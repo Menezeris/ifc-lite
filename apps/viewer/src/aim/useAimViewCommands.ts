@@ -19,13 +19,14 @@ import { totalYupOffset } from '@/lib/geo/coordinate-frame';
 import { useViewMode } from '@/hooks/useViewMode';
 import type { BimContext } from '@ifc-lite/sdk';
 import { resolveGuids } from './bridge-protocol.js';
-import type { SectionAxis, ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
-import {
-  VIEWER_AXIS, cameraStep, cutPercent, ifcCoordinateToRender, pickStorey, sectionThroughBox, storeyCutPercent,
-} from './viewCommands.js';
-import { queryBounds, queryViewState, renderBoundsOfGuids, sectionBounds, worldOffset } from './viewQueries.js';
+import type { ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
+import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCommands.js';
 
 type Reply = (msg: ViewQueryResult) => void;
+
+/** D-085 (obálky, stav, rez cez prvok) sa načíta až pri prvom použití - mimo vstupného balíka. */
+let queries: Promise<typeof import('./viewQueries.js')> | null = null;
+const loadQueries = () => (queries ??= import('./viewQueries.js'));
 
 /**
  * Rez cez prvok z deep linku príde s MODELS_LOADED, keď sú modely naparsované,
@@ -65,27 +66,19 @@ export function useAimViewCommands(bim: BimContext) {
         }
         if (msg.guids?.length || msg.coordinate !== undefined) {
           // Rez cez prvok alebo na presnej súradnici IFC sveta (D-085).
-          let target: { axis: SectionAxis; world: number } | null = null;
-          if (msg.guids?.length) {
-            const box = renderBoundsOfGuids(state, msg.guids).union;
-            target = box ? sectionThroughBox(box, msg.fit ?? 'center', msg.axis) : null;
-          } else if (msg.axis && msg.coordinate !== undefined) {
-            target = { axis: msg.axis, world: ifcCoordinateToRender(msg.axis, msg.coordinate, worldOffset(state)) };
-          }
-          if (!target) {
-            if (msg.guids?.length && attempt < SECTION_RETRIES) {
+          void loadQueries().then((q) => {
+            if (sectionToken.current !== token) return;
+            const cut = q.sectionCutFor(useViewerStore.getState(), msg);
+            if (cut) {
+              showSectionCut(useViewerStore.getState, { ...cut, flipped: msg.flipped === true });
+            } else if (msg.guids?.length && attempt < SECTION_RETRIES) {
               setTimeout(() => {
                 if (sectionToken.current === token) ref.current(msg, reply, attempt + 1);
               }, SECTION_RETRY_MS);
-              return;
+            } else {
+              console.warn('[aim-bridge] SET_SECTION: prvok bez geometrie alebo bez osi', msg.guids ?? msg.coordinate);
             }
-            console.warn('[aim-bridge] SET_SECTION: prvok bez geometrie alebo bez osi', msg.guids ?? msg.coordinate);
-            return;
-          }
-          const axis = VIEWER_AXIS[target.axis];
-          const position = cutPercent(target.world, sectionAxisRange(sectionBounds(state), axis));
-          if (position === null) return;
-          showSectionCut(useViewerStore.getState, { axis, position, flipped: msg.flipped === true });
+          });
           return;
         }
         if (msg.axis && msg.position !== undefined) {
@@ -121,14 +114,16 @@ export function useAimViewCommands(bim: BimContext) {
       }
       case 'QUERY': {
         if (!reply) return;
-        try {
-          const result = msg.query === 'bounds'
-            ? queryBounds(state, msg.guids ?? [])
-            : queryViewState(state, { mode, storeyGuid: activeStorey?.guid });
-          reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: true, result });
-        } catch (err) {
-          reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: false, error: err instanceof Error ? err.message : String(err) });
-        }
+        const view = { mode, storeyGuid: activeStorey?.guid };
+        void loadQueries()
+          .then((q) => {
+            const now = useViewerStore.getState();
+            const result = msg.query === 'bounds' ? q.queryBounds(now, msg.guids ?? []) : q.queryViewState(now, view);
+            reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: true, result });
+          })
+          .catch((err: unknown) => {
+            reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: false, error: err instanceof Error ? err.message : String(err) });
+          });
         return;
       }
     }

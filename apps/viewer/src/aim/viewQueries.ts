@@ -19,7 +19,12 @@ import { bcfWorldOffset } from '@/hooks/bcf/viewpoint-world-frame';
 import { mergedSectionBounds, percentToWorld, sectionAxisRange } from '@/lib/section/section-distance';
 import { expandToGeometryBearingIds } from '@/utils/aggregation';
 import { guidForEntity, resolveGuids } from './bridge-protocol.js';
-import { hostAxis, renderBoxToIfc, renderPointToIfc, unionBoxes, type Box3, type Vec3 } from './viewCommands.js';
+import type { SectionPlaneAxis } from '@/store/types';
+import type { SectionAxis, SectionFit } from './view-protocol.js';
+import {
+  VIEWER_AXIS, cutPercent, hostAxis, ifcCoordinateToRender, renderBoxToIfc, renderPointToIfc, sectionThroughBox,
+  unionBoxes, type Box3, type Vec3,
+} from './viewCommands.js';
 
 type State = ReturnType<typeof useViewerStore.getState>;
 
@@ -118,4 +123,26 @@ export function queryViewState(state: State, view: { mode: string; storeyGuid?: 
     hidden_count: state.hiddenEntities.size,
     isolated_count: state.isolatedEntities ? state.isolatedEntities.size : null,
   };
+}
+
+/**
+ * Rez cez obálku prvkov alebo na súradnici IFC sveta -> os a poloha pre
+ * `showSectionCut`. null = prvky ešte nemajú geometriu v scéne (volajúci
+ * skúsi znova) alebo chýba os či rozsah modelu.
+ */
+export function sectionCutFor(
+  state: State,
+  msg: { guids?: string[]; fit?: SectionFit; axis?: SectionAxis; coordinate?: number },
+): { axis: SectionPlaneAxis; position: number } | null {
+  let target: { axis: SectionAxis; world: number } | null = null;
+  if (msg.guids?.length) {
+    const box = renderBoundsOfGuids(state, msg.guids).union;
+    target = box ? sectionThroughBox(box, msg.fit ?? 'center', msg.axis) : null;
+  } else if (msg.axis && msg.coordinate !== undefined) {
+    target = { axis: msg.axis, world: ifcCoordinateToRender(msg.axis, msg.coordinate, worldOffset(state)) };
+  }
+  if (!target) return null;
+  const axis = VIEWER_AXIS[target.axis];
+  const position = cutPercent(target.world, sectionAxisRange(sectionBounds(state), axis));
+  return position === null ? null : { axis, position };
 }
