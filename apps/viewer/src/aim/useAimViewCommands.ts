@@ -8,7 +8,7 @@
  * `setSection` a BCF viewpoint, Section tool ho ukáže a dá sa posúvať),
  * kamera cez `cameraCallbacks` + `bim.viewer.flyTo`, režim cez `useViewMode`
  * (prepínač 3D|2D|Split, D-075). Vracia ref, aby ho listener v AimBridge
- * mohol volať bez re-registrácie.
+ * mohol volať bez re-registrácie. `QUERY` (AIM D-085) odpovedá rodičovi na `origin`.
  */
 
 import { useEffect, useRef } from 'react';
@@ -18,16 +18,24 @@ import { mergedSectionBounds, sectionAxisRange } from '@/lib/section/section-dis
 import { totalYupOffset } from '@/lib/geo/coordinate-frame';
 import { useViewMode } from '@/hooks/useViewMode';
 import type { BimContext } from '@ifc-lite/sdk';
-import { resolveGuids } from './bridge-protocol.js';
+import { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import type { ViewInboundMessage } from './view-protocol.js';
 import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCommands.js';
 
+/** D-085 (obálky, stav, rez cez prvok) sa načíta až pri prvom použití - mimo vstupného balíka. */
+let queries: Promise<typeof import('./viewQueries.js')> | null = null;
+const loadQueries = () => (queries ??= import('./viewQueries.js'));
+const GUIDS = { resolveGuids, guidForEntity };
+
 export function useAimViewCommands(bim: BimContext) {
   const { setMode, storeys } = useViewMode();
-  const run = (msg: ViewInboundMessage) => {
+  const sectionToken = useRef(0);
+  const run = (msg: ViewInboundMessage, origin = '*') => {
     const state = useViewerStore.getState();
     switch (msg.type) {
       case 'SET_SECTION': {
+        // Novší rez zruší čakajúce opakovanie staršieho rezu cez prvok.
+        const token = ++sectionToken.current;
         if (msg.action === 'clear') {
           clearSectionCut(useViewerStore.getState);
           return;
@@ -44,6 +52,11 @@ export function useAimViewCommands(bim: BimContext) {
           const position = storeyCutPercent(storey.elevation, msg.offsetM ?? 1.2, offY, range);
           if (position === null) return;
           showSectionCut(useViewerStore.getState, { axis: 'down', position, flipped: msg.flipped === true });
+          return;
+        }
+        if (msg.guids?.length || msg.coordinate !== undefined) {
+          // Rez cez prvok alebo na presnej súradnici IFC sveta (D-085).
+          void loadQueries().then((q) => q.cutThroughTarget(msg, () => sectionToken.current === token, GUIDS));
           return;
         }
         if (msg.axis && msg.position !== undefined) {
@@ -75,6 +88,10 @@ export function useAimViewCommands(bim: BimContext) {
           return;
         }
         setMode(msg.mode, storey);
+        return;
+      }
+      case 'QUERY': {
+        void loadQueries().then((q) => q.answerQuery(msg, origin, GUIDS));
         return;
       }
     }

@@ -85,7 +85,7 @@ export function AimBridge() {
       if (e.source !== window.parent) return;
       if (parentOriginRef.current && e.origin !== parentOriginRef.current) return;
       if (isViewMessage(e.data)) {
-        viewCommands.current(e.data);
+        viewCommands.current(e.data, parentOriginRef.current ?? '*');
         return;
       }
       if (!isInboundMessage(e.data)) return;

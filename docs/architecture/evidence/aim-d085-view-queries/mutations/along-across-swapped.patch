@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewFrame.ts a/apps/viewer/src/aim/viewFrame.ts
+index c705b4c6..8e7791d6 100644
+--- b/apps/viewer/src/aim/viewFrame.ts
++++ a/apps/viewer/src/aim/viewFrame.ts
+@@ -83,7 +83,7 @@ export function sectionThroughBox(box: Box3, fit: SectionFit, axis?: SectionAxis
+     cut = axis;
+   } else {
+     const longIsX = box.max.x - box.min.x >= box.max.z - box.min.z;
+-    cut = (fit === 'along') === longIsX ? 'x' : 'z';
++    cut = (fit === 'along') === longIsX ? 'z' : 'x';
+   }
+   const world = (box.min[cut] + box.max[cut]) / 2;
+   return Number.isFinite(world) ? { axis: cut, world } : null;

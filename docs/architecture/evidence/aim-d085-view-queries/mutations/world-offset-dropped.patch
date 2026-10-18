@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewFrame.ts a/apps/viewer/src/aim/viewFrame.ts
+index cef62f89..8e7791d6 100644
+--- b/apps/viewer/src/aim/viewFrame.ts
++++ a/apps/viewer/src/aim/viewFrame.ts
+@@ -45,7 +45,7 @@ export function unionBoxes(boxes: readonly Box3[]): Box3 | null {
+ /** Bod v render rámci (Y hore, posunutý) -> IFC svet (Z hore), `offset` z `bcfWorldOffset`. */
+ export function renderPointToIfc(p: Vec3, offset: Vec3): Vec3 {
+   const z = viewerToIfcAxes(p);
+-  return { x: z.x, y: z.y, z: z.z };
++  return { x: z.x + offset.x, y: z.y + offset.y, z: z.z + offset.z };
+ }
+ 
+ /** Obálka v render rámci -> IFC svet; os s otočeným znamienkom si vymení min a max. */

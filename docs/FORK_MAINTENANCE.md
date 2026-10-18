@@ -308,12 +308,31 @@ fork's current counts as baseline rows instead of rewriting that UI in the same 
 | `check-agents-md-size` | `scripts/agents-md-budget.txt` | the fork section in `AGENTS.md` and `packages/collab-server/AGENTS.md` |
 | `check-jsx-a11y` | `scripts/jsx-a11y-baseline.json` | role-based `group` / `radio` widgets and the clickable identifier-link box in the underlay / identifier-link / view-mode UI |
 | `check-type-scale` | `scripts/type-scale-baseline.json` | `text-[Npx]` in the AIM card, documents, underlay and identifier-link panels (upstream itself is at zero) |
-| perf ratchet `bundle` | `tests/perf-ratchets/bundle.json` (`viewer-entry-js-bytes`, `viewer-eager-js-bytes`) | raised in the 2026-10 sync by the fork's boot-path code (~32 kB entry, ~70 kB eager): the AIM bridge and slices, and the AIM-FORK wiring in PropertiesPanel / Viewport / HierarchyPanel / ViewportContainer. Panels, panes and overlays are `lazy()` (−100 kB); the daily lowering job only lowers it again |
+| perf ratchet `bundle` | `tests/perf-ratchets/bundle.json` (`viewer-entry-js-bytes`, `viewer-eager-js-bytes`) | raised in the 2026-10 sync by the fork's boot-path code (~32 kB entry, ~70 kB eager): the AIM bridge and slices, and the AIM-FORK wiring in PropertiesPanel / Viewport / HierarchyPanel / ViewportContainer. Panels, panes and overlays are `lazy()` (−100 kB); the daily lowering job only lowers it again. Entry raised again 2026-10-18 by +3,333 B for AIM D-085 (view queries, section through an element): the feature itself loads lazily, the entry keeps the message checks and the loader (+968 B over `main`, which was already 2,365 B above the old ceiling) |
 | ribbon command guard (`command-labels.guard.test.tsx`) | `rawByTab` (`AIM-FORK` row) | `documents: 3` — the 3D / 2D / Split buttons of the fork's Documents tab, which have no surface-command id yet |
 
 They ratchet **down**: moving a panel's copy into `catalogues/aim-fork.en.ts`, switching to
 `IconButton`, or splitting a file lowers its row (`--update`). Never raise a row for new fork
 code without saying why in the PR.
+
+### Pre-approved raises for new AIM features (Samuel, 2026-10-18)
+
+A PR that adds an AIM feature may raise the `bundle` perf ratchet itself, without asking
+first, when all of these hold:
+
+1. The new code is in `apps/viewer/src/aim/` (or an `AIM-FORK` wiring line), and it was made
+   lazy first: a dynamic `import()` on first use. The lazy module must not import a module
+   the entry chunk imports too (`viewCommands.ts`, `bridge-protocol.ts`, ...): the bundler
+   then pulls that module out into a shared chunk and the entry grows by the import and the
+   preload list. Pass such helpers in from the caller instead (see `viewQueries.ts`).
+2. The raise is at most **2 kB** on `viewer-entry-js-bytes` and **10 kB** on
+   `viewer-eager-js-bytes` over the measured `main`. Above that, ask Samuel.
+3. It is its own commit (`perf(viewer): strop ... (predschválené, FORK_MAINTENANCE)`) that
+   sets the ceiling to the measured value, with the provenance commit and the numbers
+   before / after in the message, and one line in the PR body.
+
+The raise goes in the same PR as the feature, so CI is green on the first run. Measure it
+locally before the first push (`.claude/skills/aim-feature/SKILL.md`).
 
 ## Temporary pins (remove on the sync that fixes upstream)
 
@@ -324,6 +343,8 @@ code without saying why in the PR.
 ## Conventions (don't drift)
 
 - **New custom code → `apps/viewer/src/aim/`**, not scattered into upstream files.
+- **New AIM feature → follow `.claude/skills/aim-feature/SKILL.md`** (local checks, bundle
+  measurement, revert-oracle evidence and label in the first push), so CI runs once.
 - **Every edit inside an upstream file → wrap in `// >>> AIM-FORK … // <<< AIM-FORK`.**
 - **Merge, never rebase** the deployed `main`; sync PRs land as **merge commits**, never squashed.
 - **No `|| true` around `gh` calls** in the sync workflow — silence there cost us three weeks once.

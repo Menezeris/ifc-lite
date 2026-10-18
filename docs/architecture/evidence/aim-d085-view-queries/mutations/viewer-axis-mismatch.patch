@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewFrame.ts a/apps/viewer/src/aim/viewFrame.ts
+index c4278066..8e7791d6 100644
+--- b/apps/viewer/src/aim/viewFrame.ts
++++ a/apps/viewer/src/aim/viewFrame.ts
+@@ -22,7 +22,7 @@ export interface Box3 { min: Vec3; max: Vec3 }
+  * `viewCommands.ts` by ho vytrhol do zdieľaného chunku a zväčšil vstup.
+  */
+ export function viewerAxis(axis: SectionAxis): SectionPlaneAxis {
+-  return axis === 'x' ? 'front' : axis === 'y' ? 'down' : 'side';
++  return axis === 'x' ? 'side' : axis === 'y' ? 'down' : 'front';
+ }
+ 
+ /** Os viewera -> písmeno osi hosta (inverz `VIEWER_AXIS`). */
