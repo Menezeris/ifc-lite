@@ -11,6 +11,7 @@
  */
 
 import { useViewerStore } from '@/store';
+import { showSectionCut } from '@/store/section-active';
 import { toGlobalIdFromModels } from '@/store/globalId';
 import { resolveEntityRef } from '@/store/resolveEntityRef';
 import { activeSectionPlane } from '@/store/section-active';
@@ -18,15 +19,22 @@ import { getGlobalRenderer } from '@/hooks/useBCF';
 import { bcfWorldOffset } from '@/hooks/bcf/viewpoint-world-frame';
 import { mergedSectionBounds, percentToWorld, sectionAxisRange } from '@/lib/section/section-distance';
 import { expandToGeometryBearingIds } from '@/utils/aggregation';
-import { guidForEntity, resolveGuids } from './bridge-protocol.js';
+import { deriveViewMode } from '@/hooks/viewModeCore';
+import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import type { SectionPlaneAxis } from '@/store/types';
-import type { SectionAxis, SectionFit } from './view-protocol.js';
+import type { SectionAxis, SectionFit, ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
 import {
-  VIEWER_AXIS, cutPercent, hostAxis, ifcCoordinateToRender, renderBoxToIfc, renderPointToIfc, sectionThroughBox,
-  unionBoxes, type Box3, type Vec3,
-} from './viewCommands.js';
+  cutPercent, hostAxis, viewerAxis, ifcCoordinateToRender, renderBoxToIfc, renderPointToIfc, sectionThroughBox, unionBoxes,
+  type Box3, type Vec3,
+} from './viewFrame.js';
 
 type State = ReturnType<typeof useViewerStore.getState>;
+
+/**
+ * GUID <-> prvok z `bridge-protocol.ts`, odovzdané volajúcim: priamy import by
+ * ten modul vytrhol zo vstupného balíka do zdieľaného chunku (perf ratchet).
+ */
+export interface GuidHelpers { resolveGuids: typeof resolveGuids; guidForEntity: typeof guidForEntity }
 
 /** Výsledok zaokrúhlený na milimetre - Claude ho číta, nie renderer. */
 const mm = (v: number) => Math.round(v * 1000) / 1000;
@@ -47,11 +55,11 @@ export const worldOffset = (state: State): Vec3 => bcfWorldOffset(state.models, 
 export const sectionBounds = (state: State) => mergedSectionBounds(state.models, state.geometryResult);
 
 /** Render-rámcová obálka jedného prvku podľa GUID (zostava bez geometrie = jej časti). */
-function renderBoundsOfGuid(state: State, guid: string): Box3 | null {
+function renderBoundsOfGuid(state: State, guid: string, g: GuidHelpers): Box3 | null {
   const scene = getGlobalRenderer()?.getScene();
   if (!scene) return null;
   const boxOf = (id: number): Box3 | null => scene.getEntityBoundingBox(id) ?? scene.getInstancedEntityBounds(id) ?? null;
-  const ids = resolveGuids(state.models, [guid]).map((r) => toGlobalIdFromModels(state.models, r.modelId, r.expressId));
+  const ids = g.resolveGuids(state.models, [guid]).map((r) => toGlobalIdFromModels(state.models, r.modelId, r.expressId));
   if (ids.length === 0) return null;
   const parts = expandToGeometryBearingIds(ids, (id) => boxOf(id) !== null, {
     resolve: resolveEntityRef,
@@ -62,11 +70,11 @@ function renderBoundsOfGuid(state: State, guid: string): Box3 | null {
 }
 
 /** Zjednotená render-rámcová obálka GUIDov a zoznam tých, ktoré nemajú geometriu. */
-export function renderBoundsOfGuids(state: State, guids: readonly string[]) {
+export function renderBoundsOfGuids(state: State, guids: readonly string[], g: GuidHelpers) {
   const found: { guid: string; box: Box3 }[] = [];
   const missing: string[] = [];
   for (const guid of guids) {
-    const box = renderBoundsOfGuid(state, guid);
+    const box = renderBoundsOfGuid(state, guid, g);
     if (box) found.push({ guid, box });
     else missing.push(guid);
   }
@@ -74,10 +82,10 @@ export function renderBoundsOfGuids(state: State, guids: readonly string[]) {
 }
 
 /** `QUERY bounds`: obálka modelu a (voliteľne) prvkov v IFC svete. */
-export function queryBounds(state: State, guids: readonly string[]) {
+export function queryBounds(state: State, guids: readonly string[], g: GuidHelpers) {
   const offset = worldOffset(state);
   const model = sectionBounds(state);
-  const { found, missing, union } = renderBoundsOfGuids(state, guids);
+  const { found, missing, union } = renderBoundsOfGuids(state, guids, g);
   return {
     frame: 'ifc_world', units: 'm', axes: { x: 'IFC X', y: 'IFC Y', z: 'IFC Z (hore)' },
     section_axis: SECTION_AXIS_IN_IFC,
@@ -91,7 +99,12 @@ export function queryBounds(state: State, guids: readonly string[]) {
 const MAX_SELECTION = 50;
 
 /** `QUERY view_state`: rez, kamera, režim, výber a viditeľnosť. */
-export function queryViewState(state: State, view: { mode: string; storeyGuid?: string | null }) {
+export function queryViewState(state: State, g: GuidHelpers) {
+  const mode = deriveViewMode({
+    splitView: state.underlaySplitView,
+    planFull: state.underlayPlanFull,
+    viewLocked: state.underlayViewLocked,
+  });
   const offset = worldOffset(state);
   const plane = activeSectionPlane(state);
   const range = plane ? sectionAxisRange(sectionBounds(state), plane.axis) : null;
@@ -110,11 +123,11 @@ export function queryViewState(state: State, view: { mode: string; storeyGuid?: 
     ? [...state.selectedEntityIds]
     : state.selectedEntityId !== null ? [state.selectedEntityId] : [];
   const guids = selected.slice(0, MAX_SELECTION)
-    .map((id) => guidForEntity(state.models, resolveEntityRef(id)))
+    .map((id) => g.guidForEntity(state.models, resolveEntityRef(id)))
     .filter((g): g is string => !!g);
   return {
     frame: 'ifc_world', units: 'm',
-    mode: view.mode, storey_guid: view.storeyGuid ?? null,
+    mode, storey_guid: state.underlayActiveStoreyGuid ?? state.underlayLastStoreyGuid ?? null,
     section,
     camera: camera
       ? { position: roundVec(renderPointToIfc(camera.getPosition(), offset)), target: roundVec(renderPointToIfc(camera.getTarget(), offset)), projection: state.projectionMode }
@@ -133,16 +146,51 @@ export function queryViewState(state: State, view: { mode: string; storeyGuid?: 
 export function sectionCutFor(
   state: State,
   msg: { guids?: string[]; fit?: SectionFit; axis?: SectionAxis; coordinate?: number },
+  g: GuidHelpers,
 ): { axis: SectionPlaneAxis; position: number } | null {
   let target: { axis: SectionAxis; world: number } | null = null;
   if (msg.guids?.length) {
-    const box = renderBoundsOfGuids(state, msg.guids).union;
+    const box = renderBoundsOfGuids(state, msg.guids, g).union;
     target = box ? sectionThroughBox(box, msg.fit ?? 'center', msg.axis) : null;
   } else if (msg.axis && msg.coordinate !== undefined) {
     target = { axis: msg.axis, world: ifcCoordinateToRender(msg.axis, msg.coordinate, worldOffset(state)) };
   }
   if (!target) return null;
-  const axis = VIEWER_AXIS[target.axis];
+  const axis = viewerAxis(target.axis);
   const position = cutPercent(target.world, sectionAxisRange(sectionBounds(state), axis));
   return position === null ? null : { axis, position };
+}
+
+/**
+ * Rez cez prvok z deep linku príde s MODELS_LOADED, keď sú modely naparsované,
+ * ale geometria ešte len prúdi do scény - obálka prvku vtedy chýba. Skúša sa
+ * znova, kým nepríde, alebo kým `isCurrent` nepovie, že prišiel novší rez.
+ */
+const SECTION_RETRY_MS = 500;
+const SECTION_RETRIES = 60;
+
+type TargetSection = Extract<ViewInboundMessage, { type: 'SET_SECTION' }>;
+
+export function cutThroughTarget(msg: TargetSection, isCurrent: () => boolean, g: GuidHelpers, attempt = 0): void {
+  if (!isCurrent()) return;
+  const cut = sectionCutFor(useViewerStore.getState(), msg, g);
+  if (cut) {
+    showSectionCut(useViewerStore.getState, { ...cut, flipped: msg.flipped === true });
+  } else if (msg.guids?.length && attempt < SECTION_RETRIES) {
+    setTimeout(() => cutThroughTarget(msg, isCurrent, g, attempt + 1), SECTION_RETRY_MS);
+  } else {
+    console.warn('[aim-bridge] SET_SECTION: prvok bez geometrie alebo bez osi', msg.guids ?? msg.coordinate);
+  }
+}
+
+/** `QUERY` -> `QUERY_RESULT` rodičovi s tým istým id; chyba výpočtu sa vráti ako `ok: false`. */
+export function answerQuery(msg: Extract<ViewInboundMessage, { type: 'QUERY' }>, origin: string, g: GuidHelpers): void {
+  const reply = (r: ViewQueryResult) => window.parent.postMessage(r, origin);
+  try {
+    const state = useViewerStore.getState();
+    const result = msg.query === 'bounds' ? queryBounds(state, msg.guids ?? [], g) : queryViewState(state, g);
+    reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: true, result });
+  } catch (err) {
+    reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: false, error: err instanceof Error ? err.message : String(err) });
+  }
 }

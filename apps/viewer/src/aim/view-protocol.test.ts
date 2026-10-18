@@ -6,10 +6,11 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
 import { isViewMessage } from './view-protocol.js';
+import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCommands.js';
 import {
-  VIEWER_AXIS, cameraStep, cutPercent, hostAxis, ifcCoordinateToRender, pickStorey, renderBoxToIfc,
-  renderPointToIfc, sectionThroughBox, storeyCutPercent, unionBoxes,
-} from './viewCommands.js';
+  cutPercent, hostAxis, ifcCoordinateToRender, renderBoxToIfc, renderPointToIfc, sectionThroughBox, unionBoxes,
+  viewerAxis,
+} from './viewFrame.js';
 
 const S = 'aim-bridge';
 const G = '27hbQtAoP6qvoEYhPARoI7';
@@ -131,7 +132,10 @@ describe('rez cez prvok a IFC svet (AIM D-085)', () => {
       unionBoxes([{ min: { x: 0, y: 1, z: 2 }, max: { x: 1, y: 2, z: 3 } }, { min: { x: -1, y: 5, z: 0 }, max: { x: 0, y: 6, z: 9 } }]),
       { min: { x: -1, y: 1, z: 0 }, max: { x: 1, y: 6, z: 9 } },
     );
-    for (const axis of ['x', 'y', 'z'] as const) assert.equal(hostAxis(VIEWER_AXIS[axis]), axis);
+    for (const axis of ['x', 'y', 'z'] as const) {
+      assert.equal(hostAxis(VIEWER_AXIS[axis]), axis);
+      assert.equal(viewerAxis(axis), VIEWER_AXIS[axis]);
+    }
     assert.equal(cutPercent(5, { min: 0, max: 20 }), 25);
     assert.equal(cutPercent(5, null), null);
   });

@@ -8,7 +8,7 @@
  * `setSection` a BCF viewpoint, Section tool ho ukáže a dá sa posúvať),
  * kamera cez `cameraCallbacks` + `bim.viewer.flyTo`, režim cez `useViewMode`
  * (prepínač 3D|2D|Split, D-075). Vracia ref, aby ho listener v AimBridge
- * mohol volať bez re-registrácie. `QUERY` (AIM D-085) odpovedá cez `reply`.
+ * mohol volať bez re-registrácie. `QUERY` (AIM D-085) odpovedá rodičovi na `origin`.
  */
 
 import { useEffect, useRef } from 'react';
@@ -18,34 +18,24 @@ import { mergedSectionBounds, sectionAxisRange } from '@/lib/section/section-dis
 import { totalYupOffset } from '@/lib/geo/coordinate-frame';
 import { useViewMode } from '@/hooks/useViewMode';
 import type { BimContext } from '@ifc-lite/sdk';
-import { resolveGuids } from './bridge-protocol.js';
-import type { ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
+import { guidForEntity, resolveGuids } from './bridge-protocol.js';
+import type { ViewInboundMessage } from './view-protocol.js';
 import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCommands.js';
-
-type Reply = (msg: ViewQueryResult) => void;
 
 /** D-085 (obálky, stav, rez cez prvok) sa načíta až pri prvom použití - mimo vstupného balíka. */
 let queries: Promise<typeof import('./viewQueries.js')> | null = null;
 const loadQueries = () => (queries ??= import('./viewQueries.js'));
-
-/**
- * Rez cez prvok z deep linku príde s MODELS_LOADED, keď sú modely naparsované,
- * ale geometria ešte len prúdi do scény - obálka prvku vtedy chýba. Skúša sa
- * znova, kým nepríde (alebo kým nepríde iný rez).
- */
-const SECTION_RETRY_MS = 500;
-const SECTION_RETRIES = 60;
+const GUIDS = { resolveGuids, guidForEntity };
 
 export function useAimViewCommands(bim: BimContext) {
-  const { setMode, storeys, mode, activeStorey } = useViewMode();
+  const { setMode, storeys } = useViewMode();
   const sectionToken = useRef(0);
-  const run = (msg: ViewInboundMessage, reply?: Reply, attempt = 0) => {
+  const run = (msg: ViewInboundMessage, origin = '*') => {
     const state = useViewerStore.getState();
     switch (msg.type) {
       case 'SET_SECTION': {
-        // Novší rez zruší čakajúce opakovanie staršieho.
-        if (attempt === 0) sectionToken.current += 1;
-        const token = sectionToken.current;
+        // Novší rez zruší čakajúce opakovanie staršieho rezu cez prvok.
+        const token = ++sectionToken.current;
         if (msg.action === 'clear') {
           clearSectionCut(useViewerStore.getState);
           return;
@@ -66,19 +56,7 @@ export function useAimViewCommands(bim: BimContext) {
         }
         if (msg.guids?.length || msg.coordinate !== undefined) {
           // Rez cez prvok alebo na presnej súradnici IFC sveta (D-085).
-          void loadQueries().then((q) => {
-            if (sectionToken.current !== token) return;
-            const cut = q.sectionCutFor(useViewerStore.getState(), msg);
-            if (cut) {
-              showSectionCut(useViewerStore.getState, { ...cut, flipped: msg.flipped === true });
-            } else if (msg.guids?.length && attempt < SECTION_RETRIES) {
-              setTimeout(() => {
-                if (sectionToken.current === token) ref.current(msg, reply, attempt + 1);
-              }, SECTION_RETRY_MS);
-            } else {
-              console.warn('[aim-bridge] SET_SECTION: prvok bez geometrie alebo bez osi', msg.guids ?? msg.coordinate);
-            }
-          });
+          void loadQueries().then((q) => q.cutThroughTarget(msg, () => sectionToken.current === token, GUIDS));
           return;
         }
         if (msg.axis && msg.position !== undefined) {
@@ -113,17 +91,7 @@ export function useAimViewCommands(bim: BimContext) {
         return;
       }
       case 'QUERY': {
-        if (!reply) return;
-        const view = { mode, storeyGuid: activeStorey?.guid };
-        void loadQueries()
-          .then((q) => {
-            const now = useViewerStore.getState();
-            const result = msg.query === 'bounds' ? q.queryBounds(now, msg.guids ?? []) : q.queryViewState(now, view);
-            reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: true, result });
-          })
-          .catch((err: unknown) => {
-            reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: false, error: err instanceof Error ? err.message : String(err) });
-          });
+        void loadQueries().then((q) => q.answerQuery(msg, origin, GUIDS));
         return;
       }
     }
