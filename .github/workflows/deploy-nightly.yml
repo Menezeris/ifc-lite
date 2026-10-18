@@ -61,6 +61,10 @@ concurrency:
 
 jobs:
   advance-production:
+    # >>> AIM-FORK: upstream-only. The fork's Vercel projects deploy production
+    # from `main` on merge; there is no `production` branch to advance.
+    if: github.repository == 'LTplus-AG/ifc-lite'
+    # <<< AIM-FORK
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

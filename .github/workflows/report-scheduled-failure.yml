@@ -31,6 +31,11 @@ permissions:
 
 jobs:
   report:
+    # >>> AIM-FORK: upstream-only. The fork has issues disabled, so every
+    # scheduled failure added a second red job here; the failing caller job and
+    # GitHub's failure mail still report it.
+    if: github.repository == 'LTplus-AG/ifc-lite'
+    # <<< AIM-FORK
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

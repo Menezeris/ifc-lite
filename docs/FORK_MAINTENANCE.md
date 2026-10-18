@@ -263,6 +263,8 @@ so they **skip** on our fork instead of failing red:
 | `.github/workflows/docs.yml` | `build`, `deploy` | Deploys docs to GitHub Pages; the fork has no Pages site (`configure-pages` → 404 "Get Pages site failed"). |
 | `.github/workflows/docker.yml` | `docker` | Publishes the server container; the fork embeds the viewer via Vercel and doesn't ship it (also wants a Depot runner). |
 | `.github/workflows/issue-queue.yml` | `issue-queue`, `issue-queue-merge-group` | Upstream's steering gate (PR must close a `ready` issue or carry `unqueued`); the fork has no such triage. |
+| `.github/workflows/deploy-nightly.yml` | `advance-production` | Fast-forwards upstream's `production` branch, from which their Vercel projects deploy. The fork's Vercel projects deploy production from `main` on merge and there is no `production` branch (first nightly failed: no green commit found, then the issue step hit disabled issues). |
+| `.github/workflows/report-scheduled-failure.yml` | `report` | Opens/updates an issue per failing scheduled lane; the fork has issues disabled, so it only added a second red job. The failing caller job and GitHub's failure mail still report the failure. Callers' `if:` stays upstream's (pinned by `check-workflow-report-paths`). |
 | `.github/workflows/test.yml` | step *Refuse a release commit that still carries changesets* | Guards upstream's npm release; every sync moves versions and carries upstream's pending changesets, so it can only fail here. |
 
 If we ever want these on the fork: for docs, enable GitHub Pages (Settings → Pages → build
