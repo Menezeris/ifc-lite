@@ -60,14 +60,19 @@ describe('aimDerivationsStore', () => {
     assert.deepEqual(useAimDerivationsStore.getState().hiddenRuleIds, ['b']);
   });
 
-  it('opens/closes the AIM LAYERS section and clears the layer on teardown', () => {
+  it('opens/closes the AIM LAYERS section and resets everything on teardown', () => {
     const s = useAimDerivationsStore.getState();
     s.setLayersOpen(false);
     assert.equal(useAimDerivationsStore.getState().layersOpen, false);
     s.setLayer(layer('a'));
     s.toggleRuleVisible('a');
+    s.toggleRelationsVisible();
     s.clear();
-    assert.equal(useAimDerivationsStore.getState().layer, null);
-    assert.deepEqual(useAimDerivationsStore.getState().hiddenRuleIds, []);
+    // A remounted bridge with a fresh layer must not inherit the old toggles.
+    const after = useAimDerivationsStore.getState();
+    assert.equal(after.layer, null);
+    assert.deepEqual(after.hiddenRuleIds, []);
+    assert.equal(after.relationsVisible, true);
+    assert.equal(after.layersOpen, true);
   });
 });

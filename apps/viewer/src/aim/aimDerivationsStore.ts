@@ -53,5 +53,6 @@ export const useAimDerivationsStore = create<AimDerivationsState>((set) => ({
         : [...s.hiddenRuleIds, ruleId],
     })),
   setLayersOpen: (layersOpen) => set({ layersOpen }),
-  clear: () => set({ layer: null, hiddenRuleIds: [] }),
+  // Teardown (bridge unmount): back to the initial state, local toggles included.
+  clear: () => set({ layer: null, relationsVisible: true, hiddenRuleIds: [], layersOpen: true }),
 }));
