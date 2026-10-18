@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/derivations-protocol.ts a/apps/viewer/src/aim/derivations-protocol.ts
+index 6647e1f2..06da74d4 100644
+--- b/apps/viewer/src/aim/derivations-protocol.ts
++++ a/apps/viewer/src/aim/derivations-protocol.ts
+@@ -174,5 +174,5 @@ export function derivedRelationsOf(data: {
+ export function isDerivationsMessage(data: unknown): data is DerivationsLoadMessage {
+   if (!data || typeof data !== 'object') return false;
+   const msg = data as { source?: unknown; type?: unknown; layer?: unknown };
+-  return msg.type === 'AIM_DERIVATIONS_LOAD' && isDerivationsLayerWire(msg.layer);
++  return msg.source === SOURCE && msg.type === 'AIM_DERIVATIONS_LOAD' && isDerivationsLayerWire(msg.layer);
+ }

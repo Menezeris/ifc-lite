@@ -1,5 +1,5 @@
 diff --git b/apps/viewer/src/aim/aimDerivationsStore.ts a/apps/viewer/src/aim/aimDerivationsStore.ts
-index 41239281..0587cee0 100644
+index 925de77e..f00af20b 100644
 --- b/apps/viewer/src/aim/aimDerivationsStore.ts
 +++ a/apps/viewer/src/aim/aimDerivationsStore.ts
 @@ -49,7 +49,7 @@ export const useAimDerivationsStore = create<AimDerivationsState>((set) => ({

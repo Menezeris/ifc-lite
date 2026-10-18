@@ -1,5 +1,5 @@
 diff --git b/apps/viewer/src/aim/derivations.ts a/apps/viewer/src/aim/derivations.ts
-index af96bd1b..23cc92d2 100644
+index cf8137e1..65e0b46f 100644
 --- b/apps/viewer/src/aim/derivations.ts
 +++ a/apps/viewer/src/aim/derivations.ts
 @@ -29,7 +29,7 @@ export function modelKey(name: string): string {

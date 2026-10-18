@@ -1,8 +1,8 @@
-diff --git b/apps/viewer/src/aim/bridge-protocol.ts a/apps/viewer/src/aim/bridge-protocol.ts
-index 181b9755..1dbb42d7 100644
---- b/apps/viewer/src/aim/bridge-protocol.ts
-+++ a/apps/viewer/src/aim/bridge-protocol.ts
-@@ -354,7 +354,7 @@ function isDerivationRuleWire(v: unknown): v is DerivationRuleWire {
+diff --git b/apps/viewer/src/aim/derivations-protocol.ts a/apps/viewer/src/aim/derivations-protocol.ts
+index 70a9376b..06da74d4 100644
+--- b/apps/viewer/src/aim/derivations-protocol.ts
++++ a/apps/viewer/src/aim/derivations-protocol.ts
+@@ -106,7 +106,7 @@ function isDerivationRuleWire(v: unknown): v is DerivationRuleWire {
    if (r.mode !== 'auto' && r.mode !== 'manual') return false;
    if (!isStringArray(r.targetClasses) || !isStringArray(r.roles)) return false;
    if (!isFiniteNonNegative(r.count)) return false;

@@ -1,5 +1,5 @@
 diff --git b/apps/viewer/src/aim/derivations.ts a/apps/viewer/src/aim/derivations.ts
-index 23230289..23cc92d2 100644
+index f90f5d02..65e0b46f 100644
 --- b/apps/viewer/src/aim/derivations.ts
 +++ a/apps/viewer/src/aim/derivations.ts
 @@ -47,7 +47,7 @@ export function visibleDerivedRelations(

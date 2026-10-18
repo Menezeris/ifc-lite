@@ -1,11 +1,11 @@
-diff --git b/apps/viewer/src/aim/bridge-protocol.ts a/apps/viewer/src/aim/bridge-protocol.ts
-index be29872b..1dbb42d7 100644
---- b/apps/viewer/src/aim/bridge-protocol.ts
-+++ a/apps/viewer/src/aim/bridge-protocol.ts
-@@ -410,7 +410,7 @@ function isDerivedRelationWire(v: unknown): v is DerivedRelationWire {
-  */
- export function derivedRelationsOf(data: AimPanelData): { relations: DerivedRelationWire[]; total: number } {
-   const raw: unknown = data.derivedRelations;
+diff --git b/apps/viewer/src/aim/derivations-protocol.ts a/apps/viewer/src/aim/derivations-protocol.ts
+index eec0c7c0..06da74d4 100644
+--- b/apps/viewer/src/aim/derivations-protocol.ts
++++ a/apps/viewer/src/aim/derivations-protocol.ts
+@@ -165,7 +165,7 @@ export function derivedRelationsOf(data: {
+   derivedTotal?: unknown;
+ }): { relations: DerivedRelationWire[]; total: number } {
+   const raw = data.derivedRelations;
 -  const relations = Array.isArray(raw) ? (raw as DerivedRelationWire[]) : [];
 +  const relations = Array.isArray(raw) ? raw.filter(isDerivedRelationWire) : [];
    const total = isFiniteNonNegative(data.derivedTotal) ? Math.max(data.derivedTotal, relations.length) : relations.length;
