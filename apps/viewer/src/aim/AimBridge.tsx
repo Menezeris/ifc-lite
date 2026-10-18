@@ -39,6 +39,7 @@ import {
 import { useAimPanelStore } from './aimPanelStore.js';
 import { useCapturePinsStore } from './capturePinsStore.js';
 import { useAimDecorationsStore } from './aimDecorationsStore.js';
+import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
 import { useAimViewCommands } from './useAimViewCommands.js';
 
@@ -218,6 +219,11 @@ export function AimBridge() {
           // Per-GUID badge counts (D-077) — HierarchyPanel rows render pills.
           useAimDecorationsStore.getState().setDecorations(e.data.decorations);
           break;
+        case 'AIM_DERIVATIONS_LOAD':
+          // AIM layer over the models (D-089): rules + model revisions for the
+          // AIM ribbon tab and the AIM LAYERS tree section.
+          useAimDerivationsStore.getState().setLayer(e.data.layer);
+          break;
       }
     }
 
@@ -254,6 +260,7 @@ export function AimBridge() {
       useCapturePinsStore.getState().setEmitClick(null);
       useCapturePinsStore.getState().setPins([]);
       useAimDecorationsStore.getState().clear();
+      useAimDerivationsStore.getState().clear();
     };
   }, [bim]);
 

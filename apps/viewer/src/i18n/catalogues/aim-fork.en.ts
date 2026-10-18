@@ -15,6 +15,6 @@ export const aimForkEn = {
   'aimFork.assistant.boundaryDocuments': 'Project document library. Opening a PDF or image produces no analysis result; the documents themselves live in the AIM platform.',
   /** Empty first option of the 2D storey picker (it has no visible text). */
   'aimFork.viewMode.noStorey': 'No storey selected',
-  /** Fork-only ribbon tab (D-072 / D-075); keyed like upstream's `ribbon.tab.*` because the band reads `t(`ribbon.tab.${tab}`)`. */
-  'ribbon.tab.documents': 'Documents',
+  /** Fork-only ribbon tab (D-072 / D-075, labelled AIM since D-089); keyed like upstream's `ribbon.tab.*` because the band reads `t(`ribbon.tab.${tab}`)`. */
+  'ribbon.tab.documents': 'AIM',
 } as const;

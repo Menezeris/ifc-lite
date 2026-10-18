@@ -20,6 +20,9 @@ import type { TreeNode } from './types';
 import type { HierarchyNodeAriaProps } from './HierarchyNode';
 import { ModelRowTags } from './ModelRowTags';
 import { SourceSyncIcon, useModelSyncProgress } from '@/components/sources/SourceDownloadStatus';
+// >>> AIM-FORK: AIM model revision pill (D-089)
+import { AimModelRevision } from '@/aim/AimModelRevision';
+// <<< AIM-FORK
 
 export interface ModelHeaderRowProps extends HierarchyNodeAriaProps {
   node: TreeNode;
@@ -116,6 +119,9 @@ export function ModelHeaderRow({
           </span>
         )}
         <ModelRowTags modelId={modelId} modelName={node.name} />
+        {/* >>> AIM-FORK: AIM model revision (D-089) */}
+        <AimModelRevision modelName={node.name} />
+        {/* <<< AIM-FORK */}
 
         <button
           // 14px icon, `p-[5px]` a side: 14 + 2*5 = 24, the WCAG 2.2 2.5.8

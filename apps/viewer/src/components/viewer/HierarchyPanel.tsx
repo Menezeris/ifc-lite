@@ -17,6 +17,7 @@ import { Rule, activeGroupRules, type FilterRule } from '@ifc-lite/rules';
 // >>> AIM-FORK: AIM dekorácie stromu (D-077)
 import { useAimDecorationsStore } from '@/aim/aimDecorationsStore';
 import { guidForEntity, type AimTreeDecoration } from '@/aim/bridge-protocol';
+import { AimLayersSection } from '@/aim/AimLayersSection';
 // <<< AIM-FORK
 import { toast } from '@/components/ui/toast';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -641,6 +642,10 @@ export function HierarchyPanel() {
           </div>
         </div>}
 
+        {/* >>> AIM-FORK: AIM LAYERS section (D-089) */}
+        <AimLayersSection />
+        {/* <<< AIM-FORK */}
+
         {/* Footer status */}
         <HierarchyFooterStatus
           hasActiveFilters={hasActiveFilters} selectedStoreys={selectedStoreys} classFilter={classFilter}
@@ -706,6 +711,10 @@ export function HierarchyPanel() {
           })}
         </div>
       </div>)}
+
+      {/* >>> AIM-FORK: AIM LAYERS section (D-089) */}
+      <AimLayersSection />
+      {/* <<< AIM-FORK */}
 
       {/* Footer status */}
       <HierarchyFooterStatus

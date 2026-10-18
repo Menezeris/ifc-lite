@@ -3,12 +3,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * Ribbon · Documents tab — the fork's own ribbon tab, gathering the
- * AIM-layer surfaces that upstream's five tabs have no home for:
+ * Ribbon · AIM tab (tab id `documents`, labelled "AIM" since D-089): the
+ * fork's own ribbon tab, gathering the AIM-layer surfaces that upstream's
+ * five tabs have no home for:
  *
  *   · Documents  — the project document library (D-075), `documents` panel
  *   · Underlays  — georeferenced PDF drawing underlays (D-072)
  *   · 3D | 2D | Split (+ storey) — the workspace view mode (D-075)
+ *   · Derivations: the AIM derivations layer (D-089, DerivationsRibbonGroup.tsx)
  *
  * Nothing new and nothing moved out from under anyone: every button drives
  * the same store action the classic toolbar and the sidebar rail already
@@ -35,6 +37,7 @@ import {
 } from '@/components/viewer/ribbon/primitives';
 import { RibbonCommandLargeButton } from '@/components/viewer/ribbon/command-button';
 import type { SurfaceCommandContext } from '@/components/viewer/surface-commands';
+import { DerivationsRibbonGroup } from './DerivationsRibbonGroup';
 
 /** Ribbon icons for the view modes, keyed by the shared `VIEW_MODES` ids. */
 const MODE_ICONS = {
@@ -101,6 +104,10 @@ export function DocumentsRibbonTab() {
           <StoreyPicker className="h-7" />
         </div>
       </RibbonGroup>
+
+      <RibbonGroupDivider />
+
+      <DerivationsRibbonGroup />
     </>
   );
 }
