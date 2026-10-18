@@ -1,0 +1,72 @@
+{
+  "camera-any-preset": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "0a7cb82101ec430cd26c001dcc33d71e3d1b0b3a",
+    "head": "6c7c2a7390944b5d6f190380abf4c4352d465090",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "cut-frame-offset-sign": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "0a7cb82101ec430cd26c001dcc33d71e3d1b0b3a",
+    "head": "6c7c2a7390944b5d6f190380abf4c4352d465090",
+    "production": [
+      "apps/viewer/src/aim/viewCommands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "storey-offset-unbounded": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "0a7cb82101ec430cd26c001dcc33d71e3d1b0b3a",
+    "head": "6c7c2a7390944b5d6f190380abf4c4352d465090",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "storey-section-any-axis": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "0a7cb82101ec430cd26c001dcc33d71e3d1b0b3a",
+    "head": "6c7c2a7390944b5d6f190380abf4c4352d465090",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "unknown-storey-falls-back": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "0a7cb82101ec430cd26c001dcc33d71e3d1b0b3a",
+    "head": "6c7c2a7390944b5d6f190380abf4c4352d465090",
+    "production": [
+      "apps/viewer/src/aim/viewCommands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/view-protocol.ts a/apps/viewer/src/aim/view-protocol.ts
+index eae09b4b..0bd88e5b 100644
+--- b/apps/viewer/src/aim/view-protocol.ts
++++ a/apps/viewer/src/aim/view-protocol.ts
+@@ -61,7 +61,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
+       return (m.axis === 'x' || m.axis === 'y' || m.axis === 'z') && inRange(m.position, 0, 100);
+     }
+     case 'SET_CAMERA':
+-      return typeof m.preset === "string"
++      return (CAMERA_PRESETS as readonly unknown[]).includes(m.preset)
+         && optional(m.projection, (p) => p === 'perspective' || p === 'orthographic')
+         && optional(m.guids, isGuidList);
+     case 'SET_VIEW_MODE':
