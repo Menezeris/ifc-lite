@@ -32,6 +32,12 @@ a conflict is obvious and trivially resolvable — **keep our side**:
 // <<< AIM-FORK
 ```
 
+Where the closing sentinel would push a file over the 400-line module-size rule
+(or past its allowlist row), a one-line marker that counts the lines is allowed
+instead: `// AIM-FORK (<ref>): next N lines, <what>`. Trimming fork comments to
+fit is a comment-only diff, so the revert oracle treats it as not applicable;
+merging fork code lines to save space is not, and needs a test.
+
 **This table is generated from the sentinels — regenerate it, don't hand-patch it:**
 
 ```bash
@@ -253,10 +259,12 @@ so they **skip** on our fork instead of failing red:
 
 | Workflow | Job(s) | Why it can't run here |
 |---|---|---|
-| `.github/workflows/release.yml` | `release` | Publishes to npm/crates + opens the changesets version PR; needs `RELEASE_PAT` + OIDC trusted publishers the fork lacks (fails at checkout: "token not supplied"). |
+| `.github/workflows/release.yml` | `release`, `verify-npm-publish`, `verify-scaffold-cohort`, `verify-crates-publish` | Publishes to npm/crates + opens the changesets version PR; needs `RELEASE_PAT` + OIDC trusted publishers the fork lacks (fails at checkout: "token not supplied"). |
 | `.github/workflows/docs.yml` | `build`, `deploy` | Deploys docs to GitHub Pages; the fork has no Pages site (`configure-pages` → 404 "Get Pages site failed"). |
 | `.github/workflows/docker.yml` | `docker` | Publishes the server container; the fork embeds the viewer via Vercel and doesn't ship it (also wants a Depot runner). |
 | `.github/workflows/issue-queue.yml` | `issue-queue`, `issue-queue-merge-group` | Upstream's steering gate (PR must close a `ready` issue or carry `unqueued`); the fork has no such triage. |
+| `.github/workflows/deploy-nightly.yml` | `advance-production` | Fast-forwards upstream's `production` branch, from which their Vercel projects deploy. The fork's Vercel projects deploy production from `main` on merge and there is no `production` branch (first nightly failed: no green commit found, then the issue step hit disabled issues). |
+| `.github/workflows/report-scheduled-failure.yml` | `report` | Opens/updates an issue per failing scheduled lane; the fork has issues disabled, so it only added a second red job. The failing caller job and GitHub's failure mail still report the failure. Callers' `if:` stays upstream's (pinned by `check-workflow-report-paths`). |
 | `.github/workflows/test.yml` | step *Refuse a release commit that still carries changesets* | Guards upstream's npm release; every sync moves versions and carries upstream's pending changesets, so it can only fail here. |
 
 If we ever want these on the fork: for docs, enable GitHub Pages (Settings → Pages → build
@@ -305,6 +313,12 @@ fork's current counts as baseline rows instead of rewriting that UI in the same 
 They ratchet **down**: moving a panel's copy into `catalogues/aim-fork.en.ts`, switching to
 `IconButton`, or splitting a file lowers its row (`--update`). Never raise a row for new fork
 code without saying why in the PR.
+
+## Temporary pins (remove on the sync that fixes upstream)
+
+| Where | Pin | Why | Remove when |
+|---|---|---|---|
+| `.github/workflows/export-schema-conformance.yml` (both `pip install` steps) | `ifcopenshell==0.8.5` | Upstream #7886 (ported 2026-10-18 to fix the nightly parity lane) unpinned the shared `tools/ifcopenshell_reference/requirements.lock`. On 0.9 the LandXML checks hit removed APIs (`entity_instance.wrapped_data`, `api.alignment.get_referent_nest`) and the cant-premise test (§13.2) flips; on 0.8.5 all 11 pass. | An upstream sync adapts `check_alignment.py` / `check_vertical.py` / `check_referents.py` and the cant test to 0.9 (run the lane once without the pin to confirm). |
 
 ## Conventions (don't drift)
 
