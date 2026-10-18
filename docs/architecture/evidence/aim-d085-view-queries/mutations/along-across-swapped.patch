@@ -1,8 +1,8 @@
-diff --git b/apps/viewer/src/aim/viewCommands.ts a/apps/viewer/src/aim/viewCommands.ts
-index 5c53e86f..4300b243 100644
---- b/apps/viewer/src/aim/viewCommands.ts
-+++ a/apps/viewer/src/aim/viewCommands.ts
-@@ -114,7 +114,7 @@ export function sectionThroughBox(box: Box3, fit: SectionFit, axis?: SectionAxis
+diff --git b/apps/viewer/src/aim/viewFrame.ts a/apps/viewer/src/aim/viewFrame.ts
+index c705b4c6..8e7791d6 100644
+--- b/apps/viewer/src/aim/viewFrame.ts
++++ a/apps/viewer/src/aim/viewFrame.ts
+@@ -83,7 +83,7 @@ export function sectionThroughBox(box: Box3, fit: SectionFit, axis?: SectionAxis
      cut = axis;
    } else {
      const longIsX = box.max.x - box.min.x >= box.max.z - box.min.z;

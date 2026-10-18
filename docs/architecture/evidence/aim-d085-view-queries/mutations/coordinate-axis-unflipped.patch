@@ -1,8 +1,8 @@
-diff --git b/apps/viewer/src/aim/viewCommands.ts a/apps/viewer/src/aim/viewCommands.ts
-index 7b40b3c7..4300b243 100644
---- b/apps/viewer/src/aim/viewCommands.ts
-+++ a/apps/viewer/src/aim/viewCommands.ts
-@@ -96,8 +96,8 @@ export function renderBoxToIfc(box: Box3, offset: Vec3): Box3 {
+diff --git b/apps/viewer/src/aim/viewFrame.ts a/apps/viewer/src/aim/viewFrame.ts
+index b3271c68..8e7791d6 100644
+--- b/apps/viewer/src/aim/viewFrame.ts
++++ a/apps/viewer/src/aim/viewFrame.ts
+@@ -65,8 +65,8 @@ export function renderBoxToIfc(box: Box3, offset: Vec3): Box3 {
  export function ifcCoordinateToRender(axis: SectionAxis, coordinate: number, offset: Vec3): number {
    const local = {
      x: axis === 'x' ? coordinate - offset.x : 0,
