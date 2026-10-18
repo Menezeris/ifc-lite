@@ -27,12 +27,24 @@ import { queryBounds, queryViewState, renderBoundsOfGuids, sectionBounds, worldO
 
 type Reply = (msg: ViewQueryResult) => void;
 
+/**
+ * Rez cez prvok z deep linku príde s MODELS_LOADED, keď sú modely naparsované,
+ * ale geometria ešte len prúdi do scény - obálka prvku vtedy chýba. Skúša sa
+ * znova, kým nepríde (alebo kým nepríde iný rez).
+ */
+const SECTION_RETRY_MS = 500;
+const SECTION_RETRIES = 60;
+
 export function useAimViewCommands(bim: BimContext) {
   const { setMode, storeys, mode, activeStorey } = useViewMode();
-  const run = (msg: ViewInboundMessage, reply?: Reply) => {
+  const sectionToken = useRef(0);
+  const run = (msg: ViewInboundMessage, reply?: Reply, attempt = 0) => {
     const state = useViewerStore.getState();
     switch (msg.type) {
       case 'SET_SECTION': {
+        // Novší rez zruší čakajúce opakovanie staršieho.
+        if (attempt === 0) sectionToken.current += 1;
+        const token = sectionToken.current;
         if (msg.action === 'clear') {
           clearSectionCut(useViewerStore.getState);
           return;
@@ -61,6 +73,12 @@ export function useAimViewCommands(bim: BimContext) {
             target = { axis: msg.axis, world: ifcCoordinateToRender(msg.axis, msg.coordinate, worldOffset(state)) };
           }
           if (!target) {
+            if (msg.guids?.length && attempt < SECTION_RETRIES) {
+              setTimeout(() => {
+                if (sectionToken.current === token) ref.current(msg, reply, attempt + 1);
+              }, SECTION_RETRY_MS);
+              return;
+            }
             console.warn('[aim-bridge] SET_SECTION: prvok bez geometrie alebo bez osi', msg.guids ?? msg.coordinate);
             return;
           }
