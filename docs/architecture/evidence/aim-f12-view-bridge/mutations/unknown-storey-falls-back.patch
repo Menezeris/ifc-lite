@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/viewCommands.ts a/apps/viewer/src/aim/viewCommands.ts
+index 3b215e9d..dc86639a 100644
+--- b/apps/viewer/src/aim/viewCommands.ts
++++ a/apps/viewer/src/aim/viewCommands.ts
+@@ -49,5 +49,5 @@ export function cameraStep(preset: CameraPreset): CameraStep {
+  */
+ export function pickStorey<T extends { guid: string }>(storeys: readonly T[], guid?: string): T | undefined | null {
+   if (!guid) return undefined;
+-  return storeys.find((s) => s.guid === guid) ?? undefined;
++  return storeys.find((s) => s.guid === guid) ?? null;
+ }

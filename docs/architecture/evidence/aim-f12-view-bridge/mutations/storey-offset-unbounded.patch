@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/view-protocol.ts a/apps/viewer/src/aim/view-protocol.ts
+index d48fb7b7..0bd88e5b 100644
+--- b/apps/viewer/src/aim/view-protocol.ts
++++ a/apps/viewer/src/aim/view-protocol.ts
+@@ -56,7 +56,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
+       if (isStr(m.storeyGuid)) {
+         // Rez nad podlažím je vždy vodorovný.
+         return (m.axis === undefined || m.axis === 'y')
+-          ;
++          && optional(m.offsetM, (o) => inRange(o, SECTION_OFFSET_RANGE.min, SECTION_OFFSET_RANGE.max));
+       }
+       return (m.axis === 'x' || m.axis === 'y' || m.axis === 'z') && inRange(m.position, 0, 100);
+     }
