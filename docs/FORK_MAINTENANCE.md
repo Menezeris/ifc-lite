@@ -314,6 +314,12 @@ They ratchet **down**: moving a panel's copy into `catalogues/aim-fork.en.ts`, s
 `IconButton`, or splitting a file lowers its row (`--update`). Never raise a row for new fork
 code without saying why in the PR.
 
+## Temporary pins (remove on the sync that fixes upstream)
+
+| Where | Pin | Why | Remove when |
+|---|---|---|---|
+| `.github/workflows/export-schema-conformance.yml` (both `pip install` steps) | `ifcopenshell==0.8.5` | Upstream #7886 (ported 2026-10-18 to fix the nightly parity lane) unpinned the shared `tools/ifcopenshell_reference/requirements.lock`. On 0.9 the LandXML checks hit removed APIs (`entity_instance.wrapped_data`, `api.alignment.get_referent_nest`) and the cant-premise test (§13.2) flips; on 0.8.5 all 11 pass. | An upstream sync adapts `check_alignment.py` / `check_vertical.py` / `check_referents.py` and the cant test to 0.9 (run the lane once without the pin to confirm). |
+
 ## Conventions (don't drift)
 
 - **New custom code → `apps/viewer/src/aim/`**, not scattered into upstream files.
