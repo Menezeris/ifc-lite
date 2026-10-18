@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewCommands.ts a/apps/viewer/src/aim/viewCommands.ts
+index 5c53e86f..4300b243 100644
+--- b/apps/viewer/src/aim/viewCommands.ts
++++ a/apps/viewer/src/aim/viewCommands.ts
+@@ -114,7 +114,7 @@ export function sectionThroughBox(box: Box3, fit: SectionFit, axis?: SectionAxis
+     cut = axis;
+   } else {
+     const longIsX = box.max.x - box.min.x >= box.max.z - box.min.z;
+-    cut = (fit === 'along') === longIsX ? 'x' : 'z';
++    cut = (fit === 'along') === longIsX ? 'z' : 'x';
+   }
+   const world = (box.min[cut] + box.max[cut]) / 2;
+   return Number.isFinite(world) ? { axis: cut, world } : null;

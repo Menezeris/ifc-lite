@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/view-protocol.ts a/apps/viewer/src/aim/view-protocol.ts
+index f43072df..6610538f 100644
+--- b/apps/viewer/src/aim/view-protocol.ts
++++ a/apps/viewer/src/aim/view-protocol.ts
+@@ -87,7 +87,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
+       if (m.guids !== undefined) {
+         // along/across si os zvolí podľa obálky; stredom treba os povedať.
+         if (!isGuidList(m.guids, MAX_QUERY_GUIDS) || m.guids.length === 0) return false;
+-        if (m.fit === 'along' || m.fit === 'across') return true;
++        if (m.fit === 'along' || m.fit === 'across') return m.axis === undefined;
+         return (m.fit === undefined || m.fit === 'center') && isAxis(m.axis);
+       }
+       if (m.coordinate !== undefined) return isAxis(m.axis) && inRange(m.coordinate, -1e7, 1e7);

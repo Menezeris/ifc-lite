@@ -1,0 +1,86 @@
+{
+  "along-across-swapped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "d9eac57dcbfacfa54315dd3412e095ac6c6725da",
+    "head": "f178baae3945c00f90857dfe5afd87468daf5a8a",
+    "production": [
+      "apps/viewer/src/aim/viewCommands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "coordinate-axis-unflipped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "d9eac57dcbfacfa54315dd3412e095ac6c6725da",
+    "head": "f178baae3945c00f90857dfe5afd87468daf5a8a",
+    "production": [
+      "apps/viewer/src/aim/viewCommands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "fit-accepts-axis": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "d9eac57dcbfacfa54315dd3412e095ac6c6725da",
+    "head": "f178baae3945c00f90857dfe5afd87468daf5a8a",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "ifc-box-no-reorder": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "d9eac57dcbfacfa54315dd3412e095ac6c6725da",
+    "head": "f178baae3945c00f90857dfe5afd87468daf5a8a",
+    "production": [
+      "apps/viewer/src/aim/viewCommands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "query-id-unbounded": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "d9eac57dcbfacfa54315dd3412e095ac6c6725da",
+    "head": "f178baae3945c00f90857dfe5afd87468daf5a8a",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "world-offset-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "d9eac57dcbfacfa54315dd3412e095ac6c6725da",
+    "head": "f178baae3945c00f90857dfe5afd87468daf5a8a",
+    "production": [
+      "apps/viewer/src/aim/viewCommands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

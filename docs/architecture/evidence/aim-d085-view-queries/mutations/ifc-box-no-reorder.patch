@@ -1,0 +1,15 @@
+diff --git b/apps/viewer/src/aim/viewCommands.ts a/apps/viewer/src/aim/viewCommands.ts
+index 21595f96..4300b243 100644
+--- b/apps/viewer/src/aim/viewCommands.ts
++++ a/apps/viewer/src/aim/viewCommands.ts
+@@ -84,8 +84,8 @@ export function renderBoxToIfc(box: Box3, offset: Vec3): Box3 {
+   const a = renderPointToIfc(box.min, offset);
+   const b = renderPointToIfc(box.max, offset);
+   return {
+-    min: a,
+-    max: b,
++    min: { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), z: Math.min(a.z, b.z) },
++    max: { x: Math.max(a.x, b.x), y: Math.max(a.y, b.y), z: Math.max(a.z, b.z) },
+   };
+ }
+ 

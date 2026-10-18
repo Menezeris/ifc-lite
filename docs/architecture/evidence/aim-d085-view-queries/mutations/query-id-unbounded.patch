@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/view-protocol.ts a/apps/viewer/src/aim/view-protocol.ts
+index 5b9c62b5..6610538f 100644
+--- b/apps/viewer/src/aim/view-protocol.ts
++++ a/apps/viewer/src/aim/view-protocol.ts
+@@ -68,7 +68,7 @@ function isGuidList(v: unknown, max = MAX_GUIDS): v is string[] {
+ }
+ 
+ const isAxis = (v: unknown) => v === 'x' || v === 'y' || v === 'z';
+-const isId = (v: unknown) => isStr(v);
++const isId = (v: unknown) => isStr(v) && v.length <= 64;
+ 
+ export function isViewMessage(data: unknown): data is ViewInboundMessage {
+   if (!data || typeof data !== 'object') return false;
