@@ -64,7 +64,8 @@ describe('viewCommands (AIM D-083)', () => {
   it('neznáme podlažie sa nevykoná, chýbajúce nechá výber na viewri', () => {
     const storeys = [{ guid: 'A' }, { guid: 'B' }];
     assert.deepEqual(pickStorey(storeys, 'B'), { guid: 'B' });
-    assert.equal(pickStorey(storeys, undefined), undefined);
-    assert.equal(pickStorey(storeys, 'X'), null);
+    // strictEqual: `undefined` (viewer chooses) and `null` (skip) must not blur.
+    assert.strictEqual(pickStorey(storeys, undefined), undefined);
+    assert.strictEqual(pickStorey(storeys, 'X'), null);
   });
 });
