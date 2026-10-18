@@ -1,0 +1,170 @@
+{
+  "global-eye-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/derivations.test.ts; that file has a green, attributable baseline.",
+    "base": "d037edafc83c83852c26b885507d88414933c7be",
+    "head": "bf8f609bd4966fdfab39e414b48ff46e4c6f4e7b",
+    "production": [
+      "apps/viewer/src/aim/derivations.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/derivations.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "layer-version-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/bridge-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "d037edafc83c83852c26b885507d88414933c7be",
+    "head": "bf8f609bd4966fdfab39e414b48ff46e4c6f4e7b",
+    "production": [
+      "apps/viewer/src/aim/bridge-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/bridge-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "manage-url-any-scheme": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/derivations.test.ts; that file has a green, attributable baseline.",
+    "base": "d037edafc83c83852c26b885507d88414933c7be",
+    "head": "bf8f609bd4966fdfab39e414b48ff46e4c6f4e7b",
+    "production": [
+      "apps/viewer/src/aim/derivations.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/derivations.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "relations-not-filtered": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/bridge-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "d037edafc83c83852c26b885507d88414933c7be",
+    "head": "bf8f609bd4966fdfab39e414b48ff46e4c6f4e7b",
+    "production": [
+      "apps/viewer/src/aim/bridge-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/bridge-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "relative-hours-as-minutes": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/derivations.test.ts; that file has a green, attributable baseline.",
+    "base": "d037edafc83c83852c26b885507d88414933c7be",
+    "head": "bf8f609bd4966fdfab39e414b48ff46e4c6f4e7b",
+    "production": [
+      "apps/viewer/src/aim/derivationsFormat.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/derivations.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "revision-substring-match": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/derivations.test.ts; that file has a green, attributable baseline.",
+    "base": "d037edafc83c83852c26b885507d88414933c7be",
+    "head": "bf8f609bd4966fdfab39e414b48ff46e4c6f4e7b",
+    "production": [
+      "apps/viewer/src/aim/derivations.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/derivations.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "rule-count-negative": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/bridge-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "d037edafc83c83852c26b885507d88414933c7be",
+    "head": "bf8f609bd4966fdfab39e414b48ff46e4c6f4e7b",
+    "production": [
+      "apps/viewer/src/aim/bridge-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/bridge-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "rule-eye-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/derivations.test.ts; that file has a green, attributable baseline.",
+    "base": "d037edafc83c83852c26b885507d88414933c7be",
+    "head": "bf8f609bd4966fdfab39e414b48ff46e4c6f4e7b",
+    "production": [
+      "apps/viewer/src/aim/derivations.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/derivations.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "rule-eye-never-reopens": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimDerivationsStore.test.ts; that file has a green, attributable baseline.",
+    "base": "d037edafc83c83852c26b885507d88414933c7be",
+    "head": "bf8f609bd4966fdfab39e414b48ff46e4c6f4e7b",
+    "production": [
+      "apps/viewer/src/aim/aimDerivationsStore.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimDerivationsStore.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "rule-last-run-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/bridge-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "d037edafc83c83852c26b885507d88414933c7be",
+    "head": "bf8f609bd4966fdfab39e414b48ff46e4c6f4e7b",
+    "production": [
+      "apps/viewer/src/aim/bridge-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/bridge-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "stale-hidden-rules-kept": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimDerivationsStore.test.ts; that file has a green, attributable baseline.",
+    "base": "d037edafc83c83852c26b885507d88414933c7be",
+    "head": "bf8f609bd4966fdfab39e414b48ff46e4c6f4e7b",
+    "production": [
+      "apps/viewer/src/aim/aimDerivationsStore.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimDerivationsStore.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "total-below-rows": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/bridge-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "d037edafc83c83852c26b885507d88414933c7be",
+    "head": "bf8f609bd4966fdfab39e414b48ff46e4c6f4e7b",
+    "production": [
+      "apps/viewer/src/aim/bridge-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/bridge-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

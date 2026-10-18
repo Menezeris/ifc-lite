@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/bridge-protocol.ts a/apps/viewer/src/aim/bridge-protocol.ts
+index aecc04db..1dbb42d7 100644
+--- b/apps/viewer/src/aim/bridge-protocol.ts
++++ a/apps/viewer/src/aim/bridge-protocol.ts
+@@ -378,6 +378,7 @@ function isModelRevisionWire(v: unknown): v is ModelRevisionWire {
+ export function isDerivationsLayerWire(v: unknown): v is DerivationsLayerWire {
+   if (!v || typeof v !== 'object') return false;
+   const l = v as { version?: unknown; rules?: unknown; models?: unknown; manageUrl?: unknown };
++  if (l.version !== 1) return false;
+   if (!Array.isArray(l.rules) || !l.rules.every(isDerivationRuleWire)) return false;
+   if (!Array.isArray(l.models) || !l.models.every(isModelRevisionWire)) return false;
+   if (l.manageUrl !== undefined && typeof l.manageUrl !== 'string') return false;

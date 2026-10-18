@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimDerivationsStore.ts a/apps/viewer/src/aim/aimDerivationsStore.ts
+index 41239281..0587cee0 100644
+--- b/apps/viewer/src/aim/aimDerivationsStore.ts
++++ a/apps/viewer/src/aim/aimDerivationsStore.ts
+@@ -49,7 +49,7 @@ export const useAimDerivationsStore = create<AimDerivationsState>((set) => ({
+   toggleRuleVisible: (ruleId) =>
+     set((s) => ({
+       hiddenRuleIds: s.hiddenRuleIds.includes(ruleId)
+-        ? s.hiddenRuleIds
++        ? s.hiddenRuleIds.filter((id) => id !== ruleId)
+         : [...s.hiddenRuleIds, ruleId],
+     })),
+   setLayersOpen: (layersOpen) => set({ layersOpen }),
