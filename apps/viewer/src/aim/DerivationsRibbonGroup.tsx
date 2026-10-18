@@ -24,7 +24,7 @@
 
 import type { ComponentType } from 'react';
 import type { RibbonGroup, RibbonContentLargeButton } from '@/components/viewer/ribbon/primitives';
-import type { DerivationsLayerWire } from './bridge-protocol';
+import type { DerivationsLayerWire } from './derivations-protocol';
 
 const NO_LAYER = 'AIM vrstva nie je k dispozícii (host ju neposlal)';
 

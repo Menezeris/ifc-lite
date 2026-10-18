@@ -16,7 +16,7 @@
 import type { ComponentType } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { DerivationRuleWire, DerivationsLayerWire } from './bridge-protocol';
+import type { DerivationRuleWire, DerivationsLayerWire } from './derivations-protocol';
 import { formatRelativeTime } from './derivationsFormat';
 
 interface RuleRowProps {

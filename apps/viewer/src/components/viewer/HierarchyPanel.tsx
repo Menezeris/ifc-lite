@@ -14,10 +14,8 @@ import { useIfcLoader } from '@/hooks/useIfcLoader';
 import { useIfcFederation } from '@/hooks/useIfcFederation';
 import { useEntityListMultiSelect } from '@/hooks/useEntityListMultiSelect';
 import { Rule, activeGroupRules, type FilterRule } from '@ifc-lite/rules';
-// >>> AIM-FORK: AIM dekorácie stromu (D-077)
-import { useAimDecorationsStore } from '@/aim/aimDecorationsStore';
-import { guidForEntity, type AimTreeDecoration } from '@/aim/bridge-protocol';
-import { AimLayersSection } from '@/aim/AimLayersSection';
+// >>> AIM-FORK: AIM dekorácie stromu (D-077) + sekcia AIM VRSTVY (D-089)
+import { useAimDecorationsStore, guidForEntity, AimLayersSection, type AimTreeDecoration } from '@/aim/hierarchyPanel';
 // <<< AIM-FORK
 import { toast } from '@/components/ui/toast';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -411,9 +409,7 @@ export function HierarchyPanel() {
     return { isSelected, ...visibility, modelVisible };
   }, [selectedEntityId, selectedEntityIds, hiddenEntities, getNodeElements, models]);
 
-  // >>> AIM-FORK: AIM dekorácie stromu (D-077) — riadok → IFC GlobalId → badge counts.
-  // Lookup beží len keď host poslal dekorácie (hasDecorations), inak nula réžie;
-  // guidForEntity je O(1) nad GlobalId indexom modelu.
+  // >>> AIM-FORK: AIM dekorácie stromu (D-077): riadok -> GlobalId (O(1)) -> badge, len ak host poslal dekorácie.
   const aimDecorations = useAimDecorationsStore((s) => s.decorations);
   const aimHasDecorations = useAimDecorationsStore((s) => s.hasDecorations);
   const aimDecorationFor = useCallback((node: TreeNode): AimTreeDecoration | undefined => {
@@ -642,10 +638,7 @@ export function HierarchyPanel() {
           </div>
         </div>}
 
-        {/* >>> AIM-FORK: AIM LAYERS section (D-089) */}
-        <AimLayersSection />
-        {/* <<< AIM-FORK */}
-
+        {/* >>> AIM-FORK: AIM LAYERS (D-089) */}<AimLayersSection />{/* <<< AIM-FORK */}
         {/* Footer status */}
         <HierarchyFooterStatus
           hasActiveFilters={hasActiveFilters} selectedStoreys={selectedStoreys} classFilter={classFilter}
@@ -712,10 +705,7 @@ export function HierarchyPanel() {
         </div>
       </div>)}
 
-      {/* >>> AIM-FORK: AIM LAYERS section (D-089) */}
-      <AimLayersSection />
-      {/* <<< AIM-FORK */}
-
+      {/* >>> AIM-FORK: AIM LAYERS (D-089) */}<AimLayersSection />{/* <<< AIM-FORK */}
       {/* Footer status */}
       <HierarchyFooterStatus
         hasActiveFilters={hasActiveFilters} selectedStoreys={selectedStoreys} classFilter={classFilter}

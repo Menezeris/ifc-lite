@@ -41,6 +41,7 @@ import { useCapturePinsStore } from './capturePinsStore.js';
 import { useAimDecorationsStore } from './aimDecorationsStore.js';
 import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
+import { isDerivationsMessage } from './derivations-protocol.js';
 import { useAimViewCommands } from './useAimViewCommands.js';
 
 export function AimBridge() {
@@ -87,6 +88,12 @@ export function AimBridge() {
       if (parentOriginRef.current && e.origin !== parentOriginRef.current) return;
       if (isViewMessage(e.data)) {
         viewCommands.current(e.data, parentOriginRef.current ?? '*');
+        return;
+      }
+      if (isDerivationsMessage(e.data)) {
+        // AIM layer over the models (D-089): rules + model revisions for the
+        // AIM ribbon tab and the AIM LAYERS tree section.
+        useAimDerivationsStore.getState().setLayer(e.data.layer);
         return;
       }
       if (!isInboundMessage(e.data)) return;
@@ -218,11 +225,6 @@ export function AimBridge() {
         case 'AIM_TREE_DECORATIONS':
           // Per-GUID badge counts (D-077) — HierarchyPanel rows render pills.
           useAimDecorationsStore.getState().setDecorations(e.data.decorations);
-          break;
-        case 'AIM_DERIVATIONS_LOAD':
-          // AIM layer over the models (D-089): rules + model revisions for the
-          // AIM ribbon tab and the AIM LAYERS tree section.
-          useAimDerivationsStore.getState().setLayer(e.data.layer);
           break;
       }
     }

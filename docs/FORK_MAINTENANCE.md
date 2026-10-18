@@ -54,7 +54,7 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/components/viewer/MobileBottomSheet.tsx` | 1 | `z-50` so sheets sit above the full-screen plan/document overlays |
 | `apps/viewer/src/components/viewer/MobileToolbar.tsx` | 2 | `<ViewModeSwitcher />` (D-075) |
 | `apps/viewer/src/components/viewer/PropertiesPanel.tsx` | 7 | AIM \| IFC inspector tabs + `<AimCard />`, native content wrapped, mobile scroll host (D-077) |
-| `apps/viewer/src/components/viewer/HierarchyPanel.tsx` | 4 | AIM tree decorations — row → IFC GlobalId → badge counts (D-077); `<AimLayersSection />` (AIM LAYERS) above the footer in both layouts (D-089) |
+| `apps/viewer/src/components/viewer/HierarchyPanel.tsx` | 4 | AIM tree decorations — row → IFC GlobalId → badge counts (D-077); `<AimLayersSection />` (AIM LAYERS) above the footer in both layouts (D-089), one-line blocks and one import from `aim/hierarchyPanel.ts` because the file sits at its module-size budget |
 | `apps/viewer/src/components/viewer/hierarchy/ModelHeaderRow.tsx` | 2 | `<AimModelRevision />` model revision pill on MODELS rows (D-089) |
 | `apps/viewer/src/components/viewer/properties/RelationshipsCard.tsx` | 3 | `<AimDerivedRelations />` AIM group in Relationship records + its rows in the card count (D-089) |
 | `apps/viewer/src/components/viewer/hierarchy/HierarchyNode.tsx` | 4 | AIM badge icons + per-GUID counts (D-077) |

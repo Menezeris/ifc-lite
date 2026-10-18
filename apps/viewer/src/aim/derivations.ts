@@ -9,7 +9,7 @@
  * the store (aimDerivationsStore.ts) and the components only wire them up.
  */
 
-import type { DerivedRelationWire, ModelRevisionWire } from './bridge-protocol.js';
+import type { DerivedRelationWire, ModelRevisionWire } from './derivations-protocol.js';
 
 /**
  * Model key as the host stores it in `model_revisions`: the file name without

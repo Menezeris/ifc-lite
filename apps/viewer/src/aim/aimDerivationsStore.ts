@@ -15,7 +15,7 @@
 
 import { create } from 'zustand';
 
-import type { DerivationsLayerWire } from './bridge-protocol.js';
+import type { DerivationsLayerWire } from './derivations-protocol.js';
 
 interface AimDerivationsState {
   /** The layer; null = the host sent none (standalone or older host). */

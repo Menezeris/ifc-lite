@@ -5,7 +5,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
-import type { DerivedRelationWire } from './bridge-protocol.js';
+import type { DerivedRelationWire } from './derivations-protocol.js';
 import { modelKey, revisionForModel, safeManageUrl, visibleDerivedRelations } from './derivations.js';
 import { formatRelativeTime } from './derivationsFormat.js';
 

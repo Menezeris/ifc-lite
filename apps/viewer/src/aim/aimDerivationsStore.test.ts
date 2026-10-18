@@ -5,7 +5,7 @@
 import { beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert';
 
-import type { DerivationRuleWire, DerivationsLayerWire } from './bridge-protocol.js';
+import type { DerivationRuleWire, DerivationsLayerWire } from './derivations-protocol.js';
 import { useAimDerivationsStore } from './aimDerivationsStore.js';
 
 const rule = (id: string): DerivationRuleWire => ({

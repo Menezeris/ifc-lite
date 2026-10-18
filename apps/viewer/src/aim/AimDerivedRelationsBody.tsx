@@ -9,7 +9,7 @@
  * file. Everything comes in as props, so this chunk imports no entry module.
  */
 
-import type { DerivedRelationWire } from './bridge-protocol';
+import type { DerivedRelationWire } from './derivations-protocol';
 
 function AimBadge() {
   return (
