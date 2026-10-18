@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/derivations-protocol.ts a/apps/viewer/src/aim/derivations-protocol.ts
+index 4d7d53e2..06da74d4 100644
+--- b/apps/viewer/src/aim/derivations-protocol.ts
++++ a/apps/viewer/src/aim/derivations-protocol.ts
+@@ -166,7 +166,7 @@ export function derivedRelationsOf(data: {
+ }): { relations: DerivedRelationWire[]; total: number } {
+   const raw = data.derivedRelations;
+   const relations = Array.isArray(raw) ? raw.filter(isDerivedRelationWire) : [];
+-  const total = isFiniteNonNegative(data.derivedTotal) ? data.derivedTotal : relations.length;
++  const total = isFiniteNonNegative(data.derivedTotal) ? Math.max(data.derivedTotal, relations.length) : relations.length;
+   return { relations, total };
+ }
+ 

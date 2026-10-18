@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/derivations-protocol.ts a/apps/viewer/src/aim/derivations-protocol.ts
+index 70a9376b..06da74d4 100644
+--- b/apps/viewer/src/aim/derivations-protocol.ts
++++ a/apps/viewer/src/aim/derivations-protocol.ts
+@@ -106,7 +106,7 @@ function isDerivationRuleWire(v: unknown): v is DerivationRuleWire {
+   if (r.mode !== 'auto' && r.mode !== 'manual') return false;
+   if (!isStringArray(r.targetClasses) || !isStringArray(r.roles)) return false;
+   if (!isFiniteNonNegative(r.count)) return false;
+-  if (false) {
++  if (r.lastRun !== null) {
+     const run = r.lastRun as Record<string, unknown> | undefined;
+     if (!run || typeof run !== 'object') return false;
+     if (typeof run.at !== 'string' || typeof run.status !== 'string') return false;

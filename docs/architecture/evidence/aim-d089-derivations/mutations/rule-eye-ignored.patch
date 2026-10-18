@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/derivations.ts a/apps/viewer/src/aim/derivations.ts
+index f90f5d02..65e0b46f 100644
+--- b/apps/viewer/src/aim/derivations.ts
++++ a/apps/viewer/src/aim/derivations.ts
+@@ -47,7 +47,7 @@ export function visibleDerivedRelations(
+   if (!relationsVisible) return [];
+   if (hiddenRuleIds.length === 0) return [...relations];
+   const hidden = new Set(hiddenRuleIds);
+-  return [...relations];
++  return relations.filter((r) => !hidden.has(r.ruleId));
+ }
+ 
+ /**

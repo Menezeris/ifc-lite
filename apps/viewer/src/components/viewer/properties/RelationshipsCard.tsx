@@ -13,6 +13,9 @@ import { useState } from 'react';
 import { useTranslation } from '@/i18n';
 import { formatLocaleNumber } from '@/i18n/intlFormat';
 import { PersistentCollapsible } from './PersistentCollapsible';
+// >>> AIM-FORK: AIM derived relations group (D-089, see src/aim/AimDerivedRelations.tsx)
+import { AimDerivedRelations, useAimDerivedRelationCount } from '@/aim/AimDerivedRelations';
+// <<< AIM-FORK
 
 interface RelationshipsCardProps {
   relationships: EntityRelationshipsData;
@@ -44,7 +47,10 @@ export function RelationshipsCard({ relationships, populationUnavailable = false
   const [exactPage, setExactPage] = useState({ key: exactKey, count: EXACT_RELATION_PAGE_SIZE });
   const visibleExactCount = exactPage.key === exactKey ? exactPage.count : EXACT_RELATION_PAGE_SIZE;
   const visibleExactRelations = exactRelations.slice(0, visibleExactCount);
-  const totalCount = voids.length + fills.length + groups.length + connections.length + exactRelations.length;
+  const totalCount = voids.length + fills.length + groups.length + connections.length + exactRelations.length
+    // >>> AIM-FORK: derived AIM rows count toward the card (and keep it shown)
+    + useAimDerivedRelationCount();
+    // <<< AIM-FORK
 
   if (totalCount === 0 && !populationUnavailable) return null;
 
@@ -136,6 +142,9 @@ export function RelationshipsCard({ relationships, populationUnavailable = false
               )}
             </div>
           )}
+          {/* >>> AIM-FORK: AIM derived relations (D-089) */}
+          <AimDerivedRelations />
+          {/* <<< AIM-FORK */}
         </div>
       </CollapsibleContent>
     </PersistentCollapsible>

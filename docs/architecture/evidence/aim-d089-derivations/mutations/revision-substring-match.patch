@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/derivations.ts a/apps/viewer/src/aim/derivations.ts
+index cf8137e1..65e0b46f 100644
+--- b/apps/viewer/src/aim/derivations.ts
++++ a/apps/viewer/src/aim/derivations.ts
+@@ -29,7 +29,7 @@ export function modelKey(name: string): string {
+ export function revisionForModel(revisions: readonly ModelRevisionWire[], modelName: string): number | null {
+   const key = modelKey(modelName).toLowerCase();
+   if (!key) return null;
+-  const hit = revisions.find((r) => key.includes(r.model.trim().toLowerCase()));
++  const hit = revisions.find((r) => r.model.trim().toLowerCase() === key);
+   return hit ? hit.revision : null;
+ }
+ 

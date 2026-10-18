@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/aimDerivationsStore.ts a/apps/viewer/src/aim/aimDerivationsStore.ts
+index f0a4b60c..f00af20b 100644
+--- b/apps/viewer/src/aim/aimDerivationsStore.ts
++++ a/apps/viewer/src/aim/aimDerivationsStore.ts
+@@ -54,5 +54,5 @@ export const useAimDerivationsStore = create<AimDerivationsState>((set) => ({
+     })),
+   setLayersOpen: (layersOpen) => set({ layersOpen }),
+   // Teardown (bridge unmount): back to the initial state, local toggles included.
+-  clear: () => set({ layer: null, hiddenRuleIds: [] }),
++  clear: () => set({ layer: null, relationsVisible: true, hiddenRuleIds: [], layersOpen: true }),
+ }));

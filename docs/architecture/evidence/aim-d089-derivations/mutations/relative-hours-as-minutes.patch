@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/derivationsFormat.ts a/apps/viewer/src/aim/derivationsFormat.ts
+index 8fbd5a10..7aa36c8c 100644
+--- b/apps/viewer/src/aim/derivationsFormat.ts
++++ a/apps/viewer/src/aim/derivationsFormat.ts
+@@ -14,7 +14,7 @@ export function formatRelativeTime(iso: string, now: number = Date.now()): strin
+   if (!Number.isFinite(at)) return iso;
+   const minutes = Math.floor((now - at) / 60_000);
+   if (minutes < 1) return 'práve teraz';
+-  if (minutes < 600) return `pred ${minutes} min`;
++  if (minutes < 60) return `pred ${minutes} min`;
+   const hours = Math.floor(minutes / 60);
+   if (hours < 24) return `pred ${hours} h`;
+   const days = Math.floor(hours / 24);

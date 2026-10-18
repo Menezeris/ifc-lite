@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/derivations.ts a/apps/viewer/src/aim/derivations.ts
+index eb8e1c9d..65e0b46f 100644
+--- b/apps/viewer/src/aim/derivations.ts
++++ a/apps/viewer/src/aim/derivations.ts
+@@ -59,7 +59,7 @@ export function safeManageUrl(manageUrl: string | undefined): string | null {
+   if (!manageUrl) return null;
+   try {
+     const url = new URL(manageUrl);
+-    return url.href;
++    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null;
+   } catch {
+     return null;
+   }

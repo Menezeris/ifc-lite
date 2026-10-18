@@ -54,7 +54,9 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/components/viewer/MobileBottomSheet.tsx` | 1 | `z-50` so sheets sit above the full-screen plan/document overlays |
 | `apps/viewer/src/components/viewer/MobileToolbar.tsx` | 2 | `<ViewModeSwitcher />` (D-075) |
 | `apps/viewer/src/components/viewer/PropertiesPanel.tsx` | 7 | AIM \| IFC inspector tabs + `<AimCard />`, native content wrapped, mobile scroll host (D-077) |
-| `apps/viewer/src/components/viewer/HierarchyPanel.tsx` | 2 | AIM tree decorations — row → IFC GlobalId → badge counts (D-077) |
+| `apps/viewer/src/components/viewer/HierarchyPanel.tsx` | 4 | AIM tree decorations — row → IFC GlobalId → badge counts (D-077); `<AimLayersSection />` (AIM LAYERS) above the footer in both layouts (D-089), one-line blocks and one import from `aim/hierarchyPanel.ts` because the file sits at its module-size budget |
+| `apps/viewer/src/components/viewer/hierarchy/ModelHeaderRow.tsx` | 2 | `<AimModelRevision />` model revision pill on MODELS rows (D-089) |
+| `apps/viewer/src/components/viewer/properties/RelationshipsCard.tsx` | 3 | `<AimDerivedRelations />` AIM group in Relationship records + its rows in the card count (D-089) |
 | `apps/viewer/src/components/viewer/hierarchy/HierarchyNode.tsx` | 4 | AIM badge icons + per-GUID counts (D-077) |
 | `apps/viewer/src/components/viewer/Viewport.tsx` | 2 | `useDrawingUnderlay` (D-072) |
 | `apps/viewer/src/components/viewer/ViewportContainer.tsx` | 4 | Reality Capture pin layer (D-073), calibration / split-view overlays (D-072) |
@@ -62,7 +64,7 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/components/viewer/selectionHandlers.ts` | 2 | underlay calibration model-point pick (`aim/underlayPick.ts`, D-072) |
 | `apps/viewer/src/components/viewer/useMouseControls.ts` | 2 | drawing view: drag pans; Ctrl/Cmd+wheel moves the cut while it is active (D-072) |
 | `apps/viewer/src/hooks/useFloorplanView.ts` | 2 | `StoreyInfo` alias + projection/camera selectors for the drawing / split / 2D views (D-072, D-075) |
-| `apps/viewer/src/components/viewer/ribbon/RibbonToolbar.tsx` | 3 | fork-only **Documents** ribbon tab — strip entry + band mount (D-072/D-075) |
+| `apps/viewer/src/components/viewer/ribbon/RibbonToolbar.tsx` | 3 | fork-only **AIM** ribbon tab (id `documents`) — strip entry + band mount (D-072/D-075, Derivations group D-089) |
 | `apps/viewer/src/store/constants.ts` | 1 | `'documents'` added to `RibbonTabId` |
 | `apps/viewer/src/store/index.ts` | 1 | fork-only store slices (underlays D-072, documents D-075, identifier links D-076) |
 | `apps/viewer/src/store/teardown-registry.ts` | 2 | the fork slices' session-reset teardowns (`slices/*Slice.teardown.ts`) |
@@ -70,7 +72,7 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/store/createViewerActions.ts` | 2 | fork panel flags in `openWorkspacePanel` / properties reveal |
 | `apps/viewer/src/lib/panels/registry.ts` | 3 | fork-only workspace panels `drawing-underlay` + `documents`, appended last |
 | `apps/viewer/src/lib/panels/renderPanelBody.tsx` | 2 | bodies of the two fork panels |
-| `apps/viewer/src/i18n/en.ts` | 2 | fork catalogue `catalogues/aim-fork.en.ts` (panel titles, `ribbon.tab.documents`) |
+| `apps/viewer/src/i18n/en.ts` | 2 | fork catalogue `catalogues/aim-fork.en.ts` (panel titles, `ribbon.tab.documents` = "AIM") |
 | `packages/renderer/src/index.ts` | 5 | generic external-overlay hook + registry — **upstream-PR candidate** |
 | `packages/collab-server/src/bin.ts` | 3 | fail-closed startup guard (replaces upstream's warn-only block) |
 
@@ -309,7 +311,7 @@ fork's current counts as baseline rows instead of rewriting that UI in the same 
 | `check-jsx-a11y` | `scripts/jsx-a11y-baseline.json` | role-based `group` / `radio` widgets and the clickable identifier-link box in the underlay / identifier-link / view-mode UI |
 | `check-type-scale` | `scripts/type-scale-baseline.json` | `text-[Npx]` in the AIM card, documents, underlay and identifier-link panels (upstream itself is at zero) |
 | perf ratchet `bundle` | `tests/perf-ratchets/bundle.json` (`viewer-entry-js-bytes`, `viewer-eager-js-bytes`) | raised in the 2026-10 sync by the fork's boot-path code (~32 kB entry, ~70 kB eager): the AIM bridge and slices, and the AIM-FORK wiring in PropertiesPanel / Viewport / HierarchyPanel / ViewportContainer. Panels, panes and overlays are `lazy()` (−100 kB); the daily lowering job only lowers it again. Entry raised again 2026-10-18 by +3,333 B for AIM D-085 (view queries, section through an element): the feature itself loads lazily, the entry keeps the message checks and the loader (+968 B over `main`, which was already 2,365 B above the old ceiling) |
-| ribbon command guard (`command-labels.guard.test.tsx`) | `rawByTab` (`AIM-FORK` row) | `documents: 3` — the 3D / 2D / Split buttons of the fork's Documents tab, which have no surface-command id yet |
+| ribbon command guard (`command-labels.guard.test.tsx`) | `rawByTab` (`AIM-FORK` row) | `documents: 3` — the 3D / 2D / Split buttons of the fork's AIM tab (id `documents`), which have no surface-command id yet; the Derivations buttons (D-089) carry `data-ribbon-extension` and do not count |
 
 They ratchet **down**: moving a panel's copy into `catalogues/aim-fork.en.ts`, switching to
 `IconButton`, or splitting a file lowers its row (`--update`). Never raise a row for new fork

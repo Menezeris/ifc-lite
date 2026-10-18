@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/derivations-protocol.ts a/apps/viewer/src/aim/derivations-protocol.ts
+index 6bdeee99..06da74d4 100644
+--- b/apps/viewer/src/aim/derivations-protocol.ts
++++ a/apps/viewer/src/aim/derivations-protocol.ts
+@@ -130,6 +130,7 @@ function isModelRevisionWire(v: unknown): v is ModelRevisionWire {
+ export function isDerivationsLayerWire(v: unknown): v is DerivationsLayerWire {
+   if (!v || typeof v !== 'object') return false;
+   const l = v as { version?: unknown; rules?: unknown; models?: unknown; manageUrl?: unknown };
++  if (l.version !== 1) return false;
+   if (!Array.isArray(l.rules) || !l.rules.every(isDerivationRuleWire)) return false;
+   if (!Array.isArray(l.models) || !l.models.every(isModelRevisionWire)) return false;
+   if (l.manageUrl !== undefined && typeof l.manageUrl !== 'string') return false;

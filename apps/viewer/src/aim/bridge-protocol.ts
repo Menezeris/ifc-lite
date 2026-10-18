@@ -12,6 +12,7 @@
  */
 
 import type { EntityRef } from '../store/index.js';
+import type { DerivedRelationWire } from './derivations-protocol.js';
 
 export const SOURCE = 'aim-bridge' as const;
 
@@ -48,6 +49,9 @@ export interface AimPanelData {
   captures?: { count: number; href: string };
   /** GUID history entries (bitemporal validity; `active` = current GUID). */
   history?: { guid: string; validFrom: string; validUntil?: string; active: boolean }[];
+  /** D-089: derived relations of the element (Relationship records); see derivations-protocol.ts. */
+  derivedRelations?: DerivedRelationWire[];
+  derivedTotal?: number;
 }
 
 /**
@@ -257,11 +261,6 @@ function isDocumentDescriptorWire(v: unknown): v is DocumentDescriptorWire {
 }
 
 /**
- * One capture pin must carry a non-empty id, a known kind and finite world
- * coordinates; name/thumbUrl are optional. Malformed entries are dropped so a
- * bad host payload can't crash the billboard projection loop.
- */
-/**
  * One decoration value must be an object whose present count fields are
  * finite non-negative numbers. Malformed entries reject the whole message —
  * decorations are an all-or-nothing host push, partial junk helps nobody.
@@ -275,6 +274,7 @@ function isAimTreeDecoration(v: unknown): v is AimTreeDecoration {
   return true;
 }
 
+/** A capture pin needs an id, a known kind and finite world coordinates (name/thumbUrl optional). */
 function isCapturePinWire(v: unknown): v is CapturePinWire {
   if (!v || typeof v !== 'object') return false;
   const c = v as { id?: unknown; kind?: unknown; world?: unknown };
