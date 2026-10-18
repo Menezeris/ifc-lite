@@ -36,6 +36,11 @@ concurrency:
 jobs:
   canary:
     name: Review lane canary
+    # >>> AIM-FORK: upstream-only. An ops monitor for upstream's review lane that
+    # files an issue when the lane is down; the fork has issues disabled, and its
+    # PR reviews are still gated per PR by `Review posted`.
+    if: github.repository == 'LTplus-AG/ifc-lite'
+    # <<< AIM-FORK
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
