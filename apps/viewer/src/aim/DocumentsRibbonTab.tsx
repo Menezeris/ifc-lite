@@ -24,8 +24,9 @@
  * itself is bracketed with `AIM-FORK` sentinels — see docs/FORK_MAINTENANCE.md.
  */
 
+import { lazy, Suspense } from 'react';
 import { Columns2, Files, Map as MapIcon } from 'lucide-react';
-import { IsometricView, TopView } from '@/icons';
+import { DisplayAll, HideSelected, IsometricView, List, Refresh, TopView } from '@/icons';
 import { useViewerStore } from '@/store';
 import { useViewMode } from '@/hooks/useViewMode';
 import { viewModeDisabledReason } from '@/hooks/viewModeCore';
@@ -37,7 +38,20 @@ import {
 } from '@/components/viewer/ribbon/primitives';
 import { RibbonCommandLargeButton } from '@/components/viewer/ribbon/command-button';
 import type { SurfaceCommandContext } from '@/components/viewer/surface-commands';
-import { DerivationsRibbonGroup } from './DerivationsRibbonGroup';
+import { useAimDerivationsStore } from './aimDerivationsStore';
+import { safeManageUrl } from './derivations';
+import type { DerivationsRibbonUi } from './DerivationsRibbonGroup';
+
+// Lazy: the Derivations group (D-089) loads when the AIM tab is first opened.
+// It gets the entry-chunk primitives and icons from here, not by import.
+const DerivationsRibbonGroup = lazy(() =>
+  import('./DerivationsRibbonGroup').then((m) => ({ default: m.DerivationsRibbonGroup })),
+);
+const DERIVATIONS_UI: DerivationsRibbonUi = {
+  Group: RibbonGroup,
+  Button: RibbonContentLargeButton,
+  icons: { shown: DisplayAll, hidden: HideSelected, rules: List, recompute: Refresh },
+};
 
 /** Ribbon icons for the view modes, keyed by the shared `VIEW_MODES` ids. */
 const MODE_ICONS = {
@@ -55,6 +69,15 @@ export function DocumentsRibbonTab() {
   const calibrating = useViewerStore((s) => s.underlayCalibration !== null);
 
   const { mode, setMode, storeys } = useViewMode();
+  const derivationsLayer = useAimDerivationsStore((s) => s.layer);
+  const relationsVisible = useAimDerivationsStore((s) => s.relationsVisible);
+  const layersOpen = useAimDerivationsStore((s) => s.layersOpen);
+  const toggleLayers = () => {
+    const open = !useAimDerivationsStore.getState().layersOpen;
+    useAimDerivationsStore.getState().setLayersOpen(open);
+    // The AIM LAYERS section lives in the tree panel; opening it shows the panel.
+    if (open && useViewerStore.getState().leftPanelCollapsed) useViewerStore.getState().setLeftPanelCollapsed(false);
+  };
   const disabledReason = viewModeDisabledReason({ calibrating, storeyCount: storeys.length });
   // The library buttons run the same registered `panel:*` commands as the
   // command palette (surface-commands-panels.ts), so ribbon and palette share
@@ -107,7 +130,17 @@ export function DocumentsRibbonTab() {
 
       <RibbonGroupDivider />
 
-      <DerivationsRibbonGroup />
+      <Suspense fallback={null}>
+        <DerivationsRibbonGroup
+          ui={DERIVATIONS_UI}
+          layer={derivationsLayer}
+          manageUrl={safeManageUrl(derivationsLayer?.manageUrl)}
+          relationsVisible={relationsVisible}
+          layersOpen={layersOpen}
+          onToggleRelations={() => useAimDerivationsStore.getState().toggleRelationsVisible()}
+          onToggleLayers={toggleLayers}
+        />
+      </Suspense>
     </>
   );
 }

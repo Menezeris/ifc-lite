@@ -12,10 +12,11 @@
  *
  * Mounted by AIM-FORK lines in RelationshipsCard (`useAimDerivedRelationCount`
  * folds the rows into the card count so the card also shows when the file
- * itself has no relationships). Nothing renders without AIM panel data.
+ * itself has no relationships). Nothing renders without AIM panel data; the
+ * rows themselves load lazily (AimDerivedRelationsBody.tsx).
  */
 
-import { useMemo } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { useViewerStore } from '@/store';
 import { toGlobalIdFromModels } from '@/store/globalId';
 import { selectPickedGlobalId } from '@/components/viewer/viewport-selection';
@@ -23,6 +24,10 @@ import { resolveGuids, derivedRelationsOf, type DerivedRelationWire } from './br
 import { useAimPanelStore } from './aimPanelStore';
 import { useAimDerivationsStore } from './aimDerivationsStore';
 import { visibleDerivedRelations } from './derivations';
+
+const AimDerivedRelationsBody = lazy(() =>
+  import('./AimDerivedRelationsBody').then((m) => ({ default: m.AimDerivedRelationsBody })),
+);
 
 const EMPTY = { relations: [] as DerivedRelationWire[], total: 0 };
 
@@ -47,90 +52,30 @@ export function useAimDerivedRelationCount(): number {
 }
 
 /** Select the other end like a viewport click (the same path AimBridge SELECT takes). */
-function selectByGuid(guid: string): boolean {
+function selectByGuid(guid: string): void {
   const state = useViewerStore.getState();
   const [ref] = resolveGuids(state.models, [guid]);
-  if (!ref) return false;
+  if (!ref) return;
   selectPickedGlobalId(toGlobalIdFromModels(state.models, ref.modelId, ref.expressId));
   const frame = useViewerStore.getState().cameraCallbacks.frameSelection;
   if (frame) window.setTimeout(() => frame(), 50);
-  return true;
-}
-
-function AimBadge() {
-  return (
-    <span className="font-mono text-2xs font-bold leading-none px-1 py-0.5 border border-primary/50 text-primary bg-primary/10 shrink-0">
-      AIM
-    </span>
-  );
-}
-
-function DerivedRelationItem({ relation }: { relation: DerivedRelationWire }) {
-  const models = useViewerStore((s) => s.models);
-  const { other } = relation;
-  const label = other.ref ?? other.name ?? other.objectId;
-  const selectable = other.guid !== null && resolveGuids(models, [other.guid]).length > 0;
-  const relationLabel = relation.ifcRelation ?? `cez priestor ${relation.viaSpaceRef ?? '?'}`;
-  const arrow = relation.direction === 'outgoing' ? '→' : '←';
-  const title = [
-    `${relation.ifcRelation ?? 'IfcZone cez priestor'} (${relation.direction === 'outgoing' ? 'prvok je v cieli' : 'prvok je cieľ'})`,
-    relation.role ? `rola: ${relation.role}` : null,
-    `${label}${other.name && other.name !== label ? `, ${other.name}` : ''}${other.ifcType ? ` (${other.ifcType})` : ''}`,
-    relation.viaSpaceRef ? `cez priestor ${relation.viaSpaceRef}` : null,
-    `zdroj: ${relation.ruleName}`,
-  ].filter(Boolean).join('\n');
-
-  const body = (
-    <>
-      <span className="flex items-center gap-2 min-w-0">
-        <span className="font-mono text-zinc-500 text-2xs shrink-0">{arrow}</span>
-        <AimBadge />
-        <span className={selectable ? 'truncate' : 'truncate text-zinc-600 dark:text-zinc-400'}>
-          {label}
-          {other.name && other.name !== label && <span className="text-zinc-500"> {other.name}</span>}
-        </span>
-        {other.ifcType && <span className="text-2xs text-zinc-400 ml-auto shrink-0">{other.ifcType}</span>}
-      </span>
-      <span className="block pl-5 text-2xs text-zinc-500 truncate">
-        {[relationLabel, relation.role, relation.ruleName].filter(Boolean).join(' | ')}
-      </span>
-    </>
-  );
-
-  if (!selectable || other.guid === null) {
-    return <div className="text-xs py-0.5 w-full" title={title} data-aim-derived>{body}</div>;
-  }
-  const guid = other.guid;
-  return (
-    <button
-      type="button"
-      className="block text-xs py-0.5 w-full text-left text-zinc-700 dark:text-zinc-300 hover:text-primary transition-colors"
-      title={title}
-      onClick={() => selectByGuid(guid)}
-      data-aim-derived
-    >
-      {body}
-    </button>
-  );
 }
 
 /** The AIM group inside Relationship records; null when there is nothing to show. */
 export function AimDerivedRelations() {
   const { relations, more } = useAimDerivedRelations();
+  const models = useViewerStore((s) => s.models);
+  const selectableGuids = useMemo(() => {
+    const guids = new Set<string>();
+    for (const r of relations) {
+      if (r.other.guid !== null && resolveGuids(models, [r.other.guid]).length > 0) guids.add(r.other.guid);
+    }
+    return guids;
+  }, [relations, models]);
   if (relations.length === 0 && more <= 0) return null;
   return (
-    <div className="px-3 py-2" data-aim-derived-relations>
-      <div className="flex items-center gap-1.5 text-2xs font-bold text-zinc-500 uppercase tracking-wider mb-1">
-        <AimBadge />
-        <span>Odvodené záznamy ({relations.length + more})</span>
-      </div>
-      {relations.map((relation, i) => (
-        <DerivedRelationItem
-          key={`${relation.ruleId}:${relation.direction}:${relation.other.objectId}:${i}`}
-          relation={relation}
-        />
-      ))}
-      {more > 0 && <p className="text-2xs text-zinc-500 pt-0.5">a ďalších {more}</p>}
-    </div>
+    <Suspense fallback={null}>
+      <AimDerivedRelationsBody relations={relations} more={more} selectableGuids={selectableGuids} onSelectGuid={selectByGuid} />
+    </Suspense>
   );
 }

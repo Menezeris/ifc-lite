@@ -50,20 +50,6 @@ export function visibleDerivedRelations(
   return relations.filter((r) => !hidden.has(r.ruleId));
 }
 
-/** Short Slovak relative time ("pred 5 min"); an unparsable timestamp is shown as sent. */
-export function formatRelativeTime(iso: string, now: number = Date.now()): string {
-  const at = Date.parse(iso);
-  if (!Number.isFinite(at)) return iso;
-  const minutes = Math.floor((now - at) / 60_000);
-  if (minutes < 1) return 'práve teraz';
-  if (minutes < 60) return `pred ${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `pred ${hours} h`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `pred ${days} d`;
-  return new Date(at).toLocaleDateString('sk-SK');
-}
-
 /**
  * `layer.manageUrl` when it is an absolute http(s) URL, else null. The link is
  * opened in a new tab, so a `javascript:` or relative value from a broken

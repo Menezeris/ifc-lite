@@ -6,13 +6,8 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
 import type { DerivedRelationWire } from './bridge-protocol.js';
-import {
-  formatRelativeTime,
-  modelKey,
-  revisionForModel,
-  safeManageUrl,
-  visibleDerivedRelations,
-} from './derivations.js';
+import { modelKey, revisionForModel, safeManageUrl, visibleDerivedRelations } from './derivations.js';
+import { formatRelativeTime } from './derivationsFormat.js';
 
 describe('modelKey / revisionForModel', () => {
   const revisions = [{ model: 'ASR', revision: 72 }, { model: 'VZT', revision: 15 }];

@@ -17,36 +17,41 @@
  *
  * The buttons are tagged `data-ribbon-extension` so the ribbon command-label
  * guard counts them as fork contributions, not as unregistered raw controls.
+ * Loaded lazily by DocumentsRibbonTab, which passes in the store state, the
+ * ribbon primitives and the icons: importing them here would pull those entry
+ * modules out into shared eager chunks (docs/FORK_MAINTENANCE.md).
  */
 
-import { DisplayAll, HideSelected, List, Refresh } from '@/icons';
-import { useViewerStore } from '@/store';
-import { RibbonGroup, RibbonContentLargeButton } from '@/components/viewer/ribbon/primitives';
-import { useAimDerivationsStore } from './aimDerivationsStore';
-import { safeManageUrl } from './derivations';
+import type { ComponentType } from 'react';
+import type { RibbonGroup, RibbonContentLargeButton } from '@/components/viewer/ribbon/primitives';
+import type { DerivationsLayerWire } from './bridge-protocol';
 
 const NO_LAYER = 'AIM vrstva nie je k dispozícii (host ju neposlal)';
 
-export function DerivationsRibbonGroup() {
-  const layer = useAimDerivationsStore((s) => s.layer);
-  const relationsVisible = useAimDerivationsStore((s) => s.relationsVisible);
-  const layersOpen = useAimDerivationsStore((s) => s.layersOpen);
-  const manageUrl = safeManageUrl(layer?.manageUrl);
+/** Entry-chunk UI the caller hands in (see the header comment). */
+export interface DerivationsRibbonUi {
+  Group: typeof RibbonGroup;
+  Button: typeof RibbonContentLargeButton;
+  icons: { shown: ComponentType; hidden: ComponentType; rules: ComponentType; recompute: ComponentType };
+}
 
-  const toggleLayers = () => {
-    const { setLayersOpen } = useAimDerivationsStore.getState();
-    const open = !layersOpen;
-    setLayersOpen(open);
-    // The section lives in the tree panel; opening it must also show the panel.
-    if (open && useViewerStore.getState().leftPanelCollapsed) {
-      useViewerStore.getState().setLeftPanelCollapsed(false);
-    }
-  };
+export interface DerivationsRibbonGroupProps {
+  ui: DerivationsRibbonUi;
+  layer: DerivationsLayerWire | null;
+  /** `layer.manageUrl` when safe to open (http/https), else null. */
+  manageUrl: string | null;
+  relationsVisible: boolean;
+  layersOpen: boolean;
+  onToggleRelations: () => void;
+  onToggleLayers: () => void;
+}
 
+export function DerivationsRibbonGroup({ ui, layer, manageUrl, relationsVisible, layersOpen, onToggleRelations, onToggleLayers }: DerivationsRibbonGroupProps) {
+  const { Group, Button, icons } = ui;
   return (
-    <RibbonGroup label="Derivations">
-      <RibbonContentLargeButton
-        icon={relationsVisible ? DisplayAll : HideSelected}
+    <Group label="Derivations">
+      <Button
+        icon={relationsVisible ? icons.shown : icons.hidden}
         contentLabel="AIM vzťahy"
         contentSource="extension"
         contentId="aim-derivations:relations"
@@ -54,10 +59,10 @@ export function DerivationsRibbonGroup() {
         tooltip={layer ? 'Zobraziť/skryť odvodené AIM vzťahy v paneli vlastností (len lokálne)' : NO_LAYER}
         active={layer ? relationsVisible : undefined}
         disabled={!layer}
-        onClick={() => useAimDerivationsStore.getState().toggleRelationsVisible()}
+        onClick={onToggleRelations}
       />
-      <RibbonContentLargeButton
-        icon={List}
+      <Button
+        icon={icons.rules}
         contentLabel="Pravidlá"
         contentSource="extension"
         contentId="aim-derivations:rules"
@@ -65,10 +70,10 @@ export function DerivationsRibbonGroup() {
         tooltip={layer ? 'Pravidlá odvodení: sekcia AIM VRSTVY v ľavom paneli' : NO_LAYER}
         active={layer ? layersOpen : undefined}
         disabled={!layer}
-        onClick={toggleLayers}
+        onClick={onToggleLayers}
       />
-      <RibbonContentLargeButton
-        icon={Refresh}
+      <Button
+        icon={icons.recompute}
         contentLabel="Prepočítať"
         contentSource="extension"
         contentId="aim-derivations:recompute"
@@ -85,6 +90,6 @@ export function DerivationsRibbonGroup() {
           if (manageUrl) window.open(manageUrl, '_blank', 'noopener,noreferrer');
         }}
       />
-    </RibbonGroup>
+    </Group>
   );
 }
