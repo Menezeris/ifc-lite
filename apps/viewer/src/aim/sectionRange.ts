@@ -10,17 +10,19 @@
  * veľké, takže rez prepočítaný voči holej obálke padol inam (sklon 0,486,
  * #63) a spätné čítanie hlásilo inú výšku, než ukazoval Section bar.
  * Rovnaký postup ako `useSectionDistance` (Section bar), bez Reactu.
+ * `placementCoordinateInfo` dodá volajúci (`useAimViewCommands.ts`): jeho
+ * import ťahá zbuildované balíky, ktoré rýchle AIM testy nemajú.
  */
 
 import type { CoordinateInfo } from '@ifc-lite/geometry';
 import type { useViewerStore } from '@/store';
 import { mergedSectionBounds, type AxisBounds } from '@/lib/section/section-distance';
-import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
+import type { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
 
 type State = Pick<ReturnType<typeof useViewerStore.getState>, 'models' | 'geometryResult' | 'modelPlacement'>;
 
 /** Obálka rezu v render rámci, tá istá ako pri Section bare a rendereri; null kým nie je nič načítané. */
-export function sectionRenderBounds(state: State): AxisBounds | null {
+export function sectionRenderBounds(state: State, place: typeof placementCoordinateInfo): AxisBounds | null {
   const merged = mergedSectionBounds(state.models, state.geometryResult);
   if (!merged) return null;
   let base: CoordinateInfo | undefined;
@@ -29,5 +31,5 @@ export function sectionRenderBounds(state: State): AxisBounds | null {
   }
   base ??= state.geometryResult?.coordinateInfo;
   if (!base) return merged;
-  return placementCoordinateInfo({ ...base, shiftedBounds: merged }, state.models, state.modelPlacement)?.shiftedBounds ?? merged;
+  return place({ ...base, shiftedBounds: merged }, state.models, state.modelPlacement)?.shiftedBounds ?? merged;
 }

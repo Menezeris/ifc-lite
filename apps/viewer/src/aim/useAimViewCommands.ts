@@ -21,11 +21,14 @@ import type { BimContext } from '@ifc-lite/sdk';
 import { guidForEntity, resolveGuids, resolveSelector } from './bridge-protocol.js';
 import type { ViewInboundMessage } from './view-protocol.js';
 import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCommands.js';
-import { sectionRenderBounds } from './sectionRange.js';
+import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
+import { sectionRenderBounds as sectionBoundsWith } from './sectionRange.js';
 
 /** D-085 (obálky, stav, rez cez prvok) sa načíta až pri prvom použití - mimo vstupného balíka. */
 let queries: Promise<typeof import('./viewQueries.js')> | null = null;
 const loadQueries = () => (queries ??= import('./viewQueries.js'));
+/** Obálka, voči ktorej renderer reže (#63). */
+const sectionRenderBounds = (state: Parameters<typeof sectionBoundsWith>[0]) => sectionBoundsWith(state, placementCoordinateInfo);
 const GUIDS = { resolveGuids, guidForEntity, sectionRenderBounds };
 let camera: Promise<typeof import('./viewCamera.js')> | null = null;
 const loadCamera = () => (camera ??= import('./viewCamera.js'));

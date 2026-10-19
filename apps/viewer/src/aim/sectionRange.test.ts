@@ -7,10 +7,19 @@ import assert from 'node:assert';
 
 import type { FederatedModel } from '@/store';
 import { fixtureModel } from '@/test/store-fixture';
-import { beginPlacement, commitPlacement, emptyPlacementState, previewPlacement } from '@/lib/model-placement/state';
+import { emptyPlacementState } from '@/lib/model-placement/state';
 import { mergedSectionBounds, percentToWorld, sectionAxisRange } from '@/lib/section/section-distance';
 import { storeyCutPercent } from './viewCommands.js';
 import { sectionRenderBounds } from './sectionRange.js';
+
+type Place = Parameters<typeof sectionRenderBounds>[1];
+/** Bez umiestnenia: obálka ostáva zjednotenie modelov. */
+const unplaced: Place = (source) => source;
+/** Ako `placementCoordinateInfo` so živou scénou, kde je VZT posunutý o +15 m hore (render Y). */
+const vztRaised: Place = (source) => source && {
+  ...source,
+  shiftedBounds: { min: source.shiftedBounds.min, max: { ...source.shiftedBounds.max, y: 8.24 + 15 } },
+};
 
 /** Dva modely federácie s obálkami ako v živom teste (FZK-Haus + AB22), render rámec Y hore. */
 function federation(): Map<string, FederatedModel> {
@@ -33,15 +42,13 @@ describe('obálka rezu = obálka renderera (AIM #63)', () => {
   it('bez posunu modelov je to zjednotenie obálok modelov', () => {
     const models = federation();
     const state = { models, geometryResult: null, modelPlacement: emptyPlacementState() };
-    assert.deepEqual(sectionRenderBounds(state), mergedSectionBounds(models, null));
+    assert.deepEqual(sectionRenderBounds(state, unplaced), mergedSectionBounds(models, null));
   });
 
   it('posunutý model mení obálku, rez nad podlažím padne presne na eleváciu + offset', () => {
     const models = federation();
-    let placement = beginPlacement(emptyPlacementState(), ['vzt'], new Set(models.keys()));
-    placement = commitPlacement(previewPlacement(placement, [0, 0, 15]));
-    const state = { models, geometryResult: null, modelPlacement: placement };
-    const bounds = sectionRenderBounds(state);
+    const state = { models, geometryResult: null, modelPlacement: emptyPlacementState() };
+    const bounds = sectionRenderBounds(state, vztRaised);
     assert.ok(bounds);
     // Renderer reže voči posunutej obálke (VZT +15 m hore), nie voči holému zjednoteniu.
     assert.ok(Math.abs(bounds.max.y - 23.24) < 1e-9, String(bounds.max.y));
@@ -59,6 +66,6 @@ describe('obálka rezu = obálka renderera (AIM #63)', () => {
   });
 
   it('nič načítané = null', () => {
-    assert.equal(sectionRenderBounds({ models: new Map(), geometryResult: null, modelPlacement: emptyPlacementState() }), null);
+    assert.equal(sectionRenderBounds({ models: new Map(), geometryResult: null, modelPlacement: emptyPlacementState() }, vztRaised), null);
   });
 });

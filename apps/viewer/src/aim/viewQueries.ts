@@ -18,7 +18,7 @@ import { activeSectionPlane } from '@/store/section-active';
 import { getGlobalRenderer } from '@/hooks/useBCF';
 import { bcfWorldOffset } from '@/hooks/bcf/viewpoint-world-frame';
 import { percentToWorld, sectionAxisRange } from '@/lib/section/section-distance';
-import type { sectionRenderBounds } from './sectionRange.js';
+import type { AxisBounds } from '@/lib/section/section-distance';
 import { expandToGeometryBearingIds } from '@/utils/aggregation';
 import { deriveViewMode } from '@/hooks/viewModeCore';
 import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
@@ -39,7 +39,7 @@ type State = ReturnType<typeof useViewerStore.getState>;
 export interface GuidHelpers {
   resolveGuids: typeof resolveGuids;
   guidForEntity: typeof guidForEntity;
-  sectionRenderBounds: typeof sectionRenderBounds;
+  sectionRenderBounds: (state: State) => AxisBounds | null;
 }
 
 /** Výsledok zaokrúhlený na milimetre - Claude ho číta, nie renderer. */
