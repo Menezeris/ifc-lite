@@ -1,0 +1,15 @@
+diff --git b/apps/viewer/src/aim/selectionSummary.ts a/apps/viewer/src/aim/selectionSummary.ts
+index c969a1d38..58a9c3977 100644
+--- b/apps/viewer/src/aim/selectionSummary.ts
++++ a/apps/viewer/src/aim/selectionSummary.ts
+@@ -123,8 +123,8 @@ export function summarizeSelection(infos: readonly SelectedEntityInfo[]): Viewer
+     truncated: guids.length < infos.length,
+     summary: {
+       of: infos.length,
+-      by_ifc_type: group(infos.slice(0, MAX_SELECTION_GUIDS).map((i) => i.ifc_type)),
+-      by_storey: group(infos.slice(0, MAX_SELECTION_GUIDS).map((i) => i.storey)),
++      by_ifc_type: group(infos.map((i) => i.ifc_type)),
++      by_storey: group(infos.map((i) => i.storey)),
+       by_parent: groupParents(infos),
+       ...(multiModel ? { by_model: group(infos.map((i) => i.model)) } : {}),
+     },

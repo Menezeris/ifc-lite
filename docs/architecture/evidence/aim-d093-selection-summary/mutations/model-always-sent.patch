@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/selectionSummary.ts a/apps/viewer/src/aim/selectionSummary.ts
+index 3fb62cfb7..58a9c3977 100644
+--- b/apps/viewer/src/aim/selectionSummary.ts
++++ a/apps/viewer/src/aim/selectionSummary.ts
+@@ -114,7 +114,7 @@ function toItem(info: SelectedEntityInfo & { guid: string }, withModel: boolean)
+ export function summarizeSelection(infos: readonly SelectedEntityInfo[]): ViewerSelectionReply {
+   const withGuid = infos.filter((i): i is SelectedEntityInfo & { guid: string } => !!i.guid);
+   const models = new Set(infos.map((i) => i.model ?? ''));
+-  const multiModel = models.size > 0;
++  const multiModel = models.size > 1;
+   const guids = withGuid.slice(0, MAX_SELECTION_GUIDS).map((i) => i.guid);
+   return {
+     count: infos.length,

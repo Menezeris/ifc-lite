@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/selectionSummary.ts a/apps/viewer/src/aim/selectionSummary.ts
+index 3f1a4b4c0..58a9c3977 100644
+--- b/apps/viewer/src/aim/selectionSummary.ts
++++ a/apps/viewer/src/aim/selectionSummary.ts
+@@ -88,7 +88,7 @@ function parentKey(p: SelectedEntityInfo['parent']): string {
+ function groupParents(infos: readonly SelectedEntityInfo[]): ParentGroup[] {
+   const groups = new Map<string, ParentGroup>();
+   for (const { parent } of infos) {
+-    const key = parentKey(parent);
++    const key = parent?.guid ? `#${parent.guid}` : parentKey(parent);
+     const g = groups.get(key);
+     if (g) g.count++;
+     else groups.set(key, { key: parentKey(parent), count: 1, guid: parent?.guid ?? null, ifc_type: parent?.ifc_type ?? null, name: parent?.name ?? null });

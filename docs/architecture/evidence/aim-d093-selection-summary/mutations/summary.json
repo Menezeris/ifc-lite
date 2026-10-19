@@ -1,0 +1,86 @@
+{
+  "groups-uncapped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/selection-summary.test.ts; that file has a green, attributable baseline.",
+    "base": "420c013e9049b1ce989db7927497d9fc3188dec8",
+    "head": "944abb1146f5052a9da067a827c3dcd1460a9f0f",
+    "production": [
+      "apps/viewer/src/aim/selectionSummary.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/selection-summary.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "guids-uncapped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/selection-summary.test.ts; that file has a green, attributable baseline.",
+    "base": "420c013e9049b1ce989db7927497d9fc3188dec8",
+    "head": "944abb1146f5052a9da067a827c3dcd1460a9f0f",
+    "production": [
+      "apps/viewer/src/aim/selectionSummary.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/selection-summary.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "model-always-sent": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/selection-summary.test.ts; that file has a green, attributable baseline.",
+    "base": "420c013e9049b1ce989db7927497d9fc3188dec8",
+    "head": "944abb1146f5052a9da067a827c3dcd1460a9f0f",
+    "production": [
+      "apps/viewer/src/aim/selectionSummary.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/selection-summary.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "parent-grouped-by-label": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/selection-summary.test.ts; that file has a green, attributable baseline.",
+    "base": "420c013e9049b1ce989db7927497d9fc3188dec8",
+    "head": "944abb1146f5052a9da067a827c3dcd1460a9f0f",
+    "production": [
+      "apps/viewer/src/aim/selectionSummary.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/selection-summary.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "summary-from-capped-list": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/selection-summary.test.ts; that file has a green, attributable baseline.",
+    "base": "420c013e9049b1ce989db7927497d9fc3188dec8",
+    "head": "944abb1146f5052a9da067a827c3dcd1460a9f0f",
+    "production": [
+      "apps/viewer/src/aim/selectionSummary.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/selection-summary.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "truncated-ignores-guidless": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/selection-summary.test.ts; that file has a green, attributable baseline.",
+    "base": "420c013e9049b1ce989db7927497d9fc3188dec8",
+    "head": "944abb1146f5052a9da067a827c3dcd1460a9f0f",
+    "production": [
+      "apps/viewer/src/aim/selectionSummary.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/selection-summary.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}
