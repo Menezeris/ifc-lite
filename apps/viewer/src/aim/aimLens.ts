@@ -27,6 +27,7 @@ import {
   isAimLens, isEvaluated, isolationRules, nextAimLens, parseLensMessage, summarizeLens,
   type AimIsolation, type ApplyLensMessage, type LensQueryMessage,
 } from './aimLensPlan.js';
+import { noteIssue } from './command-gate.js';
 
 const SLOT = AUTO_COLOR_FROM_LIST_ID;
 const POLL_MS = 100;
@@ -100,8 +101,9 @@ function applyLens(msg: ApplyLensMessage): void {
     const gen = ++isolationGen;
     void isolate(msg, toIsolate, tag, gen)
       .catch((err: unknown) => {
-        if (gen === isolationGen) isolationFailedRev = rev;
-        console.warn('[aim-bridge] izolácia z chatu zlyhala', err);
+        if (gen !== isolationGen) return;
+        isolationFailedRev = rev;
+        noteIssue(`Lens: izolácia z chatu zlyhala (${err instanceof Error ? err.message : String(err)})`);
       })
       .finally(() => {
         // Len posledná izolácia: staršia s tou istou verziou nesmie skončiť čakanie novšej.
@@ -166,7 +168,10 @@ export function handleLensMessage(data: LensInboundMessage, origin: string): voi
   const msg = parseLensMessage(data);
   if (!msg) {
     console.warn('[aim-bridge] neplatná správa Lens', data.type);
-    if (data.type === 'APPLY_LENS') rejectedRev = typeof data.rev === 'string' && data.rev ? data.rev : '*';
+    if (data.type === 'APPLY_LENS') {
+      rejectedRev = typeof data.rev === 'string' && data.rev ? data.rev : '*';
+      noteIssue('Lens: viewer správu odmietol (neplatné pravidlá)'); // aj do najbližšieho APPLIED (D-101)
+    }
     if (data.type === 'LENS_QUERY' && typeof data.id === 'string') {
       window.parent.postMessage({ source: data.source, type: 'QUERY_RESULT', id: data.id, ok: false, error: 'neplatná otázka' }, origin);
     }
