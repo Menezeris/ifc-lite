@@ -32,5 +32,6 @@ export function sectionRenderBounds(state: State, place: typeof placementCoordin
   base ??= state.geometryResult?.coordinateInfo;
   // mergedSectionBounds skladá tie isté viditeľné modely (alebo legacy výsledok), takže bez `base` by bolo aj `merged` null.
   if (!base) return null;
-  return place({ ...base, shiftedBounds: merged }, state.models, state.modelPlacement)?.shiftedBounds ?? merged;
+  // `place` vráti undefined len pre undefined zdroj; holá obálka sa nevracia nikdy (#63).
+  return place({ ...base, shiftedBounds: merged }, state.models, state.modelPlacement)?.shiftedBounds ?? null;
 }

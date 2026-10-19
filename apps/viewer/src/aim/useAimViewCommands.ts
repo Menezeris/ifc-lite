@@ -68,8 +68,10 @@ export function useAimViewCommands(bim: BimContext) {
           // Rozsah, voči ktorému renderer reže, a rámec modelu, z ktorého je
           // elevácia podlažia (#63: holá federovaná obálka posunula rez).
           const range = sectionAxisRange(sectionRenderBounds(state), 'down');
-          const own = state.models.get(storey.info.modelId) ?? [...state.models.values()].find((m) => m.geometryResult?.coordinateInfo);
-          const offY = totalYupOffset(own?.geometryResult?.coordinateInfo).y;
+          // Rámec modelu podlažia; kým jeho geometria ešte prúdi, rámec prvého načítaného modelu.
+          const frame = state.models.get(storey.info.modelId)?.geometryResult?.coordinateInfo
+            ?? [...state.models.values()].find((m) => m.geometryResult?.coordinateInfo)?.geometryResult?.coordinateInfo;
+          const offY = totalYupOffset(frame).y;
           const position = storeyCutPercent(storey.elevation, msg.offsetM ?? 1.2, offY, range);
           if (position === null) return;
           showSectionCut(useViewerStore.getState, { axis: 'down', position, flipped: msg.flipped === true });
