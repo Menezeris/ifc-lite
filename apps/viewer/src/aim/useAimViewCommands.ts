@@ -75,7 +75,7 @@ export function useAimViewCommands(bim: BimContext) {
         }
         if (msg.guids?.length || msg.coordinate !== undefined) {
           // Rez cez prvok alebo na presnej súradnici IFC sveta (D-085).
-          void loadQueries().then((q) => q.cutThroughTarget(msg, () => sectionToken.current === token, GUIDS, () => applyGizmo(msg.showGizmo)));
+          void loadQueries().then((q) => q.cutThroughTarget(msg, () => sectionToken.current === token, GUIDS, 0, () => applyGizmo(msg.showGizmo)));
           return;
         }
         if (msg.axis && msg.position !== undefined) {

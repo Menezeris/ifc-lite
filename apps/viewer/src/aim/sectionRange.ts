@@ -13,11 +13,11 @@
  */
 
 import type { CoordinateInfo } from '@ifc-lite/geometry';
-import { useViewerStore } from '@/store';
+import type { useViewerStore } from '@/store';
 import { mergedSectionBounds, type AxisBounds } from '@/lib/section/section-distance';
 import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
 
-type State = ReturnType<typeof useViewerStore.getState>;
+type State = Pick<ReturnType<typeof useViewerStore.getState>, 'models' | 'geometryResult' | 'modelPlacement'>;
 
 /** Obálka rezu v render rámci, tá istá ako pri Section bare a rendereri; null kým nie je nič načítané. */
 export function sectionRenderBounds(state: State): AxisBounds | null {

@@ -198,14 +198,14 @@ const SECTION_RETRIES = 60;
 
 type TargetSection = Extract<ViewInboundMessage, { type: 'SET_SECTION' }>;
 
-export function cutThroughTarget(msg: TargetSection, isCurrent: () => boolean, g: GuidHelpers, after?: () => void, attempt = 0): void {
+export function cutThroughTarget(msg: TargetSection, isCurrent: () => boolean, g: GuidHelpers, attempt = 0, after?: () => void): void {
   if (!isCurrent()) return;
   const cut = sectionCutFor(useViewerStore.getState(), msg, g);
   if (cut) {
     showSectionCut(useViewerStore.getState, { ...cut, flipped: msg.flipped === true });
     after?.();
   } else if (msg.guids?.length && attempt < SECTION_RETRIES) {
-    setTimeout(() => cutThroughTarget(msg, isCurrent, g, after, attempt + 1), SECTION_RETRY_MS);
+    setTimeout(() => cutThroughTarget(msg, isCurrent, g, attempt + 1, after), SECTION_RETRY_MS);
   } else {
     console.warn('[aim-bridge] SET_SECTION: prvok bez geometrie alebo bez osi', msg.guids ?? msg.coordinate);
   }
