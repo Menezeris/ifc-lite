@@ -19,7 +19,9 @@ type BcfApi = Pick<typeof import('@ifc-lite/bcf-api'), 'BcfApiClient' | 'fetchPr
 export interface AimBcfDeps {
   getProject: () => BCFProject | null;
   setProject: (project: BCFProject) => void;
-  loadApi?: () => Promise<BcfApi>;
+  /** The caller's `import('@ifc-lite/bcf-api')`: a dynamic import here would make
+   * vite-plugin-top-level-await rewrite this chunk (scripts/check-tla-chunk-await.mjs). */
+  loadApi: () => Promise<BcfApi>;
 }
 
 /**
@@ -44,7 +46,7 @@ export async function loadAimBcfTopics(
   deps: AimBcfDeps,
 ): Promise<'loaded' | 'kept' | 'stale'> {
   const mine = ++generation;
-  const api = await (deps.loadApi ?? (() => import('@ifc-lite/bcf-api')))();
+  const api = await deps.loadApi();
   const client = new api.BcfApiClient({ baseUrl: msg.baseUrl });
   // Snapshots are not served by the AIM host yet; skip the per-viewpoint probes.
   const result = await api.fetchProjectAsBCF(client, msg.projectId, { includeSnapshots: false });

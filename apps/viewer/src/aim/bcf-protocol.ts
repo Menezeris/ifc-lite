@@ -57,6 +57,7 @@ export function loadBcfTopics(
     .then(({ loadAimBcfTopics }) => loadAimBcfTopics(msg, {
       getProject: () => getState().bcfProject,
       setProject: (project) => getState().setBcfProject(project),
+      loadApi: () => import('@ifc-lite/bcf-api'),
     }))
     .catch((err) => console.warn('[aim-bridge] AIM_BCF_LOAD failed', err));
 }
