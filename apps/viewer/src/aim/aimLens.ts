@@ -144,3 +144,20 @@ export function handleLensMessage(data: LensInboundMessage, origin: string): voi
   if (msg.type === 'LENS_QUERY') answerLensQuery(msg, origin);
   else applyLens(msg);
 }
+
+/** Odpojenie mostu (AimBridge): zruší izoláciu z chatu, vypne AIM chat lens a zabudne verzie. */
+export function resetAimLens(): void {
+  releaseIsolation();
+  const state = useViewerStore.getState();
+  const lens = slotLens(state);
+  if (isAimLens(lens)) {
+    useViewerStore.setState({
+      savedLenses: state.savedLenses.filter((l) => l.id !== SLOT),
+      activeLensId: state.activeLensId === SLOT ? null : state.activeLensId,
+    });
+  }
+  appliedRev = undefined;
+  pendingIsolationRev = null;
+  isolationFailedRev = null;
+}
+

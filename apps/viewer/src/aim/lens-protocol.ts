@@ -52,3 +52,16 @@ export function isLensEnvelope(data: unknown): data is LensInboundMessage {
   const m = data as Record<string, unknown>;
   return m.source === SOURCE && (m.type === 'APPLY_LENS' || m.type === 'LENS_QUERY');
 }
+
+/** Modul Lens z chatu sa načíta až pri prvej správe, aby vstupný balík nerástol. */
+let lensModule: Promise<typeof import('./aimLens.js')> | null = null;
+
+export function dispatchLensMessage(msg: LensInboundMessage, origin: string): void {
+  lensModule ??= import('./aimLens.js');
+  void lensModule.then((m) => m.handleLensMessage(msg, origin));
+}
+
+/** Odpojenie mostu: upratať len vtedy, keď chat Lens vôbec použil. */
+export function resetLensFromChat(): void {
+  void lensModule?.then((m) => m.resetAimLens());
+}
