@@ -1,5 +1,5 @@
 diff --git b/apps/viewer/src/aim/aimPanelViewPlan.ts a/apps/viewer/src/aim/aimPanelViewPlan.ts
-index 7a0c9c87..999b29ed 100644
+index fe962644..f94cac2b 100644
 --- b/apps/viewer/src/aim/aimPanelViewPlan.ts
 +++ a/apps/viewer/src/aim/aimPanelViewPlan.ts
 @@ -28,7 +28,7 @@ export function parsePanelView(raw: unknown): AimPanelView | null {

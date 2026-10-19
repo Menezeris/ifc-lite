@@ -1,5 +1,5 @@
 diff --git b/apps/viewer/src/aim/aimPanelViewPlan.ts a/apps/viewer/src/aim/aimPanelViewPlan.ts
-index 5c8c59f5..999b29ed 100644
+index df36607c..f94cac2b 100644
 --- b/apps/viewer/src/aim/aimPanelViewPlan.ts
 +++ a/apps/viewer/src/aim/aimPanelViewPlan.ts
 @@ -54,5 +54,5 @@ export function selectPanel(raw: unknown): AimPanelView | undefined | null {
