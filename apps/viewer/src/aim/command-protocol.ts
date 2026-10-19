@@ -7,7 +7,8 @@
  * jedného volania pošle `ACK_REQUEST {cmdId}`, viewer ho vybaví v poradí po
  * nich, počká na ich asynchrónne kroky a odpovie `APPLIED` so stavom po
  * aplikovaní. `CLEAR_FOCUS` zruší oranžové zvýraznenie z `FOCUS` (#94),
- * `ISOLATE_ADD` / `ISOLATE_REMOVE` menia aktuálnu izoláciu (#95). Samostatný
+ * `ISOLATE_ADD` / `ISOLATE_REMOVE` menia aktuálnu izoláciu (#95),
+ * `CLEAR_SELECTION` zruší výber ako klik do prázdna (D-102). Samostatný
  * modul, lebo `bridge-protocol.ts` je na strope veľkosti.
  */
 
@@ -19,6 +20,7 @@ const MAX_CMD_ID = 64;
 export type CommandInboundMessage =
   | { source: typeof SOURCE; type: 'ACK_REQUEST'; cmdId: string }
   | { source: typeof SOURCE; type: 'CLEAR_FOCUS' }
+  | { source: typeof SOURCE; type: 'CLEAR_SELECTION' }
   | { source: typeof SOURCE; type: 'ISOLATE_ADD' | 'ISOLATE_REMOVE'; guids?: string[]; selector?: OpsSelector };
 
 /** Viewer -> host: príkazy pred `ACK_REQUEST` sú vykonané; `issues` = čo sa vykonať nedalo. */
@@ -41,6 +43,7 @@ export function isCommandMessage(data: unknown): data is CommandInboundMessage {
     case 'ACK_REQUEST':
       return isCmdId(m.cmdId);
     case 'CLEAR_FOCUS':
+    case 'CLEAR_SELECTION':
       return true;
     case 'ISOLATE_ADD':
     case 'ISOLATE_REMOVE':

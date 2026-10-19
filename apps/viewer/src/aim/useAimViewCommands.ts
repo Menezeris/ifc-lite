@@ -73,7 +73,11 @@ export function useAimViewCommands(bim: BimContext) {
   const { setMode, storeys } = useViewMode();
   const sectionToken = useRef(0);
   // Voľba widgetu patrí relácii mosta: nová relácia (iný `bim`) začína s predvoleným widgetom.
-  useEffect(() => () => { lastGizmo = undefined; }, [bim]);
+  useEffect(() => {
+    // Dotazy stavu sa stiahnu hneď po pripojení: prvé `APPLIED` (D-101) na ne inak čakalo (D-102).
+    void loadQueries();
+    return () => { lastGizmo = undefined; };
+  }, [bim]);
   const run = (msg: ViewInboundMessage, origin = '*') => {
     const state = useViewerStore.getState();
     switch (msg.type) {

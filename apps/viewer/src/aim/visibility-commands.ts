@@ -4,7 +4,7 @@
 
 /**
  * Príkazy hosta na zvýraznenie, výber a viditeľnosť (FOCUS, SELECT, filtre,
- * COLORIZE/HIDE/SHOW/ISOLATE a doplnky z AIM D-101). Vytiahnuté z `AimBridge`
+ * COLORIZE/HIDE/SHOW/ISOLATE a doplnky z AIM D-101, CLEAR_SELECTION z D-102). Vytiahnuté z `AimBridge`
  * a načítané lenivo (strop veľkosti súboru aj vstupného balíka); pomocné
  * funkcie z modulov vstupu dostáva od volajúceho (`VisibilityDeps`). Čo sa
  * nedá vykonať (nič sa nenašlo), sa zapíše ako problém pre `APPLIED`.
@@ -15,13 +15,15 @@ import { useViewerStore } from '../store/index.js';
 import { fromGlobalIdFromModels, toGlobalIdFromModels } from '../store/globalId.js';
 import type { InboundMessage, OpsSelector, resolveGuids, resolveSelector } from './bridge-protocol.js';
 import { nextIsolation, type CommandInboundMessage } from './command-protocol.js';
+import { frameRefs } from './frame-refs.js';
 
 /** Funkcie z modulov vstupného balíka - lenivý modul ich neimportuje (pravidlo balíka forku). */
 export interface VisibilityDeps {
   resolveGuids: typeof resolveGuids;
   resolveSelector: typeof resolveSelector;
-  selectPickedGlobalId: (globalId: number) => void;
+  selectPickedGlobalId: (globalId: number | null) => void;
   noteIssue: (text: string) => void;
+  track: (p: Promise<unknown>) => void;
   FOCUS_COLOR: string;
   FILTER_COLOR: string;
 }
@@ -103,7 +105,7 @@ export function runVisibilityCommand(
       focused = refs;
       programmatic.current = new Set(refs.map((r) => `${r.modelId}:${r.expressId}`));
       bim.viewer.select(refs);
-      bim.viewer.flyTo(refs);
+      d.track(frameRefs(bim, refs, 'FOCUS', d.noteIssue));
       return true;
     }
     case 'SELECT': {
@@ -118,9 +120,14 @@ export function runVisibilityCommand(
       programmatic.current = null;
       d.selectPickedGlobalId(toGlobalIdFromModels(state.models, ref.modelId, ref.expressId));
       useViewerStore.getState().openPanelInHome('properties', 'programmatic');
-      bim.viewer.flyTo([ref]);
+      d.track(frameRefs(bim, [ref], 'SELECT', d.noteIssue));
       return true;
     }
+    case 'CLEAR_SELECTION':
+      // Ako klik do prázdna: výber zruší a hostovi ide ENTITY_DESELECTED (D-102).
+      programmatic.current = null;
+      d.selectPickedGlobalId(null);
+      return true;
     case 'HIGHLIGHT_FILTER': {
       bim.viewer.resetColors(); // plný reset zhodí aj focus - filter ho nahrádza
       focused = [];

@@ -43,7 +43,7 @@ import { appliedViewState, setFocusProvider, useAimViewCommands } from './useAim
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
 /** Helpery zo vstupného balíka pre lenivý modul príkazov viditeľnosti. */
-const VIS_DEPS = { resolveGuids, resolveSelector, selectPickedGlobalId, noteIssue, FOCUS_COLOR, FILTER_COLOR };
+const VIS_DEPS = { resolveGuids, resolveSelector, selectPickedGlobalId, noteIssue, track, FOCUS_COLOR, FILTER_COLOR };
 let visibility: Promise<typeof import('./visibility-commands.js')> | null = null;
 const loadVisibility = () => (visibility ??= import('./visibility-commands.js'));
 
