@@ -42,6 +42,7 @@ import { useAimDecorationsStore } from './aimDecorationsStore.js';
 import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
+import { isBcfLoadMessage } from './bcf-protocol.js';
 import { dispatchLensMessage, isLensEnvelope, resetLensFromChat } from './lens-protocol.js';
 import { useAimViewCommands } from './useAimViewCommands.js';
 
@@ -99,6 +100,17 @@ export function AimBridge() {
         // AIM layer over the models (D-089): rules + model revisions for the
         // AIM ribbon tab and the AIM LAYERS tree section.
         useAimDerivationsStore.getState().setLayer(e.data.layer);
+        return;
+      }
+      if (isBcfLoadMessage(e.data, parentOriginRef.current)) {
+        // BCF topics of the AIM host (D-099): pulled read-only into the BCF panel.
+        const msg = e.data;
+        void import('./aimBcf.js')
+          .then(({ loadAimBcfTopics }) => loadAimBcfTopics(msg, {
+            getProject: () => useViewerStore.getState().bcfProject,
+            setProject: (project) => useViewerStore.getState().setBcfProject(project),
+          }))
+          .catch((err) => console.warn('[aim-bridge] AIM_BCF_LOAD failed', err));
         return;
       }
       if (!isInboundMessage(e.data)) return;
