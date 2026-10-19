@@ -1,5 +1,5 @@
 diff --git a/apps/viewer/src/aim/view-protocol.ts b/apps/viewer/src/aim/view-protocol.ts
-index 3a62b0c2..af5d0d7a 100644
+index 83352fc8..3c19aba7 100644
 --- a/apps/viewer/src/aim/view-protocol.ts
 +++ b/apps/viewer/src/aim/view-protocol.ts
 @@ -102,7 +102,7 @@ function isViewpoint(v: unknown): boolean {

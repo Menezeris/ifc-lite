@@ -4,13 +4,14 @@
 
 # AIM D-098 camera: surgical mutation evidence
 
-The change extends the AIM bridge message `SET_CAMERA` in `apps/viewer/src/aim/`: preset `keep` (direction unchanged) and `section` (upstream's Set view of the active plane), `fit` `visible` (`fitAll`) or `selection` (`frameSelection`), a `selector` target (`resolveSelector` + `flyTo`) and an exact `viewpoint` from the host (`applyViewpoint`). Framing now waits for the direction animation, which fixes "preset front/back with a target does not move the camera" (AIMviewer #65). `view_state` also returns the camera `up`, `fov_deg`, `ortho_size` and `aspect`. The new test (`view-camera.test.ts`) imports `ifcPointToRender` / `ifcDirToRender` / `renderDirToIfc`, which do not exist on the base, so the CI revert oracle reports INCONCLUSIVE. Each main decision of the three tested modules was checked with a surgical mutation instead.
+The change extends the AIM bridge message `SET_CAMERA` in `apps/viewer/src/aim/`: preset `keep` (direction unchanged) and `section` (upstream's Set view of the active plane), `fit` `visible` (`fitAll`) or `selection` (`frameSelection`), a `selector` target (`resolveSelector` + `flyTo`) and an exact `viewpoint` from the host (`applyViewpoint`). Framing now waits for the direction animation, which fixes "preset front/back with a target does not move the camera" (AIMviewer #65). `view_state` also returns the camera `up`, `fov_deg`, `ortho_size` and `aspect`. The new test (`view-camera.test.ts`) imports `ifcPointToRender` / `ifcDirToRender` / `renderDirToIfc`, which do not exist on the base, so the CI revert oracle reports INCONCLUSIVE. Each main decision of the three tested modules (six mutations) was checked with a surgical mutation instead.
 
 Each patch is written mutant→fixed (the orientation of `git diff base...head`); the oracle reverse-applies it. Every run ended `OBSERVED` (exit 0) with restoration verified, against base `origin/main`. The full records are in `summary.json`.
 
 | Patch | Module | Mutation | Test that went red |
 |---|---|---|---|
 | `viewpoint-with-preset.patch` | `view-protocol.ts` | a host pose is accepted together with a preset, so the two would contradict each other | `view-camera.test.ts` |
+| `viewpoint-with-target.patch` | `view-protocol.ts` | a host pose is accepted together with a framing target, so framing would discard the pose | `view-camera.test.ts` |
 | `two-targets-allowed.patch` | `view-protocol.ts` | more than one framing target (guids, selector, fit) is accepted | `view-camera.test.ts` |
 | `viewpoint-zero-up.patch` | `view-protocol.ts` | a pose with a zero `up` vector is accepted | `view-camera.test.ts` |
 | `ifc-point-offset-dropped.patch` | `viewFrame.ts` | an IFC world point goes to the render frame without the world offset | `view-camera.test.ts` |

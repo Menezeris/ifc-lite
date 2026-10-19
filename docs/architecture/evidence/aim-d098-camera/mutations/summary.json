@@ -4,7 +4,7 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-camera.test.ts; that file has a green, attributable baseline.",
     "base": "38d967693808c5af529055cd249592c3eb926f2f",
-    "head": "04651ffb9b4aecf46c8fdac4a3f662f7a0956216",
+    "head": "65a15264f5d769bee177b5043eecd587b1b8d4f8",
     "production": [
       "apps/viewer/src/aim/viewFrame.ts"
     ],
@@ -18,7 +18,7 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-camera.test.ts; that file has a green, attributable baseline.",
     "base": "38d967693808c5af529055cd249592c3eb926f2f",
-    "head": "04651ffb9b4aecf46c8fdac4a3f662f7a0956216",
+    "head": "65a15264f5d769bee177b5043eecd587b1b8d4f8",
     "production": [
       "apps/viewer/src/aim/viewCommands.ts"
     ],
@@ -32,7 +32,7 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-camera.test.ts; that file has a green, attributable baseline.",
     "base": "38d967693808c5af529055cd249592c3eb926f2f",
-    "head": "04651ffb9b4aecf46c8fdac4a3f662f7a0956216",
+    "head": "65a15264f5d769bee177b5043eecd587b1b8d4f8",
     "production": [
       "apps/viewer/src/aim/view-protocol.ts"
     ],
@@ -46,7 +46,21 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-camera.test.ts; that file has a green, attributable baseline.",
     "base": "38d967693808c5af529055cd249592c3eb926f2f",
-    "head": "04651ffb9b4aecf46c8fdac4a3f662f7a0956216",
+    "head": "65a15264f5d769bee177b5043eecd587b1b8d4f8",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-camera.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "viewpoint-with-target": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-camera.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "65a15264f5d769bee177b5043eecd587b1b8d4f8",
     "production": [
       "apps/viewer/src/aim/view-protocol.ts"
     ],
@@ -60,7 +74,7 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-camera.test.ts; that file has a green, attributable baseline.",
     "base": "38d967693808c5af529055cd249592c3eb926f2f",
-    "head": "04651ffb9b4aecf46c8fdac4a3f662f7a0956216",
+    "head": "65a15264f5d769bee177b5043eecd587b1b8d4f8",
     "production": [
       "apps/viewer/src/aim/view-protocol.ts"
     ],

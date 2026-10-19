@@ -1,11 +1,11 @@
 diff --git a/apps/viewer/src/aim/view-protocol.ts b/apps/viewer/src/aim/view-protocol.ts
-index 8e909f8a..af5d0d7a 100644
+index 2df2810b..3c19aba7 100644
 --- a/apps/viewer/src/aim/view-protocol.ts
 +++ b/apps/viewer/src/aim/view-protocol.ts
-@@ -147,7 +147,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
-       // Jeden cieľ rámovania; póza nahrádza smer presetu.
-       const targets = [m.guids !== undefined && (m.guids as string[]).length > 0, m.selector !== undefined, m.fit !== undefined];
+@@ -149,7 +149,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
        if (targets.filter(Boolean).length > 1) return false;
+       // Póza od hosta je hotový výsledok: rámovanie po nej by ju zahodilo.
+       if (m.viewpoint !== undefined && targets.some(Boolean)) return false;
 -      return true;
 +      return m.viewpoint === undefined || m.preset === 'keep';
      }
