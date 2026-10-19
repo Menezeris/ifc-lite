@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelViewPlan.ts a/apps/viewer/src/aim/aimPanelViewPlan.ts
+index 49efe689..999b29ed 100644
+--- b/apps/viewer/src/aim/aimPanelViewPlan.ts
++++ a/apps/viewer/src/aim/aimPanelViewPlan.ts
+@@ -32,7 +32,7 @@ export function parsePanelView(raw: unknown): AimPanelView | null {
+     out.tab = p.tab as InspectorTab;
+   }
+   if (p.section !== undefined) {
+-    if (typeof p.section !== 'string') return null;
++    if (typeof p.section !== 'string' || !SECTIONS.has(p.section)) return null;
+     out.section = p.section as PanelSection;
+   }
+   if (p.focus !== undefined) {

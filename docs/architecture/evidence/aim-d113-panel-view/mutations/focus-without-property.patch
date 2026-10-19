@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelViewPlan.ts a/apps/viewer/src/aim/aimPanelViewPlan.ts
+index 3a893c22..999b29ed 100644
+--- b/apps/viewer/src/aim/aimPanelViewPlan.ts
++++ a/apps/viewer/src/aim/aimPanelViewPlan.ts
+@@ -37,7 +37,7 @@ export function parsePanelView(raw: unknown): AimPanelView | null {
+   }
+   if (p.focus !== undefined) {
+     const f = p.focus as Record<string, unknown> | null;
+-    if (!f || typeof f !== 'object' || !name(f.pset)) return null;
++    if (!f || typeof f !== 'object' || !name(f.pset) || !name(f.property)) return null;
+     out.focus = { pset: f.pset, property: f.property };
+   }
+   return out;

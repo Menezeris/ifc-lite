@@ -1,0 +1,86 @@
+{
+  "focus-keeps-tab": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelViewPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "fe4fc51280d7f464d1945074775dcb49c092bcc8",
+    "production": [
+      "apps/viewer/src/aim/aimPanelViewPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelViewPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "focus-without-property": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelViewPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "fe4fc51280d7f464d1945074775dcb49c092bcc8",
+    "production": [
+      "apps/viewer/src/aim/aimPanelViewPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelViewPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "invalid-panel-kept": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelViewPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "fe4fc51280d7f464d1945074775dcb49c092bcc8",
+    "production": [
+      "apps/viewer/src/aim/aimPanelViewPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelViewPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "section-stays-under-aim": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelViewPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "fe4fc51280d7f464d1945074775dcb49c092bcc8",
+    "production": [
+      "apps/viewer/src/aim/aimPanelViewPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelViewPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "section-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelViewPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "fe4fc51280d7f464d1945074775dcb49c092bcc8",
+    "production": [
+      "apps/viewer/src/aim/aimPanelViewPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelViewPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "tab-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelViewPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "fe4fc51280d7f464d1945074775dcb49c092bcc8",
+    "production": [
+      "apps/viewer/src/aim/aimPanelViewPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelViewPlan.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

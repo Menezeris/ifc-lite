@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelViewPlan.ts a/apps/viewer/src/aim/aimPanelViewPlan.ts
+index 7a0c9c87..999b29ed 100644
+--- b/apps/viewer/src/aim/aimPanelViewPlan.ts
++++ a/apps/viewer/src/aim/aimPanelViewPlan.ts
+@@ -28,7 +28,7 @@ export function parsePanelView(raw: unknown): AimPanelView | null {
+   const p = raw as Record<string, unknown>;
+   const out: AimPanelView = {};
+   if (p.tab !== undefined) {
+-    if (typeof p.tab !== 'string') return null;
++    if (typeof p.tab !== 'string' || !TABS.has(p.tab)) return null;
+     out.tab = p.tab as InspectorTab;
+   }
+   if (p.section !== undefined) {
