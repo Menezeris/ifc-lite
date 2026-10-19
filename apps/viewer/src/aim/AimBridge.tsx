@@ -59,9 +59,14 @@ export function AimBridge() {
   // Brána príkazov (AIM D-101): do načítania modelov a dotečenia geometrie sa
   // príkazy radia a vykonajú potom v poradí, predtým sa zahodili.
   const modelsAnnouncedRef = useRef(false);
-  const announcedAtRef = useRef(0);
+  // Odklad sa ráta od ohlásenia modelov alebo od začiatku ďalšieho prúdu geometrie (neskorší model), čo je neskôr.
+  const graceFromRef = useRef(0);
   const gateRef = useRef(createCommandGate(() => modelsAnnouncedRef.current
-    && (!useViewerStore.getState().geometryStreamingActive || Date.now() - announcedAtRef.current > STREAM_GRACE_MS)));
+    && (!useViewerStore.getState().geometryStreamingActive || Date.now() - graceFromRef.current > STREAM_GRACE_MS)));
+  const startGrace = () => {
+    graceFromRef.current = Date.now();
+    setTimeout(() => gateRef.current.flush(), STREAM_GRACE_MS + 50);
+  };
   // Selekcie nastavené hostovým FOCUS-om — tie sa hostovi NEposielajú späť
   // ako ENTITY_SELECTED (echo by z jeho vlastného príkazu spravilo "user
   // pick" a prirodzená host implementácia by sa zacyklila FOCUS→SELECTED).
@@ -270,9 +275,8 @@ export function AimBridge() {
     const count = useViewerStore.getState().models.size;
     if (count === 0 || modelsAnnouncedRef.current) return;
     modelsAnnouncedRef.current = true;
-    announcedAtRef.current = Date.now();
+    startGrace();
     gateRef.current.flush();
-    setTimeout(() => gateRef.current.flush(), STREAM_GRACE_MS + 50);
     window.parent.postMessage(
       { source: SOURCE, type: 'MODELS_LOADED', count } satisfies OutboundMessage,
       parentOriginRef.current ?? '*',
@@ -320,9 +324,11 @@ export function AimBridge() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelCount]);
 
-  // Geometria dotiekla -> zaradené príkazy hosta sa vykonajú (D-101).
+  // Geometria dotiekla -> zaradené príkazy hosta sa vykonajú (D-101); nový prúd znova spustí odklad.
   useEffect(() => useViewerStore.subscribe((s, prev) => {
+    if (!prev.geometryStreamingActive && s.geometryStreamingActive) startGrace();
     if (prev.geometryStreamingActive && !s.geometryStreamingActive) gateRef.current.flush();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }), []);
 
   // 3D -> DB: forward native selection changes to the host. The host
