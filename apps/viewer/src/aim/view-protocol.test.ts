@@ -140,3 +140,18 @@ describe('rez cez prvok a IFC svet (AIM D-085)', () => {
     assert.equal(cutPercent(5, null), null);
   });
 });
+
+describe('rez nad podlažím a widget rezu (AIM #63)', () => {
+  it('widget: action gizmo s boolean, showGizmo pri set; iné tvary odmietne', () => {
+    for (const msg of [
+      { source: S, type: 'SET_SECTION', action: 'gizmo', showGizmo: false },
+      { source: S, type: 'SET_SECTION', action: 'set', storeyGuid: G, offsetM: 1, showGizmo: false },
+      { source: S, type: 'SET_SECTION', action: 'set', axis: 'z', coordinate: 3, showGizmo: true },
+    ]) assert.ok(isViewMessage(msg), JSON.stringify(msg));
+    for (const msg of [
+      { source: S, type: 'SET_SECTION', action: 'gizmo' },
+      { source: S, type: 'SET_SECTION', action: 'gizmo', showGizmo: 'no' },
+      { source: S, type: 'SET_SECTION', action: 'set', storeyGuid: G, showGizmo: 0 },
+    ]) assert.ok(!isViewMessage(msg), JSON.stringify(msg));
+  });
+});

@@ -14,21 +14,32 @@
 import { useEffect, useRef } from 'react';
 import { useViewerStore } from '@/store';
 import { clearSectionCut, showSectionCut } from '@/store/section-active';
-import { mergedSectionBounds, sectionAxisRange } from '@/lib/section/section-distance';
+import { sectionAxisRange } from '@/lib/section/section-distance';
 import { totalYupOffset } from '@/lib/geo/coordinate-frame';
 import { useViewMode } from '@/hooks/useViewMode';
 import type { BimContext } from '@ifc-lite/sdk';
 import { guidForEntity, resolveGuids, resolveSelector } from './bridge-protocol.js';
 import type { ViewInboundMessage } from './view-protocol.js';
 import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCommands.js';
+import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
+import { sectionRenderBounds as sectionBoundsWith } from './sectionRange.js';
 
 /** D-085 (obálky, stav, rez cez prvok) sa načíta až pri prvom použití - mimo vstupného balíka. */
 let queries: Promise<typeof import('./viewQueries.js')> | null = null;
 const loadQueries = () => (queries ??= import('./viewQueries.js'));
-const GUIDS = { resolveGuids, guidForEntity };
+/** Obálka, voči ktorej renderer reže (#63). */
+const sectionRenderBounds = (state: Parameters<typeof sectionBoundsWith>[0]) => sectionBoundsWith(state, placementCoordinateInfo);
+const GUIDS = { resolveGuids, guidForEntity, sectionRenderBounds };
 let camera: Promise<typeof import('./viewCamera.js')> | null = null;
 const loadCamera = () => (camera ??= import('./viewCamera.js'));
 const TARGETS = { resolveGuids, resolveSelector };
+
+/** Widget (quad a obrys) aktívneho rezu; bez hodnoty sa nemení (#63). */
+function applyGizmo(show: boolean | undefined): void {
+  if (show === undefined) return;
+  const state = useViewerStore.getState();
+  if (state.sectionPlane.showGizmo !== show) state.setSectionPlaneShowGizmo(state.sectionPlane.id, show);
+}
 
 export function useAimViewCommands(bim: BimContext) {
   const { setMode, storeys } = useViewMode();
@@ -37,6 +48,11 @@ export function useAimViewCommands(bim: BimContext) {
     const state = useViewerStore.getState();
     switch (msg.type) {
       case 'SET_SECTION': {
+        if (msg.action === 'gizmo') {
+          // Len widget aktívneho rezu, rez ostáva (#63); čakajúci rez cez prvok neruší.
+          applyGizmo(msg.showGizmo);
+          return;
+        }
         // Novší rez zruší čakajúce opakovanie staršieho rezu cez prvok.
         const token = ++sectionToken.current;
         if (msg.action === 'clear') {
@@ -49,17 +65,22 @@ export function useAimViewCommands(bim: BimContext) {
             console.warn('[aim-bridge] SET_SECTION: neznáme podlažie', msg.storeyGuid);
             return;
           }
-          const range = sectionAxisRange(mergedSectionBounds(state.models, state.geometryResult), 'down');
-          const first = [...state.models.values()].find((m) => m.geometryResult?.coordinateInfo);
-          const offY = totalYupOffset(first?.geometryResult?.coordinateInfo).y;
+          // Rozsah, voči ktorému renderer reže, a rámec modelu, z ktorého je
+          // elevácia podlažia (#63: holá federovaná obálka posunula rez).
+          const range = sectionAxisRange(sectionRenderBounds(state), 'down');
+          // Rámec modelu podlažia; kým jeho geometria ešte prúdi, rámec prvého načítaného modelu.
+          const frame = state.models.get(storey.info.modelId)?.geometryResult?.coordinateInfo
+            ?? [...state.models.values()].find((m) => m.geometryResult?.coordinateInfo)?.geometryResult?.coordinateInfo;
+          const offY = totalYupOffset(frame).y;
           const position = storeyCutPercent(storey.elevation, msg.offsetM ?? 1.2, offY, range);
           if (position === null) return;
           showSectionCut(useViewerStore.getState, { axis: 'down', position, flipped: msg.flipped === true });
+          applyGizmo(msg.showGizmo);
           return;
         }
         if (msg.guids?.length || msg.coordinate !== undefined) {
           // Rez cez prvok alebo na presnej súradnici IFC sveta (D-085).
-          void loadQueries().then((q) => q.cutThroughTarget(msg, () => sectionToken.current === token, GUIDS));
+          void loadQueries().then((q) => q.cutThroughTarget(msg, () => sectionToken.current === token, GUIDS, 0, () => applyGizmo(msg.showGizmo)));
           return;
         }
         if (msg.axis && msg.position !== undefined) {
@@ -68,6 +89,7 @@ export function useAimViewCommands(bim: BimContext) {
             position: msg.position,
             flipped: msg.flipped === true,
           });
+          applyGizmo(msg.showGizmo);
         }
         return;
       }

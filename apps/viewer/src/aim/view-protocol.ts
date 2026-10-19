@@ -50,7 +50,8 @@ export type ViewInboundMessage =
   | {
       source: typeof SOURCE;
       type: 'SET_SECTION';
-      action: 'set' | 'clear';
+      /** gizmo = len zobraziť/skryť widget aktívneho rezu, rez ostáva (#63). */
+      action: 'set' | 'clear' | 'gizmo';
       axis?: SectionAxis;
       storeyGuid?: string;
       offsetM?: number;
@@ -61,6 +62,8 @@ export type ViewInboundMessage =
       /** Poloha roviny v IFC svete (m) na osi rezu: x = IFC X, y = IFC Z (výška), z = IFC Y. */
       coordinate?: number;
       flipped?: boolean;
+      /** Widget rezu (quad a obrys roviny); false = čistý pohľad, rez ostáva aktívny. */
+      showGizmo?: boolean;
     }
   | {
       source: typeof SOURCE;
@@ -120,8 +123,10 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
   switch (m.type) {
     case 'SET_SECTION': {
       if (m.action === 'clear') return true;
+      if (m.action === 'gizmo') return typeof m.showGizmo === 'boolean';
       if (m.action !== 'set') return false;
       if (!optional(m.flipped, (f) => typeof f === 'boolean')) return false;
+      if (!optional(m.showGizmo, (f) => typeof f === 'boolean')) return false;
       if (isStr(m.storeyGuid)) {
         // Rez nad podlažím je vždy vodorovný.
         return (m.axis === undefined || m.axis === 'y')
