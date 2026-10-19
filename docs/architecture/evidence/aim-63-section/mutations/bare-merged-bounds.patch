@@ -1,11 +1,11 @@
 diff --git b/apps/viewer/src/aim/sectionRange.ts a/apps/viewer/src/aim/sectionRange.ts
-index fca1ca53..c422340f 100644
+index 1778d2c8..bb025ced 100644
 --- b/apps/viewer/src/aim/sectionRange.ts
 +++ a/apps/viewer/src/aim/sectionRange.ts
-@@ -31,5 +31,5 @@ export function sectionRenderBounds(state: State, place: typeof placementCoordin
-   }
-   base ??= state.geometryResult?.coordinateInfo;
-   if (!base) return merged;
+@@ -33,5 +33,5 @@ export function sectionRenderBounds(state: State, place: typeof placementCoordin
+   // mergedSectionBounds skladá tie isté viditeľné modely (alebo legacy výsledok), takže bez `base` by bolo aj `merged` null.
+   if (!base) return null;
+   // `place` vráti undefined len pre undefined zdroj; holá obálka sa nevracia nikdy (#63).
 -  return merged;
-+  return place({ ...base, shiftedBounds: merged }, state.models, state.modelPlacement)?.shiftedBounds ?? merged;
++  return place({ ...base, shiftedBounds: merged }, state.models, state.modelPlacement)?.shiftedBounds ?? null;
  }
