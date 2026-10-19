@@ -48,15 +48,15 @@ export function useAimViewCommands(bim: BimContext) {
     const state = useViewerStore.getState();
     switch (msg.type) {
       case 'SET_SECTION': {
+        if (msg.action === 'gizmo') {
+          // Len widget aktívneho rezu, rez ostáva (#63); čakajúci rez cez prvok neruší.
+          applyGizmo(msg.showGizmo);
+          return;
+        }
         // Novší rez zruší čakajúce opakovanie staršieho rezu cez prvok.
         const token = ++sectionToken.current;
         if (msg.action === 'clear') {
           clearSectionCut(useViewerStore.getState);
-          return;
-        }
-        if (msg.action === 'gizmo') {
-          // Len widget aktívneho rezu, rez ostáva (#63).
-          applyGizmo(msg.showGizmo);
           return;
         }
         if (msg.storeyGuid) {
