@@ -1,0 +1,41 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+# >>> AIM-FORK (whole file, AIM D-103): reports a red nightly full run of
+# test.yml on main. The fork's fast path (D-098, D-103) skips the heavy lanes on
+# pull requests, so this nightly run is where they catch a regression; its
+# failure must not be one more red row nobody opens.
+#
+# It hands the result to report-scheduled-failure.yml, which opens or updates
+# one issue per lane. That reporter runs on the fork only when the repository
+# variable AIM_SCHEDULED_ISSUES is 'true' (issues must be enabled first, see
+# docs/FORK_MAINTENANCE.md); until then the red Test run and GitHub's failure
+# mail for the scheduled run are the report.
+
+name: AIM nightly report
+
+on:
+  workflow_run:
+    workflows: [Test]
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  report-nightly:
+    if: >-
+      github.repository != 'LTplus-AG/ifc-lite' &&
+      github.event.workflow_run.event == 'schedule' &&
+      github.event.workflow_run.conclusion != 'success'
+    uses: ./.github/workflows/report-scheduled-failure.yml
+    with:
+      workflow_name: Test (nightly full run on main)
+      jobs: all test.yml lanes
+      result: ${{ github.event.workflow_run.conclusion }} at ${{ github.event.workflow_run.head_sha }}, ${{ github.event.workflow_run.html_url }}
+    permissions:
+      contents: read
+      issues: write
+# <<< AIM-FORK
