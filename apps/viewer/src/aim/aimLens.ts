@@ -38,21 +38,27 @@ let appliedRev: string | undefined;
 let pendingIsolationRev: string | null = null;
 /** Izolácia z chatu: počty a presné id v kanáli (uvoľní sa len, ak ich kanál stále drží). */
 let isolation: (AimIsolation & { ids: number[] }) | null = null;
+/** Poradie izolácií: staršia, ktorá dobehne po novšej alebo po zrušení, sa zahodí. */
+let isolationGen = 0;
+/** Verzia, ktorej izolácia zlyhala (`LENS_QUERY` ju nahlási ako chybu, nie úspech). */
+let isolationFailedRev: string | null = null;
 let seq = 0;
 
 type State = ReturnType<typeof useViewerStore.getState>;
 const slotLens = (s: State) => s.savedLenses.find((l) => l.id === SLOT) ?? null;
 
 function releaseIsolation(): void {
+  isolationGen++;
   const state = useViewerStore.getState();
   if (isolation && ruleIsolationOwnsChannel(state.isolatedEntities, isolation.ids)) state.clearIsolation();
   isolation = null;
 }
 
-async function isolate(msg: ApplyLensMessage, rules: Lens['rules'], tag: string): Promise<void> {
+async function isolate(msg: ApplyLensMessage, rules: Lens['rules'], tag: string, gen: number): Promise<void> {
   const state = useViewerStore.getState();
   const probe: Lens = { id: `aim-isolate-${tag}`, name: 'AIM isolate', rules };
   const matched = await evaluateLensGroups(probe, evaluatorModelsFromState(state), state.models, definedModelTagIdsOf(state));
+  if (gen !== isolationGen) return;
   const raw = new Set<number>();
   for (const ids of matched.values()) for (const id of ids) raw.add(id);
   // Zostava bez geometrie (schodisko ako kontajner) sa izoluje cez svoje časti, ako v paneli Lens.
@@ -79,9 +85,14 @@ function applyLens(msg: ApplyLensMessage): void {
   if (msg.mode === 'clear' || msg.mode === 'unisolate') releaseIsolation();
   const toIsolate = isolationRules(msg, models, tag);
   if (toIsolate.length > 0) {
-    pendingIsolationRev = msg.rev ?? tag;
-    void isolate(msg, toIsolate, tag)
-      .catch((err: unknown) => console.warn('[aim-bridge] izolácia z chatu zlyhala', err))
+    const rev = msg.rev ?? tag;
+    pendingIsolationRev = rev;
+    isolationFailedRev = null;
+    void isolate(msg, toIsolate, tag, ++isolationGen)
+      .catch((err: unknown) => {
+        isolationFailedRev = rev;
+        console.warn('[aim-bridge] izolácia z chatu zlyhala', err);
+      })
       .finally(() => {
         if (pendingIsolationRev === (msg.rev ?? tag)) pendingIsolationRev = null;
       });
@@ -110,6 +121,10 @@ function answerLensQuery(msg: LensQueryMessage, origin: string, started = Date.n
   }
   if (!revReady) {
     reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: false, error: 'Lens s touto verziou do viewera neprišla.' });
+    return;
+  }
+  if (msg.rev && isolationFailedRev === msg.rev) {
+    reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: false, error: 'Izolácia tejto verzie vo vieweri zlyhala.' });
     return;
   }
   const iso = isolation ? { rev: isolation.rev, rules: isolation.rules, isolated: isolation.isolated } : null;
