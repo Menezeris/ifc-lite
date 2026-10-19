@@ -105,9 +105,13 @@ export function AimBridge() {
         noteIssue(`Lens: ${err instanceof Error ? err.message : String(err)}`);
         return null;
       });
+      const state = await appliedViewState().catch((err: unknown) => {
+        noteIssue(`stav viewera: ${err instanceof Error ? err.message : String(err)}`);
+        return undefined;
+      });
+      // Problémy až po stave a Lens, aby ich chyby patrili do tohto potvrdenia.
       const issues = takeIssues();
       if (!done) issues.push('niektoré kroky vo vieweri ešte bežia');
-      const state = await appliedViewState().catch(() => undefined);
       const applied: AppliedMessage = { source: SOURCE, type: 'APPLIED', cmdId, ok: issues.length === 0, issues, state: state && { ...state, ...(lens ? { lens } : {}) } };
       window.parent.postMessage(applied, origin());
     }
