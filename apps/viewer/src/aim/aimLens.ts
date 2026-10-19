@@ -50,6 +50,7 @@ const slotLens = (s: State) => s.savedLenses.find((l) => l.id === SLOT) ?? null;
 function releaseIsolation(): void {
   isolationGen++;
   pendingIsolationRev = null;
+  isolationFailedRev = null;
   const state = useViewerStore.getState();
   if (isolation && ruleIsolationOwnsChannel(state.isolatedEntities, isolation.ids)) state.clearIsolation();
   isolation = null;
@@ -126,7 +127,8 @@ function answerLensQuery(msg: LensQueryMessage, origin: string, started = Date.n
     reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: false, error: 'Lens s touto verziou do viewera neprišla.' });
     return;
   }
-  if (msg.rev && isolationFailedRev === msg.rev) {
+  // Bez rev sa pýta na poslednú izoláciu; zlyhaná izolácia nesmie odpovedať úspechom.
+  if (isolationFailedRev !== null && (!msg.rev || isolationFailedRev === msg.rev)) {
     reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: false, error: 'Izolácia tejto verzie vo vieweri zlyhala.' });
     return;
   }
