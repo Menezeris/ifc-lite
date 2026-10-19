@@ -24,7 +24,13 @@ import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCom
 import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
 import { sectionRenderBounds as sectionBoundsWith } from './sectionRange.js';
 import { noteIssue, track } from './command-gate.js';
-import { focusSummary } from './visibility-commands.js';
+
+type FocusSummary = () => { count: number; guids: string[] };
+/** Zvýraznenie z FOCUS (#94) - poskytne ho AimBridge po lenivom načítaní príkazov viditeľnosti. */
+let focusProvider: FocusSummary | undefined;
+export function setFocusProvider(f: FocusSummary | undefined): void {
+  focusProvider = f;
+}
 
 /** D-085 (obálky, stav, rez cez prvok) sa načíta až pri prvom použití - mimo vstupného balíka. */
 let queries: Promise<typeof import('./viewQueries.js')> | null = null;
@@ -53,15 +59,15 @@ function applyGizmo(show: boolean | undefined): void {
 }
 
 /** Stav pre `APPLIED` (D-101): rez, režim, výber a viditeľnosť po vykonaní príkazov. */
-export async function appliedViewState(focus: NonNullable<typeof GUIDS_WITH_FOCUS['focus']>): Promise<Record<string, unknown>> {
+export async function appliedViewState(): Promise<Record<string, unknown>> {
   const q = await loadQueries();
-  const s = q.queryViewState(useViewerStore.getState(), { ...GUIDS, focus });
+  const s = q.queryViewState(useViewerStore.getState(), { ...GUIDS, focus: focusProvider });
   return {
     mode: s.mode, storey_guid: s.storey_guid, section: s.section, camera: s.camera,
     selection_count: s.selection.count, hidden_count: s.hidden_count, isolated_count: s.isolated_count, focus: s.focus,
   };
 }
-const GUIDS_WITH_FOCUS: Parameters<typeof import('./viewQueries.js')['queryViewState']>[1] = GUIDS;
+
 
 export function useAimViewCommands(bim: BimContext) {
   const { setMode, storeys } = useViewMode();
@@ -137,7 +143,7 @@ export function useAimViewCommands(bim: BimContext) {
         return;
       }
       case 'QUERY': {
-        void loadQueries().then((q) => q.answerQuery(msg, origin, { ...GUIDS, focus: focusSummary }));
+        void loadQueries().then((q) => q.answerQuery(msg, origin, { ...GUIDS, focus: focusProvider }));
         return;
       }
     }

@@ -23,10 +23,13 @@ import { parsePlacement, serializePlacement } from '@ifc-lite/drawing-underlay';
 import { useBim } from '../sdk/BimProvider.js';
 import { useViewerStore } from '../store/index.js';
 import { AUTOLOAD_COMPLETE_EVENT, parseAutoloadUrls } from '../lib/autoload.js';
-import { SOURCE, isInboundMessage, guidForEntity, type OutboundMessage } from './bridge-protocol.js';
-import { isCommandMessage, type AppliedMessage } from './command-protocol.js';
-import { createCommandGate, settled, takeIssues, track } from './command-gate.js';
-import { focusSummary, isVisibilityCommand, runVisibilityCommand } from './visibility-commands.js';
+import { selectPickedGlobalId } from '../components/viewer/viewport-selection.js';
+import {
+  SOURCE, FILTER_COLOR, FOCUS_COLOR, isInboundMessage, guidForEntity, resolveGuids, resolveSelector,
+  type InboundMessage, type OutboundMessage,
+} from './bridge-protocol.js';
+import { isCommandMessage, type AppliedMessage, type CommandInboundMessage } from './command-protocol.js';
+import { createCommandGate, noteIssue, settled, takeIssues, track } from './command-gate.js';
 import { useAimPanelStore } from './aimPanelStore.js';
 import { useCapturePinsStore } from './capturePinsStore.js';
 import { useAimDecorationsStore } from './aimDecorationsStore.js';
@@ -35,7 +38,14 @@ import { isViewMessage } from './view-protocol.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
 import { isBcfLoadMessage, loadBcfTopics } from './bcf-protocol.js';
 import { dispatchLensMessage, isLensEnvelope, lensSettled, resetLensFromChat } from './lens-protocol.js';
-import { appliedViewState, useAimViewCommands } from './useAimViewCommands.js';
+import { appliedViewState, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
+
+/** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
+const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
+/** Helpery zo vstupného balíka pre lenivý modul príkazov viditeľnosti. */
+const VIS_DEPS = { resolveGuids, resolveSelector, selectPickedGlobalId, noteIssue, FOCUS_COLOR, FILTER_COLOR };
+let visibility: Promise<typeof import('./visibility-commands.js')> | null = null;
+const loadVisibility = () => (visibility ??= import('./visibility-commands.js'));
 
 /** Najdlhšie čakanie `APPLIED` na asynchrónne kroky (rez cez prvok, kamera, Lens); host čaká 3 s. */
 const ACK_WAIT_MS = 2500;
@@ -75,6 +85,17 @@ export function AimBridge() {
 
     const origin = () => parentOriginRef.current ?? '*';
     const gate = gateRef.current;
+    // Modul príkazov viditeľnosti sa načíta hneď (mimo vstupného balíka); brána drží príkazy
+    // až do načítania modelov, takže je vtedy pripravený a príkazy idú synchrónne v poradí.
+    let vis: Awaited<ReturnType<typeof loadVisibility>> | null = null;
+    void loadVisibility().then((m) => {
+      vis = m;
+      setFocusProvider(m.focusSummary);
+    });
+    const runVisibility = (msg: InboundMessage | CommandInboundMessage) => {
+      if (vis) vis.runVisibilityCommand(msg, bim, programmaticSelectionRef, VIS_DEPS);
+      else track(loadVisibility().then((m) => m.runVisibilityCommand(msg, bim, programmaticSelectionRef, VIS_DEPS)));
+    };
 
     // `ACK_REQUEST` ide bránou za príkazmi, preto ich vidí vykonané; počká ešte na ich asynchrónne kroky.
     async function answerAck(cmdId: string) {
@@ -82,7 +103,7 @@ export function AimBridge() {
       const lens = await lensSettled(ACK_WAIT_MS).catch(() => null);
       const issues = takeIssues();
       if (!done) issues.push('niektoré kroky vo vieweri ešte bežia');
-      const state = await appliedViewState(focusSummary).catch(() => undefined);
+      const state = await appliedViewState().catch(() => undefined);
       const applied: AppliedMessage = { source: SOURCE, type: 'APPLIED', cmdId, ok: issues.length === 0, issues, state: state && { ...state, ...(lens ? { lens } : {}) } };
       window.parent.postMessage(applied, origin());
     }
@@ -107,7 +128,7 @@ export function AimBridge() {
       }
       if (isCommandMessage(e.data)) {
         const msg = e.data;
-        gate.run(() => (msg.type === 'ACK_REQUEST' ? void answerAck(msg.cmdId) : runVisibilityCommand(msg, bim, programmaticSelectionRef)));
+        gate.run(() => (msg.type === 'ACK_REQUEST' ? void answerAck(msg.cmdId) : runVisibility(msg)));
         return;
       }
       if (isDerivationsMessage(e.data)) {
@@ -121,9 +142,9 @@ export function AimBridge() {
         return;
       }
       if (!isInboundMessage(e.data)) return;
-      if (isVisibilityCommand(e.data)) {
+      if (VISIBILITY.has(e.data.type)) {
         const msg = e.data;
-        gate.run(() => runVisibilityCommand(msg, bim, programmaticSelectionRef));
+        gate.run(() => runVisibility(msg));
         return;
       }
 
@@ -219,6 +240,7 @@ export function AimBridge() {
       useAimDecorationsStore.getState().clear();
       useAimDerivationsStore.getState().clear();
       resetLensFromChat(); // D-096: izolácia a AIM chat lens neprežijú odpojenie mostu
+      setFocusProvider(undefined);
     };
   }, [bim]);
 

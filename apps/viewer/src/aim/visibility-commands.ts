@@ -5,17 +5,26 @@
 /**
  * Príkazy hosta na zvýraznenie, výber a viditeľnosť (FOCUS, SELECT, filtre,
  * COLORIZE/HIDE/SHOW/ISOLATE a doplnky z AIM D-101). Vytiahnuté z `AimBridge`
- * (strop veľkosti súboru). Čo sa nedá vykonať (nič sa nenašlo), sa zapíše
- * ako problém pre `APPLIED` namiesto tichého no-op.
+ * a načítané lenivo (strop veľkosti súboru aj vstupného balíka); pomocné
+ * funkcie z modulov vstupu dostáva od volajúceho (`VisibilityDeps`). Čo sa
+ * nedá vykonať (nič sa nenašlo), sa zapíše ako problém pre `APPLIED`.
  */
 
 import type { BimContext, EntityRef } from '@ifc-lite/sdk';
 import { useViewerStore } from '../store/index.js';
 import { fromGlobalIdFromModels, toGlobalIdFromModels } from '../store/globalId.js';
-import { selectPickedGlobalId } from '../components/viewer/viewport-selection.js';
-import { FILTER_COLOR, FOCUS_COLOR, resolveGuids, resolveSelector, type InboundMessage, type OpsSelector } from './bridge-protocol.js';
+import type { InboundMessage, OpsSelector, resolveGuids, resolveSelector } from './bridge-protocol.js';
 import { nextIsolation, type CommandInboundMessage } from './command-protocol.js';
-import { noteIssue } from './command-gate.js';
+
+/** Funkcie z modulov vstupného balíka - lenivý modul ich neimportuje (pravidlo balíka forku). */
+export interface VisibilityDeps {
+  resolveGuids: typeof resolveGuids;
+  resolveSelector: typeof resolveSelector;
+  selectPickedGlobalId: (globalId: number) => void;
+  noteIssue: (text: string) => void;
+  FOCUS_COLOR: string;
+  FILTER_COLOR: string;
+}
 
 /** Prvky ofarbené posledným FOCUS-om - ďalší FOCUS alebo CLEAR_FOCUS ich vráti do pôvodných farieb. */
 let focused: EntityRef[] = [];
@@ -38,10 +47,10 @@ export function clearFocus(bim: BimContext): void {
 
 // Ops berú buď explicitné GUIDy, alebo množinový selektor (typy/model)
 // rozkladaný viewer-side - "celý VZT.ifc" tak necestuje ako zoznam GUIDov.
-function refsForOp(type: string, msg: { guids?: string[]; selector?: OpsSelector }): EntityRef[] {
+function refsForOp(d: VisibilityDeps, type: string, msg: { guids?: string[]; selector?: OpsSelector }): EntityRef[] {
   const models = useViewerStore.getState().models;
-  const refs = msg.guids?.length ? resolveGuids(models, msg.guids) : msg.selector ? resolveSelector(models, msg.selector) : [];
-  if (refs.length === 0) noteIssue(`${type}: vo vieweri sa nenašiel žiadny prvok`);
+  const refs = msg.guids?.length ? d.resolveGuids(models, msg.guids) : msg.selector ? d.resolveSelector(models, msg.selector) : [];
+  if (refs.length === 0) d.noteIssue(`${type}: vo vieweri sa nenašiel žiadny prvok`);
   return refs;
 }
 
@@ -64,13 +73,6 @@ function changeIsolation(bim: BimContext, refs: EntityRef[], op: 'add' | 'remove
   isolateExactly(bim, nextRefs);
 }
 
-const VISIBILITY_TYPES = new Set<string>(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
-
-/** Príkaz pre `runVisibilityCommand` (ide bránou príkazov), nie dáta panelov a dokumentov. */
-export function isVisibilityCommand(msg: InboundMessage): boolean {
-  return VISIBILITY_TYPES.has(msg.type);
-}
-
 /**
  * Vykoná príkaz; false = správa nie je príkaz viditeľnosti (AimBridge ju spracuje sám).
  * `programmatic` = selekcie z FOCUS, ktoré sa hostovi neposielajú späť ako ENTITY_SELECTED.
@@ -79,19 +81,20 @@ export function runVisibilityCommand(
   msg: InboundMessage | CommandInboundMessage,
   bim: BimContext,
   programmatic: { current: Set<string> | null },
+  d: VisibilityDeps,
 ): boolean {
   switch (msg.type) {
     case 'FOCUS': {
-      const refs = resolveGuids(useViewerStore.getState().models, msg.guids);
+      const refs = d.resolveGuids(useViewerStore.getState().models, msg.guids);
       // Prázdny FOCUS zruší predošlé zvýraznenie (inak by oranžová ostala navždy, #94).
       clearFocus(bim);
       if (refs.length === 0) {
-        if (msg.guids.length > 0) noteIssue('FOCUS: vo vieweri sa nenašiel žiadny prvok');
+        if (msg.guids.length > 0) d.noteIssue('FOCUS: vo vieweri sa nenašiel žiadny prvok');
         return true;
       }
       // Explicitné ofarbenie (oranžová ako v pôvodnom AIM three.js vieweri):
       // multi-select cez SDK highlight v 3D sám nezobrazí.
-      bim.viewer.colorize(refs, FOCUS_COLOR);
+      bim.viewer.colorize(refs, d.FOCUS_COLOR);
       focused = refs;
       programmatic.current = new Set(refs.map((r) => `${r.modelId}:${r.expressId}`));
       bim.viewer.select(refs);
@@ -101,14 +104,14 @@ export function runVisibilityCommand(
     case 'SELECT': {
       // Výber ako klik myšou (D-082): ENTITY_SELECTED musí ísť hostovi, preto nie je programový.
       const state = useViewerStore.getState();
-      const [ref] = resolveGuids(state.models, [msg.guid]);
+      const [ref] = d.resolveGuids(state.models, [msg.guid]);
       if (!ref) {
-        noteIssue('SELECT: prvok sa vo vieweri nenašiel');
+        d.noteIssue('SELECT: prvok sa vo vieweri nenašiel');
         return true;
       }
       clearFocus(bim); // oranžová by prekryla selekčné zvýraznenie
       programmatic.current = null;
-      selectPickedGlobalId(toGlobalIdFromModels(state.models, ref.modelId, ref.expressId));
+      d.selectPickedGlobalId(toGlobalIdFromModels(state.models, ref.modelId, ref.expressId));
       useViewerStore.getState().openPanelInHome('properties', 'programmatic');
       bim.viewer.flyTo([ref]);
       return true;
@@ -116,8 +119,8 @@ export function runVisibilityCommand(
     case 'HIGHLIGHT_FILTER': {
       bim.viewer.resetColors(); // plný reset zhodí aj focus - filter ho nahrádza
       focused = [];
-      const refs = resolveGuids(useViewerStore.getState().models, msg.guids);
-      if (refs.length > 0) bim.viewer.colorize(refs, FILTER_COLOR);
+      const refs = d.resolveGuids(useViewerStore.getState().models, msg.guids);
+      if (refs.length > 0) bim.viewer.colorize(refs, d.FILTER_COLOR);
       return true;
     }
     case 'CLEAR_FILTER':
@@ -129,28 +132,28 @@ export function runVisibilityCommand(
       clearFocus(bim);
       return true;
     case 'COLORIZE': {
-      const refs = refsForOp(msg.type, msg);
+      const refs = refsForOp(d, msg.type, msg);
       if (refs.length > 0) bim.viewer.colorize(refs, msg.color);
       return true;
     }
     case 'HIDE': {
-      const refs = refsForOp(msg.type, msg);
+      const refs = refsForOp(d, msg.type, msg);
       if (refs.length > 0) bim.viewer.hide(refs);
       return true;
     }
     case 'SHOW': {
-      const refs = refsForOp(msg.type, msg);
+      const refs = refsForOp(d, msg.type, msg);
       if (refs.length > 0) bim.viewer.show(refs);
       return true;
     }
     case 'ISOLATE': {
-      const refs = refsForOp(msg.type, msg);
+      const refs = refsForOp(d, msg.type, msg);
       if (refs.length > 0) isolateExactly(bim, refs);
       return true;
     }
     case 'ISOLATE_ADD':
     case 'ISOLATE_REMOVE': {
-      const refs = refsForOp(msg.type, msg);
+      const refs = refsForOp(d, msg.type, msg);
       if (refs.length > 0) changeIsolation(bim, refs, msg.type === 'ISOLATE_ADD' ? 'add' : 'remove');
       return true;
     }
