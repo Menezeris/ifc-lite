@@ -75,6 +75,8 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/i18n/en.ts` | 2 | fork catalogue `catalogues/aim-fork.en.ts` (panel titles, `ribbon.tab.documents` = "AIM") |
 | `packages/renderer/src/index.ts` | 5 | generic external-overlay hook + registry — **upstream-PR candidate** |
 | `packages/collab-server/src/bin.ts` | 3 | fail-closed startup guard (replaces upstream's warn-only block) |
+| `apps/viewer/src/components/viewer/tools/SectionHint.tsx` | 1 | no Section hint while the AIM host hides the section widget (`showGizmo` false, D-101) |
+| `apps/viewer/src/components/viewer/tools/SectionVisualization.tsx` | 1 | no cardinal drag handle while the section widget is hidden (D-101) |
 | `scripts/lib/presentation-channel-allowlist.mjs` | 1 | `aim/aimLens.ts` in `REQUIRES_ROUTING_MARKER`: AIM chat isolation routes through `resolvePresentationIds` (D-096) |
 
 If you resolve a conflict here, grep for `AIM-FORK` to confirm you kept all our

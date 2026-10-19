@@ -37,7 +37,7 @@ let appliedRev: string | undefined;
 /** Verzia, ktorej izolácia ešte beží (vyhodnotenie je asynchrónne). */
 let pendingIsolationRev: string | null = null;
 /** Izolácia z chatu: počty a presné id v kanáli (uvoľní sa len, ak ich kanál stále drží). */
-let isolation: (AimIsolation & { ids: number[] }) | null = null;
+let isolation: (AimIsolation & { ids: number[]; raw: number[] }) | null = null;
 /** Poradie izolácií: staršia, ktorá dobehne po novšej alebo po zrušení, sa zahodí. */
 let isolationGen = 0;
 /** Verzia, ktorej izolácia zlyhala (`LENS_QUERY` ju nahlási ako chybu, nie úspech). */
@@ -65,6 +65,9 @@ async function isolate(msg: ApplyLensMessage, rules: Lens['rules'], tag: string,
   if (gen !== isolationGen) return;
   const raw = new Set<number>();
   for (const ids of matched.values()) for (const id of ids) raw.add(id);
+  // `add` k izolácii z chatu rozšíri doterajšiu, nie nahradí (AIM D-101, #95) - ak ju kanál stále drží.
+  const prev = msg.mode === 'add' && isolation && ruleIsolationOwnsChannel(state.isolatedEntities, isolation.ids) ? isolation : null;
+  if (prev) for (const id of prev.raw) raw.add(id);
   // Zostava bez geometrie (schodisko ako kontajner) sa izoluje cez svoje časti, ako v paneli Lens.
   const ids = resolvePresentationIds(useViewerStore.getState().cameraCallbacks.resolveHighlightIds, [...raw]);
   const now = useViewerStore.getState();
@@ -73,9 +76,10 @@ async function isolate(msg: ApplyLensMessage, rules: Lens['rules'], tag: string,
   if (ids.length > 0) now.isolateEntities(ids);
   isolation = {
     ...(msg.rev ? { rev: msg.rev } : {}),
-    rules: rules.map((r) => ({ name: r.name, count: matched.get(r.id)?.size ?? 0 })),
+    rules: [...(prev?.rules ?? []), ...rules.map((r) => ({ name: r.name, count: matched.get(r.id)?.size ?? 0 }))],
     isolated: raw.size,
     ids,
+    raw: [...raw],
   };
 }
 
@@ -142,6 +146,20 @@ function answerLensQuery(msg: LensQueryMessage, origin: string, started = Date.n
   const iso = isolation ? { rev: isolation.rev, rules: isolation.rules, isolated: isolation.isolated } : null;
   const summary = summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, msg.rev, iso);
   reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: true, result: { ...summary, ...(ready ? {} : { pending: true }) } });
+}
+
+/** Súhrn poslednej lens z chatu po jej vyhodnotení (D-101, `APPLIED`); null = chat lens nepoužil. */
+export async function settledLensSummary(timeoutMs: number, started = Date.now()): Promise<unknown> {
+  if (appliedRev === undefined && !isolation && pendingIsolationRev === null) return null;
+  const state = useViewerStore.getState();
+  const lens = state.activeLensId === SLOT && isAimLens(slotLens(state)) ? slotLens(state) : null;
+  const ready = pendingIsolationRev === null && (!lens || isEvaluated(lens, state.lensRuleCounts, state.lensAutoColorLegend));
+  if (!ready && Date.now() - started < timeoutMs) {
+    await new Promise((r) => setTimeout(r, POLL_MS));
+    return settledLensSummary(timeoutMs, started);
+  }
+  const iso = isolation ? { rev: isolation.rev, rules: isolation.rules, isolated: isolation.isolated } : null;
+  return { ...summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, appliedRev, iso), ...(ready ? {} : { pending: true }) };
 }
 
 export function handleLensMessage(data: LensInboundMessage, origin: string): void {

@@ -109,15 +109,20 @@ function frameTarget(msg: CameraMessage, bim: BimContext, g: TargetHelpers): voi
  * smeru, preto ide až po animácii smeru - spustené hneď prepísalo koncový bod
  * animácie a preset s cieľom kamerou nepohol (AIMviewer #65).
  */
-export function runCamera(msg: CameraMessage, step: CameraStep, bim: BimContext, g: TargetHelpers): void {
+export function runCamera(msg: CameraMessage, step: CameraStep, bim: BimContext, g: TargetHelpers): Promise<void> {
   const token = ++latest;
   const state = useViewerStore.getState();
   if (msg.projection) state.setProjectionMode(msg.projection);
   const wait = setDirection(state, msg, step);
-  if (!msg.guids?.length && !msg.selector && !msg.fit) return;
+  // Promise skončí po animácii a rámovaní, aby `APPLIED` (D-101) hlásilo koncovú pózu.
+  const settle = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+  if (!msg.guids?.length && !msg.selector && !msg.fit) return wait > 0 ? settle(wait + FRAME_SLACK_MS) : Promise.resolve();
   const frame = () => {
     if (token === latest) frameTarget(msg, bim, g);
   };
-  if (wait > 0) setTimeout(frame, wait + FRAME_SLACK_MS);
-  else frame();
+  if (wait <= 0) {
+    frame();
+    return Promise.resolve();
+  }
+  return settle(wait + FRAME_SLACK_MS).then(frame);
 }
