@@ -39,10 +39,13 @@ const VIEWPOINT_MS = 300;
 let latest = 0;
 
 /** Póza od hosta (IFC svet) -> render rámec, s FOV a projekciou, ktoré kamera práve má. */
-function applyHostViewpoint(state: State, vp: BridgeViewpoint): void {
+function applyHostViewpoint(state: State, vp: BridgeViewpoint): boolean {
   const cam = state.cameraCallbacks;
   const current = cam.getViewpoint?.();
-  if (!current || !cam.applyViewpoint) return;
+  if (!current || !cam.applyViewpoint) {
+    console.warn('[aim-bridge] SET_CAMERA viewpoint: kamera viewera ešte nie je pripravená');
+    return false;
+  }
   const offset = bcfWorldOffset(state.models, state.geometryResult);
   cam.applyViewpoint({
     ...current,
@@ -51,6 +54,7 @@ function applyHostViewpoint(state: State, vp: BridgeViewpoint): void {
     up: ifcDirToRender(vp.up),
     ...(vp.orthoSize !== undefined ? { orthoSize: vp.orthoSize } : {}),
   }, true, VIEWPOINT_MS);
+  return true;
 }
 
 /** Set view aktívneho rezu; bez rezu nič (host to vie z `view_state`). */
@@ -76,8 +80,7 @@ function lookAtSection(state: State): boolean {
 function setDirection(state: State, msg: CameraMessage, step: CameraStep): number {
   const cam = state.cameraCallbacks;
   if (msg.viewpoint) {
-    applyHostViewpoint(state, msg.viewpoint);
-    return VIEWPOINT_MS;
+    return applyHostViewpoint(state, msg.viewpoint) ? VIEWPOINT_MS : 0;
   }
   switch (step.kind) {
     case 'home': cam.home?.(); return 500;
