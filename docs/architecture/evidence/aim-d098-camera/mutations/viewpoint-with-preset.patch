@@ -1,0 +1,13 @@
+diff --git a/apps/viewer/src/aim/view-protocol.ts b/apps/viewer/src/aim/view-protocol.ts
+index 8e909f8a..af5d0d7a 100644
+--- a/apps/viewer/src/aim/view-protocol.ts
++++ b/apps/viewer/src/aim/view-protocol.ts
+@@ -147,7 +147,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
+       // Jeden cieľ rámovania; póza nahrádza smer presetu.
+       const targets = [m.guids !== undefined && (m.guids as string[]).length > 0, m.selector !== undefined, m.fit !== undefined];
+       if (targets.filter(Boolean).length > 1) return false;
+-      return true;
++      return m.viewpoint === undefined || m.preset === 'keep';
+     }
+     case 'SET_VIEW_MODE':
+       return (VIEW_MODES as readonly unknown[]).includes(m.mode) && optional(m.storeyGuid, isStr);
