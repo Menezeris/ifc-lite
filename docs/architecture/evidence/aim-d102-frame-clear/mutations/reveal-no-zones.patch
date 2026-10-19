@@ -1,8 +1,8 @@
-diff --git b/apps/viewer/src/aim/frame-refs.ts a/apps/viewer/src/aim/frame-refs.ts
-index e7c26a57..efeed7a2 100644
---- b/apps/viewer/src/aim/frame-refs.ts
-+++ a/apps/viewer/src/aim/frame-refs.ts
-@@ -18,7 +18,7 @@ import { resolvePresentationIds } from '@/lib/presentation/resolvePresentationId
+diff --git b/apps/viewer/src/aim/frame-gates.ts a/apps/viewer/src/aim/frame-gates.ts
+index b3027e38..619e7d75 100644
+--- b/apps/viewer/src/aim/frame-gates.ts
++++ a/apps/viewer/src/aim/frame-gates.ts
+@@ -10,7 +10,7 @@
  type Gate = { spaces: boolean; spatialZones: boolean };
  type GateKey = keyof Gate;
  

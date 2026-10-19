@@ -1,8 +1,8 @@
-diff --git b/apps/viewer/src/aim/frame-refs.ts a/apps/viewer/src/aim/frame-refs.ts
-index 813de4c3..efeed7a2 100644
---- b/apps/viewer/src/aim/frame-refs.ts
-+++ a/apps/viewer/src/aim/frame-refs.ts
-@@ -25,7 +25,7 @@ export function gatesToReveal(ifcTypes: readonly string[], gate: Gate): GateKey[
+diff --git b/apps/viewer/src/aim/frame-gates.ts a/apps/viewer/src/aim/frame-gates.ts
+index 0dc83493..619e7d75 100644
+--- b/apps/viewer/src/aim/frame-gates.ts
++++ a/apps/viewer/src/aim/frame-gates.ts
+@@ -17,7 +17,7 @@ export function gatesToReveal(ifcTypes: readonly string[], gate: Gate): GateKey[
    const keys = new Set<GateKey>();
    for (const t of ifcTypes) {
      const key = CLASS_GATE[t.toUpperCase()];

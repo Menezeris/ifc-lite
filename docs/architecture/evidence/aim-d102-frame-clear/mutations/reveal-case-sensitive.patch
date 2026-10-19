@@ -1,8 +1,8 @@
-diff --git b/apps/viewer/src/aim/frame-refs.ts a/apps/viewer/src/aim/frame-refs.ts
-index 1f1b6238..efeed7a2 100644
---- b/apps/viewer/src/aim/frame-refs.ts
-+++ a/apps/viewer/src/aim/frame-refs.ts
-@@ -24,7 +24,7 @@ const CLASS_GATE: Record<string, GateKey> = { IFCSPACE: 'spaces', IFCSPATIALZONE
+diff --git b/apps/viewer/src/aim/frame-gates.ts a/apps/viewer/src/aim/frame-gates.ts
+index 81b17989..619e7d75 100644
+--- b/apps/viewer/src/aim/frame-gates.ts
++++ a/apps/viewer/src/aim/frame-gates.ts
+@@ -16,7 +16,7 @@ const CLASS_GATE: Record<string, GateKey> = { IFCSPACE: 'spaces', IFCSPATIALZONE
  export function gatesToReveal(ifcTypes: readonly string[], gate: Gate): GateKey[] {
    const keys = new Set<GateKey>();
    for (const t of ifcTypes) {

@@ -9,15 +9,15 @@ The change has three parts.
 - **`CLEAR_SELECTION`.** Clears the selection like a click into empty space.
 - **Earlier view-state queries.** The view-state query module is fetched when the bridge mounts, so the first `APPLIED` no longer waits for it.
 
-The test (`frame-refs.test.ts`) imports the new module, so reverting it to the base (deleting the file) makes the test fail to load and the CI revert oracle (`Changed tests observe production`) reports INCONCLUSIVE. Each decision of the tested function `gatesToReveal` was instead checked with a surgical mutation. The `CLEAR_SELECTION` message check is covered by the existing `command-gate.test.ts`, which imports `isCommandMessage` from the base module.
+The pure part (which hidden classes to turn on) lives in `frame-gates.ts`, without the store, so its test runs without loading the viewer or the WASM package. The test (`frame-gates.test.ts`) imports this new module, so reverting it to the base (deleting the file) makes the test fail to load and the CI revert oracle (`Changed tests observe production`) reports INCONCLUSIVE. Each decision of the tested function `gatesToReveal` was instead checked with a surgical mutation. The `CLEAR_SELECTION` message check is covered by the existing `command-gate.test.ts`, which imports `isCommandMessage` from the base module.
 
 Each patch is written mutant→fixed (the orientation of `git diff base...head`); the oracle reverse-applies it. Every run ended `OBSERVED` (exit 0) with restoration verified, against base `origin/main`. The full records are in `summary.json`.
 
 | Patch | Mutation | Test that went red |
 |---|---|---|
-| `reveal-ignores-gate.patch` | toggles a class that is already visible (and so hides it) | `frame-refs.test.ts` |
-| `reveal-case-sensitive.patch` | misses `IfcSpace` written in the viewer's mixed case | `frame-refs.test.ts` |
-| `reveal-no-zones.patch` | does not turn on zones (IfcSpatialZone) | `frame-refs.test.ts` |
+| `reveal-ignores-gate.patch` | toggles a class that is already visible (and so hides it) | `frame-gates.test.ts` |
+| `reveal-case-sensitive.patch` | misses `IfcSpace` written in the viewer's mixed case | `frame-gates.test.ts` |
+| `reveal-no-zones.patch` | does not turn on zones (IfcSpatialZone) | `frame-gates.test.ts` |
 
 `frameRefs`, `visibility-commands.ts` (FOCUS, SELECT, CLEAR_SELECTION) and `useAimViewCommands.ts` are store and renderer glue with no unit test. They were verified live: local fork viewer embedded in a host page, `AC20-FZK-Haus.ifc`, Playwright posting the bridge messages.
 - `SELECT` of a room moved the camera from (50, -100, 50) to (27.6, -17.6, 20.7), and `APPLIED` already carried the new position.
@@ -33,7 +33,7 @@ Use a clean checkout of the branch with dependencies installed. Copy the patches
 
 ```bash
 node scripts/check-test-revert-oracle.mjs --base origin/main \
-  --only apps/viewer/src/aim/frame-refs.ts \
-  --test apps/viewer/src/aim/frame-refs.test.ts \
+  --only apps/viewer/src/aim/frame-gates.ts \
+  --test apps/viewer/src/aim/frame-gates.test.ts \
   --mutation /tmp/d102-mut/reveal-ignores-gate.patch --ci --json
 ```

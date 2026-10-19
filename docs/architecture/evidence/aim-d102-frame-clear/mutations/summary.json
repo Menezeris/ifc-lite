@@ -2,42 +2,42 @@
   "reveal-case-sensitive": {
     "verdict": "OBSERVED",
     "exitCode": 0,
-    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/frame-refs.test.ts; that file has a green, attributable baseline.",
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/frame-gates.test.ts; that file has a green, attributable baseline.",
     "base": "b34cad6de4d7782f83bef434822fedbd88041642",
-    "head": "f4f1b38e4fa9471dcc3b11680a0363fa3927821f",
+    "head": "354ca3fec8988c233a0c3965291e95a4e73e85cd",
     "production": [
-      "apps/viewer/src/aim/frame-refs.ts"
+      "apps/viewer/src/aim/frame-gates.ts"
     ],
     "tests": [
-      "apps/viewer/src/aim/frame-refs.test.ts"
+      "apps/viewer/src/aim/frame-gates.test.ts"
     ],
     "restoration": "verified"
   },
   "reveal-ignores-gate": {
     "verdict": "OBSERVED",
     "exitCode": 0,
-    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/frame-refs.test.ts; that file has a green, attributable baseline.",
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/frame-gates.test.ts; that file has a green, attributable baseline.",
     "base": "b34cad6de4d7782f83bef434822fedbd88041642",
-    "head": "f4f1b38e4fa9471dcc3b11680a0363fa3927821f",
+    "head": "354ca3fec8988c233a0c3965291e95a4e73e85cd",
     "production": [
-      "apps/viewer/src/aim/frame-refs.ts"
+      "apps/viewer/src/aim/frame-gates.ts"
     ],
     "tests": [
-      "apps/viewer/src/aim/frame-refs.test.ts"
+      "apps/viewer/src/aim/frame-gates.test.ts"
     ],
     "restoration": "verified"
   },
   "reveal-no-zones": {
     "verdict": "OBSERVED",
     "exitCode": 0,
-    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/frame-refs.test.ts; that file has a green, attributable baseline.",
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/frame-gates.test.ts; that file has a green, attributable baseline.",
     "base": "b34cad6de4d7782f83bef434822fedbd88041642",
-    "head": "f4f1b38e4fa9471dcc3b11680a0363fa3927821f",
+    "head": "354ca3fec8988c233a0c3965291e95a4e73e85cd",
     "production": [
-      "apps/viewer/src/aim/frame-refs.ts"
+      "apps/viewer/src/aim/frame-gates.ts"
     ],
     "tests": [
-      "apps/viewer/src/aim/frame-refs.test.ts"
+      "apps/viewer/src/aim/frame-gates.test.ts"
     ],
     "restoration": "verified"
   }
