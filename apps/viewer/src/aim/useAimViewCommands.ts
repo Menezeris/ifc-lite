@@ -14,21 +14,29 @@
 import { useEffect, useRef } from 'react';
 import { useViewerStore } from '@/store';
 import { clearSectionCut, showSectionCut } from '@/store/section-active';
-import { mergedSectionBounds, sectionAxisRange } from '@/lib/section/section-distance';
+import { sectionAxisRange } from '@/lib/section/section-distance';
 import { totalYupOffset } from '@/lib/geo/coordinate-frame';
 import { useViewMode } from '@/hooks/useViewMode';
 import type { BimContext } from '@ifc-lite/sdk';
 import { guidForEntity, resolveGuids, resolveSelector } from './bridge-protocol.js';
 import type { ViewInboundMessage } from './view-protocol.js';
 import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCommands.js';
+import { sectionRenderBounds } from './sectionRange.js';
 
 /** D-085 (obálky, stav, rez cez prvok) sa načíta až pri prvom použití - mimo vstupného balíka. */
 let queries: Promise<typeof import('./viewQueries.js')> | null = null;
 const loadQueries = () => (queries ??= import('./viewQueries.js'));
-const GUIDS = { resolveGuids, guidForEntity };
+const GUIDS = { resolveGuids, guidForEntity, sectionRenderBounds };
 let camera: Promise<typeof import('./viewCamera.js')> | null = null;
 const loadCamera = () => (camera ??= import('./viewCamera.js'));
 const TARGETS = { resolveGuids, resolveSelector };
+
+/** Widget (quad a obrys) aktívneho rezu; bez hodnoty sa nemení (#63). */
+function applyGizmo(show: boolean | undefined): void {
+  if (show === undefined) return;
+  const state = useViewerStore.getState();
+  if (state.sectionPlane.showGizmo !== show) state.setSectionPlaneShowGizmo(state.sectionPlane.id, show);
+}
 
 export function useAimViewCommands(bim: BimContext) {
   const { setMode, storeys } = useViewMode();
@@ -43,23 +51,31 @@ export function useAimViewCommands(bim: BimContext) {
           clearSectionCut(useViewerStore.getState);
           return;
         }
+        if (msg.action === 'gizmo') {
+          // Len widget aktívneho rezu, rez ostáva (#63).
+          applyGizmo(msg.showGizmo);
+          return;
+        }
         if (msg.storeyGuid) {
           const storey = pickStorey(storeys, msg.storeyGuid);
           if (!storey) {
             console.warn('[aim-bridge] SET_SECTION: neznáme podlažie', msg.storeyGuid);
             return;
           }
-          const range = sectionAxisRange(mergedSectionBounds(state.models, state.geometryResult), 'down');
-          const first = [...state.models.values()].find((m) => m.geometryResult?.coordinateInfo);
-          const offY = totalYupOffset(first?.geometryResult?.coordinateInfo).y;
+          // Rozsah, voči ktorému renderer reže, a rámec modelu, z ktorého je
+          // elevácia podlažia (#63: holá federovaná obálka posunula rez).
+          const range = sectionAxisRange(sectionRenderBounds(state), 'down');
+          const own = state.models.get(storey.info.modelId) ?? [...state.models.values()].find((m) => m.geometryResult?.coordinateInfo);
+          const offY = totalYupOffset(own?.geometryResult?.coordinateInfo).y;
           const position = storeyCutPercent(storey.elevation, msg.offsetM ?? 1.2, offY, range);
           if (position === null) return;
           showSectionCut(useViewerStore.getState, { axis: 'down', position, flipped: msg.flipped === true });
+          applyGizmo(msg.showGizmo);
           return;
         }
         if (msg.guids?.length || msg.coordinate !== undefined) {
           // Rez cez prvok alebo na presnej súradnici IFC sveta (D-085).
-          void loadQueries().then((q) => q.cutThroughTarget(msg, () => sectionToken.current === token, GUIDS));
+          void loadQueries().then((q) => q.cutThroughTarget(msg, () => sectionToken.current === token, GUIDS, () => applyGizmo(msg.showGizmo)));
           return;
         }
         if (msg.axis && msg.position !== undefined) {
@@ -68,6 +84,7 @@ export function useAimViewCommands(bim: BimContext) {
             position: msg.position,
             flipped: msg.flipped === true,
           });
+          applyGizmo(msg.showGizmo);
         }
         return;
       }

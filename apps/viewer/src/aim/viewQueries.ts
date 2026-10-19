@@ -17,7 +17,8 @@ import { resolveEntityRef } from '@/store/resolveEntityRef';
 import { activeSectionPlane } from '@/store/section-active';
 import { getGlobalRenderer } from '@/hooks/useBCF';
 import { bcfWorldOffset } from '@/hooks/bcf/viewpoint-world-frame';
-import { mergedSectionBounds, percentToWorld, sectionAxisRange } from '@/lib/section/section-distance';
+import { percentToWorld, sectionAxisRange } from '@/lib/section/section-distance';
+import type { sectionRenderBounds } from './sectionRange.js';
 import { expandToGeometryBearingIds } from '@/utils/aggregation';
 import { deriveViewMode } from '@/hooks/viewModeCore';
 import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
@@ -31,10 +32,15 @@ import {
 type State = ReturnType<typeof useViewerStore.getState>;
 
 /**
- * GUID <-> prvok z `bridge-protocol.ts`, odovzdané volajúcim: priamy import by
- * ten modul vytrhol zo vstupného balíka do zdieľaného chunku (perf ratchet).
+ * GUID <-> prvok z `bridge-protocol.ts` a obálka rezu z `sectionRange.ts`,
+ * odovzdané volajúcim: priamy import by tie moduly vytrhol zo vstupného
+ * balíka do zdieľaného chunku (perf ratchet).
  */
-export interface GuidHelpers { resolveGuids: typeof resolveGuids; guidForEntity: typeof guidForEntity }
+export interface GuidHelpers {
+  resolveGuids: typeof resolveGuids;
+  guidForEntity: typeof guidForEntity;
+  sectionRenderBounds: typeof sectionRenderBounds;
+}
 
 /** Výsledok zaokrúhlený na milimetre - Claude ho číta, nie renderer. */
 const mm = (v: number) => Math.round(v * 1000) / 1000;
@@ -52,7 +58,6 @@ function describeBox(box: Box3) {
 export const SECTION_AXIS_IN_IFC = { x: 'IFC X', y: 'IFC Z (výška)', z: 'IFC Y' } as const;
 
 export const worldOffset = (state: State): Vec3 => bcfWorldOffset(state.models, state.geometryResult);
-export const sectionBounds = (state: State) => mergedSectionBounds(state.models, state.geometryResult);
 
 /** Render-rámcová obálka jedného prvku podľa GUID (zostava bez geometrie = jej časti). */
 function renderBoundsOfGuid(state: State, guid: string, g: GuidHelpers): Box3 | null {
@@ -84,7 +89,8 @@ export function renderBoundsOfGuids(state: State, guids: readonly string[], g: G
 /** `QUERY bounds`: obálka modelu a (voliteľne) prvkov v IFC svete. */
 export function queryBounds(state: State, guids: readonly string[], g: GuidHelpers) {
   const offset = worldOffset(state);
-  const model = sectionBounds(state);
+  // Obálka, voči ktorej renderer reže (#63): rez, spätné čítanie aj obálka modelu z jednej pravdy.
+  const model = g.sectionRenderBounds(state);
   const { found, missing, union } = renderBoundsOfGuids(state, guids, g);
   return {
     frame: 'ifc_world', units: 'm', axes: { x: 'IFC X', y: 'IFC Y', z: 'IFC Z (hore)' },
@@ -130,7 +136,7 @@ export function queryViewState(state: State, g: GuidHelpers) {
   });
   const offset = worldOffset(state);
   const plane = activeSectionPlane(state);
-  const range = plane ? sectionAxisRange(sectionBounds(state), plane.axis) : null;
+  const range = plane ? sectionAxisRange(g.sectionRenderBounds(state), plane.axis) : null;
   let section: Record<string, unknown> | null = null;
   if (plane) {
     const axis = hostAxis(plane.axis);
@@ -139,7 +145,7 @@ export function queryViewState(state: State, g: GuidHelpers) {
     if (range) point[axis] = percentToWorld(plane.position, range);
     const ifc = renderPointToIfc(point, offset);
     const coord = axis === 'x' ? ifc.x : axis === 'y' ? ifc.z : ifc.y;
-    section = { axis, crosses: SECTION_AXIS_IN_IFC[axis], position_percent: mm(plane.position), ...(range ? { coordinate: mm(coord) } : {}), flipped: plane.flipped };
+    section = { axis, crosses: SECTION_AXIS_IN_IFC[axis], position_percent: mm(plane.position), ...(range ? { coordinate: mm(coord) } : {}), flipped: plane.flipped, show_gizmo: plane.showGizmo };
   }
   const camera = getGlobalRenderer()?.getCamera();
   const selected = state.selectedEntityIds.size > 0
@@ -178,7 +184,7 @@ export function sectionCutFor(
   }
   if (!target) return null;
   const axis = viewerAxis(target.axis);
-  const position = cutPercent(target.world, sectionAxisRange(sectionBounds(state), axis));
+  const position = cutPercent(target.world, sectionAxisRange(g.sectionRenderBounds(state), axis));
   return position === null ? null : { axis, position };
 }
 
@@ -192,13 +198,14 @@ const SECTION_RETRIES = 60;
 
 type TargetSection = Extract<ViewInboundMessage, { type: 'SET_SECTION' }>;
 
-export function cutThroughTarget(msg: TargetSection, isCurrent: () => boolean, g: GuidHelpers, attempt = 0): void {
+export function cutThroughTarget(msg: TargetSection, isCurrent: () => boolean, g: GuidHelpers, after?: () => void, attempt = 0): void {
   if (!isCurrent()) return;
   const cut = sectionCutFor(useViewerStore.getState(), msg, g);
   if (cut) {
     showSectionCut(useViewerStore.getState, { ...cut, flipped: msg.flipped === true });
+    after?.();
   } else if (msg.guids?.length && attempt < SECTION_RETRIES) {
-    setTimeout(() => cutThroughTarget(msg, isCurrent, g, attempt + 1), SECTION_RETRY_MS);
+    setTimeout(() => cutThroughTarget(msg, isCurrent, g, after, attempt + 1), SECTION_RETRY_MS);
   } else {
     console.warn('[aim-bridge] SET_SECTION: prvok bez geometrie alebo bez osi', msg.guids ?? msg.coordinate);
   }

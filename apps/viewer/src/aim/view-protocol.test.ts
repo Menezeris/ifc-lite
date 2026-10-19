@@ -6,6 +6,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
 import { isViewMessage } from './view-protocol.js';
+import { percentToWorld } from '@/lib/section/section-distance';
 import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCommands.js';
 import {
   cutPercent, hostAxis, ifcCoordinateToRender, renderBoxToIfc, renderPointToIfc, sectionThroughBox, unionBoxes,
@@ -138,5 +139,30 @@ describe('rez cez prvok a IFC svet (AIM D-085)', () => {
     }
     assert.equal(cutPercent(5, { min: 0, max: 20 }), 25);
     assert.equal(cutPercent(5, null), null);
+  });
+});
+
+describe('rez nad podlažím a widget rezu (AIM #63)', () => {
+  it('widget: action gizmo s boolean, showGizmo pri set; iné tvary odmietne', () => {
+    for (const msg of [
+      { source: S, type: 'SET_SECTION', action: 'gizmo', showGizmo: false },
+      { source: S, type: 'SET_SECTION', action: 'set', storeyGuid: G, offsetM: 1, showGizmo: false },
+      { source: S, type: 'SET_SECTION', action: 'set', axis: 'z', coordinate: 3, showGizmo: true },
+    ]) assert.ok(isViewMessage(msg), JSON.stringify(msg));
+    for (const msg of [
+      { source: S, type: 'SET_SECTION', action: 'gizmo' },
+      { source: S, type: 'SET_SECTION', action: 'gizmo', showGizmo: 'no' },
+      { source: S, type: 'SET_SECTION', action: 'set', storeyGuid: G, showGizmo: 0 },
+    ]) assert.ok(!isViewMessage(msg), JSON.stringify(msg));
+  });
+
+  it('elevácie podlaží AIM: rovina = elevácia + offset a zmena offsetu o N m ju posunie presne o N m', () => {
+    // Elevácie z AIM DB (m): 1NP 0, 2NP 5, 3NP 9,2, 4NP 13,4, 5NP 16,954; rozsah ako živá obálka renderera.
+    const range = { min: -1.2, max: 21.5 };
+    const at = (elevation: number, offset: number) => percentToWorld(storeyCutPercent(elevation, offset, 0, range) ?? NaN, range);
+    assert.ok(Math.abs(at(9.2, 1) - 10.2) < 1e-9);
+    assert.ok(Math.abs(at(9.2, -2) - 7.2) < 1e-9);
+    assert.ok(Math.abs(at(9.2, 1) - at(9.2, -2) - 3) < 1e-9);
+    for (const e of [0, 5, 9.2, 13.4, 16.954]) assert.ok(Math.abs(at(e, 1.2) - (e + 1.2)) < 1e-9);
   });
 });
