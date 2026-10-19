@@ -1,0 +1,114 @@
+{
+ "cmd-id-unbounded": {
+  "verdict": "OBSERVED",
+  "exitCode": 0,
+  "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/command-gate.test.ts; that file has a green, attributable baseline.",
+  "base": "f19910bdd6526f1b7e5ccc3262fa48ea12d043c3",
+  "head": "b91e514e68381655063a99b66f4888a6a73e8565",
+  "production": [
+   "apps/viewer/src/aim/command-protocol.ts"
+  ],
+  "tests": [
+   "apps/viewer/src/aim/command-gate.test.ts"
+  ],
+  "restoration": "verified"
+ },
+ "gate-flush-unready": {
+  "verdict": "OBSERVED",
+  "exitCode": 0,
+  "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/command-gate.test.ts; that file has a green, attributable baseline.",
+  "base": "f19910bdd6526f1b7e5ccc3262fa48ea12d043c3",
+  "head": "b91e514e68381655063a99b66f4888a6a73e8565",
+  "production": [
+   "apps/viewer/src/aim/command-gate.ts"
+  ],
+  "tests": [
+   "apps/viewer/src/aim/command-gate.test.ts"
+  ],
+  "restoration": "verified"
+ },
+ "gate-skips-queue": {
+  "verdict": "OBSERVED",
+  "exitCode": 0,
+  "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/command-gate.test.ts; that file has a green, attributable baseline.",
+  "base": "f19910bdd6526f1b7e5ccc3262fa48ea12d043c3",
+  "head": "b91e514e68381655063a99b66f4888a6a73e8565",
+  "production": [
+   "apps/viewer/src/aim/command-gate.ts"
+  ],
+  "tests": [
+   "apps/viewer/src/aim/command-gate.test.ts"
+  ],
+  "restoration": "verified"
+ },
+ "isolate-add-replaces": {
+  "verdict": "OBSERVED",
+  "exitCode": 0,
+  "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/command-gate.test.ts; that file has a green, attributable baseline.",
+  "base": "f19910bdd6526f1b7e5ccc3262fa48ea12d043c3",
+  "head": "b91e514e68381655063a99b66f4888a6a73e8565",
+  "production": [
+   "apps/viewer/src/aim/command-protocol.ts"
+  ],
+  "tests": [
+   "apps/viewer/src/aim/command-gate.test.ts"
+  ],
+  "restoration": "verified"
+ },
+ "isolate-remove-noop": {
+  "verdict": "OBSERVED",
+  "exitCode": 0,
+  "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/command-gate.test.ts; that file has a green, attributable baseline.",
+  "base": "f19910bdd6526f1b7e5ccc3262fa48ea12d043c3",
+  "head": "b91e514e68381655063a99b66f4888a6a73e8565",
+  "production": [
+   "apps/viewer/src/aim/command-protocol.ts"
+  ],
+  "tests": [
+   "apps/viewer/src/aim/command-gate.test.ts"
+  ],
+  "restoration": "verified"
+ },
+ "isolate-target-optional": {
+  "verdict": "OBSERVED",
+  "exitCode": 0,
+  "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/command-gate.test.ts; that file has a green, attributable baseline.",
+  "base": "f19910bdd6526f1b7e5ccc3262fa48ea12d043c3",
+  "head": "b91e514e68381655063a99b66f4888a6a73e8565",
+  "production": [
+   "apps/viewer/src/aim/command-protocol.ts"
+  ],
+  "tests": [
+   "apps/viewer/src/aim/command-gate.test.ts"
+  ],
+  "restoration": "verified"
+ },
+ "settled-single-wait": {
+  "verdict": "OBSERVED",
+  "exitCode": 0,
+  "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/command-gate.test.ts; that file has a green, attributable baseline.",
+  "base": "f19910bdd6526f1b7e5ccc3262fa48ea12d043c3",
+  "head": "b91e514e68381655063a99b66f4888a6a73e8565",
+  "production": [
+   "apps/viewer/src/aim/command-gate.ts"
+  ],
+  "tests": [
+   "apps/viewer/src/aim/command-gate.test.ts"
+  ],
+  "restoration": "verified"
+ },
+ "track-swallows-error": {
+  "verdict": "OBSERVED",
+  "exitCode": 0,
+  "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/command-gate.test.ts; that file has a green, attributable baseline.",
+  "base": "f19910bdd6526f1b7e5ccc3262fa48ea12d043c3",
+  "head": "b91e514e68381655063a99b66f4888a6a73e8565",
+  "production": [
+   "apps/viewer/src/aim/command-gate.ts"
+  ],
+  "tests": [
+   "apps/viewer/src/aim/command-gate.test.ts"
+  ],
+  "restoration": "verified"
+ }
+}

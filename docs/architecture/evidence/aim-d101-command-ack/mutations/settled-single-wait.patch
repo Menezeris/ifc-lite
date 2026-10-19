@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/command-gate.ts a/apps/viewer/src/aim/command-gate.ts
+index 99d4a7ff..a9c08b67 100644
+--- b/apps/viewer/src/aim/command-gate.ts
++++ a/apps/viewer/src/aim/command-gate.ts
+@@ -51,7 +51,7 @@ export function track(p: Promise<unknown>): void {
+ /** Čaká, kým dobehnú všetky sledované kroky (aj tie, ktoré medzitým pribudnú). false = vypršal čas. */
+ export async function settled(timeoutMs: number, sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))): Promise<boolean> {
+   const deadline = Date.now() + timeoutMs;
+-  if (inflight.size > 0) {
++  while (inflight.size > 0) {
+     const left = deadline - Date.now();
+     if (left <= 0) return false;
+     await Promise.race([Promise.allSettled([...inflight]), sleep(left)]);

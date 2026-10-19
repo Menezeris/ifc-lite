@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/command-protocol.ts a/apps/viewer/src/aim/command-protocol.ts
+index d2871b5b..e682e901 100644
+--- b/apps/viewer/src/aim/command-protocol.ts
++++ a/apps/viewer/src/aim/command-protocol.ts
+@@ -31,7 +31,7 @@ export interface AppliedMessage {
+   state?: unknown;
+ }
+ 
+-const isCmdId = (v: unknown) => typeof v === 'string' && v.length > 0;
++const isCmdId = (v: unknown) => typeof v === 'string' && v.length > 0 && v.length <= MAX_CMD_ID;
+ 
+ export function isCommandMessage(data: unknown): data is CommandInboundMessage {
+   if (!data || typeof data !== 'object') return false;

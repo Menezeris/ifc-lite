@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/command-protocol.ts a/apps/viewer/src/aim/command-protocol.ts
+index 681413c2..e682e901 100644
+--- b/apps/viewer/src/aim/command-protocol.ts
++++ a/apps/viewer/src/aim/command-protocol.ts
+@@ -56,5 +56,5 @@ export function nextIsolation(current: ReadonlySet<number> | null, ids: readonly
+   if (op === 'add') return [...new Set([...(current ?? []), ...ids])];
+   if (!current) return [];
+   const drop = new Set(ids);
+-  return [...current];
++  return [...current].filter((id) => !drop.has(id));
+ }
