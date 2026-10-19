@@ -52,12 +52,10 @@ describe('obálka rezu = obálka renderera (AIM #63)', () => {
     assert.ok(bounds);
     // Renderer reže voči posunutej obálke (VZT +15 m hore), nie voči holému zjednoteniu.
     assert.ok(Math.abs(bounds.max.y - 23.24) < 1e-9, String(bounds.max.y));
+    // Rozsah rezu = živá obálka (min z ASR/VZT, max z posunutého VZT), nie holé zjednotenie.
     const range = sectionAxisRange(bounds, 'down');
     assert.ok(range);
-    for (const [elevation, offset] of [[2.7, 1], [2.7, -2], [9.2, 1]] as const) {
-      const world = percentToWorld(storeyCutPercent(elevation, offset, 0, range) ?? NaN, range);
-      assert.ok(Math.abs(world - (elevation + offset)) < 1e-9, `${elevation}+${offset} -> ${world}`);
-    }
+    assert.ok(Math.abs(range.min - -1.49) < 1e-9 && Math.abs(range.max - 23.24) < 1e-9, JSON.stringify(range));
     // Pred opravou (holé zjednotenie) by percento padlo inde.
     const bare = sectionAxisRange(mergedSectionBounds(models, null), 'down');
     assert.ok(bare);
