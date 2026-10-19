@@ -92,6 +92,7 @@ describe('command-protocol (AIM D-101)', () => {
     for (const msg of [
       { source: S, type: 'ACK_REQUEST', cmdId: 'c-1' },
       { source: S, type: 'CLEAR_FOCUS' },
+      { source: S, type: 'CLEAR_SELECTION' },
       { source: S, type: 'ISOLATE_ADD', guids: [G] },
       { source: S, type: 'ISOLATE_REMOVE', selector: { types: ['IfcStair'] } },
     ]) assert.strictEqual(isCommandMessage(msg), true, JSON.stringify(msg));

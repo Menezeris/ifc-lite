@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/frame-gates.ts a/apps/viewer/src/aim/frame-gates.ts
+index b3027e38..619e7d75 100644
+--- b/apps/viewer/src/aim/frame-gates.ts
++++ a/apps/viewer/src/aim/frame-gates.ts
+@@ -10,7 +10,7 @@
+ type Gate = { spaces: boolean; spatialZones: boolean };
+ type GateKey = keyof Gate;
+ 
+-const CLASS_GATE: Record<string, GateKey> = { IFCSPACE: 'spaces' };
++const CLASS_GATE: Record<string, GateKey> = { IFCSPACE: 'spaces', IFCSPATIALZONE: 'spatialZones' };
+ 
+ /** Prepínače viditeľnosti, ktoré treba zapnúť, aby boli cieľové triedy v scéne. */
+ export function gatesToReveal(ifcTypes: readonly string[], gate: Gate): GateKey[] {
