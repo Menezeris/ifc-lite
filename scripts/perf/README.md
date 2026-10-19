@@ -12,6 +12,110 @@ that also dominate in the browser; the WASM-only concerns (per-worker file
 re-decode, no threads, memory bandwidth) are orchestration-level and are read
 off the viewer's own telemetry (below).
 
+## Sloped coincident-sided differences (#7292)
+
+**Restored-O3 frozen-pair qualification complete; workload-dependent cost.**
+The [completed evidence](../../docs/architecture/evidence/issue-7292/final-43ec-qualified-runtime.json)
+binds fresh interleaved worker-pool comparisons on the small model, the void-heavy
+regression fixture and the larger tower. Exact flat typed fingerprints and
+canonical instanced metadata match on the small model and tower. The void-heavy
+fixture changes cut outputs and has a measurable runtime cost; passing the
+existing coarse regression gate does not establish neutrality. Current-main
+native, Clippy, root consumer, actual viewer/WASM and approved size checks retain
+their separate execution source and command scopes.
+
+Fixed inherited affinity for owned native Chrome, recorded physical-processor
+counters, a user-approved integrated CPU budget and stable same-source controls
+made a reproducible comparison possible without stopping other work. This is
+not an OS-exclusive reservation or whole-host idle claim. Large-model uploads
+use the same canonical file input through native CDP, with the whole staged IFC
+verified and cleaned. Complete raw output is exported in bounded chunks after
+timing; transmitting JSON text avoids Playwright recursively wrapping every
+number. Every actual JS/WASM response and every flat geometry buffer still
+requires full verification. Failed attempts remain separate and unused. Lesson:
+separate setup/collection cost from the authored worker-pool interval, keep
+actual byte coverage, and report correctness costs honestly. The approved engine
+ceiling keeps its original relative tolerance; its restored-O3 runtime condition
+is now fulfilled for the measured pair.
+
+The following measured Os disposition and attribution limits are historical.
+The independent native attribution campaign was incomplete after host admission
+refused a later sample. Earlier failed browser attempts and cleanup failures
+remain preserved.
+
+The measured branch ships LLVM `Os`, while matched main ships `O3`. The
+comparison therefore combines geometry/output changes and build policy. The
+trace identifies geometry work and overlapping consumer/frame waiting, but
+does not isolate a kernel cause or quantify the optimization-flag effect. Passing
+the compressed-transfer gate did not protect runtime cost. Lesson: evaluate size
+and end-to-end runtime together; a smaller shipping engine is not evidence of
+performance neutrality. The original one-file `O3` restoration fails its original transfer gate and
+original generated-types source guard. The generated declaration order is now
+committed, and the user conditionally approved a measured engine ceiling with
+the same relative tolerance. The fresh restored-O3 official build, types, approved size and root consumers
+pass. Fresh functional captures and scoped reporter proof transfers also pass. That historical fresh
+end-to-end runtime qualification ended without a verdict: canonical host admission
+refuses the campaign after a base-only sample, with no branch sample or completed
+pair. The window is released and its authorities revoked. At that stage the performance
+condition remained unfulfilled; approval did not erase either original
+failure or the measured shipping regression. Native proofs retain their actual
+qualification head and only their demonstrated source applicability.
+
+Historical native instruction comparisons improved after short-circuiting proper
+crossing tests when an exact zero or same-side orientation proves rejection.
+Lookup-only maps and shared projected containment retained emitted ordering.
+Those results compared instruction work and mesh counts, not worker-pool time
+or full byte identity.
+
+Replacing supported-cell hash collections with wide sorted records increased
+the actual compressed engine despite removing hash specializations: new sort
+specializations outweighed the removed code. That replacement was reverted.
+Do not repeat it on other wide keys without a different mechanism and a real
+source-built transfer measurement. Lazy support validation retains conservative
+candidate bounds and validates support before constructing an exact point.
+
+Reusing already-read triangle coordinates preserves the classifier's arithmetic
+and ordering, but that subsequent historical engine exceeded the transfer
+gate. Final artifacts lack usable function names, so a read-only inspection did
+not establish that consolidation replay clones large functions. Do not repeat
+that attribution or add outlining attributes without evidence. Those historical
+finite reporter comparisons passed independently of the preserved browser cleanup
+failure; neither proof nor instruction counts supplied a fresh
+end-to-end timing verdict.
+
+Replacing paired boundary direction counters with a mask increased the
+source-built engine; the prior counters were restored. An isolated build proved
+the determinant refactor produced byte-identical WASM, JavaScript and types:
+its explicit determinant oracle is called only by tests. Its shared arithmetic
+and analytic sign regression are retained without a production-size claim.
+Bypassing general-point dispatch at known-explicit plane-weld calls also grew
+the engine and was reverted. Fewer source lines, a reused map value type or
+simpler dispatch do not establish a compressed-transfer saving.
+
+Earlier coordinated idle windows and safe consumer cleanup did not qualify a complete
+interleaved worker-pool cohort under the unchanged host checks. An earlier capture
+also exposed a response observer retaining handles across the canonical cold
+reload; its correction preserves both navigations and captures setup bytes before
+invalidation. Refused campaigns remain separate and provide no timing verdict. On the historical
+`80bc1bff69` source, the first browser sample completed its load but could not
+complete delivered worker-script byte coverage afterward because a response
+handle was unavailable. Installed Playwright code shows worker-session teardown
+can invalidate that handle; the failed response URL was not recorded. That
+cohort accepts no rows. The separate
+native cohort stopped before its first sample when host admission failed. No
+retry, missing-body exemption or cached-file substitution qualified either
+attempt. That failure required worker-response retention before another accepted
+timing campaign; setup-navigation retention alone was insufficient. The historical
+completed Os campaign satisfies byte coverage and still records a runtime regression.
+
+Historical untimed native mesh counts and fingerprints match the base for Haus and Holter;
+ISSUE_129 changes geometry and reports fewer CSG failures. These fingerprints
+exclude instancing, text, material definitions, UVs and textures. Lesson: retain
+healthy neighbors in ordinary seam conformance, preserve the baseline replay's
+closure checks and budget-failure signals before opening oracle scopes, and
+qualify actual worker-pool cost before claiming neutrality.
+See the [correctness evidence and performance disposition](../../docs/architecture/evidence/issue-7292/README.md).
+
 ## TL;DR
 
 ```bash
@@ -30,6 +134,28 @@ scripts/perf/instructions.sh tests/models/ara3d/AC20-FZK-Haus.ifc --json
 
 Fetch a fixture first if missing: `pnpm fixtures ara3d/schependomlaan.ifc`.
 
+`ab-report.mjs` accepts input rows only with literal `side` values `base` and
+`branch`; `--base` and `--branch` set display labels and do not select rows.
+It refuses empty, incomplete, or unpaired comparisons before printing a
+verdict. Optional phases may be absent for a whole fixture; once supplied in
+any sample, they must be present in every base and branch sample for that
+fixture. Equal mesh/vertex/triangle counts remain a count check, not proof of
+byte identity.
+
+A zero baseline has no defined relative delta or noise floor. Both native and
+browser reporters preserve those values as `null`: zero on both sides is inconclusive (below
+timer resolution), while an increase from zero blocks a no-regression verdict.
+Positive-baseline noise and real-change thresholds are unchanged. The JSON
+verdict exposes `inconclusive` and `zeroBaselineIncrease`; each phase records
+its direction when the relative delta is defined. Reporter regression tests use
+synthetic input, not new performance measurements (#7912).
+
+The browser reporter retains descriptive partial metrics but requires every
+sample's metric to be present for a noise-based verdict. A metric absent
+everywhere remains optional. Unknown sides, invalid fixture/round/count
+identity and invalid supplied timings cannot produce a trusted comparison.
+Existing readiness, failed-sample and GPU-loss rules remain binding.
+
 **Instruction ceilings gate kernel and parse work only (#6982).** The
 `native-instructions` ratchet (`tests/perf-ratchets/native-instructions*.json`,
 0.05% tolerance, FZK-Haus per PR, ISSUE_129 daily) is a blocking check for
@@ -39,6 +165,16 @@ so it does not see scheduling, threading, WASM or browser-only effects (worker
 fan-out, memory bandwidth, GPU); a change in those still needs an end-to-end
 A/B (`ab.sh`, the browser rigs below), and a green ratchet is no evidence for it.
 
+
+## Generated shader commentary and eager bytes (#7918)
+
+WGSL comments inside generated shader strings survive JavaScript minification
+and count against eager viewer bytes. Keep explanations in TypeScript comments
+outside the template when they do not need to reach the GPU compiler. Moving
+the orthographic visibility explanation out of its generated string restored
+the existing bundle allowance without changing any shader operation or raising
+a ceiling. The rebuilt viewer and all six GPU witnesses passed. This is a
+bundle-size correction, with no model-load or frame-time speed claim.
 
 ## Accepted eager viewer JS growth (#7759)
 
@@ -1330,6 +1466,29 @@ and OS cache; timings are evidence, not a comparison baseline):
 | many surfaces | 52.13 KiB | 3.206 / 5.975 | 15.88 / 8.52 | 256 / 1,024 / 512 | 0 / 0 / 0 / 32 | 3.36 KiB (4 events) | 954 B / 8.00 KiB / 246.09 KiB |
 | boundary/breakline/contour | 5.48 KiB | 0.280 / 0.472 | 19.09 / 11.34 | 1 / 4 / 2 | 1 / 24 / 24 / 32 | 5.92 KiB (4 events) | 19.71 KiB / 8.00 KiB / 28.21 KiB |
 
+### One XML driver (C9a, #7784)
+
+Pull and stream used to be four parsers (terrain, plan, alignment, pipe), each
+with its own copy of the loop, the prologue, the text rules and the namespace
+and attribute handling; `parse_landxml_document` read the bytes three times and
+the wasm `parseLandXmlSourceBytes` four. They are now handlers on one
+`xml::Driver` and the source is read once. Measured base (main before the
+series) against the series head, interleaved, release, on a loaded shared host
+(wall time varied by +-10% run to run, so the verdict uses callgrind instruction
+counts, which are deterministic; wall medians of 5 runs agree):
+
+| | pull: `parse_landxml_document` over the 10 golden fixtures | `landxml_streaming_bench_5050` (whole + stream, 4 cases) |
+|---|---:|---:|
+| base | 72.9M instr, 117 ms | 19.13G instr, whole 523 ms / stream 876 ms (large TIN) |
+| series head | 25.3M instr (-65%), 51 ms | 11.37G instr (-41%), whole 189 ms / stream 532 ms |
+
+Lessons: (1) the stream cost was the per-token `VecDeque` traffic, the
+per-event attribute decode and the namespace-map clone, each done once per
+family (four times); the driver does them once. (2) The memchr-driven scanner
+removed the byte-at-a-time preflight. (3) Measure instruction counts for a
+refactor of this size; the first wall-clock runs differed by more than the
+effect of the small steps.
+
 ## Schema-specific crate-private registries (#4203, #4996)
 
 Selecting generated per-schema attribute tables by the source file's schema
@@ -1575,7 +1734,7 @@ Two lessons, both found by measuring rather than by design:
 - **The stream needs the baked basis before its first batch.** Without it,
   site-rotated models (skolebygg, advanced_model, DigitalHub) matched only the
   buffered route run with no basis, 2-5x worse. The frame is chosen before
-  meshing, so `process_geometry_streaming_filtered_with_baked_basis` publishes it then.
+  meshing, so `process` announces it through the sink's `on_frame` event then.
 
 ## The native probe (`perf_probe`)
 

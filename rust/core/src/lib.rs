@@ -82,8 +82,10 @@ pub mod project_locator;
 pub mod project_units;
 pub mod schema_family;
 pub mod schema_gen;
+pub mod typed_value;
 pub(crate) mod schema_helpers;
 pub mod step_encoding;
+pub mod slot;
 pub mod streaming;
 pub mod unit_labels;
 pub mod units;
@@ -100,8 +102,7 @@ pub use dense_index::DenseEntityIndex;
 pub use error::{Error, Result};
 pub use fast_parse::{
     extract_coordinate_list_from_entity, extract_coordinate_list_from_entity_f64,
-    extract_entity_refs_from_list, extract_entity_type_name,
-    extract_face_indices_from_entity, extract_first_entity_ref, parse_coordinates_direct,
+    extract_face_indices_from_entity, parse_coordinates_direct,
     parse_indices_direct, process_triangulated_faceset_direct, should_use_fast_path, FastMeshData,
     INVALID_INDEX,
 };
@@ -125,11 +126,12 @@ pub use project_units::{
 };
 pub use schema_family::SchemaFamily;
 pub use schema_gen::{AttributeValue, DecodedEntity, GeometryCategory, IfcSchema, ProfileCategory};
+pub use typed_value::Logical;
 pub use schema_helpers::{
     geometry_flags_by_name, has_geometry_by_name, is_representationless_spatial_container_by_name,
     ifc_type_from_keyword, ifc_type_from_record, is_simple_geometry_type, type_product_ifc_type,
 };
-pub use step_encoding::{decode_ifc_string, decode_step_binary};
+pub use step_encoding::{decode_ifc_string, decode_step_binary, optional_text};
 pub use streaming::{parse_stream, ParseEvent, StreamConfig};
 pub use unit_labels::{
     is_us_survey_foot_key, is_us_survey_foot_tokens, si_prefix, SiPrefix, SI_PREFIXES, US_SURVEY_FOOT_M,

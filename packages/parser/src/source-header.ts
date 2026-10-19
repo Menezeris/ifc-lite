@@ -185,8 +185,12 @@ function findKeywordThen(
   text: string,
   keyword: string,
   then: '(' | ';',
+<<<<<<< HEAD
 ): { start: number; thenAt: number } | undefined {
 // <<< AIM-FORK
+=======
+): { start: number; delimiterIndex: number } | undefined {
+>>>>>>> upstream/main
   const scan = new StepTextScan(text);
   for (let i = 0; i + keyword.length <= text.length; i++) {
     const skip = skipLexical(scan, text, i);
@@ -210,7 +214,11 @@ function findKeywordThen(
         if (comment === undefined || comment.stop) return undefined;
         at = comment.next;
       }
+<<<<<<< HEAD
       if (text[at] === then) return { start: i, thenAt: at }; // AIM-FORK: thenAt
+=======
+      if (text[at] === then) return { start: i, delimiterIndex: at };
+>>>>>>> upstream/main
     }
   }
   return undefined;
@@ -226,7 +234,11 @@ function extractRecordArgs(text: string, keyword: string): string | null {
   const hit = findKeywordThen(text, keyword, '(');
   if (hit === undefined) return null;
   const scan = new StepTextScan(text);
+<<<<<<< HEAD
   const start = hit.thenAt; // AIM-FORK: thenAt
+=======
+  const start = hit.delimiterIndex;
+>>>>>>> upstream/main
   let depth = 0;
   for (let i = start; i < text.length; i++) {
     const skip = skipLexical(scan, text, i);

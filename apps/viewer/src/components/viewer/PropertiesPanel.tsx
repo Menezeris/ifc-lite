@@ -88,6 +88,7 @@ import { CopyValueButton } from './properties/CopyValueButton';
 import { useCopyValue } from './properties/useCopyValue';
 import { SelectionSummaryPanel } from './properties/SelectionSummaryPanel';
 import { AssistantAction } from './assistant/AssistantAction';
+<<<<<<< HEAD
 // >>> AIM-FORK: AIM asset card, rendered only inside the AIM host (see docs/FORK_MAINTENANCE.md)
 import { AimInspectorTabs, useAimNativeHidden } from '@/aim/AimInspectorTabs';
 // <<< AIM-FORK
@@ -112,6 +113,12 @@ function TabScrollHost({ mobile, children }: { mobile: boolean; children: ReactN
 }
 // <<< AIM-FORK
 
+=======
+
+const DISCLOSURE_CHEVRON_CLASSES = 'size-3 transition-transform group-data-[state=closed]/disclosure:-rotate-90';
+const MULTI_SELECTION_TRIGGER_CLASSES = 'group/disclosure flex items-center gap-2 w-full p-2 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-left text-xs';
+const MULTI_SELECTION_SECTION_CLASSES = 'border-b border-zinc-200 dark:border-zinc-800';
+>>>>>>> upstream/main
 export function PropertiesPanel() {
   const { t, locale } = useTranslation();
   // Display-unit converter overrides (issue #1573 proposal 2) — read once
@@ -1377,7 +1384,7 @@ export function PropertiesPanel() {
             <span className="font-medium text-sm">{t('properties.panel.attributesHeading')}</span>
             {editMode && <PenLine className="h-3 w-3 text-overlay-accent ml-1" />}
             <span className="text-xs text-muted-foreground ml-auto">{foundAttributes.length}</span>
-            <ChevronDown className="size-3 transition-transform group-data-[state=closed]/disclosure:-rotate-90" aria-hidden="true" />
+            <ChevronDown className={DISCLOSURE_CHEVRON_CLASSES} aria-hidden="true" />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="divide-y border-t">
@@ -1415,7 +1422,7 @@ export function PropertiesPanel() {
             <Layers className="h-4 w-4 text-emerald-600" />
             <span className="font-medium text-sm">{t('properties.panel.structureHeading')}</span>
             <span className="text-xs text-muted-foreground ml-auto">{foundStructure.length}</span>
-            <ChevronDown className="size-3 transition-transform group-data-[state=closed]/disclosure:-rotate-90" aria-hidden="true" />
+            <ChevronDown className={DISCLOSURE_CHEVRON_CLASSES} aria-hidden="true" />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="divide-y border-t">
@@ -1439,7 +1446,7 @@ export function PropertiesPanel() {
             <Box className="h-4 w-4 text-amber-600" />
             <span className="font-medium text-sm">{t('properties.panel.zonesHeading')}</span>
             <span className="text-xs text-muted-foreground ml-auto">{foundZones.length}</span>
-            <ChevronDown className="size-3 transition-transform group-data-[state=closed]/disclosure:-rotate-90" aria-hidden="true" />
+            <ChevronDown className={DISCLOSURE_CHEVRON_CLASSES} aria-hidden="true" />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="divide-y border-t">
@@ -1966,12 +1973,12 @@ function EntityDataSection({
 
       {/* Attributes */}
       {attributes.length > 0 && (
-        <PersistentCollapsible id="multi-attributes" className="border-b border-zinc-200 dark:border-zinc-800">
-          <CollapsibleTrigger className="group/disclosure flex items-center gap-2 w-full p-2 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-left text-xs">
+        <PersistentCollapsible id="multi-attributes" className={MULTI_SELECTION_SECTION_CLASSES}>
+          <CollapsibleTrigger className={MULTI_SELECTION_TRIGGER_CLASSES}>
             <Tag className="h-3 w-3 text-zinc-400" />
             <span className="font-medium">{t('properties.panel.multiEntity.attributesHeading')}</span>
             <span className="text-2xs text-zinc-400 ml-auto">{attributes.length}</span>
-            <ChevronDown className="size-3 transition-transform group-data-[state=closed]/disclosure:-rotate-90" aria-hidden="true" />
+            <ChevronDown className={DISCLOSURE_CHEVRON_CLASSES} aria-hidden="true" />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="divide-y divide-zinc-100 dark:divide-zinc-900 border-t border-zinc-100 dark:border-zinc-900">
@@ -1993,12 +2000,12 @@ function EntityDataSection({
 
       {/* Properties */}
       {properties.length > 0 && (
-        <PersistentCollapsible id="multi-properties" className="border-b border-zinc-200 dark:border-zinc-800">
-          <CollapsibleTrigger className="group/disclosure flex items-center gap-2 w-full p-2 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-left text-xs">
+        <PersistentCollapsible id="multi-properties" className={MULTI_SELECTION_SECTION_CLASSES}>
+          <CollapsibleTrigger className={MULTI_SELECTION_TRIGGER_CLASSES}>
             <FileText className="h-3 w-3 text-zinc-400" />
             <span className="font-medium">{t('properties.panel.multiEntity.propertiesHeading')}</span>
             <span className="text-2xs text-zinc-400 ml-auto">{t('properties.panel.multiEntity.propertySetsCount', { count: properties.length })}</span>
-            <ChevronDown className="size-3 transition-transform group-data-[state=closed]/disclosure:-rotate-90" aria-hidden="true" />
+            <ChevronDown className={DISCLOSURE_CHEVRON_CLASSES} aria-hidden="true" />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="p-2 pt-0 space-y-2">
@@ -2012,12 +2019,12 @@ function EntityDataSection({
 
       {/* Quantities */}
       {quantities.length > 0 && (
-        <PersistentCollapsible id="multi-quantities" className="border-b border-zinc-200 dark:border-zinc-800">
-          <CollapsibleTrigger className="group/disclosure flex items-center gap-2 w-full p-2 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-left text-xs">
+        <PersistentCollapsible id="multi-quantities" className={MULTI_SELECTION_SECTION_CLASSES}>
+          <CollapsibleTrigger className={MULTI_SELECTION_TRIGGER_CLASSES}>
             <Calculator className="h-3 w-3 text-zinc-400" />
             <span className="font-medium">{t('properties.panel.multiEntity.quantitiesHeading')}</span>
             <span className="text-2xs text-zinc-400 ml-auto">{t('properties.panel.multiEntity.quantitySetsCount', { count: quantities.length })}</span>
-            <ChevronDown className="size-3 transition-transform group-data-[state=closed]/disclosure:-rotate-90" aria-hidden="true" />
+            <ChevronDown className={DISCLOSURE_CHEVRON_CLASSES} aria-hidden="true" />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="p-2 pt-0 space-y-2">

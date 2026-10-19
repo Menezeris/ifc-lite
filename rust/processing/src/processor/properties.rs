@@ -20,13 +20,7 @@ pub(super) struct RelDefinesByPropertiesLink {
 }
 
 fn normalize_ifc_property_name(raw: Option<&str>) -> Option<String> {
-    let name = normalize_optional_string(raw)?;
-    let cleaned = name.trim();
-    if cleaned.is_empty() {
-        return None;
-    }
-
-    Some(cleaned.to_string())
+    normalize_optional_string(raw)
 }
 
 fn is_space_or_zone_type(ifc_type: &IfcType) -> bool {
@@ -118,13 +112,8 @@ fn attribute_value_to_string(value: &AttributeValue) -> Option<String> {
         AttributeValue::Integer(number) => Some(number.to_string()),
         AttributeValue::Float(number) => Some(number.to_string()),
         AttributeValue::EntityRef(id) => Some(format!("#{id}")),
-        AttributeValue::List(values) => {
-            if values.len() >= 2 && matches!(values.first(), Some(AttributeValue::String(_))) {
-                return values.get(1).and_then(attribute_value_to_string);
-            }
-
-            attribute_list_to_string(values)
-        }
+        AttributeValue::Typed { value, .. } => attribute_value_to_string(value),
+        AttributeValue::List(values) => attribute_list_to_string(values),
     }
 }
 

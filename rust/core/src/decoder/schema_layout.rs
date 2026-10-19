@@ -13,6 +13,7 @@
 
 use super::{EntityDecoder, EntityScanner};
 use crate::generated::schema_registry::SchemaVersion;
+use crate::slot::{SchemaSlot, Slot};
 use rustc_hash::FxHashMap;
 use std::sync::{Arc, OnceLock};
 
@@ -48,6 +49,30 @@ impl EntityDecoder<'_> {
     pub fn attribute_index(&mut self, entity_name: &str, attribute: &str) -> Option<usize> {
         let schema = self.schema_version().unwrap_or(SchemaVersion::Ifc4x3);
         schema.attribute(entity_name, attribute).map(|slot| slot.index)
+    }
+
+    /// Resolve a moving [`SchemaSlot`] against this source's schema: the
+    /// declared `FILE_SCHEMA`, or IFC4X3 when it is undeclared or unknown (the
+    /// same default as [`Self::attribute_index`]). `None` when that schema
+    /// has no such attribute, e.g. `IfcLinearPlacement.RelativePlacement` in
+    /// an IFC4X2 file.
+    ///
+    /// The header is read once and cached, so this is a branch and an array
+    /// index; still resolve it once outside any per-entity loop.
+    pub fn slot<K>(&mut self, slot: SchemaSlot<K>) -> Option<Slot<K>> {
+        slot.at(self.schema_version().unwrap_or(SchemaVersion::Ifc4x3))
+    }
+
+    /// [`Self::slot`] for a reader that must keep working on a file whose
+    /// declared schema predates the entity: an `IFC4`-labelled export that
+    /// carries `IfcAlignment` (the IFC4X1 draft) or `IfcLinearPlacement` (IFC4X3)
+    /// has no declared layout to follow. When the declared schema does not
+    /// declare the slot's entity at all, the slot is resolved as `fallback`
+    /// lays it out; otherwise this is exactly [`Self::slot`]. The caller names
+    /// the layout such files have always been read with.
+    pub fn slot_or<K>(&mut self, slot: SchemaSlot<K>, fallback: SchemaVersion) -> Option<Slot<K>> {
+        let declared = self.schema_version().unwrap_or(SchemaVersion::Ifc4x3);
+        slot.at(if slot.entity_declared_in(declared) { declared } else { fallback })
     }
 
     /// The `IfcGrid` that lists `axis_id` among its `UAxes`/`VAxes`/`WAxes`

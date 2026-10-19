@@ -128,25 +128,10 @@ fn resolve_complex_properties(
     let mut budget = ComplexPropertyBudget::for_input(content.len());
     // Walked once per complex property id; a repeat listing reuses the value,
     // charged what it keeps (`ComplexPropertyBudget::listing`).
-    let mut memo = HashMap::new();
+    let mut memo = ComplexMemo::new();
     for (set, complex) in sets.iter_mut() {
         for &(index, prop_id) in complex.iter() {
-            let Ok(entity) = decoder.decode_by_id(prop_id) else { continue };
-            let (value, kind, data_type, values) = budget.listing(
-                &mut memo,
-                prop_id,
-                |budget| {
-                    let resolved = resolve_complex_property_value(&entity, &mut decoder, budget);
-                    let bytes = complex_property_listing_bytes(&resolved.0, resolved.3.as_deref().unwrap_or_default());
-                    (resolved, bytes)
-                },
-                spent_listing,
-            );
-            let property = &mut set.properties[index];
-            property.property_value = value;
-            property.property_type = kind;
-            property.data_type = data_type;
-            property.values = values;
+            resolve_complex_into(&mut set.properties[index], prop_id, &mut decoder, &mut budget, &mut memo);
         }
     }
     if budget.cuts() > 0 {
@@ -158,13 +143,45 @@ fn resolve_complex_properties(
     }
 }
 
+/// A complex property's resolved listing, as the budget memoises it.
+pub(super) type ComplexMemo = HashMap<u32, (ComplexListing, usize)>;
+type ComplexListing = (String, String, Option<String>, Option<Vec<String>>);
+
+/// Resolve one `IfcComplexProperty` (`prop_id`) into `property` under the
+/// model's `budget`. The one step both the server's ordered pass above and
+/// `property::PropertyDecoder` take, so a complex value is charged and cut
+/// the same way wherever it is read.
+pub(super) fn resolve_complex_into(
+    property: &mut Property,
+    prop_id: u32,
+    decoder: &mut EntityDecoder,
+    budget: &mut ComplexPropertyBudget,
+    memo: &mut ComplexMemo,
+) {
+    let Ok(entity) = decoder.decode_by_id(prop_id) else { return };
+    let (value, kind, data_type, values) = budget.listing(
+        memo,
+        prop_id,
+        |budget| {
+            let resolved = resolve_complex_property_value(&entity, decoder, budget);
+            let bytes = complex_property_listing_bytes(&resolved.0, resolved.3.as_deref().unwrap_or_default());
+            (resolved, bytes)
+        },
+        spent_listing,
+    );
+    property.property_value = value;
+    property.property_type = kind;
+    property.data_type = data_type;
+    property.values = values;
+}
+
 /// Extract a single property from IfcProperty entity.
 ///
 /// Mirrors the WASM path's `parsePropertyValue`
 /// (`packages/parser/src/on-demand-extractors.ts`) so server-parsed properties
 /// carry the SAME resolved value + kind + measure tag as the in-browser parse.
 /// STEP wraps values as typed tokens (`IFCLABEL('X')`, `IFCBOOLEAN(.T.)`), which
-/// the decoder stores as `AttributeValue::List([String(type), inner])`; the old
+/// the decoder stores as `AttributeValue::Typed { name, value }`; the old
 /// code only matched bare `String`/`Float` and emitted `format!("{:?}")` Debug
 /// garbage for every text/boolean value — this resolves them properly.
 pub(super) fn extract_property(
