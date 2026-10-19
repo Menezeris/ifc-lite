@@ -6,11 +6,13 @@
 
 mod exit_cap;
 mod exit_cap_far_field;
+pub(super) mod host_vertices;
 mod membrane;
 
 use super::super::processing::SourceHygiene;
 use super::geom::*;
 use super::{GeometryRouter, OpeningType, NORMALIZE_EPSILON};
+use crate::csg::plane_eps::PlaneEps;
 use crate::{Mesh, Point3, Vector3};
 use ifc_lite_core::{DecodedEntity, EntityDecoder};
 
@@ -100,7 +102,7 @@ impl GeometryRouter {
             // #6349: an opening whose items lie in frames >= 1 km apart comes back as
             // several frame parts; each stays its own cutter instead of being rounded
             // into one f32 mesh. An ordinary opening has exactly one part.
-            let opening_parts: Vec<Mesh> = match self.process_element_parts_with_hygiene(&opening_entity, decoder, SourceHygiene::IndexOnly) {
+            let opening_parts: Vec<Mesh> = match self.process_element_parts_with_hygiene(&opening_entity, decoder, SourceHygiene::BooleanOperand) {
                 Ok(parts) => parts.into_iter().filter(|m| !m.is_empty()).collect(),
                 Err(_) => continue,
             };
@@ -572,9 +574,8 @@ impl GeometryRouter {
         // and geometry alone disambiguates the case: in a true "opening too
         // short" pattern the opening floats inside the wall (neither end on
         // a face); in a recess one end is on a face and the other is inside.
-        // Use coplanarity-pad tolerance so a tiny float-error offset doesn't
-        // mask the alignment.
-        let face_align_tol = (wall_max_proj - wall_min_proj).abs() * 1e-5;
+        let bounds = [wall_min, wall_max, open_min, open_max];
+        let face_align_tol = recess_face_tol(&bounds, &extrusion_direction, wall_proj_extent);
         let near_at_min_face = (open_min_proj - wall_min_proj).abs() < face_align_tol;
         let near_at_max_face = (open_max_proj - wall_max_proj).abs() < face_align_tol;
         let far_inside_min = open_min_proj > wall_min_proj + face_align_tol;
@@ -727,13 +728,17 @@ impl GeometryRouter {
         // inside the one helper every void path funnels through, means no current or
         // future call site can forget it. No-op for ordinary single-solid openings.
         let deseamed = Self::remove_internal_membrane(opening_mesh, dir);
-        let opening_mesh = &deseamed;
 
         let len = dir.norm();
         if len < NORMALIZE_EPSILON {
-            return opening_mesh.clone();
+            return deseamed;
         }
         let d = dir / len;
+        // #6940: a corner the file authored once for the host and once for the
+        // opening can reach this point one snap step apart. Make them one
+        // vertex again before anything is pushed along `d`.
+        let deseamed = host_vertices::reconcile_with_host_vertices(deseamed, host_mesh, d);
+        let opening_mesh = &deseamed;
 
         // Cutter extents in the penetration frame, and which caps the opening
         // actually EXITS through. Growing a cap the opening does not exit
@@ -804,6 +809,19 @@ impl GeometryRouter {
         }
         out
     }
+}
+
+/// Face-alignment tolerance of the RECESS check (#853) along the unit `dir`.
+///
+/// The relative `wall_proj_extent * 1e-5` pad keeps a tiny float-error offset
+/// from masking a flush face. The bounds are read back from f32-stored
+/// vertices, so at building scale a flush face can also sit a few ULPs off
+/// (4.3 um at 51 m, above the 2.5 um pad of a 250 mm wall, #7920). The pad is
+/// therefore floored at that f32 noise, projected onto `dir` as in
+/// [`PlaneEps::for_normal`], so a coordinate perpendicular to the extrusion
+/// cannot widen it.
+fn recess_face_tol(bounds: &[Point3<f64>], dir: &Vector3<f64>, wall_proj_extent: f64) -> f64 {
+    PlaneEps::from_points(bounds, wall_proj_extent * 1e-5).for_normal(dir)
 }
 
 #[cfg(test)]
