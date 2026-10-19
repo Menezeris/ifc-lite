@@ -47,6 +47,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The viewer typechecks against the workspace packages' dist, and AIM tests
+      # that import a package (e.g. @ifc-lite/rules -> @ifc-lite/regex-guard dist)
+      # need it built first; the WASM package ships its committed .d.ts, so no
+      # wasm32 compile is needed.
+      - name: Build workspace packages (TypeScript only)
+        run: pnpm --filter "./packages/**" --filter '!@ifc-lite/wasm' -r --workspace-concurrency=4 build
       - name: AIM unit tests
         working-directory: apps/viewer
         run: npx tsx --import ./src/test/vite-module-hooks.mjs --test src/aim/*.test.ts
@@ -55,10 +61,6 @@ jobs:
           node scripts/check-module-size.mjs
           node scripts/check-rtc-frame-copies.mjs
           node scripts/check-i18n-literals.mjs
-      # The viewer typechecks against the workspace packages' dist; the WASM
-      # package ships its committed .d.ts, so no wasm32 compile is needed.
-      - name: Build workspace packages (TypeScript only)
-        run: pnpm --filter "./packages/**" --filter '!@ifc-lite/wasm' -r --workspace-concurrency=4 build
       - name: Typecheck the viewer
         working-directory: apps/viewer
         run: npx tsc --noEmit -p .
