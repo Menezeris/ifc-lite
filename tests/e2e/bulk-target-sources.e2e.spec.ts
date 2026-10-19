@@ -35,10 +35,21 @@ test('Bulk Selection edits three walls across two IFC models in one undo step (#
       (model.geometryResult?.meshes.length ?? 0) > 0);
   }, STORE, { timeout: 180_000 });
 
-  // The second authored file can emit a georeference warning that overlays
-  // the dialog footer. It does not affect local IFC property editing.
-  const alignmentNotice = page.locator('[role="alert"] button').first();
-  if (await alignmentNotice.isVisible()) await alignmentNotice.click();
+  // >>> AIM-FORK: the second authored file reports a failed federation
+  // alignment (same EPSG, unknown vertical datum, fail-closed) as a persistent
+  // error toast that covers the dialog footer; it does not affect local IFC
+  // property editing. Closing only the first alert once, right after load, left
+  // an error toast over "Apply" on CI (fork PR #60). Close every error toast,
+  // each by its own dismiss button, just before the dialog opens: a click on a
+  // toast while the modal is open would count as outside and close the dialog.
+  const dismissErrorToasts = async () => {
+    const errors = page.locator('[role="alert"] [data-toast-seq]');
+    for (let n = await errors.count(); n > 0; n = await errors.count()) {
+      await errors.first().locator('button[aria-label="Dismiss notification"]').click();
+      await expect(errors).toHaveCount(n - 1);
+    }
+  };
+  // <<< AIM-FORK
 
   // Bulk authoring is available through the viewer's Model workspace.
   await page.getByRole('tab', { name: 'Author', exact: true }).click();
@@ -62,6 +73,7 @@ test('Bulk Selection edits three walls across two IFC models in one undo step (#
   }, STORE);
 
   await page.getByRole('tab', { name: 'Author', exact: true }).click();
+  await dismissErrorToasts(); // AIM-FORK: see above
   await page.getByRole('button', { name: 'Bulk property editor' }).click();
   const dialog = page.getByRole('dialog', { name: 'Bulk Property Editor' });
   await expect(dialog.getByRole('combobox', { name: 'Target source' })).toContainText('Selection');
