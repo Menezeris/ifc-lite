@@ -19,7 +19,9 @@ Each patch is written mutant→fixed (the orientation of `git diff base...head`)
 | `model-always-sent.patch` | the model name is sent per item and as `by_model` even with a single model | `selection-summary.test.ts` |
 | `groups-uncapped.patch` | summary groups are not capped (55 curtain walls would give 55 parent rows) | `selection-summary.test.ts` |
 
-`viewQueries.ts` (reading class, name, storey, parent and model from the loaded IFC, and the selection bbox through the same scene bounds as `QUERY bounds`) is store and renderer glue with no unit test. It is the lazily loaded module (dynamic import from `useAimViewCommands.ts`); the new imports (`@ifc-lite/data`, `./selectionSummary.js`) are already reachable from it through `@/utils/aggregation` or are AIM-only, so nothing moves into the entry chunk.
+`viewQueries.ts` (reading class, name, storey, parent and model from the loaded IFC, and the selection bbox through the same scene bounds as `QUERY bounds`) is store and renderer glue with no unit test. It is the lazily loaded module (dynamic import from `useAimViewCommands.ts`); the new imports (`@ifc-lite/data`, `./selectionSummary.js`) are already reachable from it through `@/utils/aggregation` or are AIM-only, so nothing moves into the entry chunk. Measured like CI (`vite build` of the branch and of `main`, `measure-bundle.mjs`): `viewer-entry-js-bytes` and `viewer-eager-js-bytes` are byte-identical to `main`, no ceiling change.
+
+The IFC reads of the glue were checked against the real parser: a synthetic IFC4 file with two storeys and two `IfcCurtainWall`s aggregating `IfcPlate` / `IfcMember` parts, parsed with `IfcParser.parseColumnar`, read with the same `elementToStorey` and `getRelated(..., Aggregates, 'inverse')` calls and passed through `summarizeSelection`, gave each part its storey (1NP / 2NP, although the parts are only aggregated, not contained) and its curtain wall as parent, and the curtain wall itself its storey with no parent. The embedded-viewer run (store selection, scene bbox, Realtime round trip from the AIM host) is still to do on a real model.
 
 ## Replay
 
