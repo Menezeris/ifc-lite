@@ -44,11 +44,11 @@ export function parsePanelView(raw: unknown): AimPanelView | null {
 }
 
 /**
- * `panel` zo správy SELECT: `undefined` = bez panela (výber ako doteraz),
- * `null` = neplatný panel, správa sa zahodí celá (nič sa nevyberie).
+ * `panel` zo správy SELECT: chýbajúci aj `null` = bez panela (výber ako doteraz),
+ * výsledok `null` = neplatný panel, správa sa zahodí celá (nič sa nevyberie).
  */
 export function selectPanel(raw: unknown): AimPanelView | undefined | null {
-  return raw === undefined ? undefined : parsePanelView(raw);
+  return raw === undefined || raw === null ? undefined : parsePanelView(raw);
 }
 
 /** Čo sa má nastaviť: focus vlastnosti žije v sekcii Properties pod záložkou IFC. */

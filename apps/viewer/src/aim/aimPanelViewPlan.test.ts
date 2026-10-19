@@ -23,6 +23,7 @@ describe('panel vlastností z chatu (AIM D-113)', () => {
 
   it('neplatný panel zahodí celú správu (null), chýbajúci panel nie (undefined)', () => {
     assert.strictEqual(selectPanel(undefined), undefined);
+    assert.strictEqual(selectPanel(null), undefined);
     assert.deepEqual(selectPanel({ tab: 'ifc' }), { tab: 'ifc' });
     assert.strictEqual(selectPanel({ tab: 'raw' }), null);
     assert.strictEqual(selectPanel({ section: 'bsdd' }), null);
