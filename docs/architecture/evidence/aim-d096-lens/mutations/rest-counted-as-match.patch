@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 746d4fead..9231db95c 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -174,7 +174,7 @@ export function summarizeLens(
+ ): AimLensSummary {
+   if (!lens) return { active: false, rules: [], legend: [], matched: 0, hidden_rest: 0 };
+   const rules = lens.rules
+-    .filter((r) => r.enabled)
++    .filter((r) => r.enabled && !isRest(r))
+     .map((r) => ({ name: r.name, action: r.action, color: r.color, count: counts.get(r.id) ?? 0 }));
+   const rest = lens.rules.find(isRest);
+   const legendOut = legend.slice(0, 50).map((l) => ({ name: l.name, color: l.color, count: l.count }));

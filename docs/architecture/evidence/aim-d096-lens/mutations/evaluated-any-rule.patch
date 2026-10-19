@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 2c7413aa3..9231db95c 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -152,7 +152,7 @@ export function nextAimLens(
+ /** Vyhodnotil už useLens práve túto verziu lens? */
+ export function isEvaluated(lens: Lens, counts: ReadonlyMap<string, number>, legend: readonly AutoColorLegendEntry[]): boolean {
+   if (lens.autoColor) return legend.length > 0 || counts.size > 0;
+-  return lens.rules.filter((r) => r.enabled).some((r) => counts.has(r.id));
++  return lens.rules.filter((r) => r.enabled).every((r) => counts.has(r.id));
+ }
+ 
+ export interface AimLensSummary {

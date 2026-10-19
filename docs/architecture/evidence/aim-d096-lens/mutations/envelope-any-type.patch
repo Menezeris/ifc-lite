@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/lens-protocol.ts a/apps/viewer/src/aim/lens-protocol.ts
+index 081f74c4e..7ceb4d921 100644
+--- b/apps/viewer/src/aim/lens-protocol.ts
++++ a/apps/viewer/src/aim/lens-protocol.ts
+@@ -49,5 +49,5 @@ export type LensInboundMessage =
+ export function isLensEnvelope(data: unknown): data is LensInboundMessage {
+   if (!data || typeof data !== 'object') return false;
+   const m = data as Record<string, unknown>;
+-  return m.source === SOURCE && typeof m.type === 'string';
++  return m.source === SOURCE && (m.type === 'APPLY_LENS' || m.type === 'LENS_QUERY');
+ }

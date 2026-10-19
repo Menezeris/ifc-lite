@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 80c32cd8c..9231db95c 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -122,7 +122,7 @@ export function nextAimLens(
+   tag: string,
+ ): Lens | null {
+   if (msg.mode === 'clear') return null;
+-  const own = prev;
++  const own = isAimLens(prev) ? prev : null;
+   if (msg.mode === 'unisolate') {
+     if (!own) return null;
+     const rules = own.rules.filter((r) => !isRest(r));
