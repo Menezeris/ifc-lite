@@ -14,21 +14,7 @@ import type { BimContext, EntityRef } from '@ifc-lite/sdk';
 import { useViewerStore } from '../store/index.js';
 import { toGlobalIdFromModels } from '../store/globalId.js';
 import { resolvePresentationIds } from '@/lib/presentation/resolvePresentationIds';
-
-type Gate = { spaces: boolean; spatialZones: boolean };
-type GateKey = keyof Gate;
-
-const CLASS_GATE: Record<string, GateKey> = { IFCSPACE: 'spaces', IFCSPATIALZONE: 'spatialZones' };
-
-/** Prepínače viditeľnosti, ktoré treba zapnúť, aby boli cieľové triedy v scéne. */
-export function gatesToReveal(ifcTypes: readonly string[], gate: Gate): GateKey[] {
-  const keys = new Set<GateKey>();
-  for (const t of ifcTypes) {
-    const key = CLASS_GATE[t.toUpperCase()];
-    if (key && !gate[key]) keys.add(key);
-  }
-  return [...keys];
-}
+import { gatesToReveal } from './frame-gates.js';
 
 /** Čaká na geometriu cieľa po zapnutí triedy (scéna sa prekreslí až v ďalších snímkach). */
 const WAIT_MS = 1500;

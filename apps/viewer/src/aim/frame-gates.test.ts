@@ -5,9 +5,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { gatesToReveal } from './frame-refs.js';
+import { gatesToReveal } from './frame-gates.js';
 
-describe('frame-refs (AIM D-102)', () => {
+describe('frame-gates (AIM D-102)', () => {
   it('zapne len skryté triedy cieľa: miestnosť a zónu', () => {
     const off = { spaces: false, spatialZones: false };
     assert.deepEqual(gatesToReveal(['IfcSpace'], off), ['spaces']);
