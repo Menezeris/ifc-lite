@@ -127,6 +127,22 @@ describe('nextAimLens (AIM D-096)', () => {
     assert.equal(nextAimLens(first, apply({ mode: 'unisolate' }), SLOT, MODELS, 'r5'), first);
   });
 
+  it('X-ray (D-105): pravidlá idú do X-ray ako pri izolácii, lens bez farby nemení', () => {
+    const plain = apply({ xray: true, rules: [{ name: 'SDK', action: 'isolate', groups: [DUCTS] } as never] });
+    assert.ok(parseLensMessage(plain));
+    assert.equal(nextAimLens(first, plain, SLOT, MODELS, 'x1'), first);
+    assert.deepEqual(isolationRules(plain, MODELS, 'x1').map((r) => r.name), ['SDK']);
+    const mixed = apply({ xray: true, rules: [rule('Prívod', '#ef4444'), { name: 'Zvyšok', action: 'isolate', groups: [DUCTS] } as never] });
+    assert.deepEqual(isolationRules(mixed, MODELS, 'x2').map((r) => r.id), ['aim-x2-0', 'aim-x2-1']);
+  });
+
+  it('X-ray (D-105): odmietne xray spolu s isolate, nebooleovský príznak a pravidlo isolate bez príznaku', () => {
+    const iso = { name: 'Z', action: 'isolate', groups: [DUCTS] } as never;
+    assert.equal(parseLensMessage(apply({ xray: true, isolate: true, rules: [iso] })), null);
+    assert.equal(parseLensMessage(apply({ xray: 'ano' as never, rules: [iso] })), null);
+    assert.equal(parseLensMessage(apply({ rules: [iso] })), null);
+  });
+
   it('cudziu lens v slote (Color by z tabuľky) chat neprepíše pri add ani nezmaže pri unisolate', () => {
     const foreign: Lens = { id: SLOT, name: 'Color by Material', rules: [], autoColor: { source: 'material' } };
     const next = nextAimLens(foreign, apply({ rules: [rule('A', '#000000')] }), SLOT, MODELS, 'r1') as Lens;
