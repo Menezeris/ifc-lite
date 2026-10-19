@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index d3e26cb19..2c0fe9b9a 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -132,7 +132,7 @@ export function nextAimLens(
+   tag: string,
+ ): Lens | null {
+   if (msg.mode === 'clear') return null;
+-  const own = prev;
++  const own = isAimLens(prev) ? prev : null;
+   if (msg.mode === 'unisolate') return own;
+   if (msg.autoColor) {
+     const autoColor: AutoColorSpec = { ...msg.autoColor };

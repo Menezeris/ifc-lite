@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 8fd9db805..2c0fe9b9a 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -116,7 +116,7 @@ function toLensRules(msg: ApplyLensMessage, models: readonly ModelRef[], tag: st
+  * vyhodnocujú sa ako lens, ale do scény sa nedávajú. Bez izolácie prázdne.
+  */
+ export function isolationRules(msg: ApplyLensMessage, models: readonly ModelRef[], tag: string): LensRule[] {
+-  return toLensRules(msg, models, tag);
++  return msg.isolate === true ? toLensRules(msg, models, tag) : [];
+ }
+ 
+ /**

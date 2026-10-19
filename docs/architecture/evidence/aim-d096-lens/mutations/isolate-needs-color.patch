@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 0773b8b8a..2c0fe9b9a 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -58,7 +58,7 @@ export function parseLensMessage(data: LensInboundMessage): ApplyLensMessage | L
+     for (const r of m.rules as Record<string, unknown>[]) {
+       if (!r || typeof r !== 'object' || !shortStr(r.name, 120) || !ACTIONS.has(r.action as string)) return null;
+       // Farbu potrebuje každé pravidlo okrem čistej izolácie.
+-      if ((typeof r.color !== 'string' || !HEX.test(r.color))) return null;
++      if (r.action !== 'isolate' && (typeof r.color !== 'string' || !HEX.test(r.color))) return null;
+       if (!Array.isArray(r.groups) || r.groups.length === 0 || r.groups.length > MAX_GROUPS) return null;
+       if (!r.groups.every(isFilterGroup)) return null;
+       ids += countGlobalIds(r.groups as FilterGroup[]);

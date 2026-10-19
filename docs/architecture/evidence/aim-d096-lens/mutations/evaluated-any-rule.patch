@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 3abdd8867..2c0fe9b9a 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -151,7 +151,7 @@ export function nextAimLens(
+ /** Vyhodnotil už useLens práve túto verziu lens? */
+ export function isEvaluated(lens: Lens, counts: ReadonlyMap<string, number>, legend: readonly AutoColorLegendEntry[]): boolean {
+   if (lens.autoColor) return legend.length > 0 || counts.size > 0;
+-  return lens.rules.filter((r) => r.enabled).some((r) => counts.has(r.id));
++  return lens.rules.filter((r) => r.enabled).every((r) => counts.has(r.id));
+ }
+ 
+ /** Výsledok izolácie z chatu: počet na pravidlo a izolovaných spolu. */

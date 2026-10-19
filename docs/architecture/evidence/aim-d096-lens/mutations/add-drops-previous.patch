@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 7f246e0e3..2c0fe9b9a 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -140,7 +140,7 @@ export function nextAimLens(
+   }
+   const added = toLensRules(msg, models, tag).filter((_, i) => msg.rules?.[i].action !== 'isolate');
+   // Tá istá verzia znova (host ops po obnovení stránky) pravidlá nezdvojí.
+-  const keep = msg.mode === 'bogus' && own && !own.autoColor ? own.rules.filter((r) => !r.id.startsWith(`aim-${tag}-`)) : [];
++  const keep = msg.mode === 'add' && own && !own.autoColor ? own.rules.filter((r) => !r.id.startsWith(`aim-${tag}-`)) : [];
+   if (msg.mode === 'add' && added.length === 0) return own;
+   // Lens farbí prvou zhodou: novšie pravidlá idú dopredu, aby nová farba prebila staršiu.
+   let rules = [...added, ...keep];
