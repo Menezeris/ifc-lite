@@ -1,0 +1,13 @@
+diff --git a/apps/viewer/src/aim/viewCommands.ts b/apps/viewer/src/aim/viewCommands.ts
+index d3b8e5f1..398ceb81 100644
+--- a/apps/viewer/src/aim/viewCommands.ts
++++ b/apps/viewer/src/aim/viewCommands.ts
+@@ -45,7 +45,7 @@ export function cameraStep(preset: CameraPreset): CameraStep {
+   if (preset === 'iso') return { kind: 'home' };
+   if (preset === 'fit_all') return { kind: 'fit' };
+   if (preset === 'keep') return { kind: 'keep' };
+-  if (preset === 'section') return { kind: 'keep' };
++  if (preset === 'section') return { kind: 'section' };
+   return { kind: 'preset', view: preset };
+ }
+ 

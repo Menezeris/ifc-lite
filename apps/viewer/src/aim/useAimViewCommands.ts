@@ -6,7 +6,7 @@
  * Vykonanie bridge správ pohľadu (AIM D-083 fáza 1) cez existujúce cesty
  * viewera: rez cez `showSectionCut`/`clearSectionCut` (tá istá cesta ako SDK
  * `setSection` a BCF viewpoint, Section tool ho ukáže a dá sa posúvať),
- * kamera cez `cameraCallbacks` + `bim.viewer.flyTo`, režim cez `useViewMode`
+ * kamera cez `cameraCallbacks` + `bim.viewer.flyTo` (lenivo `viewCamera.ts`, D-098), režim cez `useViewMode`
  * (prepínač 3D|2D|Split, D-075). Vracia ref, aby ho listener v AimBridge
  * mohol volať bez re-registrácie. `QUERY` (AIM D-085) odpovedá rodičovi na `origin`.
  */
@@ -18,7 +18,7 @@ import { mergedSectionBounds, sectionAxisRange } from '@/lib/section/section-dis
 import { totalYupOffset } from '@/lib/geo/coordinate-frame';
 import { useViewMode } from '@/hooks/useViewMode';
 import type { BimContext } from '@ifc-lite/sdk';
-import { guidForEntity, resolveGuids } from './bridge-protocol.js';
+import { guidForEntity, resolveGuids, resolveSelector } from './bridge-protocol.js';
 import type { ViewInboundMessage } from './view-protocol.js';
 import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCommands.js';
 
@@ -26,6 +26,9 @@ import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCom
 let queries: Promise<typeof import('./viewQueries.js')> | null = null;
 const loadQueries = () => (queries ??= import('./viewQueries.js'));
 const GUIDS = { resolveGuids, guidForEntity };
+let camera: Promise<typeof import('./viewCamera.js')> | null = null;
+const loadCamera = () => (camera ??= import('./viewCamera.js'));
+const TARGETS = { resolveGuids, resolveSelector };
 
 export function useAimViewCommands(bim: BimContext) {
   const { setMode, storeys } = useViewMode();
@@ -69,16 +72,9 @@ export function useAimViewCommands(bim: BimContext) {
         return;
       }
       case 'SET_CAMERA': {
-        if (msg.projection) state.setProjectionMode(msg.projection);
+        // Smer, Set view rezu, póza od hosta, rámovanie (AIM D-098) - lenivo.
         const step = cameraStep(msg.preset);
-        const cam = state.cameraCallbacks;
-        if (step.kind === 'home') cam.home?.();
-        else if (step.kind === 'fit') cam.fitAll?.();
-        else cam.setPresetView?.(step.view);
-        if (msg.guids?.length) {
-          const refs = resolveGuids(state.models, msg.guids);
-          if (refs.length > 0) bim.viewer.flyTo(refs);
-        }
+        void loadCamera().then((c) => c.runCamera(msg, step, bim, TARGETS));
         return;
       }
       case 'SET_VIEW_MODE': {

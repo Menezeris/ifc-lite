@@ -14,13 +14,21 @@ description: >-
 
 # AIM feature in the fork: get CI green on the first run
 
-The fork runs upstream's full CI (Rust, WASM, viewer shards, E2E, revert oracle,
-perf ratchets). One red run costs 30-60 minutes. Everything below runs locally in
-a few minutes; do it **before the first push**. Rules and reasons:
+A PR that touches only the AIM layer (`apps/viewer/src/aim/`, `docs/architecture/evidence/aim-*`,
+this skill, `docs/FORK_MAINTENANCE.md`) runs the fast lane: `aim-fast.yml` (AIM tests, source
+gates, viewer typecheck, about ten minutes) while `test.yml` skips its heavy lanes (D-098). Keep
+such PRs AIM-only; touching any upstream file brings back upstream's full CI (Rust, WASM, viewer
+shards, E2E, revert oracle, perf ratchets: 30-60 minutes per run). The fast lane does not measure
+the bundle or run the revert oracle, so steps 3-4 below stay mandatory. Everything below runs
+locally in a few minutes; do it **before the first push**. Rules and reasons:
 `docs/FORK_MAINTENANCE.md` (Conventions, "Pre-approved raises for new AIM features").
 
 ## 1. Where the code goes
 
+- **First look for what exists (AIM D-098).** Search the store (`CameraCallbacks` and the
+  slices), the SDK, `@ifc-lite/mcp`, the embed protocol and upstream UI actions for the
+  function you need. Expose it through the bridge; do not write a new one. Maths the host can
+  do (relative camera steps, filters over AIM data) stays in AIMviewer.
 - New code in `apps/viewer/src/aim/`. Call upstream store / renderer / SDK functions,
   do not copy them. No edits in upstream files; when unavoidable, an `AIM-FORK`
   sentinel and a row in `FORK_MAINTENANCE.md`.

@@ -1,0 +1,13 @@
+diff --git a/apps/viewer/src/aim/viewFrame.ts b/apps/viewer/src/aim/viewFrame.ts
+index 9bb9ca7f..3184999b 100644
+--- a/apps/viewer/src/aim/viewFrame.ts
++++ b/apps/viewer/src/aim/viewFrame.ts
+@@ -50,7 +50,7 @@ export function renderPointToIfc(p: Vec3, offset: Vec3): Vec3 {
+ 
+ /** Bod v IFC svete -> render rámec (inverz `renderPointToIfc`), napr. póza kamery od hosta (AIM D-098). */
+ export function ifcPointToRender(p: Vec3, offset: Vec3): Vec3 {
+-  return ifcToViewerAxes(p);
++  return ifcToViewerAxes({ x: p.x - offset.x, y: p.y - offset.y, z: p.z - offset.z });
+ }
+ 
+ /** Smer (bez posunu rámca), napr. `up` kamery: render -> IFC a späť. */

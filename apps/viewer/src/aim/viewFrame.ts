@@ -48,6 +48,15 @@ export function renderPointToIfc(p: Vec3, offset: Vec3): Vec3 {
   return { x: z.x + offset.x, y: z.y + offset.y, z: z.z + offset.z };
 }
 
+/** Bod v IFC svete -> render rámec (inverz `renderPointToIfc`), napr. póza kamery od hosta (AIM D-098). */
+export function ifcPointToRender(p: Vec3, offset: Vec3): Vec3 {
+  return ifcToViewerAxes({ x: p.x - offset.x, y: p.y - offset.y, z: p.z - offset.z });
+}
+
+/** Smer (bez posunu rámca), napr. `up` kamery: render -> IFC a späť. */
+export const renderDirToIfc = (v: Vec3): Vec3 => viewerToIfcAxes(v);
+export const ifcDirToRender = (v: Vec3): Vec3 => ifcToViewerAxes(v);
+
 /** Obálka v render rámci -> IFC svet; os s otočeným znamienkom si vymení min a max. */
 export function renderBoxToIfc(box: Box3, offset: Vec3): Box3 {
   const a = renderPointToIfc(box.min, offset);

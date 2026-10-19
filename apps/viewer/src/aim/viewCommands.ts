@@ -33,12 +33,19 @@ export function storeyCutPercent(
 export type CameraStep =
   | { kind: 'preset'; view: 'top' | 'bottom' | 'front' | 'back' | 'left' | 'right' }
   | { kind: 'home' }
-  | { kind: 'fit' };
+  | { kind: 'fit' }
+  | { kind: 'keep' }
+  | { kind: 'section' };
 
-/** Preset hosta -> volanie `cameraCallbacks` (iso = home, adaptívna JV izometria). */
+/**
+ * Preset hosta -> volanie `cameraCallbacks` (iso = home, adaptívna JV izometria;
+ * keep = bez zmeny smeru, section = Set view aktívneho rezu, AIM D-098).
+ */
 export function cameraStep(preset: CameraPreset): CameraStep {
   if (preset === 'iso') return { kind: 'home' };
   if (preset === 'fit_all') return { kind: 'fit' };
+  if (preset === 'keep') return { kind: 'keep' };
+  if (preset === 'section') return { kind: 'section' };
   return { kind: 'preset', view: preset };
 }
 

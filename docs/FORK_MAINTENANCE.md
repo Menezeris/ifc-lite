@@ -273,6 +273,25 @@ so they **skip** on our fork instead of failing red:
 If we ever want these on the fork: for docs, enable GitHub Pages (Settings → Pages → build
 from Actions) and drop the guard; for releases/docker, set up our own publish targets first.
 
+## Fast CI for AIM-only pull requests (AIM D-098, Samuel 2026-10-19)
+
+A PR that touches **only** the AIM layer does not need upstream's full matrix (Rust, WASM build,
+16 viewer shards, E2E, perf ratchet: 30-60 minutes per run). Two pieces, both `AIM-FORK`:
+
+- `test.yml`, job `changes`, step *Detect an AIM-only pull request* (`aimonly`): on a
+  `pull_request` whose files all match `apps/viewer/src/aim/`, `docs/architecture/evidence/aim-*`,
+  `.claude/skills/aim-feature/` or `docs/FORK_MAINTENANCE.md`, the outputs `rust`, `frontend`,
+  `geometry`, `python`, `plato` and `perf_ratchet` are forced to `false`, so those lanes skip and
+  the aggregate `test` passes on `skipped`. `docs`, `agents_md` and `license_headers` still run.
+- `aim-fast.yml`: on any PR touching `apps/viewer/src/aim/**`, AIM unit tests, the fork's cheap
+  source gates (module size, RTC frame copies, i18n literals) and the viewer typecheck against a
+  TypeScript-only package build (about ten minutes).
+
+Everything else (an upstream sync, any upstream file, a workflow edit) runs the full CI as
+before. Not covered in CI for an AIM-only PR, so do it locally before the first push: the bundle
+perf ratchet and the revert oracle evidence (`.claude/skills/aim-feature/SKILL.md`, steps 3-4).
+`main` has no required checks, so nothing waits on the skipped lanes.
+
 ## Depot runners → ubuntu-latest on the fork
 
 Until the 2026-10 sync upstream ran its heavy CI jobs on **Depot** runners
@@ -345,6 +364,12 @@ locally before the first push (`.claude/skills/aim-feature/SKILL.md`).
 ## Conventions (don't drift)
 
 - **New custom code → `apps/viewer/src/aim/`**, not scattered into upstream files.
+- **Reuse before you build (AIM D-098).** Before designing anything, search what the viewer and
+  upstream already have: the store and its `CameraCallbacks`, the SDK (`@ifc-lite/sdk`),
+  `@ifc-lite/mcp` and the embed protocol. The fork only exposes an existing function through the
+  bridge (a thin adapter in `aim/`); computations belong to the AIM host. Example: "look straight
+  at the section" is upstream's Set view (`presetViewForAxis` / `customPlaneViewpoint`), "fit to
+  visible" is `fitAll`, an exact pose is `applyViewpoint`.
 - **New AIM feature → follow `.claude/skills/aim-feature/SKILL.md`** (local checks, bundle
   measurement, revert-oracle evidence and label in the first push), so CI runs once.
 - **Every edit inside an upstream file → wrap in `// >>> AIM-FORK … // <<< AIM-FORK`.**
