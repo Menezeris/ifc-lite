@@ -2,23 +2,37 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-# >>> AIM-FORK (whole file, AIM D-098): fast checks for a pull request that
-# touches the AIM layer. When the PR touches ONLY the AIM layer, test.yml's
-# `changes` job (step `aimonly`) turns its heavy lanes off and this workflow is
-# what checks the change: AIM unit tests, the viewer typecheck and the fork's
-# cheap source gates, in about ten minutes instead of the full upstream matrix.
-# Any PR that also touches upstream files still runs everything in test.yml.
-# The bundle perf ratchet is NOT measured here: measure it locally before the
-# first push (.claude/skills/aim-feature/SKILL.md, step 3).
+# >>> AIM-FORK (whole file, AIM D-098, D-103): fast checks for a fork pull
+# request on the fast path. scripts/check-aim-fork-only.mjs decides, on the
+# merge commit, between `aim-only` (only the AIM layer), `fork-blocks` (upstream
+# viewer files edited only inside AIM-FORK blocks, plus a pre-approved bundle
+# ceiling raise) and `full`. test.yml's `changes` job (step `aimonly`) runs the
+# same script and turns its heavy lanes off for the first two, so these jobs are
+# what checks the change: AIM unit tests, fork source gates, the viewer
+# typecheck, the viewer tests that import a changed file, and the viewer build
+# with its JS bundle ratchet. A `full` PR skips them; test.yml runs everything.
+# The nightly full run of test.yml on main (aim-nightly-report.yml) covers the
+# lanes this skips. The revert oracle is not run here: keep its evidence in the
+# first push (.claude/skills/aim-feature/SKILL.md, step 4).
 
 name: AIM fast checks
 
 on:
   pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    # Every fast-path PR changes at least one of these (an AIM-layer file, a
+    # viewer file with an AIM-FORK block, or the bundle ceilings); any other PR
+    # is `full` and test.yml checks it alone.
     paths:
-      - 'apps/viewer/src/aim/**'
+      - 'apps/viewer/**'
       - 'docs/architecture/evidence/aim-*/**'
+      - '.claude/skills/aim-feature/**'
+      - '.claude/skills/steward/**'
+      - 'docs/FORK_MAINTENANCE.md'
+      - 'tests/perf-ratchets/bundle.json'
       - '.github/workflows/aim-fast.yml'
+      - 'scripts/check-aim-fork-only.mjs'
 
 permissions:
   contents: read
@@ -28,10 +42,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  aim:
-    name: AIM tests + viewer typecheck
+  decide:
+    name: AIM fast path decision
     # Fork-only workflow; skip only on upstream, whatever the fork is named.
     if: github.repository != 'LTplus-AG/ifc-lite'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      mode: ${{ steps.mode.outputs.mode }}
+      related_tests: ${{ steps.mode.outputs.related_tests }}
+    steps:
+      # The merge ref at depth 2, as in test.yml's `changes`: HEAD~1 is the base tip.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          lfs: false
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Classify the pull request
+        id: mode
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: node scripts/check-aim-fork-only.mjs --base HEAD~1 --head HEAD --head-ref "$HEAD_REF" --github-output
+
+  aim:
+    name: AIM tests + viewer typecheck
+    needs: decide
+    if: needs.decide.outputs.mode != 'full'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -64,4 +100,108 @@ jobs:
       - name: Typecheck the viewer
         working-directory: apps/viewer
         run: npx tsc --noEmit -p .
+      # Viewer tests that import a changed file, directly or through other viewer
+      # modules (the decision job lists them; it sends a change with more than 40
+      # to the full CI). Same runner flags as the viewer's `test` script, and the
+      # same WASM runtime and fixtures as test.yml's viewer shards.
+      - name: Fetch prebuilt WASM
+        id: prebuilt
+        if: needs.decide.outputs.related_tests != ''
+        run: |
+          for attempt in 1 2 3; do
+            if node scripts/fetch-prebuilt-wasm.mjs; then echo "ok=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+            echo "::warning::prebuilt WASM fetch attempt ${attempt} failed; retrying"
+            sleep $((attempt * 5))
+          done
+          echo "::warning::No prebuilt @ifc-lite/wasm matches the committed types; building wasm32 from source."
+      - name: Setup WASM build toolchain
+        if: needs.decide.outputs.related_tests != '' && steps.prebuilt.outputs.ok != 'true'
+        uses: ./.github/actions/setup-wasm-build
+        with:
+          cache-prefix: ci-build
+      - name: Build WASM
+        if: needs.decide.outputs.related_tests != '' && steps.prebuilt.outputs.ok != 'true'
+        env:
+          CARGO_PROFILE_RELEASE_LTO: thin
+        run: bash scripts/build-wasm.sh
+      - name: Cache test fixtures
+        id: fixtures-cache
+        if: needs.decide.outputs.related_tests != ''
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: tests/models
+          key: ci-fixtures-${{ runner.os }}-${{ hashFiles('tests/models/manifest.json') }}
+      - name: Fetch fixtures
+        if: needs.decide.outputs.related_tests != '' && steps.fixtures-cache.outputs.cache-hit != 'true'
+        run: pnpm fixtures
+      - name: Related viewer tests
+        if: needs.decide.outputs.related_tests != ''
+        working-directory: apps/viewer
+        env:
+          RELATED_TESTS: ${{ needs.decide.outputs.related_tests }}
+        run: |
+          # The list is space-separated repo paths under apps/viewer/ with no spaces of their own.
+          # shellcheck disable=SC2086
+          npx tsx --import ./src/test/vite-module-hooks.mjs --test --test-timeout=120000 --test-concurrency=1 $RELATED_TESTS
+
+  build:
+    name: AIM viewer build + bundle ratchet
+    needs: decide
+    if: needs.decide.outputs.mode != 'full'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          lfs: false
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The fast path never touches Rust, so the published runtime of the same
+      # @ifc-lite/wasm version stands in for a wasm32 compile; the script checks
+      # it against the committed ifc-lite.d.ts and refuses a mismatch. After an
+      # upstream sync that moved the engine past its last release it cannot
+      # match, and the lane compiles wasm32 itself (slower, test.yml's warm cache).
+      - name: Fetch prebuilt WASM
+        id: prebuilt
+        run: |
+          for attempt in 1 2 3; do
+            if node scripts/fetch-prebuilt-wasm.mjs; then echo "ok=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+            echo "::warning::prebuilt WASM fetch attempt ${attempt} failed; retrying"
+            sleep $((attempt * 5))
+          done
+          echo "::warning::No prebuilt @ifc-lite/wasm matches the committed types; building wasm32 from source."
+      - name: Setup WASM build toolchain
+        if: steps.prebuilt.outputs.ok != 'true'
+        uses: ./.github/actions/setup-wasm-build
+        with:
+          cache-prefix: ci-build
+      - name: Build WASM
+        if: steps.prebuilt.outputs.ok != 'true'
+        env:
+          CARGO_PROFILE_RELEASE_LTO: thin
+        run: bash scripts/build-wasm.sh
+      - name: Build workspace packages (TypeScript only)
+        run: pnpm --filter "./packages/**" --filter '!@ifc-lite/wasm' -r --workspace-concurrency=4 build
+      - name: Build the viewer
+        run: pnpm --filter @ifc-lite/viewer build
+      # The same measurement test.yml's perf-ratchet lane gates, for the two
+      # viewer JS metrics only: the engine WASM here is the npm one.
+      - name: Viewer bundle ratchet
+        run: |
+          node scripts/perf-ratchet/measure-bundle.mjs --out "$RUNNER_TEMP/bundle.json" > /dev/null
+          node scripts/check-aim-fork-only.mjs --viewer-ratchet "$RUNNER_TEMP/bundle.json" --out-dir "$RUNNER_TEMP/viewer-ratchet"
+          set +e
+          node scripts/perf-ratchet/perf-ratchet.mjs check \
+            --measured "$RUNNER_TEMP/viewer-ratchet/measured.json" \
+            --ceilings-dir "$RUNNER_TEMP/viewer-ratchet/ceilings" \
+            --markdown "$RUNNER_TEMP/viewer-ratchet/report.md"
+          status=$?
+          set -e
+          [ -f "$RUNNER_TEMP/viewer-ratchet/report.md" ] && cat "$RUNNER_TEMP/viewer-ratchet/report.md" >> "$GITHUB_STEP_SUMMARY"
+          exit $status
 # <<< AIM-FORK
