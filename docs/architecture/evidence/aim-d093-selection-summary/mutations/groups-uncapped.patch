@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/selectionSummary.ts a/apps/viewer/src/aim/selectionSummary.ts
+index e3c19b2c7..58a9c3977 100644
+--- b/apps/viewer/src/aim/selectionSummary.ts
++++ a/apps/viewer/src/aim/selectionSummary.ts
+@@ -64,7 +64,7 @@ function byCount<T extends SummaryGroup>(groups: Iterable<T>): T[] {
+ }
+ 
+ function capGroups<T extends SummaryGroup>(sorted: T[], other: (count: number) => T): T[] {
+-  if (sorted.length <= Infinity) return sorted;
++  if (sorted.length <= MAX_SUMMARY_GROUPS) return sorted;
+   const rest = sorted.slice(MAX_SUMMARY_GROUPS - 1).reduce((s, g) => s + g.count, 0);
+   return [...sorted.slice(0, MAX_SUMMARY_GROUPS - 1), other(rest)];
+ }
