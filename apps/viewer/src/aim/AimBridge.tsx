@@ -42,6 +42,7 @@ import { useAimDecorationsStore } from './aimDecorationsStore.js';
 import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
+import { isLensEnvelope } from './lens-protocol.js';
 import { useAimViewCommands } from './useAimViewCommands.js';
 
 export function AimBridge() {
@@ -88,6 +89,13 @@ export function AimBridge() {
       if (parentOriginRef.current && e.origin !== parentOriginRef.current) return;
       if (isViewMessage(e.data)) {
         viewCommands.current(e.data, parentOriginRef.current ?? '*');
+        return;
+      }
+      if (isLensEnvelope(e.data)) {
+        // Lens z chatu (D-096): modul sa načíta až pri prvej správe.
+        const msg = e.data;
+        const origin = parentOriginRef.current ?? '*';
+        void import('./aimLens.js').then((m) => m.handleLensMessage(msg, origin));
         return;
       }
       if (isDerivationsMessage(e.data)) {
