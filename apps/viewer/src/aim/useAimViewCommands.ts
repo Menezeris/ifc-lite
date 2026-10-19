@@ -45,7 +45,7 @@ const TARGETS = { resolveGuids, resolveSelector };
 /**
  * Posledná voľba widgetu od hosta. Každý nový rez zakladá rovinu so
  * zobrazeným widgetom, preto sa voľba použije aj na rez bez `showGizmo`
- * (#63, D-101); zrušenie rezu ju zabudne.
+ * (#63, D-101); zrušenie rezu aj odpojenie mosta ju zabudne.
  */
 let lastGizmo: boolean | undefined;
 
@@ -72,6 +72,8 @@ export async function appliedViewState(): Promise<Record<string, unknown>> {
 export function useAimViewCommands(bim: BimContext) {
   const { setMode, storeys } = useViewMode();
   const sectionToken = useRef(0);
+  // Voľba widgetu patrí relácii mosta: nová relácia (iný `bim`) začína s predvoleným widgetom.
+  useEffect(() => () => { lastGizmo = undefined; }, [bim]);
   const run = (msg: ViewInboundMessage, origin = '*') => {
     const state = useViewerStore.getState();
     switch (msg.type) {
