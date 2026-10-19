@@ -24,7 +24,7 @@ import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import type { SectionPlaneAxis } from '@/store/types';
 import type { SectionAxis, SectionFit, ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
 import {
-  cutPercent, hostAxis, viewerAxis, ifcCoordinateToRender, renderBoxToIfc, renderPointToIfc, sectionThroughBox, unionBoxes,
+  cutPercent, hostAxis, viewerAxis, ifcCoordinateToRender, renderBoxToIfc, renderDirToIfc, renderPointToIfc, sectionThroughBox, unionBoxes,
   type Box3, type Vec3,
 } from './viewFrame.js';
 
@@ -98,6 +98,29 @@ export function queryBounds(state: State, guids: readonly string[], g: GuidHelpe
 
 const MAX_SELECTION = 50;
 
+type RenderCamera = NonNullable<ReturnType<NonNullable<ReturnType<typeof getGlobalRenderer>>['getCamera']>>;
+const unit = (v: Vec3): Vec3 => {
+  const len = Math.hypot(v.x, v.y, v.z) || 1;
+  return { x: Math.round((v.x / len) * 1e6) / 1e6, y: Math.round((v.y / len) * 1e6) / 1e6, z: Math.round((v.z / len) * 1e6) / 1e6 };
+};
+
+/**
+ * Póza kamery v IFC svete; `up`, FOV, polovica výšky ortografického pohľadu a
+ * pomer strán stačia hostovi na relatívny zoom/orbit/posun (AIM D-098).
+ */
+function describeCamera(camera: RenderCamera, offset: Vec3, projection: string) {
+  const ortho = projection === 'orthographic';
+  return {
+    position: roundVec(renderPointToIfc(camera.getPosition(), offset)),
+    target: roundVec(renderPointToIfc(camera.getTarget(), offset)),
+    up: unit(renderDirToIfc(camera.getUp())),
+    projection,
+    fov_deg: Math.round((camera.getFOV() * 180 / Math.PI) * 1000) / 1000,
+    ...(ortho ? { ortho_size: mm(camera.getOrthoSize()) } : {}),
+    aspect: Math.round(camera.getAspect() * 1e4) / 1e4,
+  };
+}
+
 /** `QUERY view_state`: rez, kamera, režim, výber a viditeľnosť. */
 export function queryViewState(state: State, g: GuidHelpers) {
   const mode = deriveViewMode({
@@ -129,9 +152,7 @@ export function queryViewState(state: State, g: GuidHelpers) {
     frame: 'ifc_world', units: 'm',
     mode, storey_guid: state.underlayActiveStoreyGuid ?? state.underlayLastStoreyGuid ?? null,
     section,
-    camera: camera
-      ? { position: roundVec(renderPointToIfc(camera.getPosition(), offset)), target: roundVec(renderPointToIfc(camera.getTarget(), offset)), projection: state.projectionMode }
-      : null,
+    camera: camera ? describeCamera(camera, offset, state.projectionMode) : null,
     selection: { count: selected.length, guids },
     hidden_count: state.hiddenEntities.size,
     isolated_count: state.isolatedEntities ? state.isolatedEntities.size : null,

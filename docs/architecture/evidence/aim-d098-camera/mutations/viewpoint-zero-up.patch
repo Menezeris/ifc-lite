@@ -1,0 +1,13 @@
+diff --git a/apps/viewer/src/aim/view-protocol.ts b/apps/viewer/src/aim/view-protocol.ts
+index 83352fc8..3c19aba7 100644
+--- a/apps/viewer/src/aim/view-protocol.ts
++++ b/apps/viewer/src/aim/view-protocol.ts
+@@ -102,7 +102,7 @@ function isViewpoint(v: unknown): boolean {
+   const p = v as Record<string, unknown>;
+   if (!isVec(p.position) || !isVec(p.target) || !isVec(p.up)) return false;
+   const up = p.up as { x: number; y: number; z: number };
+-  return Math.hypot(up.x, up.y, up.z) >= 0 && optional(p.orthoSize, (o) => inRange(o, 1e-3, COORD_LIMIT));
++  return Math.hypot(up.x, up.y, up.z) > 1e-6 && optional(p.orthoSize, (o) => inRange(o, 1e-3, COORD_LIMIT));
+ }
+ 
+ function isSelector(v: unknown): v is OpsSelector {

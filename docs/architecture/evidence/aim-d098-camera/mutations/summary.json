@@ -1,0 +1,86 @@
+{
+  "ifc-point-offset-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-camera.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "65a15264f5d769bee177b5043eecd587b1b8d4f8",
+    "production": [
+      "apps/viewer/src/aim/viewFrame.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-camera.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "section-step-keeps-direction": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-camera.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "65a15264f5d769bee177b5043eecd587b1b8d4f8",
+    "production": [
+      "apps/viewer/src/aim/viewCommands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-camera.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "two-targets-allowed": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-camera.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "65a15264f5d769bee177b5043eecd587b1b8d4f8",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-camera.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "viewpoint-with-preset": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-camera.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "65a15264f5d769bee177b5043eecd587b1b8d4f8",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-camera.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "viewpoint-with-target": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-camera.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "65a15264f5d769bee177b5043eecd587b1b8d4f8",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-camera.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "viewpoint-zero-up": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-camera.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "65a15264f5d769bee177b5043eecd587b1b8d4f8",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-camera.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

@@ -130,15 +130,19 @@ jobs:
     # would read `skipped`, and before the map entry above that was a green gate.
     timeout-minutes: 5
     outputs:
-      rust: ${{ steps.all.outputs.rust || steps.filter.outputs.rust }}
-      frontend: ${{ steps.all.outputs.frontend || steps.filter.outputs.frontend }}
-      geometry: ${{ steps.all.outputs.geometry || steps.filter.outputs.geometry }}
-      python: ${{ steps.all.outputs.python || steps.filter.outputs.python }}
-      plato: ${{ steps.all.outputs.plato || steps.filter.outputs.plato }}
+      # >>> AIM-FORK: an AIM-only PR (step `aimonly`, D-098) turns the heavy lanes off;
+      # .github/workflows/aim-fast.yml checks it instead. docs/agents_md/license_headers stay.
+      rust: ${{ steps.aimonly.outputs.only == 'true' && 'false' || steps.all.outputs.rust || steps.filter.outputs.rust }}
+      frontend: ${{ steps.aimonly.outputs.only == 'true' && 'false' || steps.all.outputs.frontend || steps.filter.outputs.frontend }}
+      geometry: ${{ steps.aimonly.outputs.only == 'true' && 'false' || steps.all.outputs.geometry || steps.filter.outputs.geometry }}
+      python: ${{ steps.aimonly.outputs.only == 'true' && 'false' || steps.all.outputs.python || steps.filter.outputs.python }}
+      plato: ${{ steps.aimonly.outputs.only == 'true' && 'false' || steps.all.outputs.plato || steps.filter.outputs.plato }}
+      # <<< AIM-FORK
       docs: ${{ steps.all.outputs.docs || steps.filter.outputs.docs }}
       agents_md: ${{ steps.all.outputs.agents_md || steps.filter.outputs.agents_md }}
       license_headers: ${{ steps.all.outputs.license_headers || steps.filter.outputs.license_headers }}
-      perf_ratchet: ${{ steps.all.outputs.perf_ratchet || steps.filter.outputs.perf_ratchet }}
+      # AIM-FORK (D-098): next 1 line, an AIM-only PR skips the perf ratchet (measured locally, aim-feature skill)
+      perf_ratchet: ${{ steps.aimonly.outputs.only == 'true' && 'false' || steps.all.outputs.perf_ratchet || steps.filter.outputs.perf_ratchet }}
       # `true` only for a title/body `edited` of a head that already has a
       # completed aggregate verdict. Every lane then skips (no filter output
       # above is `true`) and the aggregate replays the verdict. See the
@@ -557,6 +561,24 @@ jobs:
               - '.github/workflows/test.yml'
               - '.github/workflows/docs.yml'
               - '.github/actions/setup-docs-api/**'
+
+      # >>> AIM-FORK: a pull request that touches only the AIM layer (D-098) skips the
+      # heavy lanes (Rust, WASM build, viewer shards, e2e, perf ratchet) through the
+      # outputs above; aim-fast.yml runs the AIM tests, viewer typecheck and fork
+      # gates for it. Any other path (upstream files, this workflow, an upstream
+      # sync) leaves `only` unset and everything runs. On a PR the checkout is the
+      # merge ref at depth 2, so HEAD~1 is the base tip.
+      - name: Detect an AIM-only pull request
+        id: aimonly
+        if: github.event_name == 'pull_request' && steps.noop.outputs.noop != 'true'
+        run: |
+          files=$(git diff --name-only HEAD~1 HEAD)
+          other=$(printf '%s\n' "$files" | grep -Ev '^(apps/viewer/src/aim/|docs/architecture/evidence/aim-|\.claude/skills/aim-feature/|docs/FORK_MAINTENANCE\.md$)' | grep -v '^$' || true)
+          if [ -n "$files" ] && [ -z "$other" ]; then
+            echo "only=true" >> "$GITHUB_OUTPUT"
+            echo "AIM-only PR: heavy lanes skipped, aim-fast.yml checks it."
+          fi
+      # <<< AIM-FORK
 
       # Decide whether `build` can skip the from-source wasm32 compile. The
       # probe emits `true` only when the WASM source is byte-identical to the

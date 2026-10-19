@@ -1,0 +1,13 @@
+diff --git a/apps/viewer/src/aim/view-protocol.ts b/apps/viewer/src/aim/view-protocol.ts
+index 2df2810b..3c19aba7 100644
+--- a/apps/viewer/src/aim/view-protocol.ts
++++ b/apps/viewer/src/aim/view-protocol.ts
+@@ -149,7 +149,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
+       if (targets.filter(Boolean).length > 1) return false;
+       // Póza od hosta je hotový výsledok: rámovanie po nej by ju zahodilo.
+       if (m.viewpoint !== undefined && targets.some(Boolean)) return false;
+-      return true;
++      return m.viewpoint === undefined || m.preset === 'keep';
+     }
+     case 'SET_VIEW_MODE':
+       return (VIEW_MODES as readonly unknown[]).includes(m.mode) && optional(m.storeyGuid, isStr);

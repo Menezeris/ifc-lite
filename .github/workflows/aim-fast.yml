@@ -1,0 +1,65 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+# >>> AIM-FORK (whole file, AIM D-098): fast checks for a pull request that
+# touches the AIM layer. When the PR touches ONLY the AIM layer, test.yml's
+# `changes` job (step `aimonly`) turns its heavy lanes off and this workflow is
+# what checks the change: AIM unit tests, the viewer typecheck and the fork's
+# cheap source gates, in about ten minutes instead of the full upstream matrix.
+# Any PR that also touches upstream files still runs everything in test.yml.
+# The bundle perf ratchet is NOT measured here: measure it locally before the
+# first push (.claude/skills/aim-feature/SKILL.md, step 3).
+
+name: AIM fast checks
+
+on:
+  pull_request:
+    paths:
+      - 'apps/viewer/src/aim/**'
+      - 'docs/architecture/evidence/aim-*/**'
+      - '.github/workflows/aim-fast.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aim-fast-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  aim:
+    name: AIM tests + viewer typecheck
+    # Fork-only workflow; skip only on upstream, whatever the fork is named.
+    if: github.repository != 'LTplus-AG/ifc-lite'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          lfs: false
+          persist-credentials: false
+          # check-module-size audits the allowlist rows against the merge base with origin/main.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: AIM unit tests
+        working-directory: apps/viewer
+        run: npx tsx --import ./src/test/vite-module-hooks.mjs --test src/aim/*.test.ts
+      - name: Fork source gates
+        run: |
+          node scripts/check-module-size.mjs
+          node scripts/check-rtc-frame-copies.mjs
+          node scripts/check-i18n-literals.mjs
+      # The viewer typechecks against the workspace packages' dist; the WASM
+      # package ships its committed .d.ts, so no wasm32 compile is needed.
+      - name: Build workspace packages (TypeScript only)
+        run: pnpm --filter "./packages/**" --filter '!@ifc-lite/wasm' -r --workspace-concurrency=4 build
+      - name: Typecheck the viewer
+        working-directory: apps/viewer
+        run: npx tsc --noEmit -p .
+# <<< AIM-FORK
