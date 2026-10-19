@@ -42,6 +42,8 @@ export interface GuidHelpers {
   resolveGuids: typeof resolveGuids;
   guidForEntity: typeof guidForEntity;
   sectionRenderBounds: (state: State) => AxisBounds | null;
+  /** Zvýraznenie z FOCUS (D-101, #94); podáva ho AimBridge, lenivý modul ho neimportuje. */
+  focus?: () => { count: number; guids: string[] };
 }
 
 /** Výsledok zaokrúhlený na milimetre - Claude ho číta, nie renderer. */
@@ -191,6 +193,8 @@ export function queryViewState(state: State, g: GuidHelpers) {
     selection: { ...summarizeSelection(selected.map((id) => selectedEntityInfo(state, id, g))), ...(bbox ? { bbox: describeBox(renderBoxToIfc(bbox, offset)) } : {}) },
     hidden_count: state.hiddenEntities.size,
     isolated_count: state.isolatedEntities ? state.isolatedEntities.size : null,
+    // Oranžové zvýraznenie z FOCUS (#94): bez neho sa nedalo povedať, čo je to za farbu.
+    ...(g.focus ? { focus: g.focus() } : {}),
   };
 }
 
@@ -227,17 +231,20 @@ const SECTION_RETRIES = 60;
 
 type TargetSection = Extract<ViewInboundMessage, { type: 'SET_SECTION' }>;
 
-export function cutThroughTarget(msg: TargetSection, isCurrent: () => boolean, g: GuidHelpers, attempt = 0, after?: () => void): void {
-  if (!isCurrent()) return;
+/** Rez cez prvok; Promise skončí, keď je rez hotový, prekonaný novším, alebo sa vzdá (false). */
+export function cutThroughTarget(msg: TargetSection, isCurrent: () => boolean, g: GuidHelpers, after?: () => void, attempt = 0): Promise<boolean> {
+  if (!isCurrent()) return Promise.resolve(true);
   const cut = sectionCutFor(useViewerStore.getState(), msg, g);
   if (cut) {
     showSectionCut(useViewerStore.getState, { ...cut, flipped: msg.flipped === true });
     after?.();
-  } else if (msg.guids?.length && attempt < SECTION_RETRIES) {
-    setTimeout(() => cutThroughTarget(msg, isCurrent, g, attempt + 1, after), SECTION_RETRY_MS);
-  } else {
-    console.warn('[aim-bridge] SET_SECTION: prvok bez geometrie alebo bez osi', msg.guids ?? msg.coordinate);
+    return Promise.resolve(true);
   }
+  if (msg.guids?.length && attempt < SECTION_RETRIES) {
+    return new Promise((r) => setTimeout(r, SECTION_RETRY_MS)).then(() => cutThroughTarget(msg, isCurrent, g, after, attempt + 1));
+  }
+  console.warn('[aim-bridge] SET_SECTION: prvok bez geometrie alebo bez osi', msg.guids ?? msg.coordinate);
+  return Promise.resolve(false);
 }
 
 /** `QUERY` -> `QUERY_RESULT` rodičovi s tým istým id; chyba výpočtu sa vráti ako `ok: false`. */

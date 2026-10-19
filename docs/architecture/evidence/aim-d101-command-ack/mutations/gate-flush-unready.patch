@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/command-gate.ts a/apps/viewer/src/aim/command-gate.ts
+index f93d23ff..a9c08b67 100644
+--- b/apps/viewer/src/aim/command-gate.ts
++++ a/apps/viewer/src/aim/command-gate.ts
+@@ -27,7 +27,7 @@ export function createCommandGate(isReady: () => boolean): CommandGate {
+       else queue.push(fn);
+     },
+     flush() {
+-      while (queue.length > 0) queue.shift()!();
++      while (queue.length > 0 && isReady()) queue.shift()!();
+     },
+     get queued() {
+       return queue.length;

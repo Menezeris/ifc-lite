@@ -56,9 +56,14 @@ export function isLensEnvelope(data: unknown): data is LensInboundMessage {
 /** Modul Lens z chatu sa načíta až pri prvej správe, aby vstupný balík nerástol. */
 let lensModule: Promise<typeof import('./aimLens.js')> | null = null;
 
-export function dispatchLensMessage(msg: LensInboundMessage, origin: string): void {
+export function dispatchLensMessage(msg: LensInboundMessage, origin: string): Promise<void> {
   lensModule ??= import('./aimLens.js');
-  void lensModule.then((m) => m.handleLensMessage(msg, origin));
+  return lensModule.then((m) => m.handleLensMessage(msg, origin));
+}
+
+/** Pre `APPLIED` (D-101): počká na vyhodnotenie poslednej lens z chatu a vráti jej súhrn; bez lens null. */
+export function lensSettled(timeoutMs: number): Promise<unknown> {
+  return lensModule ? lensModule.then((m) => m.settledLensSummary(timeoutMs)) : Promise.resolve(null);
 }
 
 /** Odpojenie mostu: upratať len vtedy, keď chat Lens vôbec použil. */

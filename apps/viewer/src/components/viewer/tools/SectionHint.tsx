@@ -26,6 +26,10 @@ export function SectionHint() {
         : s.sectionPlane.box ? 'sectionTool.hint.box'
           : 'sectionTool.hint.cut',
   );
+  // >>> AIM-FORK: host hid the section widget (AIM D-101, set_section show_widget=false) - hint goes too
+  const aimHidden = useViewerStore((s) => s.sectionPlane.enabled && !s.sectionPlane.showGizmo);
+  if (aimHidden) return null;
+  // <<< AIM-FORK
   return (
     <HudItem region="bottom-center" order={1}>
       <HudHint>{t(key)}</HudHint>

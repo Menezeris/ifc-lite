@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/command-protocol.ts a/apps/viewer/src/aim/command-protocol.ts
+index c282476e..e682e901 100644
+--- b/apps/viewer/src/aim/command-protocol.ts
++++ a/apps/viewer/src/aim/command-protocol.ts
+@@ -53,7 +53,7 @@ export function isCommandMessage(data: unknown): data is CommandInboundMessage {
+ 
+ /** Množina po ISOLATE_ADD / ISOLATE_REMOVE; bez aktuálnej izolácie pridanie = nová izolácia. */
+ export function nextIsolation(current: ReadonlySet<number> | null, ids: readonly number[], op: 'add' | 'remove'): number[] {
+-  if (op === 'add') return [...new Set(ids)];
++  if (op === 'add') return [...new Set([...(current ?? []), ...ids])];
+   if (!current) return [];
+   const drop = new Set(ids);
+   return [...current].filter((id) => !drop.has(id));

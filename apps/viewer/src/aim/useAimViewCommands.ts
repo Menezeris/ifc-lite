@@ -23,6 +23,14 @@ import type { ViewInboundMessage } from './view-protocol.js';
 import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCommands.js';
 import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
 import { sectionRenderBounds as sectionBoundsWith } from './sectionRange.js';
+import { noteIssue, track } from './command-gate.js';
+
+type FocusSummary = () => { count: number; guids: string[] };
+/** Zvýraznenie z FOCUS (#94) - poskytne ho AimBridge po lenivom načítaní príkazov viditeľnosti. */
+let focusProvider: FocusSummary | undefined;
+export function setFocusProvider(f: FocusSummary | undefined): void {
+  focusProvider = f;
+}
 
 /** D-085 (obálky, stav, rez cez prvok) sa načíta až pri prvom použití - mimo vstupného balíka. */
 let queries: Promise<typeof import('./viewQueries.js')> | null = null;
@@ -34,16 +42,38 @@ let camera: Promise<typeof import('./viewCamera.js')> | null = null;
 const loadCamera = () => (camera ??= import('./viewCamera.js'));
 const TARGETS = { resolveGuids, resolveSelector };
 
-/** Widget (quad a obrys) aktívneho rezu; bez hodnoty sa nemení (#63). */
+/**
+ * Posledná voľba widgetu od hosta. Každý nový rez zakladá rovinu so
+ * zobrazeným widgetom, preto sa voľba použije aj na rez bez `showGizmo`
+ * (#63, D-101); zrušenie rezu aj odpojenie mosta ju zabudne.
+ */
+let lastGizmo: boolean | undefined;
+
+/** Widget (quad, obrys, nápoveda a rukoväť) aktívneho rezu; bez hodnoty platí posledná voľba. */
 function applyGizmo(show: boolean | undefined): void {
-  if (show === undefined) return;
+  if (show !== undefined) lastGizmo = show;
+  const want = show ?? lastGizmo;
+  if (want === undefined) return;
   const state = useViewerStore.getState();
-  if (state.sectionPlane.showGizmo !== show) state.setSectionPlaneShowGizmo(state.sectionPlane.id, show);
+  if (state.sectionPlane.showGizmo !== want) state.setSectionPlaneShowGizmo(state.sectionPlane.id, want);
 }
+
+/** Stav pre `APPLIED` (D-101): rez, režim, výber a viditeľnosť po vykonaní príkazov. */
+export async function appliedViewState(): Promise<Record<string, unknown>> {
+  const q = await loadQueries();
+  const s = q.queryViewState(useViewerStore.getState(), { ...GUIDS, focus: focusProvider });
+  return {
+    mode: s.mode, storey_guid: s.storey_guid, section: s.section, camera: s.camera,
+    selection_count: s.selection.count, hidden_count: s.hidden_count, isolated_count: s.isolated_count, focus: s.focus,
+  };
+}
+
 
 export function useAimViewCommands(bim: BimContext) {
   const { setMode, storeys } = useViewMode();
   const sectionToken = useRef(0);
+  // Voľba widgetu patrí relácii mosta: nová relácia (iný `bim`) začína s predvoleným widgetom.
+  useEffect(() => () => { lastGizmo = undefined; }, [bim]);
   const run = (msg: ViewInboundMessage, origin = '*') => {
     const state = useViewerStore.getState();
     switch (msg.type) {
@@ -56,13 +86,14 @@ export function useAimViewCommands(bim: BimContext) {
         // Novší rez zruší čakajúce opakovanie staršieho rezu cez prvok.
         const token = ++sectionToken.current;
         if (msg.action === 'clear') {
+          lastGizmo = undefined;
           clearSectionCut(useViewerStore.getState);
           return;
         }
         if (msg.storeyGuid) {
           const storey = pickStorey(storeys, msg.storeyGuid);
           if (!storey) {
-            console.warn('[aim-bridge] SET_SECTION: neznáme podlažie', msg.storeyGuid);
+            noteIssue('SET_SECTION: podlažie sa vo vieweri nenašlo');
             return;
           }
           // Rozsah, voči ktorému renderer reže, a rámec modelu, z ktorého je
@@ -73,14 +104,19 @@ export function useAimViewCommands(bim: BimContext) {
             ?? [...state.models.values()].find((m) => m.geometryResult?.coordinateInfo)?.geometryResult?.coordinateInfo;
           const offY = totalYupOffset(frame).y;
           const position = storeyCutPercent(storey.elevation, msg.offsetM ?? 1.2, offY, range);
-          if (position === null) return;
+          if (position === null) {
+            noteIssue('SET_SECTION: rozsah modelu pre rez nie je známy');
+            return;
+          }
           showSectionCut(useViewerStore.getState, { axis: 'down', position, flipped: msg.flipped === true });
           applyGizmo(msg.showGizmo);
           return;
         }
         if (msg.guids?.length || msg.coordinate !== undefined) {
           // Rez cez prvok alebo na presnej súradnici IFC sveta (D-085).
-          void loadQueries().then((q) => q.cutThroughTarget(msg, () => sectionToken.current === token, GUIDS, 0, () => applyGizmo(msg.showGizmo)));
+          track(loadQueries()
+            .then((q) => q.cutThroughTarget(msg, () => sectionToken.current === token, GUIDS, () => applyGizmo(msg.showGizmo)))
+            .then((ok) => { if (!ok) noteIssue('SET_SECTION: prvok bez geometrie alebo bez osi'); }));
           return;
         }
         if (msg.axis && msg.position !== undefined) {
@@ -96,20 +132,20 @@ export function useAimViewCommands(bim: BimContext) {
       case 'SET_CAMERA': {
         // Smer, Set view rezu, póza od hosta, rámovanie (AIM D-098) - lenivo.
         const step = cameraStep(msg.preset);
-        void loadCamera().then((c) => c.runCamera(msg, step, bim, TARGETS));
+        track(loadCamera().then((c) => c.runCamera(msg, step, bim, TARGETS)));
         return;
       }
       case 'SET_VIEW_MODE': {
         const storey = pickStorey(storeys, msg.storeyGuid);
         if (storey === null) {
-          console.warn('[aim-bridge] SET_VIEW_MODE: neznáme podlažie', msg.storeyGuid);
+          noteIssue('SET_VIEW_MODE: podlažie sa vo vieweri nenašlo');
           return;
         }
         setMode(msg.mode, storey);
         return;
       }
       case 'QUERY': {
-        void loadQueries().then((q) => q.answerQuery(msg, origin, GUIDS));
+        void loadQueries().then((q) => q.answerQuery(msg, origin, { ...GUIDS, focus: focusProvider }));
         return;
       }
     }

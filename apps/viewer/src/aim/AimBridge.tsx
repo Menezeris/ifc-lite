@@ -22,20 +22,14 @@ import { useEffect, useRef, useState } from 'react';
 import { parsePlacement, serializePlacement } from '@ifc-lite/drawing-underlay';
 import { useBim } from '../sdk/BimProvider.js';
 import { useViewerStore } from '../store/index.js';
-import { toGlobalIdFromModels } from '../store/globalId.js';
-import { selectPickedGlobalId } from '../components/viewer/viewport-selection.js';
 import { AUTOLOAD_COMPLETE_EVENT, parseAutoloadUrls } from '../lib/autoload.js';
+import { selectPickedGlobalId } from '../components/viewer/viewport-selection.js';
 import {
-  SOURCE,
-  FILTER_COLOR,
-  FOCUS_COLOR,
-  isInboundMessage,
-  resolveGuids,
-  resolveSelector,
-  guidForEntity,
-  type OpsSelector,
-  type OutboundMessage,
+  SOURCE, FILTER_COLOR, FOCUS_COLOR, isInboundMessage, guidForEntity, resolveGuids, resolveSelector,
+  type InboundMessage, type OutboundMessage,
 } from './bridge-protocol.js';
+import { isCommandMessage, type AppliedMessage, type CommandInboundMessage } from './command-protocol.js';
+import { createCommandGate, noteIssue, resetCommandState, settled, takeIssues, track } from './command-gate.js';
 import { useAimPanelStore } from './aimPanelStore.js';
 import { useCapturePinsStore } from './capturePinsStore.js';
 import { useAimDecorationsStore } from './aimDecorationsStore.js';
@@ -43,16 +37,36 @@ import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
 import { isBcfLoadMessage, loadBcfTopics } from './bcf-protocol.js';
-import { dispatchLensMessage, isLensEnvelope, resetLensFromChat } from './lens-protocol.js';
-import { useAimViewCommands } from './useAimViewCommands.js';
+import { dispatchLensMessage, isLensEnvelope, lensSettled, resetLensFromChat } from './lens-protocol.js';
+import { appliedViewState, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
+
+/** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
+const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
+/** Helpery zo vstupného balíka pre lenivý modul príkazov viditeľnosti. */
+const VIS_DEPS = { resolveGuids, resolveSelector, selectPickedGlobalId, noteIssue, FOCUS_COLOR, FILTER_COLOR };
+let visibility: Promise<typeof import('./visibility-commands.js')> | null = null;
+const loadVisibility = () => (visibility ??= import('./visibility-commands.js'));
+
+/** Najdlhšie čakanie `APPLIED` na asynchrónne kroky (rez cez prvok, kamera, Lens); host čaká 3 s. */
+const ACK_WAIT_MS = 2500;
+/** Ak geometria po ohlásení modelov neprestane prúdiť, príkazy sa pustia aj tak. */
+const STREAM_GRACE_MS = 30_000;
 
 export function AimBridge() {
   const bim = useBim();
   const parentOriginRef = useRef<string | null>(null);
   const embeddedRef = useRef(false);
-  // Prvky ofarbené posledným FOCUS-om — ďalší FOCUS ich vráti do pôvodných
-  // farieb (partial resetColors), aby sa oranžová nehromadila po scéne.
-  const focusedRef = useRef<ReturnType<typeof resolveGuids>>([]);
+  // Brána príkazov (AIM D-101): do načítania modelov a dotečenia geometrie sa
+  // príkazy radia a vykonajú potom v poradí, predtým sa zahodili.
+  const modelsAnnouncedRef = useRef(false);
+  // Odklad sa ráta od ohlásenia modelov alebo od začiatku ďalšieho prúdu geometrie (neskorší model), čo je neskôr.
+  const graceFromRef = useRef(0);
+  const gateRef = useRef(createCommandGate(() => modelsAnnouncedRef.current
+    && (!useViewerStore.getState().geometryStreamingActive || Date.now() - graceFromRef.current > STREAM_GRACE_MS)));
+  const startGrace = () => {
+    graceFromRef.current = Date.now();
+    setTimeout(() => gateRef.current.flush(), STREAM_GRACE_MS + 50);
+  };
   // Selekcie nastavené hostovým FOCUS-om — tie sa hostovi NEposielajú späť
   // ako ENTITY_SELECTED (echo by z jeho vlastného príkazu spravilo "user
   // pick" a prirodzená host implementácia by sa zacyklila FOCUS→SELECTED).
@@ -74,13 +88,37 @@ export function AimBridge() {
       window.parent.postMessage(msg, parentOriginRef.current ?? '*');
     }
 
-    // Ops berú buď explicitné GUIDy, alebo množinový selektor (typy/model)
-    // rozkladaný viewer-side — „celý VZT.ifc" tak necestuje ako zoznam GUIDov.
-    function refsForOp(msg: { guids?: string[]; selector?: OpsSelector }) {
-      const models = useViewerStore.getState().models;
-      if (msg.guids?.length) return resolveGuids(models, msg.guids);
-      if (msg.selector) return resolveSelector(models, msg.selector);
-      return [];
+    const origin = () => parentOriginRef.current ?? '*';
+    const gate = gateRef.current;
+    // Modul príkazov viditeľnosti sa načíta hneď (mimo vstupného balíka); brána drží príkazy
+    // až do načítania modelov, takže je vtedy pripravený a príkazy idú synchrónne v poradí.
+    let vis: Awaited<ReturnType<typeof loadVisibility>> | null = null;
+    void loadVisibility().then((m) => {
+      vis = m;
+      setFocusProvider(m.focusSummary);
+    });
+    const runVisibility = (msg: InboundMessage | CommandInboundMessage) => {
+      if (vis) vis.runVisibilityCommand(msg, bim, programmaticSelectionRef, VIS_DEPS);
+      else track(loadVisibility().then((m) => m.runVisibilityCommand(msg, bim, programmaticSelectionRef, VIS_DEPS)));
+    };
+
+    // `ACK_REQUEST` ide bránou za príkazmi, preto ich vidí vykonané; počká ešte na ich asynchrónne kroky.
+    async function answerAck(cmdId: string) {
+      const done = await settled(ACK_WAIT_MS);
+      // null = lens z chatu sa nepoužila; chyba výpočtu súhrnu je problém, nie úspech.
+      const lens = await lensSettled(ACK_WAIT_MS).catch((err: unknown) => {
+        noteIssue(`Lens: ${err instanceof Error ? err.message : String(err)}`);
+        return null;
+      });
+      const state = await appliedViewState().catch((err: unknown) => {
+        noteIssue(`stav viewera: ${err instanceof Error ? err.message : String(err)}`);
+        return undefined;
+      });
+      // Problémy až po stave a Lens, aby ich chyby patrili do tohto potvrdenia.
+      const issues = takeIssues();
+      if (!done) issues.push('niektoré kroky vo vieweri ešte bežia');
+      const applied: AppliedMessage = { source: SOURCE, type: 'APPLIED', cmdId, ok: issues.length === 0, issues, state: state && { ...state, ...(lens ? { lens } : {}) } };
+      window.parent.postMessage(applied, origin());
     }
 
     function onMessage(e: MessageEvent) {
@@ -89,11 +127,21 @@ export function AimBridge() {
       if (e.source !== window.parent) return;
       if (parentOriginRef.current && e.origin !== parentOriginRef.current) return;
       if (isViewMessage(e.data)) {
-        viewCommands.current(e.data, parentOriginRef.current ?? '*');
+        const msg = e.data;
+        // Otázky odpovedajú hneď (aj počas načítania), príkazy idú bránou.
+        if (msg.type === 'QUERY') viewCommands.current(msg, origin());
+        else gate.run(() => viewCommands.current(msg, origin()));
         return;
       }
       if (isLensEnvelope(e.data)) {
-        dispatchLensMessage(e.data, parentOriginRef.current ?? '*'); // Lens z chatu (D-096)
+        const msg = e.data; // Lens z chatu (D-096)
+        if (msg.type === 'LENS_QUERY') void dispatchLensMessage(msg, origin());
+        else gate.run(() => track(dispatchLensMessage(msg, origin())));
+        return;
+      }
+      if (isCommandMessage(e.data)) {
+        const msg = e.data;
+        gate.run(() => (msg.type === 'ACK_REQUEST' ? void answerAck(msg.cmdId) : runVisibility(msg)));
         return;
       }
       if (isDerivationsMessage(e.data)) {
@@ -107,82 +155,13 @@ export function AimBridge() {
         return;
       }
       if (!isInboundMessage(e.data)) return;
+      if (VISIBILITY.has(e.data.type)) {
+        const msg = e.data;
+        gate.run(() => runVisibility(msg));
+        return;
+      }
 
       switch (e.data.type) {
-        case 'FOCUS': {
-          const refs = resolveGuids(useViewerStore.getState().models, e.data.guids);
-          if (refs.length === 0) return;
-          // Explicitné ofarbenie (oranžová ako v pôvodnom AIM three.js
-          // vieweri): multi-select cez SDK plní iba selectedEntitiesSet a
-          // renderer highlight (selectedEntityIds sync) necháva na callerovi
-          // — pozri addEntityToSelection v selectionSlice — takže samotný
-          // select() by v 3D nebol vidieť.
-          if (focusedRef.current.length > 0) bim.viewer.resetColors(focusedRef.current);
-          bim.viewer.colorize(refs, FOCUS_COLOR);
-          focusedRef.current = refs;
-          programmaticSelectionRef.current = new Set(refs.map((r) => `${r.modelId}:${r.expressId}`));
-          bim.viewer.select(refs);
-          bim.viewer.flyTo(refs);
-          break;
-        }
-        case 'SELECT': {
-          // Výber ako klik myšou (D-082): tá istá cesta ako klik vo viewporte
-          // (`selectPickedGlobalId`), panel vlastností a priblíženie kamery.
-          // Selekcia sa zámerne NEoznačí ako programová — ENTITY_SELECTED musí
-          // ísť hostovi, aby AIM kartu dotiahol rovnakým tokom ako po kliku.
-          const state = useViewerStore.getState();
-          const [ref] = resolveGuids(state.models, [e.data.guid]);
-          if (!ref) return;
-          // Oranžové FOCUS ofarbenie by prekrylo selekčné zvýraznenie.
-          if (focusedRef.current.length > 0) {
-            bim.viewer.resetColors(focusedRef.current);
-            focusedRef.current = [];
-          }
-          programmaticSelectionRef.current = null;
-          selectPickedGlobalId(toGlobalIdFromModels(state.models, ref.modelId, ref.expressId));
-          useViewerStore.getState().openPanelInHome('properties', 'programmatic');
-          bim.viewer.flyTo([ref]);
-          break;
-        }
-        case 'HIGHLIGHT_FILTER': {
-          // Plný reset zhodí aj focus ofarbenie — filter ho nahrádza.
-          bim.viewer.resetColors();
-          focusedRef.current = [];
-          const refs = resolveGuids(useViewerStore.getState().models, e.data.guids);
-          if (refs.length > 0) bim.viewer.colorize(refs, FILTER_COLOR);
-          break;
-        }
-        case 'CLEAR_FILTER':
-          bim.viewer.resetColors();
-          focusedRef.current = [];
-          break;
-        case 'COLORIZE': {
-          const refs = refsForOp(e.data);
-          if (refs.length > 0) bim.viewer.colorize(refs, e.data.color);
-          break;
-        }
-        case 'HIDE': {
-          const refs = refsForOp(e.data);
-          if (refs.length > 0) bim.viewer.hide(refs);
-          break;
-        }
-        case 'SHOW': {
-          const refs = refsForOp(e.data);
-          if (refs.length > 0) bim.viewer.show(refs);
-          break;
-        }
-        case 'ISOLATE': {
-          const refs = refsForOp(e.data);
-          if (refs.length > 0) bim.viewer.isolate(refs);
-          break;
-        }
-        case 'SHOW_ALL':
-          bim.viewer.resetVisibility();
-          break;
-        case 'RESET_COLORS':
-          bim.viewer.resetColors();
-          focusedRef.current = [];
-          break;
         case 'AIM_PANEL_DATA':
           useAimPanelStore.getState().resolve(e.data.guid, { data: e.data.data });
           break;
@@ -274,6 +253,9 @@ export function AimBridge() {
       useAimDecorationsStore.getState().clear();
       useAimDerivationsStore.getState().clear();
       resetLensFromChat(); // D-096: izolácia a AIM chat lens neprežijú odpojenie mostu
+      setFocusProvider(undefined);
+      resetCommandState(); // problémy a kroky z predošlej relácie nepatria do ďalšieho APPLIED
+      void visibility?.then((m) => m.forgetFocus());
     };
   }, [bim]);
 
@@ -289,11 +271,12 @@ export function AimBridge() {
   // vždy, aj pri zlyhaní URL — host nesmie čakať navždy); bez autoload
   // parametrov ostáva pôvodný 0 → N latch (manuálny load v embede).
   const modelCount = useViewerStore((s) => s.models.size);
-  const modelsAnnouncedRef = useRef(false);
   const announceModels = () => {
     const count = useViewerStore.getState().models.size;
     if (count === 0 || modelsAnnouncedRef.current) return;
     modelsAnnouncedRef.current = true;
+    startGrace();
+    gateRef.current.flush();
     window.parent.postMessage(
       { source: SOURCE, type: 'MODELS_LOADED', count } satisfies OutboundMessage,
       parentOriginRef.current ?? '*',
@@ -340,6 +323,13 @@ export function AimBridge() {
     announceModels();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelCount]);
+
+  // Geometria dotiekla -> zaradené príkazy hosta sa vykonajú (D-101); nový prúd znova spustí odklad.
+  useEffect(() => useViewerStore.subscribe((s, prev) => {
+    if (!prev.geometryStreamingActive && s.geometryStreamingActive) startGrace();
+    if (prev.geometryStreamingActive && !s.geometryStreamingActive) gateRef.current.flush();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []);
 
   // 3D -> DB: forward native selection changes to the host. The host
   // resolves guid -> objects.id via its own guidMap (see lib/data/ifc.ts

@@ -65,9 +65,11 @@ export function SectionPlaneVisualization({ enabled }: SectionPlaneVisualization
       )}
       {/* A cardinal plane gets the same handle (#7545): its foot is where the renderer put the plane, and
           the value is the world coordinate along its axis, which is what the offset field reads. */}
-      {enabled && cardinal && distance.kind === 'world' && (
+      {/* >>> AIM-FORK: no drag handle while the host hides the section widget (AIM D-101) */}
+      {enabled && cardinal && cardinal.showGizmo && distance.kind === 'world' && (
         <CardinalPlaneHandle value={distance.value} setValue={distance.onChange} onDragStart={onDragStart} onDragEnd={onDragEnd} />
       )}
+      {/* <<< AIM-FORK */}
       {sectionPickPreview && <SectionPickPreviewOverlay preview={sectionPickPreview} />}
     </>
   );

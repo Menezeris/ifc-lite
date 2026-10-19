@@ -22,6 +22,7 @@ import type { resolveGuids, resolveSelector } from './bridge-protocol.js';
 import type { BridgeViewpoint, ViewInboundMessage } from './view-protocol.js';
 import type { CameraStep } from './viewCommands.js';
 import { ifcDirToRender, ifcPointToRender } from './viewFrame.js';
+import { noteIssue } from './command-gate.js';
 
 type State = ReturnType<typeof useViewerStore.getState>;
 type CameraMessage = Extract<ViewInboundMessage, { type: 'SET_CAMERA' }>;
@@ -38,14 +39,17 @@ const VIEWPOINT_MS = 300;
 /** Novší príkaz zruší rámovanie, ktoré ešte čaká na koniec animácie staršieho. */
 let latest = 0;
 
+/** Neúspech kroku ide do `APPLIED.issues`, nie len do konzoly (AIM D-101). */
+function cameraNotReady(step: string): false {
+  noteIssue(`SET_CAMERA ${step}: kamera viewera ešte nie je pripravená`);
+  return false;
+}
+
 /** Póza od hosta (IFC svet) -> render rámec, s FOV a projekciou, ktoré kamera práve má. */
 function applyHostViewpoint(state: State, vp: BridgeViewpoint): boolean {
   const cam = state.cameraCallbacks;
   const current = cam.getViewpoint?.();
-  if (!current || !cam.applyViewpoint) {
-    console.warn('[aim-bridge] SET_CAMERA viewpoint: kamera viewera ešte nie je pripravená');
-    return false;
-  }
+  if (!current || !cam.applyViewpoint) return cameraNotReady('viewpoint');
   const offset = bcfWorldOffset(state.models, state.geometryResult);
   cam.applyViewpoint({
     ...current,
@@ -62,16 +66,16 @@ function lookAtSection(state: State): boolean {
   const plane = activeSectionPlane(state);
   const cam = state.cameraCallbacks;
   if (!plane || plane.box) {
-    console.warn('[aim-bridge] SET_CAMERA section: žiadny aktívny rez');
+    noteIssue('SET_CAMERA section: žiadny aktívny rez');
     return false;
   }
   if (plane.custom) {
     const current = cam.getViewpoint?.();
-    if (!current || !cam.applyViewpoint) return false;
+    if (!current || !cam.applyViewpoint) return cameraNotReady('section');
     cam.applyViewpoint(customPlaneViewpoint({ flipped: plane.flipped, custom: plane.custom }, current), true, SECTION_VIEW_MS);
     return true;
   }
-  if (!cam.setPresetView) return false;
+  if (!cam.setPresetView) return cameraNotReady('section');
   cam.setPresetView(presetViewForAxis(plane.axis, plane.flipped));
   return true;
 }
@@ -96,7 +100,7 @@ function frameTarget(msg: CameraMessage, bim: BimContext, g: TargetHelpers): voi
   if (msg.guids?.length || msg.selector) {
     const refs = msg.guids?.length ? g.resolveGuids(state.models, msg.guids) : g.resolveSelector(state.models, msg.selector!);
     if (refs.length > 0) bim.viewer.flyTo(refs);
-    else console.warn('[aim-bridge] SET_CAMERA: cieľ bez prvkov', msg.guids ?? msg.selector);
+    else noteIssue('SET_CAMERA: cieľ bez prvkov');
   } else if (msg.fit === 'visible') {
     state.cameraCallbacks.fitAll?.();
   } else if (msg.fit === 'selection') {
@@ -109,15 +113,20 @@ function frameTarget(msg: CameraMessage, bim: BimContext, g: TargetHelpers): voi
  * smeru, preto ide až po animácii smeru - spustené hneď prepísalo koncový bod
  * animácie a preset s cieľom kamerou nepohol (AIMviewer #65).
  */
-export function runCamera(msg: CameraMessage, step: CameraStep, bim: BimContext, g: TargetHelpers): void {
+export function runCamera(msg: CameraMessage, step: CameraStep, bim: BimContext, g: TargetHelpers): Promise<void> {
   const token = ++latest;
   const state = useViewerStore.getState();
   if (msg.projection) state.setProjectionMode(msg.projection);
   const wait = setDirection(state, msg, step);
-  if (!msg.guids?.length && !msg.selector && !msg.fit) return;
+  // Promise skončí po animácii a rámovaní, aby `APPLIED` (D-101) hlásilo koncovú pózu.
+  const settle = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+  if (!msg.guids?.length && !msg.selector && !msg.fit) return wait > 0 ? settle(wait + FRAME_SLACK_MS) : Promise.resolve();
   const frame = () => {
     if (token === latest) frameTarget(msg, bim, g);
   };
-  if (wait > 0) setTimeout(frame, wait + FRAME_SLACK_MS);
-  else frame();
+  if (wait <= 0) {
+    frame();
+    return Promise.resolve();
+  }
+  return settle(wait + FRAME_SLACK_MS).then(frame);
 }

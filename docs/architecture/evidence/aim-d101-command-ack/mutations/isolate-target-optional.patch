@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/command-protocol.ts a/apps/viewer/src/aim/command-protocol.ts
+index d16d3e55..e682e901 100644
+--- b/apps/viewer/src/aim/command-protocol.ts
++++ a/apps/viewer/src/aim/command-protocol.ts
+@@ -45,7 +45,7 @@ export function isCommandMessage(data: unknown): data is CommandInboundMessage {
+     case 'ISOLATE_ADD':
+     case 'ISOLATE_REMOVE':
+       // Cieľ ako pri ISOLATE (GUIDy alebo selektor) - tá istá kontrola; tu je povinný.
+-      return isInboundMessage({ ...m, type: 'ISOLATE' });
++      return (m.selector !== undefined || (Array.isArray(m.guids) && m.guids.length > 0)) && isInboundMessage({ ...m, type: 'ISOLATE' });
+     default:
+       return false;
+   }
