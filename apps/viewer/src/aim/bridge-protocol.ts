@@ -132,10 +132,10 @@ export interface CapturePinWire {
 
 export type InboundMessage =
   | { source: typeof SOURCE; type: 'FOCUS'; guids: string[] }
-  // Výber jedného prvku presne ako klik myšou (D-082 v AIM repe): selekcia,
-  // panel vlastností a kamera; na rozdiel od FOCUS sa ENTITY_SELECTED echuje
-  // hostovi, aby dotiahol AIM kartu rovnakým tokom ako po kliku.
-  | { source: typeof SOURCE; type: 'SELECT'; guid: string }
+  // Výber ako klik myšou (D-082 v AIM repe): selekcia, panel a kamera; ENTITY_SELECTED
+  // sa echuje hostovi (AIM karta ako po kliku). `panel` (D-113): záložka, sekcia a
+  // zvýraznená vlastnosť; validuje ho lenivý SELECT (`aimPanelViewPlan.ts`).
+  | { source: typeof SOURCE; type: 'SELECT'; guid: string; panel?: unknown }
   | { source: typeof SOURCE; type: 'HIGHLIGHT_FILTER'; guids: string[] }
   | { source: typeof SOURCE; type: 'CLEAR_FILTER' }
   // AI dock viewer ops (D-066 in the AIM repo) — colorize/visibility over

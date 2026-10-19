@@ -16,6 +16,8 @@ import { fromGlobalIdFromModels, toGlobalIdFromModels } from '../store/globalId.
 import type { InboundMessage, OpsSelector, resolveGuids, resolveSelector } from './bridge-protocol.js';
 import { nextIsolation, type CommandInboundMessage } from './command-protocol.js';
 import { frameRefs } from './frame-refs.js';
+import { applyPanelView } from './aimPanelView.js';
+import { selectPanel } from './aimPanelViewPlan.js';
 
 /** Funkcie z modulov vstupného balíka - lenivý modul ich neimportuje (pravidlo balíka forku). */
 export interface VisibilityDeps {
@@ -110,6 +112,11 @@ export function runVisibilityCommand(
     }
     case 'SELECT': {
       // Výber ako klik myšou (D-082): ENTITY_SELECTED musí ísť hostovi, preto nie je programový.
+      const panel = selectPanel(msg.panel);
+      if (panel === null) {
+        d.noteIssue('SELECT: neplatný panel (tab aim|ifc, section properties|quantities, focus pset + property)');
+        return true;
+      }
       const state = useViewerStore.getState();
       const [ref] = d.resolveGuids(state.models, [msg.guid]);
       if (!ref) {
@@ -121,6 +128,7 @@ export function runVisibilityCommand(
       d.selectPickedGlobalId(toGlobalIdFromModels(state.models, ref.modelId, ref.expressId));
       useViewerStore.getState().openPanelInHome('properties', 'programmatic');
       d.track(frameRefs(bim, [ref], 'SELECT', d.noteIssue));
+      if (panel) d.track(applyPanelView(panel, ref, d.noteIssue));
       return true;
     }
     case 'CLEAR_SELECTION':
