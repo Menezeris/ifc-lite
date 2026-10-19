@@ -15,13 +15,25 @@ description: >-
 # AIM feature in the fork: get CI green on the first run
 
 A PR that touches only the AIM layer (`apps/viewer/src/aim/`, `docs/architecture/evidence/aim-*`,
-this skill, `docs/FORK_MAINTENANCE.md`) runs the fast lane: `aim-fast.yml` (AIM tests, source
-gates, viewer typecheck, about ten minutes) while `test.yml` skips its heavy lanes (D-098). Keep
-such PRs AIM-only; touching any upstream file brings back upstream's full CI (Rust, WASM, viewer
-shards, E2E, revert oracle, perf ratchets: 30-60 minutes per run). The fast lane does not measure
-the bundle or run the revert oracle, so steps 3-4 below stay mandatory. Everything below runs
-locally in a few minutes; do it **before the first push**. Rules and reasons:
-`docs/FORK_MAINTENANCE.md` (Conventions, "Pre-approved raises for new AIM features").
+the AIM skills, `docs/FORK_MAINTENANCE.md`) runs the fast lane (D-098). Since D-103 so does a PR
+whose other changes are edits **inside `AIM-FORK` blocks** of existing `apps/viewer/` files, plus
+a pre-approved raise of the two viewer bundle ceilings. `scripts/check-aim-fork-only.mjs` decides;
+run it before pushing to see which lane you get:
+
+```bash
+node scripts/check-aim-fork-only.mjs --base origin/main --head HEAD
+```
+
+The fast lane (`aim-fast.yml`, about 10-15 minutes) runs the AIM tests, source gates, viewer
+typecheck, the viewer tests that import a changed file, and the viewer build with its JS bundle
+ratchet; `test.yml` skips its heavy lanes, and a nightly full run on `main` catches the rest.
+One line changed outside a block, a new upstream file, a package, a script or a workflow brings
+back upstream's full CI (Rust, WASM, viewer shards, E2E, revert oracle: 30-60 minutes per run),
+so wrap every upstream edit in a block (step 1). The fast lane does not run the revert oracle, so
+step 4 stays mandatory; step 3 prepares the ceiling raise before the first push. Everything below
+runs locally in a few minutes; do it **before the first push**. Rules and reasons:
+`docs/FORK_MAINTENANCE.md` ("Fast CI for AIM pull requests", "Pre-approved raises for new AIM
+features").
 
 ## 1. Where the code goes
 
@@ -31,7 +43,9 @@ locally in a few minutes; do it **before the first push**. Rules and reasons:
   do (relative camera steps, filters over AIM data) stays in AIMviewer.
 - New code in `apps/viewer/src/aim/`. Call upstream store / renderer / SDK functions,
   do not copy them. No edits in upstream files; when unavoidable, an `AIM-FORK`
-  sentinel and a row in `FORK_MAINTENANCE.md`.
+  sentinel and a row in `FORK_MAINTENANCE.md`. To change an upstream line, replace it
+  inside a new block (the old line goes, the new one sits between the markers); a
+  changed line outside any block sends the PR to the full CI (D-103).
 - Anything not needed at boot: dynamic `import()` on first use. The lazy module must
   not import a module the entry imports (pass helpers in from the caller), or the
   bundler splits that module out and the entry grows anyway.
@@ -100,5 +114,9 @@ wait or retry.
 
 - Do not edit the PR body or title while CI runs: `test.yml` replays the recorded
   verdict on `edited` events and that replay can turn a check red.
+- `Claude review` findings labelled **minor** do not block the merge when CI is green
+  (D-103): do not push only for them. Reply once, resolve the thread, list them under
+  "Follow-up" in the PR body once CI has finished; they are fixed together in a later PR. A finding labelled
+  **blocker (security)** is fixed in this PR. Details: `.claude/skills/steward/SKILL.md`.
 - The PR merges into `main` with a merge commit; production deploys from `main`,
   so merging needs Samuel's consent.
