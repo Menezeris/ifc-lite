@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimBcf.ts a/apps/viewer/src/aim/aimBcf.ts
+index 2296aecb..5c77a280 100644
+--- b/apps/viewer/src/aim/aimBcf.ts
++++ a/apps/viewer/src/aim/aimBcf.ts
+@@ -47,7 +47,7 @@ export async function loadAimBcfTopics(
+   const api = await (deps.loadApi ?? (() => import('@ifc-lite/bcf-api')))();
+   const client = new api.BcfApiClient({ baseUrl: msg.baseUrl });
+   // Snapshots are not served by the AIM host yet; skip the per-viewpoint probes.
+-  const result = await api.fetchProjectAsBCF(client, msg.projectId, {});
++  const result = await api.fetchProjectAsBCF(client, msg.projectId, { includeSnapshots: false });
+   if (mine !== generation) return 'stale';
+   if (result.warnings.length > 0) console.warn('[aim-bridge] AIM_BCF_LOAD:', result.warnings);
+   if (!shouldReplaceBcfProject(deps.getProject(), lastLoaded)) {

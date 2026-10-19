@@ -1,0 +1,72 @@
+{
+  "origin-not-checked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/bcf-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "e4508ef039293696ad22bc47a175a87c35b24992",
+    "head": "6d06ee215b428c26c679ba02a6d2f7ffc6bac4e3",
+    "production": [
+      "apps/viewer/src/aim/bcf-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/bcf-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "plain-http-allowed": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/bcf-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "e4508ef039293696ad22bc47a175a87c35b24992",
+    "head": "6d06ee215b428c26c679ba02a6d2f7ffc6bac4e3",
+    "production": [
+      "apps/viewer/src/aim/bcf-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/bcf-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "replace-always": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/bcf-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "e4508ef039293696ad22bc47a175a87c35b24992",
+    "head": "6d06ee215b428c26c679ba02a6d2f7ffc6bac4e3",
+    "production": [
+      "apps/viewer/src/aim/aimBcf.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/bcf-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "stale-not-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/bcf-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "e4508ef039293696ad22bc47a175a87c35b24992",
+    "head": "6d06ee215b428c26c679ba02a6d2f7ffc6bac4e3",
+    "production": [
+      "apps/viewer/src/aim/aimBcf.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/bcf-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "snapshots-fetched": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/bcf-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "e4508ef039293696ad22bc47a175a87c35b24992",
+    "head": "6d06ee215b428c26c679ba02a6d2f7ffc6bac4e3",
+    "production": [
+      "apps/viewer/src/aim/aimBcf.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/bcf-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

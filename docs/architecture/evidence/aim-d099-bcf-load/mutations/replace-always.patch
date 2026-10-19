@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimBcf.ts a/apps/viewer/src/aim/aimBcf.ts
+index 53b9e42a..5c77a280 100644
+--- b/apps/viewer/src/aim/aimBcf.ts
++++ a/apps/viewer/src/aim/aimBcf.ts
+@@ -32,7 +32,7 @@ export function shouldReplaceBcfProject<P extends { topics: { size: number } }>(
+   current: P | null,
+   lastLoaded: P | null,
+ ): boolean {
+-  return true;
++  return current === null || current === lastLoaded || current.topics.size === 0;
+ }
+ 
+ let lastLoaded: BCFProject | null = null;
