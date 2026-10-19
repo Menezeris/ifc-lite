@@ -49,6 +49,7 @@ const slotLens = (s: State) => s.savedLenses.find((l) => l.id === SLOT) ?? null;
 
 function releaseIsolation(): void {
   isolationGen++;
+  pendingIsolationRev = null;
   const state = useViewerStore.getState();
   if (isolation && ruleIsolationOwnsChannel(state.isolatedEntities, isolation.ids)) state.clearIsolation();
   isolation = null;
@@ -88,13 +89,15 @@ function applyLens(msg: ApplyLensMessage): void {
     const rev = msg.rev ?? tag;
     pendingIsolationRev = rev;
     isolationFailedRev = null;
-    void isolate(msg, toIsolate, tag, ++isolationGen)
+    const gen = ++isolationGen;
+    void isolate(msg, toIsolate, tag, gen)
       .catch((err: unknown) => {
-        isolationFailedRev = rev;
+        if (gen === isolationGen) isolationFailedRev = rev;
         console.warn('[aim-bridge] izolácia z chatu zlyhala', err);
       })
       .finally(() => {
-        if (pendingIsolationRev === (msg.rev ?? tag)) pendingIsolationRev = null;
+        // Len posledná izolácia: staršia s tou istou verziou nesmie skončiť čakanie novšej.
+        if (gen === isolationGen) pendingIsolationRev = null;
       });
   }
   if (next === prev) return;
