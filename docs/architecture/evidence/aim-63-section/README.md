@@ -42,7 +42,7 @@ Po oprave rozdiel presne 3 m; `showGizmo: false` dal `sectionPlane.showGizmo = f
 
 ## Test a mutácia
 
-`aim/sectionRange.test.ts` volá `sectionRenderBounds` na dvoch modeloch s posunutým VZT (+15 m)
+`aim/sectionRange.test.ts` volá `sectionRenderBounds` na dvoch modeloch so živou obálkou, kde je VZT posunutý o +15 m
 a overí, že rez nad podlažím padne presne na eleváciu + offset. Mutácia
 `mutations/bare-merged-bounds.patch` (vrátenie holého `mergedSectionBounds`, teda chyba #63):
 

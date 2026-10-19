@@ -1,11 +1,11 @@
 diff --git b/apps/viewer/src/aim/sectionRange.ts a/apps/viewer/src/aim/sectionRange.ts
-index 6cab0792..0a73fd72 100644
+index fca1ca53..c422340f 100644
 --- b/apps/viewer/src/aim/sectionRange.ts
 +++ a/apps/viewer/src/aim/sectionRange.ts
-@@ -29,5 +29,5 @@ export function sectionRenderBounds(state: State): AxisBounds | null {
+@@ -31,5 +31,5 @@ export function sectionRenderBounds(state: State, place: typeof placementCoordin
    }
    base ??= state.geometryResult?.coordinateInfo;
    if (!base) return merged;
 -  return merged;
-+  return placementCoordinateInfo({ ...base, shiftedBounds: merged }, state.models, state.modelPlacement)?.shiftedBounds ?? merged;
++  return place({ ...base, shiftedBounds: merged }, state.models, state.modelPlacement)?.shiftedBounds ?? merged;
  }
