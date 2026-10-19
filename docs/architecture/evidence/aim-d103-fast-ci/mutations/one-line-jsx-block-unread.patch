@@ -1,0 +1,14 @@
+diff --git b/scripts/check-aim-fork-only.mjs a/scripts/check-aim-fork-only.mjs
+index 34678d30..2287b50e 100644
+--- b/scripts/check-aim-fork-only.mjs
++++ a/scripts/check-aim-fork-only.mjs
+@@ -66,7 +66,8 @@ export function forkBlocks(text) {
+     const opens = lines[i].includes('>>> AIM-FORK');
+     const closes = lines[i].includes('<<< AIM-FORK');
+     // JSX opens and closes on one line: `{/* >>> AIM-FORK */}<X />{/* <<< AIM-FORK */}`.
+-    if (opens) open.push(n);
++    if (opens && closes) blocks.push([n, n]);
++    else if (opens) open.push(n);
+     else if (closes) {
+       if (open.length === 0) return null;
+       blocks.push([open.pop(), n]);
