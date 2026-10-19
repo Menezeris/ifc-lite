@@ -42,6 +42,8 @@ let isolation: (AimIsolation & { ids: number[] }) | null = null;
 let isolationGen = 0;
 /** Verzia, ktorej izolácia zlyhala (`LENS_QUERY` ju nahlási ako chybu, nie úspech). */
 let isolationFailedRev: string | null = null;
+/** Posledná odmietnutá (neplatná) `APPLY_LENS`: `LENS_QUERY` ju nahlási ako chybu. Bez rev = `*`. */
+let rejectedRev: string | null = null;
 let seq = 0;
 
 type State = ReturnType<typeof useViewerStore.getState>;
@@ -78,6 +80,7 @@ async function isolate(msg: ApplyLensMessage, rules: Lens['rules'], tag: string,
 }
 
 function applyLens(msg: ApplyLensMessage): void {
+  rejectedRev = null;
   const state = useViewerStore.getState();
   const prev = slotLens(state);
   const models = [...state.models.values()].map((m) => ({ name: m.name, fingerprint: m.sourceFingerprint }));
@@ -114,6 +117,10 @@ function applyLens(msg: ApplyLensMessage): void {
 
 function answerLensQuery(msg: LensQueryMessage, origin: string, started = Date.now()): void {
   const reply = (r: ViewQueryResult) => window.parent.postMessage(r, origin);
+  if (rejectedRev !== null && (!msg.rev || rejectedRev === '*' || rejectedRev === msg.rev)) {
+    reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: false, error: 'Viewer správu lens odmietol (neplatné pravidlá).' });
+    return;
+  }
   const state = useViewerStore.getState();
   const lens = state.activeLensId === SLOT && isAimLens(slotLens(state)) ? slotLens(state) : null;
   const revReady = !msg.rev || appliedRev === msg.rev;
@@ -141,6 +148,7 @@ export function handleLensMessage(data: LensInboundMessage, origin: string): voi
   const msg = parseLensMessage(data);
   if (!msg) {
     console.warn('[aim-bridge] neplatná správa Lens', data.type);
+    if (data.type === 'APPLY_LENS') rejectedRev = typeof data.rev === 'string' && data.rev ? data.rev : '*';
     if (data.type === 'LENS_QUERY' && typeof data.id === 'string') {
       window.parent.postMessage({ source: data.source, type: 'QUERY_RESULT', id: data.id, ok: false, error: 'neplatná otázka' }, origin);
     }
@@ -156,12 +164,16 @@ export function resetAimLens(): void {
   const state = useViewerStore.getState();
   const lens = slotLens(state);
   if (isAimLens(lens)) {
+    const wasActive = state.activeLensId === SLOT;
     useViewerStore.setState({
       savedLenses: state.savedLenses.filter((l) => l.id !== SLOT),
-      activeLensId: state.activeLensId === SLOT ? null : state.activeLensId,
+      activeLensId: wasActive ? null : state.activeLensId,
+      // Panel otvorila lens z chatu; so zrušenou lens ho zavrieť.
+      ...(wasActive ? { lensPanelVisible: false } : {}),
     });
   }
   appliedRev = undefined;
+  rejectedRev = null;
   pendingIsolationRev = null;
   isolationFailedRev = null;
 }
