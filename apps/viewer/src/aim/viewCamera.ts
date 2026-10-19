@@ -67,7 +67,8 @@ function lookAtSection(state: State): boolean {
     cam.applyViewpoint(customPlaneViewpoint({ flipped: plane.flipped, custom: plane.custom }, current), true, SECTION_VIEW_MS);
     return true;
   }
-  cam.setPresetView?.(presetViewForAxis(plane.axis, plane.flipped));
+  if (!cam.setPresetView) return false;
+  cam.setPresetView(presetViewForAxis(plane.axis, plane.flipped));
   return true;
 }
 
