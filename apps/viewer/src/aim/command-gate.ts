@@ -37,12 +37,17 @@ export function createCommandGate(isReady: () => boolean): CommandGate {
 
 const inflight = new Set<Promise<unknown>>();
 let issues: string[] = [];
+/** Relácia mosta: krok, ktorý zlyhá až po odpojení, nepatrí do `APPLIED` novej relácie. */
+let session = 0;
 
 /** Asynchrónny krok príkazu; `settled` naň počká. Chyba sa zapíše ako problém. */
 export function track(p: Promise<unknown>): void {
+  const mine = session;
   const guarded = p.then(
     () => undefined,
-    (err: unknown) => noteIssue(err instanceof Error ? err.message : String(err)),
+    (err: unknown) => {
+      if (mine === session) noteIssue(err instanceof Error ? err.message : String(err));
+    },
   );
   inflight.add(guarded);
   void guarded.finally(() => inflight.delete(guarded));
@@ -72,6 +77,7 @@ export function takeIssues(): string[] {
 
 /** Odpojenie mosta: problémy a sledované kroky predošlej relácie nesmú prejsť do ďalšieho `APPLIED`. */
 export function resetCommandState(): void {
+  session++;
   inflight.clear();
   issues = [];
 }

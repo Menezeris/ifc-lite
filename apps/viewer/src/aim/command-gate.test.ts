@@ -76,6 +76,15 @@ describe('resetCommandState (AIM D-101)', () => {
     assert.deepStrictEqual(takeIssues(), []);
     assert.strictEqual(await settled(20), true);
   });
+
+  it('krok predošlej relácie, ktorý zlyhá až po odpojení, problém do novej nezapíše', async () => {
+    let fail!: (e: Error) => void;
+    track(new Promise((_, reject) => (fail = reject)));
+    resetCommandState();
+    fail(new Error('starý rez'));
+    await new Promise((r) => setTimeout(r, 0));
+    assert.deepStrictEqual(takeIssues(), []);
+  });
 });
 
 describe('command-protocol (AIM D-101)', () => {

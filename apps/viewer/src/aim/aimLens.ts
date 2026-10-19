@@ -45,6 +45,8 @@ let isolationGen = 0;
 let isolationFailedRev: string | null = null;
 /** Posledná odmietnutá (neplatná) `APPLY_LENS`: `LENS_QUERY` ju nahlási ako chybu. Bez rev = `*`. */
 let rejectedRev: string | null = null;
+/** Chat poslal `APPLY_LENS` (aj bez `rev`): `APPLIED` nesie súhrn lens (D-101). */
+let lensUsed = false;
 let seq = 0;
 
 type State = ReturnType<typeof useViewerStore.getState>;
@@ -67,7 +69,9 @@ async function isolate(msg: ApplyLensMessage, rules: Lens['rules'], tag: string,
   const raw = new Set<number>();
   for (const ids of matched.values()) for (const id of ids) raw.add(id);
   // `add` k izolácii z chatu rozšíri doterajšiu, nie nahradí (AIM D-101, #95) - ak ju kanál stále drží.
-  const prev = msg.mode === 'add' && isolation && ruleIsolationOwnsChannel(state.isolatedEntities, isolation.ids) ? isolation : null;
+  // Kanál podľa stavu po vyhodnotení: izolácia od hosta počas `await` ho prevezme (D-101).
+  const owns = isolation && ruleIsolationOwnsChannel(useViewerStore.getState().isolatedEntities, isolation.ids);
+  const prev = msg.mode === 'add' && owns ? isolation : null;
   if (prev) for (const id of prev.raw) raw.add(id);
   // Zostava bez geometrie (schodisko ako kontajner) sa izoluje cez svoje časti, ako v paneli Lens.
   const ids = resolvePresentationIds(useViewerStore.getState().cameraCallbacks.resolveHighlightIds, [...raw]);
@@ -86,6 +90,7 @@ async function isolate(msg: ApplyLensMessage, rules: Lens['rules'], tag: string,
 
 function applyLens(msg: ApplyLensMessage): void {
   rejectedRev = null;
+  lensUsed = true;
   const state = useViewerStore.getState();
   const prev = slotLens(state);
   const models = [...state.models.values()].map((m) => ({ name: m.name, fingerprint: m.sourceFingerprint }));
@@ -152,7 +157,7 @@ function answerLensQuery(msg: LensQueryMessage, origin: string, started = Date.n
 
 /** Súhrn poslednej lens z chatu po jej vyhodnotení (D-101, `APPLIED`); null = chat lens nepoužil. */
 export async function settledLensSummary(timeoutMs: number, started = Date.now()): Promise<unknown> {
-  if (appliedRev === undefined && !isolation && pendingIsolationRev === null) return null;
+  if (!lensUsed && !isolation && pendingIsolationRev === null) return null;
   const state = useViewerStore.getState();
   const lens = state.activeLensId === SLOT && isAimLens(slotLens(state)) ? slotLens(state) : null;
   const ready = pendingIsolationRev === null && (!lens || isEvaluated(lens, state.lensRuleCounts, state.lensAutoColorLegend));
@@ -196,6 +201,7 @@ export function resetAimLens(): void {
     });
   }
   appliedRev = undefined;
+  lensUsed = false;
   rejectedRev = null;
   pendingIsolationRev = null;
   isolationFailedRev = null;
