@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/derivations-protocol.ts a/apps/viewer/src/aim/derivations-protocol.ts
+index cfbc1e37..cbe11786 100644
+--- b/apps/viewer/src/aim/derivations-protocol.ts
++++ a/apps/viewer/src/aim/derivations-protocol.ts
+@@ -153,6 +153,7 @@ function isDerivedRelationWire(v: unknown): v is DerivedRelationWire {
+   if (r.viaSpaceRef !== undefined && !isNullableString(r.viaSpaceRef)) return false;
+   const o = r.other as Record<string, unknown> | undefined;
+   if (!o || typeof o !== 'object' || typeof o.objectId !== 'string') return false;
++  if (o.predefinedType !== undefined && !isNullableString(o.predefinedType)) return false;
+   return isNullableString(o.guid) && isNullableString(o.ref) && isNullableString(o.name) && isNullableString(o.ifcType);
+ }
+ 

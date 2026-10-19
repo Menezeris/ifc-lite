@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/derivationsTree.ts a/apps/viewer/src/aim/derivationsTree.ts
+index 44c48f96..6e993ad7 100644
+--- b/apps/viewer/src/aim/derivationsTree.ts
++++ a/apps/viewer/src/aim/derivationsTree.ts
+@@ -62,7 +62,7 @@ export function groupDerivedRelations(relations: readonly DerivedRelationWire[])
+     }
+     const { group, classes } = entry;
+     group.count += 1;
+-    group.rules.push(relation.ruleName);
++    if (!group.rules.includes(relation.ruleName)) group.rules.push(relation.ruleName);
+     const cls = classLabel(relation.other);
+     let classGroup = classes.get(cls);
+     if (!classGroup) {
