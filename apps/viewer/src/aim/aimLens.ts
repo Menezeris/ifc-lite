@@ -7,17 +7,25 @@
  * dočasného slotu `AUTO_COLOR_FROM_LIST_ID` (ten istý ako "Color by" z tabuľky:
  * upstream ho neukladá do localStorage ani neexportuje), aktivuje ju a otvorí
  * panel Lens; vyhodnotenie, farby, skrytie a počty robí upstream `useLens`.
+ * Izolácia (`isolate: true`) ide mimo lens: pravidlá sa vyhodnotia tým istým
+ * federovaným filtrom ako lens a ich zjednotenie sa izoluje kanálom izolácie
+ * viewera, takže prvky bez farby ostanú v pôvodnom vzhľade.
  * `LENS_QUERY` počká na vyhodnotenie verzie `rev` a vráti počty hosťovi.
  * Načítava sa lenivo z `AimBridge` pri prvej správe Lens.
  */
 
+import type { Lens } from '@ifc-lite/lens';
 import { useViewerStore } from '@/store';
 import { AUTO_COLOR_FROM_LIST_ID } from '@/lib/lens/persistence';
+import { evaluateLensGroups } from '@/lib/lens/evaluate-lens-groups';
+import { definedModelTagIdsOf, evaluatorModelsFromState } from '@/lib/model-tags/evaluator-models';
+import { resolvePresentationIds } from '@/lib/presentation/resolvePresentationIds';
+import { ruleIsolationOwnsChannel } from '@/components/viewer/lens-visibility-ownership';
 import type { LensInboundMessage } from './lens-protocol.js';
 import type { ViewQueryResult } from './view-protocol.js';
 import {
-  isAimLens, isEvaluated, nextAimLens, parseLensMessage, summarizeLens,
-  type ApplyLensMessage, type LensQueryMessage,
+  isAimLens, isEvaluated, isolationRules, nextAimLens, parseLensMessage, summarizeLens,
+  type AimIsolation, type ApplyLensMessage, type LensQueryMessage,
 } from './aimLensPlan.js';
 
 const SLOT = AUTO_COLOR_FROM_LIST_ID;
@@ -26,17 +34,59 @@ const WAIT_MS = 6000;
 
 /** Posledná použitá verzia od hosta (na párovanie `LENS_QUERY`). */
 let appliedRev: string | undefined;
+/** Verzia, ktorej izolácia ešte beží (vyhodnotenie je asynchrónne). */
+let pendingIsolationRev: string | null = null;
+/** Izolácia z chatu: počty a presné id v kanáli (uvoľní sa len, ak ich kanál stále drží). */
+let isolation: (AimIsolation & { ids: number[] }) | null = null;
 let seq = 0;
 
 type State = ReturnType<typeof useViewerStore.getState>;
 const slotLens = (s: State) => s.savedLenses.find((l) => l.id === SLOT) ?? null;
 
+function releaseIsolation(): void {
+  const state = useViewerStore.getState();
+  if (isolation && ruleIsolationOwnsChannel(state.isolatedEntities, isolation.ids)) state.clearIsolation();
+  isolation = null;
+}
+
+async function isolate(msg: ApplyLensMessage, rules: Lens['rules'], tag: string): Promise<void> {
+  const state = useViewerStore.getState();
+  const probe: Lens = { id: `aim-isolate-${tag}`, name: 'AIM isolate', rules };
+  const matched = await evaluateLensGroups(probe, evaluatorModelsFromState(state), state.models, definedModelTagIdsOf(state));
+  const raw = new Set<number>();
+  for (const ids of matched.values()) for (const id of ids) raw.add(id);
+  // Zostava bez geometrie (schodisko ako kontajner) sa izoluje cez svoje časti, ako v paneli Lens.
+  const ids = resolvePresentationIds(useViewerStore.getState().cameraCallbacks.resolveHighlightIds, [...raw]);
+  const now = useViewerStore.getState();
+  // `isolateEntities` je prepínač: rovnaká množina v kanáli by izoláciu zrušila.
+  if (ruleIsolationOwnsChannel(now.isolatedEntities, ids)) now.clearIsolation();
+  if (ids.length > 0) now.isolateEntities(ids);
+  isolation = {
+    ...(msg.rev ? { rev: msg.rev } : {}),
+    rules: rules.map((r) => ({ name: r.name, count: matched.get(r.id)?.size ?? 0 })),
+    isolated: raw.size,
+    ids,
+  };
+}
+
 function applyLens(msg: ApplyLensMessage): void {
   const state = useViewerStore.getState();
   const prev = slotLens(state);
   const models = [...state.models.values()].map((m) => ({ name: m.name, fingerprint: m.sourceFingerprint }));
-  const next = nextAimLens(prev, msg, SLOT, models, msg.rev ?? `s${++seq}`);
+  const tag = msg.rev ?? `s${++seq}`;
+  const next = nextAimLens(prev, msg, SLOT, models, tag);
   appliedRev = msg.rev;
+  if (msg.mode === 'clear' || msg.mode === 'unisolate') releaseIsolation();
+  const toIsolate = isolationRules(msg, models, tag);
+  if (toIsolate.length > 0) {
+    pendingIsolationRev = msg.rev ?? tag;
+    void isolate(msg, toIsolate, tag)
+      .catch((err: unknown) => console.warn('[aim-bridge] izolácia z chatu zlyhala', err))
+      .finally(() => {
+        if (pendingIsolationRev === (msg.rev ?? tag)) pendingIsolationRev = null;
+      });
+  }
+  if (next === prev) return;
   const others = state.savedLenses.filter((l) => l.id !== SLOT);
   if (!next) {
     // "Color by" z tabuľky v tom istom slote chat nevypína.
@@ -52,7 +102,8 @@ function answerLensQuery(msg: LensQueryMessage, origin: string, started = Date.n
   const state = useViewerStore.getState();
   const lens = state.activeLensId === SLOT && isAimLens(slotLens(state)) ? slotLens(state) : null;
   const revReady = !msg.rev || appliedRev === msg.rev;
-  const ready = revReady && (!lens || isEvaluated(lens, state.lensRuleCounts, state.lensAutoColorLegend));
+  const ready = revReady && pendingIsolationRev === null
+    && (!lens || isEvaluated(lens, state.lensRuleCounts, state.lensAutoColorLegend));
   if (!ready && Date.now() - started < WAIT_MS) {
     setTimeout(() => answerLensQuery(msg, origin, started), POLL_MS);
     return;
@@ -61,8 +112,9 @@ function answerLensQuery(msg: LensQueryMessage, origin: string, started = Date.n
     reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: false, error: 'Lens s touto verziou do viewera neprišla.' });
     return;
   }
-  const result = { ...summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, msg.rev), ...(ready ? {} : { pending: true }) };
-  reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: true, result });
+  const iso = isolation ? { rev: isolation.rev, rules: isolation.rules, isolated: isolation.isolated } : null;
+  const summary = summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, msg.rev, iso);
+  reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: true, result: { ...summary, ...(ready ? {} : { pending: true }) } });
 }
 
 export function handleLensMessage(data: LensInboundMessage, origin: string): void {

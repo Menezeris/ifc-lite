@@ -7,8 +7,9 @@
  * `LENS_QUERY`, zlúčenie s doterajšou AIM chat lens a súhrn počtov pre hosta.
  * Store sa tu nečíta; lepidlo je v `aimLens.ts`.
  *
- * Lens farbí prvou zhodou (`evaluateLens`), preto izolácia = pravidlá z chatu a
- * za nimi pravidlo "ostatné" so skrytím, ktoré zachytí všetko zvyšné.
+ * Farbu dostanú len pravidlá s farbou (colorize/transparent/hide). Izolácia
+ * nejde cez lens: prvky ostanú v pôvodnom vzhľade, viewer ich izoluje vlastným
+ * kanálom izolácie (`isolationRules` + `aimLens.ts`).
  */
 
 import { isFilterGroup, type FilterGroup, type FilterRule } from '@ifc-lite/rules';
@@ -20,13 +21,11 @@ export const MAX_AIM_RULES = 24;
 /** Spolu GlobalId v pravidlách `globalId` jednej správy (zóna z AIM, konkrétne prvky). */
 export const MAX_AIM_GLOBAL_IDS = 5000;
 const MAX_GROUPS = 8;
-const REST_PREFIX = 'aim-rest-';
-const REST_NAME = 'Ostatné (skryté)';
 /** Hodnota modelu, ktorú žiadny model nemá: neznámy model nesmie matchnúť všetko. */
 const NO_MODEL = '__aim_no_model__';
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const AUTO_SOURCES = new Set(['ifcType', 'attribute', 'property', 'quantity', 'classification', 'material', 'model', 'group']);
-const ACTIONS = new Set(['colorize', 'transparent', 'hide']);
+const ACTIONS = new Set(['colorize', 'transparent', 'hide', 'isolate']);
 
 export type ApplyLensMessage = Extract<LensInboundMessage, { type: 'APPLY_LENS' }>;
 export type LensQueryMessage = Extract<LensInboundMessage, { type: 'LENS_QUERY' }>;
@@ -58,15 +57,18 @@ export function parseLensMessage(data: LensInboundMessage): ApplyLensMessage | L
     let ids = 0;
     for (const r of m.rules as Record<string, unknown>[]) {
       if (!r || typeof r !== 'object' || !shortStr(r.name, 120) || !ACTIONS.has(r.action as string)) return null;
-      if (typeof r.color !== 'string' || !HEX.test(r.color)) return null;
+      // Farbu potrebuje každé pravidlo okrem čistej izolácie.
+      if (r.action !== 'isolate' && (typeof r.color !== 'string' || !HEX.test(r.color))) return null;
       if (!Array.isArray(r.groups) || r.groups.length === 0 || r.groups.length > MAX_GROUPS) return null;
       if (!r.groups.every(isFilterGroup)) return null;
       ids += countGlobalIds(r.groups as FilterGroup[]);
     }
     if (ids > MAX_AIM_GLOBAL_IDS) return null;
   }
-  const hasContent = (Array.isArray(m.rules) && m.rules.length > 0) || m.autoColor !== undefined || m.isolate === true;
-  if ((m.mode === 'add' || m.mode === 'replace') && !hasContent) return null;
+  const hasRules = Array.isArray(m.rules) && m.rules.length > 0;
+  if ((m.mode === 'add' || m.mode === 'replace') && !hasRules && m.autoColor === undefined) return null;
+  // Pravidlo `isolate` bez príznaku izolácie by nerobilo nič.
+  if (hasRules && m.isolate !== true && (m.rules as { action: string }[]).some((r) => r.action === 'isolate')) return null;
   return data as ApplyLensMessage;
 }
 
@@ -94,25 +96,33 @@ export function resolveModelRules(groups: FilterGroup[], models: readonly ModelR
   return groups.map((g) => ({ ...g, rules: g.rules.map(resolve) }));
 }
 
-const isRest = (r: LensRule) => r.id.startsWith(REST_PREFIX);
-
-function restRule(tag: string): LensRule {
-  return {
-    id: `${REST_PREFIX}${tag}`,
-    name: REST_NAME,
-    enabled: true,
-    action: 'hide',
-    color: '#9e9e9e',
-    groups: [{ combinator: 'AND', rules: [{ kind: 'globalId', op: 'notIn', values: [] }] }],
-  };
-}
-
 /** Je lens v slote naša (nie "Color by" z tabuľky, ktorá slot zdieľa)? */
 export const isAimLens = (lens: Lens | null | undefined): lens is Lens => !!lens && lens.name === AIM_LENS_NAME;
 
+/** Pravidlá správy ako pravidlá Lens (id jedinečné cez `tag`, modely preložené). */
+function toLensRules(msg: ApplyLensMessage, models: readonly ModelRef[], tag: string): LensRule[] {
+  return (msg.rules ?? []).map((r, i) => ({
+    id: `aim-${tag}-${i}`,
+    name: r.name,
+    enabled: true,
+    action: r.action === 'isolate' ? 'colorize' : r.action,
+    color: (r.color ?? '#000000').toLowerCase(),
+    groups: resolveModelRules(r.groups as FilterGroup[], models),
+  }));
+}
+
 /**
- * Nová AIM chat lens po správe; `null` = lens vypnúť. `tag` robí id pravidiel
- * jedinečné naprieč verziami (počty sa párujú podľa id).
+ * Pravidlá, ktorých zjednotenie viewer izoluje (`isolate: true`), vrátane farebných;
+ * vyhodnocujú sa ako lens, ale do scény sa nedávajú. Bez izolácie prázdne.
+ */
+export function isolationRules(msg: ApplyLensMessage, models: readonly ModelRef[], tag: string): LensRule[] {
+  return msg.isolate === true ? toLensRules(msg, models, tag) : [];
+}
+
+/**
+ * Nová AIM chat lens po správe; `null` = lens vypnúť. Do lens idú len pravidlá
+ * s farbou; čistá izolácia lens nemení. `tag` robí id pravidiel jedinečné
+ * naprieč verziami (počty sa párujú podľa id).
  */
 export function nextAimLens(
   prev: Lens | null,
@@ -123,29 +133,18 @@ export function nextAimLens(
 ): Lens | null {
   if (msg.mode === 'clear') return null;
   const own = isAimLens(prev) ? prev : null;
-  if (msg.mode === 'unisolate') {
-    if (!own) return null;
-    const rules = own.rules.filter((r) => !isRest(r));
-    return rules.length > 0 || own.autoColor ? { ...own, rules } : null;
-  }
+  if (msg.mode === 'unisolate') return own;
   if (msg.autoColor) {
     const autoColor: AutoColorSpec = { ...msg.autoColor };
     return { id: slotId, name: AIM_LENS_NAME, rules: [], autoColor };
   }
-  const added: LensRule[] = (msg.rules ?? []).map((r, i) => ({
-    id: `aim-${tag}-${i}`,
-    name: r.name,
-    enabled: true,
-    action: r.action,
-    color: r.color.toLowerCase(),
-    groups: resolveModelRules(r.groups as FilterGroup[], models),
-  }));
+  const added = toLensRules(msg, models, tag).filter((_, i) => msg.rules?.[i].action !== 'isolate');
   // Tá istá verzia znova (host ops po obnovení stránky) pravidlá nezdvojí.
   const keep = msg.mode === 'add' && own && !own.autoColor ? own.rules.filter((r) => !r.id.startsWith(`aim-${tag}-`)) : [];
-  const isolate = msg.isolate === true || keep.some(isRest);
-  let rules = [...keep.filter((r) => !isRest(r)), ...added];
-  if (rules.length > MAX_AIM_RULES - 1) rules = rules.slice(rules.length - (MAX_AIM_RULES - 1));
-  if (isolate) rules.push(restRule(tag));
+  if (msg.mode === 'add' && added.length === 0) return own;
+  // Lens farbí prvou zhodou: novšie pravidlá idú dopredu, aby nová farba prebila staršiu.
+  let rules = [...added, ...keep];
+  if (rules.length > MAX_AIM_RULES) rules = rules.slice(0, MAX_AIM_RULES);
   return rules.length > 0 ? { id: slotId, name: AIM_LENS_NAME, rules } : null;
 }
 
@@ -155,15 +154,22 @@ export function isEvaluated(lens: Lens, counts: ReadonlyMap<string, number>, leg
   return lens.rules.filter((r) => r.enabled).every((r) => counts.has(r.id));
 }
 
+/** Výsledok izolácie z chatu: počet na pravidlo a izolovaných spolu. */
+export interface AimIsolation {
+  rev?: string;
+  rules: { name: string; count: number }[];
+  isolated: number;
+}
+
 export interface AimLensSummary {
   active: boolean;
   name?: string;
   rev?: string;
   rules: { name: string; action: string; color: string; count: number }[];
   legend: { name: string; color: string; count: number }[];
-  /** Prvky zafarbené alebo skryté niektorým pravidlom (bez "ostatné"). */
+  /** Prvky zafarbené alebo skryté niektorým pravidlom. */
   matched: number;
-  hidden_rest: number;
+  isolation?: AimIsolation;
 }
 
 export function summarizeLens(
@@ -171,12 +177,13 @@ export function summarizeLens(
   counts: ReadonlyMap<string, number>,
   legend: readonly AutoColorLegendEntry[],
   rev?: string,
+  isolation?: AimIsolation | null,
 ): AimLensSummary {
-  if (!lens) return { active: false, rules: [], legend: [], matched: 0, hidden_rest: 0 };
+  const iso = isolation ? { isolation } : {};
+  if (!lens) return { active: false, rules: [], legend: [], matched: 0, ...iso };
   const rules = lens.rules
-    .filter((r) => r.enabled && !isRest(r))
+    .filter((r) => r.enabled)
     .map((r) => ({ name: r.name, action: r.action, color: r.color, count: counts.get(r.id) ?? 0 }));
-  const rest = lens.rules.find(isRest);
   const legendOut = legend.slice(0, 50).map((l) => ({ name: l.name, color: l.color, count: l.count }));
   return {
     active: true,
@@ -185,6 +192,6 @@ export function summarizeLens(
     rules,
     legend: legendOut,
     matched: rules.reduce((s, r) => s + r.count, 0) + legend.reduce((s, l) => s + l.count, 0),
-    hidden_rest: rest ? counts.get(rest.id) ?? 0 : 0,
+    ...iso,
   };
 }

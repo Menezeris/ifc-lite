@@ -12,15 +12,16 @@
 
 import { SOURCE } from './bridge-protocol.js';
 
-/** add = pridať k AIM chat lens, replace = nahradiť, clear = vypnúť, unisolate = zrušiť len izoláciu. */
+/** add = pridať k AIM chat lens, replace = nahradiť, clear = vypnúť, unisolate = zrušiť izoláciu z chatu. */
 export const AIM_LENS_MODES = ['add', 'replace', 'clear', 'unisolate'] as const;
 export type AimLensMode = (typeof AIM_LENS_MODES)[number];
 
 export interface AimLensRuleWire {
   name: string;
-  action: 'colorize' | 'transparent' | 'hide';
-  /** Hex `#rrggbb`. */
-  color: string;
+  /** `isolate` = len do izolácie, bez farby (prvky ostanú v pôvodnom vzhľade). */
+  action: 'colorize' | 'transparent' | 'hide' | 'isolate';
+  /** Hex `#rrggbb`; pri `isolate` sa nepoužije. */
+  color?: string;
   /** `FilterGroup[]` z `@ifc-lite/rules`; pravidlo `model` nesie mená modelov, viewer ich preloží. */
   groups: unknown[];
 }
@@ -39,7 +40,7 @@ export type LensInboundMessage =
       /** Značka verzie od hosta; `LENS_QUERY` s ňou počká na vyhodnotenie práve tejto verzie. */
       rev?: string;
       rules?: AimLensRuleWire[];
-      /** Po pravidlách skryť všetko ostatné (izolácia). */
+      /** Izolovať zjednotenie všetkých pravidiel správy (kanál izolácie viewera, nie farba). */
       isolate?: boolean;
       autoColor?: AimAutoColorWire;
     }
