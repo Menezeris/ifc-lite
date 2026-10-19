@@ -69,3 +69,9 @@ export function takeIssues(): string[] {
   issues = [];
   return out;
 }
+
+/** Odpojenie mosta: problémy a sledované kroky predošlej relácie nesmú prejsť do ďalšieho `APPLIED`. */
+export function resetCommandState(): void {
+  inflight.clear();
+  issues = [];
+}

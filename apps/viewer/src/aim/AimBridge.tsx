@@ -29,7 +29,7 @@ import {
   type InboundMessage, type OutboundMessage,
 } from './bridge-protocol.js';
 import { isCommandMessage, type AppliedMessage, type CommandInboundMessage } from './command-protocol.js';
-import { createCommandGate, noteIssue, settled, takeIssues, track } from './command-gate.js';
+import { createCommandGate, noteIssue, resetCommandState, settled, takeIssues, track } from './command-gate.js';
 import { useAimPanelStore } from './aimPanelStore.js';
 import { useCapturePinsStore } from './capturePinsStore.js';
 import { useAimDecorationsStore } from './aimDecorationsStore.js';
@@ -100,7 +100,11 @@ export function AimBridge() {
     // `ACK_REQUEST` ide bránou za príkazmi, preto ich vidí vykonané; počká ešte na ich asynchrónne kroky.
     async function answerAck(cmdId: string) {
       const done = await settled(ACK_WAIT_MS);
-      const lens = await lensSettled(ACK_WAIT_MS).catch(() => null);
+      // null = lens z chatu sa nepoužila; chyba výpočtu súhrnu je problém, nie úspech.
+      const lens = await lensSettled(ACK_WAIT_MS).catch((err: unknown) => {
+        noteIssue(`Lens: ${err instanceof Error ? err.message : String(err)}`);
+        return null;
+      });
       const issues = takeIssues();
       if (!done) issues.push('niektoré kroky vo vieweri ešte bežia');
       const state = await appliedViewState().catch(() => undefined);
@@ -241,6 +245,8 @@ export function AimBridge() {
       useAimDerivationsStore.getState().clear();
       resetLensFromChat(); // D-096: izolácia a AIM chat lens neprežijú odpojenie mostu
       setFocusProvider(undefined);
+      resetCommandState(); // problémy a kroky z predošlej relácie nepatria do ďalšieho APPLIED
+      void visibility?.then((m) => m.forgetFocus());
     };
   }, [bim]);
 

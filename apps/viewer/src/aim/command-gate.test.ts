@@ -5,7 +5,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
-import { createCommandGate, noteIssue, settled, takeIssues, track } from './command-gate.js';
+import { createCommandGate, noteIssue, resetCommandState, settled, takeIssues, track } from './command-gate.js';
 import { isCommandMessage, nextIsolation } from './command-protocol.js';
 
 const S = 'aim-bridge';
@@ -65,6 +65,16 @@ describe('settled / issues (AIM D-101)', () => {
     assert.ok(issues.includes('lens neprešla'));
     assert.ok(issues.includes('FOCUS: vo vieweri sa nenašiel žiadny prvok'));
     assert.deepStrictEqual(takeIssues(), []);
+  });
+});
+
+describe('resetCommandState (AIM D-101)', () => {
+  it('odpojenie mosta zabudne problémy aj visiace kroky predošlej relácie', async () => {
+    noteIssue('stará relácia');
+    track(new Promise(() => {}));
+    resetCommandState();
+    assert.deepStrictEqual(takeIssues(), []);
+    assert.strictEqual(await settled(20), true);
   });
 });
 

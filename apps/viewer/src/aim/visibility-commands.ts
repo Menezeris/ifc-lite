@@ -40,6 +40,11 @@ export function focusSummary(): { count: number; guids: string[] } {
   return { count: focused.length, guids };
 }
 
+/** Odpojenie mosta: zabudnúť zvýraznené prvky (patria scéne, ktorá už nemusí byť). */
+export function forgetFocus(): void {
+  focused = [];
+}
+
 export function clearFocus(bim: BimContext): void {
   if (focused.length > 0) bim.viewer.resetColors(focused);
   focused = [];
