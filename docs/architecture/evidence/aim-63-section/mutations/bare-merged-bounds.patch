@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/sectionRange.ts a/apps/viewer/src/aim/sectionRange.ts
+index 6cab0792..0a73fd72 100644
+--- b/apps/viewer/src/aim/sectionRange.ts
++++ a/apps/viewer/src/aim/sectionRange.ts
+@@ -29,5 +29,5 @@ export function sectionRenderBounds(state: State): AxisBounds | null {
+   }
+   base ??= state.geometryResult?.coordinateInfo;
+   if (!base) return merged;
+-  return merged;
++  return placementCoordinateInfo({ ...base, shiftedBounds: merged }, state.models, state.modelPlacement)?.shiftedBounds ?? merged;
+ }

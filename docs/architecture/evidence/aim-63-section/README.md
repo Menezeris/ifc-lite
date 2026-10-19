@@ -39,3 +39,17 @@ Rovina renderera = `percentToWorld(position, rozsah renderera)`.
 
 Po oprave rozdiel presne 3 m; `showGizmo: false` dal `sectionPlane.showGizmo = false` a
 `view_state.section.show_gizmo = false`, rez ostal `enabled`.
+
+## Test a mutácia
+
+`aim/sectionRange.test.ts` volá `sectionRenderBounds` na dvoch modeloch s posunutým VZT (+15 m)
+a overí, že rez nad podlažím padne presne na eleváciu + offset. Mutácia
+`mutations/bare-merged-bounds.patch` (vrátenie holého `mergedSectionBounds`, teda chyba #63):
+
+```bash
+node scripts/check-test-revert-oracle.mjs --base origin/main \
+  --only apps/viewer/src/aim/sectionRange.ts --test apps/viewer/src/aim/sectionRange.test.ts \
+  --mutation /tmp/bare-merged-bounds.patch --ci --json
+```
+
+Výsledok: `OBSERVED`, obnovenie overené.
