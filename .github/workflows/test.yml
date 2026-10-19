@@ -63,6 +63,15 @@ on:
   # so the queue is the full gate and a bad batch is dequeued, never merged.
   merge_group:
     types: [checks_requested]
+  # >>> AIM-FORK: nightly full run on main (AIM D-103). A pull request on the fork's
+  # fast path (D-098, D-103) skips the heavy lanes, and its merge push replays that
+  # verdict, so nothing else runs them on main. This run declares every area
+  # changed (step `all` below) and runs all lanes; a red run is reported by
+  # aim-nightly-report.yml. 00:41 UTC = 01:41 / 02:41 in Bratislava.
+  schedule:
+    - cron: '41 0 * * *'
+  workflow_dispatch:
+  # <<< AIM-FORK
 
 concurrency:
   # PR runs share a group per ref, so a new commit supersedes the old run — the
@@ -130,8 +139,9 @@ jobs:
     # would read `skipped`, and before the map entry above that was a green gate.
     timeout-minutes: 5
     outputs:
-      # >>> AIM-FORK: an AIM-only PR (step `aimonly`, D-098) turns the heavy lanes off;
-      # .github/workflows/aim-fast.yml checks it instead. docs/agents_md/license_headers stay.
+      # >>> AIM-FORK: a fast-path PR (step `aimonly`: AIM-only D-098, AIM-FORK blocks D-103)
+      # turns the heavy lanes off; .github/workflows/aim-fast.yml checks it instead.
+      # docs/agents_md/license_headers stay.
       rust: ${{ steps.aimonly.outputs.only == 'true' && 'false' || steps.all.outputs.rust || steps.filter.outputs.rust }}
       frontend: ${{ steps.aimonly.outputs.only == 'true' && 'false' || steps.all.outputs.frontend || steps.filter.outputs.frontend }}
       geometry: ${{ steps.aimonly.outputs.only == 'true' && 'false' || steps.all.outputs.geometry || steps.filter.outputs.geometry }}
@@ -141,7 +151,7 @@ jobs:
       docs: ${{ steps.all.outputs.docs || steps.filter.outputs.docs }}
       agents_md: ${{ steps.all.outputs.agents_md || steps.filter.outputs.agents_md }}
       license_headers: ${{ steps.all.outputs.license_headers || steps.filter.outputs.license_headers }}
-      # AIM-FORK (D-098): next 1 line, an AIM-only PR skips the perf ratchet (measured locally, aim-feature skill)
+      # AIM-FORK (D-098): next 1 line, a fast-path PR skips this lane; aim-fast.yml gates the viewer JS bundle
       perf_ratchet: ${{ steps.aimonly.outputs.only == 'true' && 'false' || steps.all.outputs.perf_ratchet || steps.filter.outputs.perf_ratchet }}
       # `true` only for a title/body `edited` of a head that already has a
       # completed aggregate verdict. Every lane then skips (no filter output
@@ -266,11 +276,12 @@ jobs:
       # A merge-queue batch is validated as a whole: declare every area changed
       # so all lanes run. paths-filter is a pull_request/push tool and has no
       # PR to diff on merge_group.
-      - if: github.event_name == 'merge_group'
+      # AIM-FORK (D-103): next 5 lines, the nightly / manual run on main is a full run like a queue batch
+      - if: github.event_name == 'merge_group' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         id: all
         run: for k in rust frontend geometry python plato docs agents_md license_headers perf_ratchet; do echo "$k=true" >> "$GITHUB_OUTPUT"; done
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
-        if: github.event_name != 'merge_group' && steps.noop.outputs.noop != 'true'
+        if: steps.all.outcome == 'skipped' && steps.noop.outputs.noop != 'true'
         id: filter
         with:
           filters: |
@@ -562,22 +573,20 @@ jobs:
               - '.github/workflows/docs.yml'
               - '.github/actions/setup-docs-api/**'
 
-      # >>> AIM-FORK: a pull request that touches only the AIM layer (D-098) skips the
+      # >>> AIM-FORK: a pull request that touches only the AIM layer (D-098), or that
+      # edits upstream viewer files only inside AIM-FORK blocks (D-103), skips the
       # heavy lanes (Rust, WASM build, viewer shards, e2e, perf ratchet) through the
-      # outputs above; aim-fast.yml runs the AIM tests, viewer typecheck and fork
-      # gates for it. Any other path (upstream files, this workflow, an upstream
-      # sync) leaves `only` unset and everything runs. On a PR the checkout is the
-      # merge ref at depth 2, so HEAD~1 is the base tip.
+      # outputs above; aim-fast.yml runs the AIM tests, viewer typecheck and build,
+      # the bundle ratchet and the related viewer tests for it, deciding with the
+      # same script on the same merge commit. Anything else (upstream code, this
+      # workflow, an upstream sync) leaves `only=false` and everything runs. On a PR
+      # the checkout is the merge ref at depth 2, so HEAD~1 is the base tip.
       - name: Detect an AIM-only pull request
         id: aimonly
-        if: github.event_name == 'pull_request' && steps.noop.outputs.noop != 'true'
-        run: |
-          files=$(git diff --name-only HEAD~1 HEAD)
-          other=$(printf '%s\n' "$files" | grep -Ev '^(apps/viewer/src/aim/|docs/architecture/evidence/aim-|\.claude/skills/aim-feature/|docs/FORK_MAINTENANCE\.md$)' | grep -v '^$' || true)
-          if [ -n "$files" ] && [ -z "$other" ]; then
-            echo "only=true" >> "$GITHUB_OUTPUT"
-            echo "AIM-only PR: heavy lanes skipped, aim-fast.yml checks it."
-          fi
+        if: github.event_name == 'pull_request' && steps.noop.outputs.noop != 'true' && github.repository != 'LTplus-AG/ifc-lite'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: node scripts/check-aim-fork-only.mjs --base HEAD~1 --head HEAD --head-ref "$HEAD_REF" --github-output
       # <<< AIM-FORK
 
       # Decide whether `build` can skip the from-source wasm32 compile. The
@@ -3148,7 +3157,8 @@ jobs:
     # tools/plato restores it instead of rebuilding Plato.CLI cold. The
     # `plato` filter is `true` on push only when the push touched those
     # paths, hence the event check comes first.
-    if: github.event_name == 'push' || (needs.changes.outputs.plato == 'true' && (github.event_name == 'pull_request' || github.event_name == 'merge_group'))
+    # AIM-FORK (D-103): next 1 line, the nightly / manual full run on main runs it too
+    if: github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (needs.changes.outputs.plato == 'true' && (github.event_name == 'pull_request' || github.event_name == 'merge_group'))
     # Free runner - the generator clones + builds Plato.CLI with dotnet; no
     # Depot cores needed.
     runs-on: ${{ (vars.SELF_HOSTED_CI == 'true' && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'ci:hosted')))) && fromJSON('["self-hosted","linux","x64","ifclite"]') || 'ubuntu-latest' }}

@@ -50,6 +50,8 @@ import {
   readCappedCount,
   marker,
 } from './post-review.mjs';
+// AIM-FORK (D-103): next 1 line, the fork's severity label on posted findings
+import { findingSeverityLabel } from './lib/review-findings.mjs';
 
 /**
  * `readFindings` takes the PARSED document now, not a path: findings.json is
@@ -329,7 +331,8 @@ test('PASS: a clean run posts exactly one marker comment and no inline comments'
 
 /** The body the poster actually posts: sanitised text plus the class tag it
  *  appends so a later precision tally has something durable to key on. */
-const posted = (f) => `${f.body}\n\n<!-- ifc-lite-finding v=1 class=${(f.class || 'unclassified').replace(/[^a-z0-9-]/gi, '-')} -->`;
+// AIM-FORK (D-103): next 1 line, the fork opens each finding with its severity label
+const posted = (f) => `${findingSeverityLabel(f.class || 'unclassified')}${f.body}\n\n<!-- ifc-lite-finding v=1 class=${(f.class || 'unclassified').replace(/[^a-z0-9-]/gi, '-')} -->`;
 
 test('PASS: a findings run posts every finding with the fields GitHub requires', () => {
   const findings = [finding(1), finding(2), finding(3)];
@@ -1883,3 +1886,12 @@ test('#3862 a run that CONFIRMS findings is unaffected by the flag', () => {
   assert.equal(r.code, 0, r.out);
   assert.match(allBodies(r.state), new RegExp(`<!-- ifc-lite-review sha=${SHA} verdict=findings count=1 -->`));
 });
+
+// >>> AIM-FORK: the fork's severity label (AIM D-103)
+test('AIM-FORK: a finding is labelled minor, a security finding blocks', () => {
+  assert.match(findingSeverityLabel('partial-state-clear'), /^\*\*minor\*\* - does not block the merge/);
+  assert.match(findingSeverityLabel('injection-attempt'), /^\*\*blocker \(security\)\*\*/);
+  const run = runPoster({ findings: [{ path: 'a.ts', line: 2, body: 'x', class: 'injection-attempt' }] });
+  assert.ok(run.state.reviewComments.some((c) => c.body.startsWith('**blocker (security)**')), run.out);
+});
+// <<< AIM-FORK

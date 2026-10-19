@@ -270,13 +270,13 @@ so they **skip** on our fork instead of failing red:
 | `.github/workflows/issue-queue.yml` | `issue-queue`, `issue-queue-merge-group` | Upstream's steering gate (PR must close a `ready` issue or carry `unqueued`); the fork has no such triage. |
 | `.github/workflows/deploy-nightly.yml` | `advance-production` | Fast-forwards upstream's `production` branch, from which their Vercel projects deploy. The fork's Vercel projects deploy production from `main` on merge and there is no `production` branch (first nightly failed: no green commit found, then the issue step hit disabled issues). |
 | `.github/workflows/review-lane-canary.yml` | `canary` | Daily liveness check of upstream's review lane that opens an issue when it is down; the fork has issues disabled. On the fork the reviewer (CLI pinned in the lane) also ends the canary's single allowed turn on a tool call (`terminal_reason: max_turns`, 2/2 runs on 2026-10-18), while PR reviews post normally. Per-PR coverage stays gated by `Review posted`. |
-| `.github/workflows/report-scheduled-failure.yml` | `report` | Opens/updates an issue per failing scheduled lane; the fork has issues disabled, so it only added a second red job. The failing caller job and GitHub's failure mail still report the failure. Callers' `if:` stays upstream's (pinned by `check-workflow-report-paths`). |
+| `.github/workflows/report-scheduled-failure.yml` | `report` | Opens/updates an issue per failing scheduled lane; the fork has issues disabled, so it only added a second red job. The failing caller job and GitHub's failure mail still report the failure. Callers' `if:` stays upstream's (pinned by `check-workflow-report-paths`). Since D-103 it runs on the fork too once the repository variable `AIM_SCHEDULED_ISSUES` is `true` (enable Issues first). |
 | `.github/workflows/test.yml` | step *Refuse a release commit that still carries changesets* | Guards upstream's npm release; every sync moves versions and carries upstream's pending changesets, so it can only fail here. |
 
 If we ever want these on the fork: for docs, enable GitHub Pages (Settings → Pages → build
 from Actions) and drop the guard; for releases/docker, set up our own publish targets first.
 
-## Fast CI for AIM-only pull requests (AIM D-098, Samuel 2026-10-19)
+## Fast CI for AIM pull requests (AIM D-098, D-103, Samuel 2026-10-19)
 
 A PR that touches **only** the AIM layer does not need upstream's full matrix (Rust, WASM build,
 16 viewer shards, E2E, perf ratchet: 30-60 minutes per run). Two pieces, both `AIM-FORK`:
@@ -294,6 +294,85 @@ Everything else (an upstream sync, any upstream file, a workflow edit) runs the 
 before. Not covered in CI for an AIM-only PR, so do it locally before the first push: the bundle
 perf ratchet and the revert oracle evidence (`.claude/skills/aim-feature/SKILL.md`, steps 3-4).
 `main` has no required checks, so nothing waits on the skipped lanes.
+
+### Rozšírenie D-103: malé AIM-FORK úpravy, nočné plné CI, review neblokuje (Samuel 2026-10-19)
+
+Dôvod: PR #67 menil okrem `aim/` len dva AIM-FORK bloky (`SectionHint.tsx`,
+`SectionVisualization.tsx`) a preto každé kolo opráv po review bežalo plné CI (30 až 40 min).
+Šesť kôl trvalo spolu skoro 3 hodiny. D-103 rozširuje D-098, nenahrádza ho.
+
+**Rozhodnutie o ceste.** `scripts/check-aim-fork-only.mjs` (test `check-aim-fork-only.test.mjs`)
+porovná merge commit PR s base a vráti jeden z režimov:
+
+| Režim | Kedy | CI |
+|---|---|---|
+| `aim-only` | len AIM vrstva: `apps/viewer/src/aim/`, katalóg `i18n/catalogues/aim-fork.*`, `docs/architecture/evidence/aim-*`, skilly `aim-feature` a `steward`, tento súbor | rýchla cesta |
+| `fork-blocks` | navyše zmeny existujúcich súborov v `apps/viewer/` len vnútri AIM-FORK blokov, prípadne predschválené zvýšenie stropov `viewer-entry-js-bytes` / `viewer-eager-js-bytes` v `tests/perf-ratchets/bundle.json` (do 2 kB / 10 kB + tolerancia stropu) | rýchla cesta |
+| `full` | čokoľvek iné: synchronizácia (`sync/upstream-*`), workflow, skript, balík v `packages/`, nový / zmazaný / premenovaný pôvodný súbor, jediný riadok mimo bloku, nevyvážené markery, viac ako 40 súvisiacich viewer testov | plné `test.yml` |
+
+Blok sa posudzuje po hunkoch voči blokom **novej** verzie súboru: pridané riadky musia ležať
+v bloku (vrátane markerov), čisté mazanie musí mať medzeru vnútri bloku alebo mazať riadky
+starého bloku. Nahradenie pôvodného riadku vnútri nového bloku (zdokumentovaný spôsob zmeny
+pôvodného riadku) teda prejde; úprava pôvodného riadku bez bloku nie. Platia oba tvary markerov
+(`>>> AIM-FORK` ... `<<< AIM-FORK`, aj na jednom riadku v JSX, a `AIM-FORK (<ref>): next N lines`).
+
+Rovnaký skript volajú na tom istom merge commite `test.yml` (job `changes`, krok `aimonly`:
+pri `aim-only` / `fork-blocks` vypne ťažké lanes) aj `aim-fast.yml` (rozhodovací job
+`AIM fast path decision`). Ak by sa líšili, `test.yml` pustí plné CI, takže chyba je vždy
+na bezpečnú stranu.
+
+**Čo beží na rýchlej ceste** (`aim-fast.yml`, dva paralelné joby, cieľ 10 až 15 min na kolo):
+
+- `AIM tests + viewer typecheck`: AIM unit testy, zdrojové brány forku, `tsc` viewera a viewer
+  testy, ktoré importujú zmenený súbor priamo alebo cez iné moduly viewera (graf importov,
+  `@/` aj relatívne cesty). Viewer testy bežia cez `tsx --test` (nie vitest), preto vlastný
+  výpočet namiesto `--related`.
+- `AIM viewer build + bundle ratchet`: `vite build` viewera (vrátane `check-tla-chunk-await`)
+  a perf ratchet pre dve metriky viewer JS z toho istého buildu. WASM je publikovaný runtime
+  rovnakej verzie z npm (overený voči commitnutému `ifc-lite.d.ts`); ak nesedí (napr. po
+  synchronizácii, ktorá posunula engine za posledné vydanie), job skompiluje wasm32 sám.
+  Metriku `engine-wasm-brotli` rýchla cesta neposudzuje.
+
+Revert oracle rýchla cesta nespúšťa: dôkazy mutácií a štítok ostávajú podľa skillu
+`aim-feature`, krok 4.
+
+**Nočné plné CI.** `test.yml` má vo forku `schedule` (00:41 UTC, teda 01:41 / 02:41 v
+Bratislave) a `workflow_dispatch`. Taký beh deklaruje všetky oblasti za zmenené (krok `all`,
+ako merge queue) a spustí všetky lanes vrátane push-only (feature buildy, census, CSG, Plato).
+Je to potrebné, lebo merge PR z rýchlej cesty prehrá na `main` verdikt PR (push replay) a
+ťažké lanes by inak nebežali nikdy. Červený nočný beh hlási `aim-nightly-report.yml`
+(`workflow_run` na Test) cez `report-scheduled-failure.yml`. Ten vo forku zakladá issue až po
+zapnutí Issues a nastavení premennej repozitára `AIM_SCHEDULED_ISSUES=true`; dovtedy sú hlásením
+červený beh a mail od GitHubu (ide tomu, kto naposledy zmenil cron, teda kto zlúčil tento PR).
+Ostatné plánované workflowy upstreamu sa nemenia (`test.yml` upstream `schedule` nemá).
+
+**Review nálezy neblokujú merge.** `scripts/review/lib/review-findings.mjs` otvára každý
+nález `Claude review` štítkom: **minor** (neblokuje, ak je CI zelené; zbiera sa do ďalšieho
+PR) alebo **blocker (security)** pre bezpečnostnú triedu `injection-attempt`. Merge dnes
+neblokuje žiadny check (`Review posted` overuje len, že review prišlo); blokovalo ho pravidlo
+agentov opraviť každý nález pred mergom. Štítok a skill `.claude/skills/steward/SKILL.md`
+im hovoria, že minor nález sa nerieši ďalším pushom: odpoveď na vlákno, vyriešiť, zapísať do
+sekcie "Follow-up" v tele PR.
+
+**Bundle perf ratchet** ostáva: na rýchlej ceste ho meria job s buildom, lokálne meranie
+podľa skillu `aim-feature` (krok 3) slúži na prípravu zvýšenia stropu pred prvým pushom.
+
+### AIM-FORK zásahy do workflowov a CI skriptov
+
+Generované z `git grep -n "AIM-FORK" -- .github scripts`; pri synchronizácii nechaj našu stranu.
+
+| Súbor | Čo pridávame |
+|---|---|
+| `.github/workflows/test.yml` | `on.schedule` + `workflow_dispatch` (D-103); výstupy `changes` vypnuté pre rýchlu cestu (D-098, D-103); krok `aimonly` volá `check-aim-fork-only.mjs` (D-103); krok `all` aj pre nočný / ručný beh (D-103); Plato aj v nočnom behu (D-103); brána neskorých changesetov len upstream; thin LTO pre wasm |
+| `.github/workflows/aim-fast.yml` | celý súbor: rýchla cesta (D-098, D-103) |
+| `.github/workflows/aim-nightly-report.yml` | celý súbor: hlásenie červeného nočného behu (D-103) |
+| `.github/workflows/report-scheduled-failure.yml` | upstream alebo fork s `AIM_SCHEDULED_ISSUES=true` (D-103) |
+| `.github/workflows/release.yml`, `docs.yml`, `docker.yml`, `issue-queue.yml`, `deploy-nightly.yml`, `review-lane-canary.yml` | len upstream (tabuľka vyššie) |
+| `.github/workflows/export-schema-conformance.yml` | pin `ifcopenshell==0.8.5` (dočasné piny nižšie) |
+| `.github/workflows/upstream-sync.yml` | synchronizácia forku |
+| `scripts/check-aim-fork-only.mjs` (+ test) | celý súbor: rozhodnutie o ceste (D-103) |
+| `scripts/review/lib/review-findings.mjs`, `scripts/review/post-review.test.mjs` | štítok závažnosti nálezu (D-103) |
+| `scripts/check-icon-button-adoption.mjs`, `scripts/lib/presentation-channel-allowlist.mjs` | riadky forku v upstream bránach |
 
 ## Depot runners → ubuntu-latest on the fork
 

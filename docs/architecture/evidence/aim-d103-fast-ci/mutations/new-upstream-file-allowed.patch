@@ -1,0 +1,13 @@
+diff --git b/scripts/check-aim-fork-only.mjs a/scripts/check-aim-fork-only.mjs
+index 661ff7f0..2287b50e 100644
+--- b/scripts/check-aim-fork-only.mjs
++++ a/scripts/check-aim-fork-only.mjs
+@@ -202,7 +202,7 @@ export function classify({ base, head, headRef = '', git, readViewerSources }) {
+   let blocks = false;
+   for (const { code, path } of status) {
+     if (AIM_LAYER.test(path)) continue;
+-    if (code === 'D') { reasons.push(`${path}: ${code === 'A' ? 'new' : code === 'D' ? 'deleted' : code} upstream file`); continue; }
++    if (code !== 'M') { reasons.push(`${path}: ${code === 'A' ? 'new' : code === 'D' ? 'deleted' : code} upstream file`); continue; }
+     const oldText = git(['show', `${base}:${path}`]);
+     const newText = git(['show', `${head}:${path}`]);
+     if (path === BUNDLE_RATCHET) {

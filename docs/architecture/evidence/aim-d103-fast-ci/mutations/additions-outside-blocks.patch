@@ -1,0 +1,13 @@
+diff --git b/scripts/check-aim-fork-only.mjs a/scripts/check-aim-fork-only.mjs
+index dbf4cfd5..2287b50e 100644
+--- b/scripts/check-aim-fork-only.mjs
++++ a/scripts/check-aim-fork-only.mjs
+@@ -98,7 +98,7 @@ const within = (blocks, from, to) => blocks.some(([s, e]) => s <= from && to <=
+  */
+ export function hunkInsideBlocks(hunk, newBlocks, oldBlocks) {
+   const { a, b, c, d } = hunk;
+-  if (d > 0) return true;
++  if (d > 0) return within(newBlocks, c, c + d - 1);
+   if (within(newBlocks, c, c + 1)) return true;
+   return b > 0 && within(oldBlocks, a, a + b - 1);
+ }

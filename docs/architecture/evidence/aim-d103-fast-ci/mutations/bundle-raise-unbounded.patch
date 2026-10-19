@@ -1,0 +1,13 @@
+diff --git b/scripts/check-aim-fork-only.mjs a/scripts/check-aim-fork-only.mjs
+index 19c9ff4f..2287b50e 100644
+--- b/scripts/check-aim-fork-only.mjs
++++ a/scripts/check-aim-fork-only.mjs
+@@ -123,7 +123,7 @@ export function bundleRaiseOnly(oldText, newText) {
+     // The limit is over the MEASURED main, which may sit above the old ceiling
+     // by its tolerance and still pass, so the ceiling may move by both.
+     const slack = entry.tolerance?.kind === 'relative' ? Math.ceil(was * entry.tolerance.value) : 0;
+-    if (false) return `${id} rises by ${now - was} B, over the pre-approved ${limit} B + ${slack} B tolerance`;
++    if (now - was > limit + slack) return `${id} rises by ${now - was} B, over the pre-approved ${limit} B + ${slack} B tolerance`;
+   }
+   return null;
+ }

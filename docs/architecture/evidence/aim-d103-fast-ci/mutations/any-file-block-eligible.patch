@@ -1,0 +1,13 @@
+diff --git b/scripts/check-aim-fork-only.mjs a/scripts/check-aim-fork-only.mjs
+index 44521a18..2287b50e 100644
+--- b/scripts/check-aim-fork-only.mjs
++++ a/scripts/check-aim-fork-only.mjs
+@@ -44,7 +44,7 @@ const VIEWER_SRC = 'apps/viewer/src';
+ export const AIM_LAYER = /^(apps\/viewer\/src\/aim\/|apps\/viewer\/src\/i18n\/catalogues\/aim-fork\.|docs\/architecture\/evidence\/aim-|\.claude\/skills\/(aim-feature|steward)\/|docs\/FORK_MAINTENANCE\.md$)/;
+ /** Only viewer files may take the fork-blocks path: a block in a package, a
+  *  script or a workflow reaches code the fast lane does not test. */
+-export const BLOCK_ELIGIBLE = /./;
++export const BLOCK_ELIGIBLE = /^apps\/viewer\//;
+ export const BUNDLE_RATCHET = 'tests/perf-ratchets/bundle.json';
+ /** Pre-approved raises (docs/FORK_MAINTENANCE.md, Samuel 2026-10-18). */
+ export const BUNDLE_RAISE_LIMITS = { 'viewer-entry-js-bytes': 2048, 'viewer-eager-js-bytes': 10240 };
