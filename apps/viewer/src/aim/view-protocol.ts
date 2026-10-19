@@ -15,10 +15,22 @@
  * jedna pravda o súradniciach ostala vo vieweri.
  */
 
-import { SOURCE } from './bridge-protocol.js';
+import { SOURCE, type OpsSelector } from './bridge-protocol.js';
 
-export const CAMERA_PRESETS = ['top', 'bottom', 'front', 'back', 'left', 'right', 'iso', 'fit_all'] as const;
+/** keep = smer sa nemení, section = kolmo na aktívny rez ako tlačidlo Set view (AIM D-098). */
+export const CAMERA_PRESETS = ['top', 'bottom', 'front', 'back', 'left', 'right', 'iso', 'fit_all', 'keep', 'section'] as const;
 export type CameraPreset = (typeof CAMERA_PRESETS)[number];
+/** Rámovanie pri zachovanom smere: viditeľné prvky (`fitAll`) alebo výber (`frameSelection`). */
+export const CAMERA_FITS = ['visible', 'selection'] as const;
+export type CameraFit = (typeof CAMERA_FITS)[number];
+/** Presná póza kamery v IFC svete (Z hore, m); host ju počíta pre relatívne kroky (AIM D-098). */
+export interface BridgeViewpoint {
+  position: { x: number; y: number; z: number };
+  target: { x: number; y: number; z: number };
+  up: { x: number; y: number; z: number };
+  /** Polovica výšky pohľadu v m, len pri ortografickej projekcii. */
+  orthoSize?: number;
+}
 export const VIEW_MODES = ['3d', '2d', 'split'] as const;
 export type BridgeViewMode = (typeof VIEW_MODES)[number];
 export type SectionAxis = 'x' | 'y' | 'z';
@@ -50,7 +62,17 @@ export type ViewInboundMessage =
       coordinate?: number;
       flipped?: boolean;
     }
-  | { source: typeof SOURCE; type: 'SET_CAMERA'; preset: CameraPreset; projection?: 'perspective' | 'orthographic'; guids?: string[] }
+  | {
+      source: typeof SOURCE;
+      type: 'SET_CAMERA';
+      preset: CameraPreset;
+      projection?: 'perspective' | 'orthographic';
+      /** Cieľ rámovania: GUIDy alebo selektor ako pri COLORIZE. */
+      guids?: string[];
+      selector?: OpsSelector;
+      fit?: CameraFit;
+      viewpoint?: BridgeViewpoint;
+    }
   | { source: typeof SOURCE; type: 'SET_VIEW_MODE'; mode: BridgeViewMode; storeyGuid?: string }
   | { source: typeof SOURCE; type: 'QUERY'; id: string; query: ViewQuery; guids?: string[] };
 
@@ -68,6 +90,27 @@ function isGuidList(v: unknown, max = MAX_GUIDS): v is string[] {
 }
 
 const isAxis = (v: unknown) => v === 'x' || v === 'y' || v === 'z';
+const COORD_LIMIT = 1e7;
+const isVec = (v: unknown) => {
+  if (!v || typeof v !== 'object') return false;
+  const p = v as Record<string, unknown>;
+  return inRange(p.x, -COORD_LIMIT, COORD_LIMIT) && inRange(p.y, -COORD_LIMIT, COORD_LIMIT) && inRange(p.z, -COORD_LIMIT, COORD_LIMIT);
+};
+
+function isViewpoint(v: unknown): boolean {
+  if (!v || typeof v !== 'object') return false;
+  const p = v as Record<string, unknown>;
+  if (!isVec(p.position) || !isVec(p.target) || !isVec(p.up)) return false;
+  const up = p.up as { x: number; y: number; z: number };
+  return Math.hypot(up.x, up.y, up.z) > 1e-6 && optional(p.orthoSize, (o) => inRange(o, 1e-3, COORD_LIMIT));
+}
+
+function isSelector(v: unknown): v is OpsSelector {
+  if (!v || typeof v !== 'object') return false;
+  const sel = v as { types?: unknown; model?: unknown };
+  const types = sel.types === undefined || (Array.isArray(sel.types) && sel.types.length <= 100 && sel.types.every(isStr));
+  return types && optional(sel.model, isStr) && (sel.types !== undefined || sel.model !== undefined);
+}
 const isId = (v: unknown) => isStr(v) && v.length <= 64;
 
 export function isViewMessage(data: unknown): data is ViewInboundMessage {
@@ -93,10 +136,19 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
       if (m.coordinate !== undefined) return isAxis(m.axis) && inRange(m.coordinate, -1e7, 1e7);
       return isAxis(m.axis) && inRange(m.position, 0, 100);
     }
-    case 'SET_CAMERA':
-      return (CAMERA_PRESETS as readonly unknown[]).includes(m.preset)
+    case 'SET_CAMERA': {
+      const valid = (CAMERA_PRESETS as readonly unknown[]).includes(m.preset)
         && optional(m.projection, (p) => p === 'perspective' || p === 'orthographic')
-        && optional(m.guids, isGuidList);
+        && optional(m.guids, isGuidList)
+        && optional(m.selector, isSelector)
+        && optional(m.fit, (f) => (CAMERA_FITS as readonly unknown[]).includes(f))
+        && optional(m.viewpoint, isViewpoint);
+      if (!valid) return false;
+      // Jeden cieľ rámovania; póza nahrádza smer presetu.
+      const targets = [m.guids !== undefined && (m.guids as string[]).length > 0, m.selector !== undefined, m.fit !== undefined];
+      if (targets.filter(Boolean).length > 1) return false;
+      return m.viewpoint === undefined || m.preset === 'keep';
+    }
     case 'SET_VIEW_MODE':
       return (VIEW_MODES as readonly unknown[]).includes(m.mode) && optional(m.storeyGuid, isStr);
     case 'QUERY':

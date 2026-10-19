@@ -345,6 +345,12 @@ locally before the first push (`.claude/skills/aim-feature/SKILL.md`).
 ## Conventions (don't drift)
 
 - **New custom code → `apps/viewer/src/aim/`**, not scattered into upstream files.
+- **Reuse before you build (AIM D-098).** Before designing anything, search what the viewer and
+  upstream already have: the store and its `CameraCallbacks`, the SDK (`@ifc-lite/sdk`),
+  `@ifc-lite/mcp` and the embed protocol. The fork only exposes an existing function through the
+  bridge (a thin adapter in `aim/`); computations belong to the AIM host. Example: "look straight
+  at the section" is upstream's Set view (`presetViewForAxis` / `customPlaneViewpoint`), "fit to
+  visible" is `fitAll`, an exact pose is `applyViewpoint`.
 - **New AIM feature → follow `.claude/skills/aim-feature/SKILL.md`** (local checks, bundle
   measurement, revert-oracle evidence and label in the first push), so CI runs once.
 - **Every edit inside an upstream file → wrap in `// >>> AIM-FORK … // <<< AIM-FORK`.**

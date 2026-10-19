@@ -21,6 +21,10 @@ a few minutes; do it **before the first push**. Rules and reasons:
 
 ## 1. Where the code goes
 
+- **First look for what exists (AIM D-098).** Search the store (`CameraCallbacks` and the
+  slices), the SDK, `@ifc-lite/mcp`, the embed protocol and upstream UI actions for the
+  function you need. Expose it through the bridge; do not write a new one. Maths the host can
+  do (relative camera steps, filters over AIM data) stays in AIMviewer.
 - New code in `apps/viewer/src/aim/`. Call upstream store / renderer / SDK functions,
   do not copy them. No edits in upstream files; when unavoidable, an `AIM-FORK`
   sentinel and a row in `FORK_MAINTENANCE.md`.
