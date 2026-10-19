@@ -27,6 +27,7 @@ export function SectionHint() {
           : 'sectionTool.hint.cut',
   );
   // >>> AIM-FORK: host hid the section widget (AIM D-101, set_section show_widget=false) - hint goes too
+  // Overovací PR pre D-103 (rýchla cesta), nezlučovať.
   const aimHidden = useViewerStore((s) => s.sectionPlane.enabled && !s.sectionPlane.showGizmo);
   if (aimHidden) return null;
   // <<< AIM-FORK
