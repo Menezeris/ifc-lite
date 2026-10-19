@@ -42,6 +42,7 @@ import { useAimDecorationsStore } from './aimDecorationsStore.js';
 import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
+import { isBcfLoadMessage, loadBcfTopics } from './bcf-protocol.js';
 import { dispatchLensMessage, isLensEnvelope, resetLensFromChat } from './lens-protocol.js';
 import { useAimViewCommands } from './useAimViewCommands.js';
 
@@ -99,6 +100,10 @@ export function AimBridge() {
         // AIM layer over the models (D-089): rules + model revisions for the
         // AIM ribbon tab and the AIM LAYERS tree section.
         useAimDerivationsStore.getState().setLayer(e.data.layer);
+        return;
+      }
+      if (isBcfLoadMessage(e.data, parentOriginRef.current)) {
+        loadBcfTopics(e.data, useViewerStore.getState); // AIM host's BCF topics, read-only (D-099)
         return;
       }
       if (!isInboundMessage(e.data)) return;

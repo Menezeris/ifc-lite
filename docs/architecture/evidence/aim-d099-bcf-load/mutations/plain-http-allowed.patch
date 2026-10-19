@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/bcf-protocol.ts a/apps/viewer/src/aim/bcf-protocol.ts
+index 95591493..4ac83212 100644
+--- b/apps/viewer/src/aim/bcf-protocol.ts
++++ a/apps/viewer/src/aim/bcf-protocol.ts
+@@ -39,7 +39,7 @@ export function isBcfLoadMessage(data: unknown, parentOrigin: string | null): da
+   } catch {
+     return false;
+   }
+-  const secure = url.protocol === 'https:' || url.protocol === 'http:';
++  const secure = url.protocol === 'https:' || (url.protocol === 'http:' && LOCAL_HOSTS.has(url.hostname));
+   if (!secure || url.username || url.password) return false;
+   return parentOrigin === null || url.origin === parentOrigin;
+ }
