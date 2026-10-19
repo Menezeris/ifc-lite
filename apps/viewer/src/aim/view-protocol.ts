@@ -147,6 +147,8 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
       // Jeden cieľ rámovania; póza nahrádza smer presetu.
       const targets = [m.guids !== undefined && (m.guids as string[]).length > 0, m.selector !== undefined, m.fit !== undefined];
       if (targets.filter(Boolean).length > 1) return false;
+      // Póza od hosta je hotový výsledok: rámovanie po nej by ju zahodilo.
+      if (m.viewpoint !== undefined && targets.some(Boolean)) return false;
       return m.viewpoint === undefined || m.preset === 'keep';
     }
     case 'SET_VIEW_MODE':

@@ -37,6 +37,9 @@ describe('SET_CAMERA kamera (AIM D-098)', () => {
       { source: S, type: 'SET_CAMERA', preset: 'keep', selector: { types: [1] } },
       // Póza nahrádza smer: s presetom by si odporovali.
       { source: S, type: 'SET_CAMERA', preset: 'top', viewpoint: VP },
+      // Rámovanie po póze by ju zahodilo.
+      { source: S, type: 'SET_CAMERA', preset: 'keep', viewpoint: VP, fit: 'visible' },
+      { source: S, type: 'SET_CAMERA', preset: 'keep', viewpoint: VP, guids: [G] },
       { source: S, type: 'SET_CAMERA', preset: 'keep', viewpoint: { ...VP, up: { x: 0, y: 0, z: 0 } } },
       { source: S, type: 'SET_CAMERA', preset: 'keep', viewpoint: { ...VP, position: { x: Number.NaN, y: 0, z: 0 } } },
       { source: S, type: 'SET_CAMERA', preset: 'keep', viewpoint: { ...VP, orthoSize: 0 } },
