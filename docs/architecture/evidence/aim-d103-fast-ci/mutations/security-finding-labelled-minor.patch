@@ -1,0 +1,13 @@
+diff --git b/scripts/review/lib/review-findings.mjs a/scripts/review/lib/review-findings.mjs
+index 6948f355..75b209e0 100644
+--- b/scripts/review/lib/review-findings.mjs
++++ a/scripts/review/lib/review-findings.mjs
+@@ -189,7 +189,7 @@ export function readFindings(parsed, path) {
+ // collected and fixed in a follow-up PR. Security findings (`injection-attempt`,
+ // the rubric's only security class) still block. The label is the word an agent
+ // or a person reads to decide, so it is stated, not implied by tone.
+-export const SECURITY_FINDING_CLASSES = new Set([]);
++export const SECURITY_FINDING_CLASSES = new Set(['injection-attempt']);
+ export function findingSeverityLabel(cls) {
+   return SECURITY_FINDING_CLASSES.has(cls)
+     ? '**blocker (security)** - blocks the merge until fixed.\n\n'

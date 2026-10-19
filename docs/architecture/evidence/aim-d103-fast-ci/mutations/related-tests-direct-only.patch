@@ -1,0 +1,13 @@
+diff --git b/scripts/check-aim-fork-only.mjs a/scripts/check-aim-fork-only.mjs
+index 55878838..2287b50e 100644
+--- b/scripts/check-aim-fork-only.mjs
++++ a/scripts/check-aim-fork-only.mjs
+@@ -184,7 +184,7 @@ export function relatedTests(changed, sources) {
+     const path = queue.pop();
+     if (seen.has(path)) continue;
+     seen.add(path);
+-    for (const next of importers.get(path) ?? []) seen.add(next);
++    for (const next of importers.get(path) ?? []) queue.push(next);
+   }
+   return [...seen].filter((p) => /\.test\.tsx?$/.test(p)).sort();
+ }

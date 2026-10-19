@@ -151,6 +151,8 @@ export function readFindings(parsed, path) {
     // The tag is appended AFTER upstream sanitisation and deliberately cannot
     // match the review marker's grammar, so it can never be mistaken for one.
     const cls = typeof f.class === 'string' && f.class.trim() !== '' ? f.class.trim().slice(0, 60) : 'unclassified';
+    // AIM-FORK (D-103): next 1 line, the severity label that opens every finding
+    const severity = findingSeverityLabel(cls);
     return {
       path: f.path,
       line: f.line,
@@ -162,7 +164,8 @@ export function readFindings(parsed, path) {
       // repeat it in prose. The comment in validate-findings claimed post-review
       // rendered it; it did not.
       body:
-        `${f.body}` +
+        // AIM-FORK (D-103): next 1 line, label first so a reader sees whether it blocks
+        `${severity}${f.body}` +
         // A sibling whose path could open a marker is DROPPED, not refused. The
         // sibling sentence is decoration on a finding that is otherwise fine, so
         // refusing the whole review over it would trade a cosmetic loss for the
@@ -180,6 +183,19 @@ export function readFindings(parsed, path) {
     };
   });
 }
+
+// >>> AIM-FORK: severity label on each posted finding (AIM D-103, Samuel 2026-10-19).
+// On the fork a finding does not block the merge once CI is green; findings are
+// collected and fixed in a follow-up PR. Security findings (`injection-attempt`,
+// the rubric's only security class) still block. The label is the word an agent
+// or a person reads to decide, so it is stated, not implied by tone.
+export const SECURITY_FINDING_CLASSES = new Set(['injection-attempt']);
+export function findingSeverityLabel(cls) {
+  return SECURITY_FINDING_CLASSES.has(cls)
+    ? '**blocker (security)** - blocks the merge until fixed.\n\n'
+    : '**minor** - does not block the merge on this fork when CI is green (AIM D-103); collected into a follow-up PR.\n\n';
+}
+// <<< AIM-FORK
 
 /**
  * What makes two findings "the same one" for dedupe. Path and line are in the
