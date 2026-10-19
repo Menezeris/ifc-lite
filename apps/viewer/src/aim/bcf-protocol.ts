@@ -10,6 +10,7 @@
  * own. The host sends it after MODELS_LOADED and again after every change.
  */
 
+import type { BCFProject } from '@ifc-lite/bcf';
 import { SOURCE } from './bridge-protocol.js';
 
 export interface BcfLoadMessage {
@@ -42,4 +43,20 @@ export function isBcfLoadMessage(data: unknown, parentOrigin: string | null): da
   const secure = url.protocol === 'https:' || (url.protocol === 'http:' && LOCAL_HOSTS.has(url.hostname));
   if (!secure || url.username || url.password) return false;
   return parentOrigin === null || url.origin === parentOrigin;
+}
+
+/**
+ * Start the pull (lazy `aimBcf.ts`). The bridge passes the store getter, so
+ * neither this entry module nor the lazy one imports the store itself.
+ */
+export function loadBcfTopics(
+  msg: BcfLoadMessage,
+  getState: () => { bcfProject: BCFProject | null; setBcfProject: (project: BCFProject) => void },
+): void {
+  void import('./aimBcf.js')
+    .then(({ loadAimBcfTopics }) => loadAimBcfTopics(msg, {
+      getProject: () => getState().bcfProject,
+      setProject: (project) => getState().setBcfProject(project),
+    }))
+    .catch((err) => console.warn('[aim-bridge] AIM_BCF_LOAD failed', err));
 }

@@ -42,7 +42,7 @@ import { useAimDecorationsStore } from './aimDecorationsStore.js';
 import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
-import { isBcfLoadMessage } from './bcf-protocol.js';
+import { isBcfLoadMessage, loadBcfTopics } from './bcf-protocol.js';
 import { dispatchLensMessage, isLensEnvelope, resetLensFromChat } from './lens-protocol.js';
 import { useAimViewCommands } from './useAimViewCommands.js';
 
@@ -103,14 +103,7 @@ export function AimBridge() {
         return;
       }
       if (isBcfLoadMessage(e.data, parentOriginRef.current)) {
-        // BCF topics of the AIM host (D-099): pulled read-only into the BCF panel.
-        const msg = e.data;
-        void import('./aimBcf.js')
-          .then(({ loadAimBcfTopics }) => loadAimBcfTopics(msg, {
-            getProject: () => useViewerStore.getState().bcfProject,
-            setProject: (project) => useViewerStore.getState().setBcfProject(project),
-          }))
-          .catch((err) => console.warn('[aim-bridge] AIM_BCF_LOAD failed', err));
+        loadBcfTopics(e.data, useViewerStore.getState); // AIM host's BCF topics, read-only (D-099)
         return;
       }
       if (!isInboundMessage(e.data)) return;
