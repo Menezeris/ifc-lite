@@ -20,6 +20,8 @@ import { bcfWorldOffset } from '@/hooks/bcf/viewpoint-world-frame';
 import { mergedSectionBounds, percentToWorld, sectionAxisRange } from '@/lib/section/section-distance';
 import { expandToGeometryBearingIds } from '@/utils/aggregation';
 import { deriveViewMode } from '@/hooks/viewModeCore';
+import { RelationshipType } from '@ifc-lite/data';
+import { summarizeSelection, type SelectedEntityInfo } from './selectionSummary.js';
 import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import type { SectionPlaneAxis } from '@/store/types';
 import type { SectionAxis, SectionFit, ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
@@ -54,19 +56,23 @@ export const SECTION_AXIS_IN_IFC = { x: 'IFC X', y: 'IFC Z (výška)', z: 'IFC Y
 export const worldOffset = (state: State): Vec3 => bcfWorldOffset(state.models, state.geometryResult);
 export const sectionBounds = (state: State) => mergedSectionBounds(state.models, state.geometryResult);
 
-/** Render-rámcová obálka jedného prvku podľa GUID (zostava bez geometrie = jej časti). */
-function renderBoundsOfGuid(state: State, guid: string, g: GuidHelpers): Box3 | null {
+/** Render-rámcová obálka prvkov viewera (globálne id; zostava bez geometrie = jej časti). */
+function renderBoundsOfIds(state: State, ids: readonly number[]): Box3 | null {
   const scene = getGlobalRenderer()?.getScene();
-  if (!scene) return null;
+  if (!scene || ids.length === 0) return null;
   const boxOf = (id: number): Box3 | null => scene.getEntityBoundingBox(id) ?? scene.getInstancedEntityBounds(id) ?? null;
-  const ids = g.resolveGuids(state.models, [guid]).map((r) => toGlobalIdFromModels(state.models, r.modelId, r.expressId));
-  if (ids.length === 0) return null;
-  const parts = expandToGeometryBearingIds(ids, (id) => boxOf(id) !== null, {
+  const parts = expandToGeometryBearingIds([...ids], (id) => boxOf(id) !== null, {
     resolve: resolveEntityRef,
     relationshipsFor: (modelId) => state.models.get(modelId)?.ifcDataStore?.relationships,
     toGlobalId: (modelId, expressId) => toGlobalIdFromModels(state.models, modelId, expressId),
   });
   return unionBoxes(parts.map(boxOf).filter((b): b is Box3 => b !== null));
+}
+
+/** Render-rámcová obálka jedného prvku podľa GUID. */
+function renderBoundsOfGuid(state: State, guid: string, g: GuidHelpers): Box3 | null {
+  const ids = g.resolveGuids(state.models, [guid]).map((r) => toGlobalIdFromModels(state.models, r.modelId, r.expressId));
+  return renderBoundsOfIds(state, ids);
 }
 
 /** Zjednotená render-rámcová obálka GUIDov a zoznam tých, ktoré nemajú geometriu. */
@@ -96,8 +102,6 @@ export function queryBounds(state: State, guids: readonly string[], g: GuidHelpe
   };
 }
 
-const MAX_SELECTION = 50;
-
 type RenderCamera = NonNullable<ReturnType<NonNullable<ReturnType<typeof getGlobalRenderer>>['getCamera']>>;
 const unit = (v: Vec3): Vec3 => {
   const len = Math.hypot(v.x, v.y, v.z) || 1;
@@ -118,6 +122,33 @@ function describeCamera(camera: RenderCamera, offset: Vec3, projection: string) 
     fov_deg: Math.round((camera.getFOV() * 180 / Math.PI) * 1000) / 1000,
     ...(ortho ? { ortho_size: mm(camera.getOrthoSize()) } : {}),
     aspect: Math.round(camera.getAspect() * 1e4) / 1e4,
+  };
+}
+
+/**
+ * Trieda, podlažie (aj pre časť zostavy, `elementToStorey`), rodič cez
+ * `IfcRelAggregates` a model vybraného prvku, z načítaného IFC (AIM D-093).
+ */
+function selectedEntityInfo(state: State, id: number, g: GuidHelpers): SelectedEntityInfo {
+  const ref = resolveEntityRef(id);
+  const model = state.models.get(ref.modelId);
+  const store = model?.ifcDataStore;
+  const guid = g.guidForEntity(state.models, ref) ?? null;
+  if (!store) return { guid, name: null, ifc_type: null, storey: null, model: model?.name ?? null, parent: null };
+  const { entities } = store;
+  const storeyId = store.spatialHierarchy?.elementToStorey.get(ref.expressId);
+  const parentId = store.relationships?.getRelated(ref.expressId, RelationshipType.Aggregates, 'inverse')[0];
+  return {
+    guid,
+    name: entities.getName(ref.expressId) || null,
+    ifc_type: entities.getTypeName(ref.expressId) || null,
+    storey: storeyId !== undefined ? entities.getName(storeyId) || `#${storeyId}` : null,
+    model: model?.name ?? null,
+    parent: parentId !== undefined ? {
+      guid: entities.getGlobalId(parentId) || null,
+      ifc_type: entities.getTypeName(parentId) || null,
+      name: entities.getName(parentId) || null,
+    } : null,
   };
 }
 
@@ -145,15 +176,13 @@ export function queryViewState(state: State, g: GuidHelpers) {
   const selected = state.selectedEntityIds.size > 0
     ? [...state.selectedEntityIds]
     : state.selectedEntityId !== null ? [state.selectedEntityId] : [];
-  const guids = selected.slice(0, MAX_SELECTION)
-    .map((id) => g.guidForEntity(state.models, resolveEntityRef(id)))
-    .filter((g): g is string => !!g);
+  const bbox = renderBoundsOfIds(state, selected);
   return {
     frame: 'ifc_world', units: 'm',
     mode, storey_guid: state.underlayActiveStoreyGuid ?? state.underlayLastStoreyGuid ?? null,
     section,
     camera: camera ? describeCamera(camera, offset, state.projectionMode) : null,
-    selection: { count: selected.length, guids },
+    selection: { ...summarizeSelection(selected.map((id) => selectedEntityInfo(state, id, g))), ...(bbox ? { bbox: describeBox(renderBoxToIfc(bbox, offset)) } : {}) },
     hidden_count: state.hiddenEntities.size,
     isolated_count: state.isolatedEntities ? state.isolatedEntities.size : null,
   };
