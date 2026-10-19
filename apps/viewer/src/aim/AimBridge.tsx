@@ -42,6 +42,7 @@ import { useAimDecorationsStore } from './aimDecorationsStore.js';
 import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
+import { dispatchLensMessage, isLensEnvelope, resetLensFromChat } from './lens-protocol.js';
 import { useAimViewCommands } from './useAimViewCommands.js';
 
 export function AimBridge() {
@@ -88,6 +89,10 @@ export function AimBridge() {
       if (parentOriginRef.current && e.origin !== parentOriginRef.current) return;
       if (isViewMessage(e.data)) {
         viewCommands.current(e.data, parentOriginRef.current ?? '*');
+        return;
+      }
+      if (isLensEnvelope(e.data)) {
+        dispatchLensMessage(e.data, parentOriginRef.current ?? '*'); // Lens z chatu (D-096)
         return;
       }
       if (isDerivationsMessage(e.data)) {
@@ -263,6 +268,7 @@ export function AimBridge() {
       useCapturePinsStore.getState().setPins([]);
       useAimDecorationsStore.getState().clear();
       useAimDerivationsStore.getState().clear();
+      resetLensFromChat(); // D-096: izolácia a AIM chat lens neprežijú odpojenie mostu
     };
   }, [bim]);
 

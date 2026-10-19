@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 54a3051c5..2c0fe9b9a 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -63,6 +63,7 @@ export function parseLensMessage(data: LensInboundMessage): ApplyLensMessage | L
+       if (!r.groups.every(isFilterGroup)) return null;
+       ids += countGlobalIds(r.groups as FilterGroup[]);
+     }
++    if (ids > MAX_AIM_GLOBAL_IDS) return null;
+   }
+   const hasRules = Array.isArray(m.rules) && m.rules.length > 0;
+   if ((m.mode === 'add' || m.mode === 'replace') && !hasRules && m.autoColor === undefined) return null;

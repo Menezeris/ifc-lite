@@ -76,6 +76,10 @@ export const REQUIRES_ROUTING_MARKER = new Set([
   // be any IFC class, including a geometry-less assembly -- the same shape
   // as LensPanel/SearchModal.filter's rule-matched ids.
   'apps/viewer/src/hooks/validation/useValidationIsolation.ts',
+  // >>> AIM-FORK: AIM chat isolation (D-096) isolates the union of Lens-rule matches,
+  // which can be any IFC class; it routes them through resolvePresentationIds like LensPanel.
+  'apps/viewer/src/aim/aimLens.ts',
+  // <<< AIM-FORK
   // The SDK/MCP isolate() channel: #3382 landed the routing fix and #3338
   // moved its union policy into the shared `resolvePresentationIds`, so this
   // now genuinely routes and belongs here instead of NO_MARKER_REQUIRED.

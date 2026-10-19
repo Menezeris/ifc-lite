@@ -1,0 +1,156 @@
+{
+  "add-drops-previous": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimLensPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "8015da88415f0eefa902838420a58649b5ee249d",
+    "production": [
+      "apps/viewer/src/aim/aimLensPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimLensPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "envelope-any-type": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimLensPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "8015da88415f0eefa902838420a58649b5ee249d",
+    "production": [
+      "apps/viewer/src/aim/lens-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimLensPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "evaluated-any-rule": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimLensPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "8015da88415f0eefa902838420a58649b5ee249d",
+    "production": [
+      "apps/viewer/src/aim/aimLensPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimLensPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "foreign-lens-adopted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimLensPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "8015da88415f0eefa902838420a58649b5ee249d",
+    "production": [
+      "apps/viewer/src/aim/aimLensPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimLensPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "globalid-cap-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimLensPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "8015da88415f0eefa902838420a58649b5ee249d",
+    "production": [
+      "apps/viewer/src/aim/aimLensPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimLensPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "isolate-needs-color": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimLensPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "8015da88415f0eefa902838420a58649b5ee249d",
+    "production": [
+      "apps/viewer/src/aim/aimLensPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimLensPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "isolate-rule-colored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimLensPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "8015da88415f0eefa902838420a58649b5ee249d",
+    "production": [
+      "apps/viewer/src/aim/aimLensPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimLensPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "isolation-without-flag": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimLensPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "8015da88415f0eefa902838420a58649b5ee249d",
+    "production": [
+      "apps/viewer/src/aim/aimLensPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimLensPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "newest-rule-last": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimLensPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "8015da88415f0eefa902838420a58649b5ee249d",
+    "production": [
+      "apps/viewer/src/aim/aimLensPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimLensPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "same-rev-duplicates": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimLensPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "8015da88415f0eefa902838420a58649b5ee249d",
+    "production": [
+      "apps/viewer/src/aim/aimLensPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimLensPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "unknown-model-matches-all": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimLensPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "38d967693808c5af529055cd249592c3eb926f2f",
+    "head": "8015da88415f0eefa902838420a58649b5ee249d",
+    "production": [
+      "apps/viewer/src/aim/aimLensPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimLensPlan.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}
