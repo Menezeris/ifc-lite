@@ -1,0 +1,44 @@
+{
+  "reveal-case-sensitive": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/frame-refs.test.ts; that file has a green, attributable baseline.",
+    "base": "b34cad6de4d7782f83bef434822fedbd88041642",
+    "head": "f4f1b38e4fa9471dcc3b11680a0363fa3927821f",
+    "production": [
+      "apps/viewer/src/aim/frame-refs.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/frame-refs.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "reveal-ignores-gate": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/frame-refs.test.ts; that file has a green, attributable baseline.",
+    "base": "b34cad6de4d7782f83bef434822fedbd88041642",
+    "head": "f4f1b38e4fa9471dcc3b11680a0363fa3927821f",
+    "production": [
+      "apps/viewer/src/aim/frame-refs.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/frame-refs.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "reveal-no-zones": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/frame-refs.test.ts; that file has a green, attributable baseline.",
+    "base": "b34cad6de4d7782f83bef434822fedbd88041642",
+    "head": "f4f1b38e4fa9471dcc3b11680a0363fa3927821f",
+    "production": [
+      "apps/viewer/src/aim/frame-refs.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/frame-refs.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}
