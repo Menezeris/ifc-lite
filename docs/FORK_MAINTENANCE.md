@@ -484,7 +484,8 @@ locally before the first push (`.claude/skills/aim-feature/SKILL.md`).
 
 | Where | Pin | Why | Remove when |
 |---|---|---|---|
-| _(none)_ | | The `ifcopenshell==0.8.5` pin in `export-schema-conformance.yml` was dropped with the 2026-10-19 sync: upstream #7899 adapted the LandXML audits to IfcOpenShell 0.9 (LandXML conformance 11/11 and IFC4X3 conformance 2/2 on 0.9.0.post1, run locally). | |
+| `rust/geometry/tests/issue_098_reveal_wall.rs`, `rust/geometry/tests/issue_098_v5c.rs` (AIM-FORK blocks) | `PINNED_OPEN_EDGES` under `csg_manifold_gate`: wall 136 -> 166 (manifold alone), 394 -> 436 (both gates); V5C 214 -> 224 (manifold alone) | Upstream #7607 (`5b730c6fd`, admin-landed on 2026-10-18) moved the gated fallback's reading and kept the old pins, so "Rust tests (feature builds)" and "CSG accept gates (feature builds)" are red on upstream main too. Bisected locally (`1b3b24e1b` 136, `5b730c6fd` 166); all four feature combinations pass with the new pins. | The upstream sync whose tests re-pin these values (or fix the fallback): take upstream's version and drop the AIM-FORK blocks. |
+| `tests/perf-ratchets/native-instructions-large.json` | `issue-129.geometry` ceiling 28 618 524 182 -> 34 034 218 597 Ir, `issue-129.total` 28 956 296 791 -> 34 294 290 206 Ir (fork main `cf6b117bd`, CI "Measure main and lower ceilings" 2026-10-20) | The same upstream #7607 (`5b730c6fd`) costs +26.5 % geometry instructions on ISSUE_129 (bisected: `db45d7172` 28.09 G, `5b730c6fd` 35.54 G); upstream documented the cost and admin-merged it without raising the ceiling, so "Perf ratchet lowering" is red on upstream main too. Raise approved by Samuel on 2026-10-20 (human approval the ratchet rule requires). | The upstream sync that raises this ceiling or makes #7607 cheaper: take upstream's entries. |
 
 ## Conventions (don't drift)
 

@@ -140,8 +140,15 @@ const PINNED_VOLUME_M3: Option<f64> = None;
 // loses a third of the wall: both volumes now sit next to the default build's
 // 33.398 m3. Its unpaired edges moved in opposite directions under the two
 // gate combinations, so both are re-measured here, not assumed.
+// >>> AIM-FORK (temporary pin, docs/FORK_MAINTENANCE.md "Temporary pins"):
+// #7607 (#7292): 214 -> 224 (manifold gate alone), volume 33.474 -> 33.475 m3
+// (within the volume tolerance, so its pin stays). Bisected on the fork to
+// 5b730c6fd; upstream main ca6991fdb still reads 224. Both gates (702 /
+// 34.559) did not move and the topology gate alone keeps the real bar (70).
+// Drop this block on the sync that re-pins it.
 #[cfg(all(feature = "csg_manifold_gate", not(feature = "csg_topology_gate")))]
-const PINNED_OPEN_EDGES: Option<i64> = Some(214);
+const PINNED_OPEN_EDGES: Option<i64> = Some(224);
+// <<< AIM-FORK
 #[cfg(all(feature = "csg_manifold_gate", not(feature = "csg_topology_gate")))]
 const PINNED_VOLUME_M3: Option<f64> = Some(33.474);
 
