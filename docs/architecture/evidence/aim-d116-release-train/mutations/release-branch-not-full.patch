@@ -1,0 +1,13 @@
+diff --git b/scripts/check-aim-fork-only.mjs a/scripts/check-aim-fork-only.mjs
+index c58f54d4..740fe541 100644
+--- b/scripts/check-aim-fork-only.mjs
++++ a/scripts/check-aim-fork-only.mjs
+@@ -208,7 +208,7 @@ export function relatedTests(changed, sources) {
+ export function classify({ base, head, headRef = '', labels = [], git, readViewerSources }) {
+   const reasons = [];
+   if (/^sync\/upstream-/.test(headRef)) reasons.push(`${headRef}: an upstream sync always runs the full CI`);
+-  if (false) reasons.push(`${headRef}: a release batch always runs the full CI`);
++  if (RELEASE_BRANCH.test(headRef)) reasons.push(`${headRef}: a release batch always runs the full CI`);
+   if (labels.includes(FULL_CI_LABEL)) reasons.push(`label ${FULL_CI_LABEL}`);
+   const status = git(['diff', '--name-status', '--no-renames', base, head]).split('\n').filter(Boolean)
+     .map((line) => { const [code, path] = line.split('\t'); return { code, path }; });
