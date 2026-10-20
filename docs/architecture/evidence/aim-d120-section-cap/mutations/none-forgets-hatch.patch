@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionCap.ts a/apps/viewer/src/aim/sectionCap.ts
+index e13cea3c1..e253b1d00 100644
+--- b/apps/viewer/src/aim/sectionCap.ts
++++ a/apps/viewer/src/aim/sectionCap.ts
+@@ -53,7 +53,7 @@ export function planSectionCap(
+ ): CapPlan {
+   const pattern = current.capStyle.pattern;
+   const remember = pattern !== 'solid' ? pattern : undefined;
+-  if (msg.cap === 'none') return { showCap: false };
++  if (msg.cap === 'none') return { showCap: false, ...(remember ? { remember } : {}) };
+   const style: Partial<SectionCapStyle> = {
+     pattern: msg.cap === 'solid' ? 'solid' : remember ?? lastHatch,
+   };

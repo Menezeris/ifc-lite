@@ -5,7 +5,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
-import { MAX_SELECTION_GUIDS, MAX_SELECTION_ITEMS, MAX_SUMMARY_GROUPS, summarizeSelection, type SelectedEntityInfo } from './selectionSummary.js';
+import {
+  MAX_SELECTION_GUIDS, MAX_SELECTION_ITEMS, MAX_SUMMARY_GROUPS, MAX_VISIBILITY_GUIDS, summarizeSelection, visibilityGuids, type SelectedEntityInfo,
+} from './selectionSummary.js';
 
 const cw = (n: number) => ({ guid: `CW${n}`, ifc_type: 'IfcCurtainWall', name: `Plášť ${n}` });
 function plate(i: number, storey: string, wall: number, type = 'IfcPlate', model = 'ASR.ifc'): SelectedEntityInfo {
@@ -78,5 +80,25 @@ describe('súhrn výberu pre view_state (AIM D-093)', () => {
     assert.strictEqual(r.truncated, true);
     assert.deepStrictEqual(r.summary.by_storey, [{ key: '(neznáme)', count: 1 }, { key: '1NP', count: 1 }].sort((a, b) => a.key.localeCompare(b.key)));
     assert.ok(r.summary.by_parent.some((g) => g.key === '(bez zostavy)' && g.count === 1));
+  });
+});
+
+describe('skryté a izolované GUIDy pre view_state (AIM D-122)', () => {
+  const guidOf = (id: number) => (id % 10 === 0 ? null : `G${id % 700}`);
+
+  it('vráti GUIDy v poradí kanála, bez prvkov bez GUID a bez duplicít', () => {
+    assert.deepStrictEqual(visibilityGuids([1, 10, 2, 701, 3], guidOf), ['G1', 'G2', 'G3']);
+  });
+
+  it('zoznam má strop mosta, aj keď je skrytých prvkov viac', () => {
+    const ids = Array.from({ length: 5000 }, (_, i) => i + 1);
+    const r = visibilityGuids(ids, (id) => `G${id}`);
+    assert.strictEqual(r.length, MAX_VISIBILITY_GUIDS);
+    assert.strictEqual(r[0], 'G1');
+    assert.strictEqual(visibilityGuids(ids, (id) => `G${id}`, 3).length, 3);
+  });
+
+  it('prázdny kanál = prázdny zoznam', () => {
+    assert.deepStrictEqual(visibilityGuids(new Set<number>(), guidOf), []);
   });
 });

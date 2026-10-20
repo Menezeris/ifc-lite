@@ -111,3 +111,9 @@ body {
 .hierarchy-item {
   letter-spacing: -0.01em;
 }
+
+/* AIM D-119: "veľká legenda" z chatu (panel Lens ako veľké plávajúce okno) - legenda farieb
+   podľa hodnoty bez stropu 220 px z LensPanel; príznak nastavuje aim/aimLensScope.ts. */
+html[data-aim-big-legend] [data-tour="lens-legend"] > .overflow-y-auto {
+  max-height: none;
+}

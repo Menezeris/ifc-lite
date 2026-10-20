@@ -4,8 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * AIM-FORK (whole file, AIM D-103, extends D-098): which CI a fork pull
- * request needs.
+ * AIM-FORK (whole file, AIM D-103 and D-116, extends D-098): which CI a fork
+ * pull request needs.
  *
  *   aim-only     every file is in the AIM layer (apps/viewer/src/aim/, the
  *                aim-fork i18n catalogue, AIM evidence, the AIM skills,
@@ -14,18 +14,20 @@
  *                blocks of existing viewer files (apps/viewer/**), checked hunk
  *                by hunk against the blocks of the new file, plus at most a
  *                pre-approved raise of the two viewer bundle ceilings.
- *   full         anything else: an upstream sync, a workflow or script, a
- *                package, a new / deleted / renamed upstream file, one line
- *                outside a block, or a change whose related viewer tests are
- *                too many for the fast lane.
+ *   upstream     anything else in a feature PR (`outside` says where): a
+ *                workflow, script, package, new upstream file, a line outside
+ *                a block. Still the fast lane: since D-116 such a PR reaches
+ *                `main` only inside a release batch.
+ *   full         a release batch (`release/aim-*`), an upstream sync
+ *                (`sync/upstream-*`) or a PR labelled `ci:full`.
  *
- * test.yml (job `changes`, step `aimonly`) turns its heavy lanes off for the
- * first two; aim-fast.yml then runs the AIM tests, the viewer typecheck and
- * build, the bundle ratchet and the viewer tests that import a changed file.
- * Both call this script on the same merge commit, so they agree.
+ * test.yml (job `changes`, step `aimonly`) turns its heavy lanes off for every
+ * mode but `full`; aim-fast.yml then runs the AIM tests, the viewer typecheck
+ * and build, the bundle ratchet and the viewer tests that import a changed
+ * file. Both call this script on the same merge commit, so they agree.
  *
  *   node scripts/check-aim-fork-only.mjs --base <rev> --head <rev>
- *        [--head-ref <branch>] [--json] [--github-output]
+ *        [--head-ref <branch>] [--labels <a,b>] [--json] [--github-output]
  *   node scripts/check-aim-fork-only.mjs --viewer-ratchet <measured.json> --out-dir <dir>
  *        writes <dir>/measured.json and <dir>/ceilings/bundle.json with only the
  *        viewer JS metrics, for `perf-ratchet.mjs check --ceilings-dir`: the fast
@@ -41,15 +43,19 @@ import { isMainEntry } from './lib/is-main-entry.mjs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const VIEWER_SRC = 'apps/viewer/src';
 
-export const AIM_LAYER = /^(apps\/viewer\/src\/aim\/|apps\/viewer\/src\/i18n\/catalogues\/aim-fork\.|docs\/architecture\/evidence\/aim-|\.claude\/skills\/(aim-feature|steward)\/|docs\/FORK_MAINTENANCE\.md$)/;
+export const AIM_LAYER = /^(apps\/viewer\/src\/aim\/|apps\/viewer\/src\/i18n\/catalogues\/aim-fork\.|docs\/architecture\/evidence\/aim-|\.claude\/skills\/(aim-feature|steward|release-train)\/|docs\/FORK_MAINTENANCE\.md$)/;
 /** Only viewer files may take the fork-blocks path: a block in a package, a
  *  script or a workflow reaches code the fast lane does not test. */
 export const BLOCK_ELIGIBLE = /^apps\/viewer\//;
 export const BUNDLE_RATCHET = 'tests/perf-ratchets/bundle.json';
 /** Pre-approved raises (docs/FORK_MAINTENANCE.md, Samuel 2026-10-18). */
 export const BUNDLE_RAISE_LIMITS = { 'viewer-entry-js-bytes': 2048, 'viewer-eager-js-bytes': 10240 };
-/** Above this many related viewer test files the change is not small. */
+/** Above this many related viewer test files the fast lane runs none of them. */
 export const MAX_RELATED_TESTS = 40;
+/** A release batch of several PRs (D-116): the one place the full CI runs. */
+export const RELEASE_BRANCH = /^release\/aim-/;
+/** A label that asks for the full CI on one PR (D-116). */
+export const FULL_CI_LABEL = 'ci:full';
 
 /**
  * The `AIM-FORK` blocks of a file as inclusive 1-based line ranges, markers
@@ -192,48 +198,54 @@ export function relatedTests(changed, sources) {
 /**
  * The decision, from what git says. `git` is (args) => stdout, so the tests
  * can hand in a fake repository.
+ *
+ * Since D-116 (release train) only a release batch, an upstream sync or the
+ * `ci:full` label runs the full CI on a pull request. Every other PR gets the
+ * fast lane: `aim-only` and `fork-blocks` as in D-103, `upstream` when it also
+ * changes upstream code outside AIM-FORK blocks (`outside` lists where). Such a
+ * PR reaches `main` only inside a `release/aim-*` batch, which runs everything.
  */
-export function classify({ base, head, headRef = '', git, readViewerSources }) {
+export function classify({ base, head, headRef = '', labels = [], git, readViewerSources }) {
   const reasons = [];
   if (/^sync\/upstream-/.test(headRef)) reasons.push(`${headRef}: an upstream sync always runs the full CI`);
+  if (RELEASE_BRANCH.test(headRef)) reasons.push(`${headRef}: a release batch always runs the full CI`);
+  if (labels.includes(FULL_CI_LABEL)) reasons.push(`label ${FULL_CI_LABEL}`);
   const status = git(['diff', '--name-status', '--no-renames', base, head]).split('\n').filter(Boolean)
     .map((line) => { const [code, path] = line.split('\t'); return { code, path }; });
   if (status.length === 0) reasons.push('the diff is empty');
+  const outside = [];
   let blocks = false;
   for (const { code, path } of status) {
     if (AIM_LAYER.test(path)) continue;
-    if (code !== 'M') { reasons.push(`${path}: ${code === 'A' ? 'new' : code === 'D' ? 'deleted' : code} upstream file`); continue; }
+    if (code !== 'M') { outside.push(`${path}: ${code === 'A' ? 'new' : code === 'D' ? 'deleted' : code} upstream file`); continue; }
     const oldText = git(['show', `${base}:${path}`]);
     const newText = git(['show', `${head}:${path}`]);
     if (path === BUNDLE_RATCHET) {
       const why = bundleRaiseOnly(oldText, newText);
-      if (why) reasons.push(`${path}: ${why}`);
+      if (why) outside.push(`${path}: ${why}`);
       continue;
     }
-    if (!BLOCK_ELIGIBLE.test(path)) { reasons.push(`${path}: outside apps/viewer/`); continue; }
+    if (!BLOCK_ELIGIBLE.test(path)) { outside.push(`${path}: outside apps/viewer/`); continue; }
     const newBlocks = forkBlocks(newText);
     const oldBlocks = forkBlocks(oldText);
-    if (!newBlocks || !oldBlocks) { reasons.push(`${path}: unbalanced AIM-FORK markers`); continue; }
-    const outside = parseHunks(git(['diff', '-U0', base, head, '--', path])).filter((h) => !hunkInsideBlocks(h, newBlocks, oldBlocks));
-    if (outside.length > 0) reasons.push(`${path}: ${outside.length} change(s) outside AIM-FORK blocks, first at new line ${outside[0].c}`);
+    if (!newBlocks || !oldBlocks) { outside.push(`${path}: unbalanced AIM-FORK markers`); continue; }
+    const hunks = parseHunks(git(['diff', '-U0', base, head, '--', path])).filter((h) => !hunkInsideBlocks(h, newBlocks, oldBlocks));
+    if (hunks.length > 0) outside.push(`${path}: ${hunks.length} change(s) outside AIM-FORK blocks, first at new line ${hunks[0].c}`);
     else blocks = true;
   }
-  let tests = [];
-  if (reasons.length === 0) {
-    const sources = readViewerSources();
-    const changed = status.filter(({ code }) => code !== 'D').map(({ path }) => path);
-    // The AIM unit tests run in their own step of aim-fast.yml.
-    const related = (paths) => relatedTests(paths, sources).filter((p) => !/^apps\/viewer\/src\/aim\/[^/]+\.test\.tsx?$/.test(p));
-    // The cap judges the edits in upstream files: those are what D-103 adds. An
-    // AIM module imported far and wide (bridge-protocol.ts) keeps D-098's fast
-    // path; past the cap its dependents are left to the nightly full run.
-    const upstream = related(changed.filter((p) => !AIM_LAYER.test(p)));
-    const all = related(changed);
-    tests = all.length <= MAX_RELATED_TESTS ? all : upstream;
-    if (upstream.length > MAX_RELATED_TESTS) reasons.push(`${upstream.length} viewer test files import the edited upstream files, over the fast lane's ${MAX_RELATED_TESTS}`);
-  }
-  const mode = reasons.length > 0 ? 'full' : blocks ? 'fork-blocks' : 'aim-only';
-  return { mode, reasons, relatedTests: mode === 'full' ? [] : tests };
+  if (reasons.length > 0) return { mode: 'full', reasons, outside, relatedTests: [] };
+  const sources = readViewerSources();
+  const changed = status.filter(({ code }) => code !== 'D').map(({ path }) => path);
+  // The AIM unit tests run in their own step of aim-fast.yml.
+  const related = (paths) => relatedTests(paths, sources).filter((p) => !/^apps\/viewer\/src\/aim\/[^/]+\.test\.tsx?$/.test(p));
+  // Edits in upstream files come first: an AIM module imported far and wide
+  // (bridge-protocol.ts) would crowd them out. Past the cap the lane runs no
+  // related tests; the release batch and the nightly run cover them.
+  const upstream = related(changed.filter((p) => !AIM_LAYER.test(p)));
+  const all = related(changed);
+  const tests = all.length <= MAX_RELATED_TESTS ? all : upstream.length <= MAX_RELATED_TESTS ? upstream : [];
+  const mode = outside.length > 0 ? 'upstream' : blocks ? 'fork-blocks' : 'aim-only';
+  return { mode, reasons, outside, relatedTests: tests };
 }
 
 export function main(argv = process.argv.slice(2)) {
@@ -252,11 +264,13 @@ export function main(argv = process.argv.slice(2)) {
   const head = arg('--head', 'HEAD');
   const git = (args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
   const readViewerSources = () => new Map(listSources(ROOT, VIEWER_SRC).map((p) => [p, readFileSync(join(ROOT, p), 'utf8')]));
-  const result = classify({ base, head, headRef: arg('--head-ref', ''), git, readViewerSources });
+  const labels = arg('--labels', '').split(',').map((l) => l.trim()).filter(Boolean);
+  const result = classify({ base, head, headRef: arg('--head-ref', ''), labels, git, readViewerSources });
   if (argv.includes('--json')) console.log(JSON.stringify(result, null, 2));
   else {
     console.log(`AIM fork CI mode: ${result.mode}`);
     for (const reason of result.reasons) console.log(`  full CI because ${reason}`);
+    for (const where of result.outside) console.log(`  outside the AIM layer: ${where}`);
     if (result.mode !== 'full') console.log(`  related viewer tests: ${result.relatedTests.length}`);
   }
   if (argv.includes('--github-output') && process.env.GITHUB_OUTPUT) {

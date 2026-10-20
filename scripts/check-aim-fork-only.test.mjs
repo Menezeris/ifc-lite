@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * AIM-FORK (whole file, AIM D-103): tests for check-aim-fork-only.mjs. The
+ * AIM-FORK (whole file, AIM D-103, D-116): tests for check-aim-fork-only.mjs. The
  * classification runs against throwaway git repositories, never this
  * checkout, so a change to the fork's own files cannot make them pass.
  *
@@ -74,7 +74,7 @@ test('a PR inside apps/viewer/src/aim only is aim-only', () => {
 test('an edit inside an existing AIM-FORK block is fork-blocks', () => {
   const changed = UPSTREAM.replace('if (hidden()) return null;', 'if (hidden() || parked()) return null;');
   withRepo({ [HINT]: UPSTREAM }, { [HINT]: changed }, (repo) => {
-    assert.deepEqual(classify(repo), { mode: 'fork-blocks', reasons: [], relatedTests: [] });
+    assert.deepEqual(classify(repo), { mode: 'fork-blocks', reasons: [], outside: [], relatedTests: [] });
   });
 });
 
@@ -85,18 +85,19 @@ test('an upstream line replaced inside a NEW block is fork-blocks (the documente
   });
 });
 
-test('one changed line outside the blocks sends the PR to the full CI', () => {
+test('one changed line outside the blocks is upstream mode, still the fast lane (D-116)', () => {
   const changed = UPSTREAM.replace('const key = pick();', 'const key = pick(1);');
   withRepo({ [HINT]: UPSTREAM }, { [HINT]: changed }, (repo) => {
     const result = classify(repo);
-    assert.equal(result.mode, 'full');
-    assert.match(result.reasons[0], /1 change\(s\) outside AIM-FORK blocks, first at new line 2/);
+    assert.equal(result.mode, 'upstream');
+    assert.deepEqual(result.reasons, []);
+    assert.match(result.outside[0], /1 change\(s\) outside AIM-FORK blocks, first at new line 2/);
   });
 });
 
-test('deleting upstream lines next to a block is full; deleting a whole block is fork-blocks', () => {
+test('deleting upstream lines next to a block is upstream; deleting a whole block is fork-blocks', () => {
   withRepo({ [HINT]: UPSTREAM }, { [HINT]: UPSTREAM.replace('  return render(key);\n', '') }, (repo) => {
-    assert.equal(classify(repo).mode, 'full');
+    assert.equal(classify(repo).mode, 'upstream');
   });
   const noBlock = UPSTREAM.replace(/ {2}\/\/ >>> AIM-FORK[^\n]*\n[^\n]*\n[^\n]*<<< AIM-FORK\n/, '');
   withRepo({ [HINT]: UPSTREAM }, { [HINT]: noBlock }, (repo) => {
@@ -104,22 +105,31 @@ test('deleting upstream lines next to a block is full; deleting a whole block is
   });
 });
 
-test('workflows, scripts, packages, new and deleted upstream files always run the full CI', () => {
+test('workflows, scripts, packages, new and deleted upstream files are upstream mode and say where', () => {
   const yml = '# >>> AIM-FORK: x\non: push\n# <<< AIM-FORK\n';
   withRepo({ '.github/workflows/a.yml': yml }, { '.github/workflows/a.yml': yml.replace('push', 'pull_request') }, (repo) => {
-    assert.match(classify(repo).reasons[0], /outside apps\/viewer/);
+    const result = classify(repo);
+    assert.equal(result.mode, 'upstream');
+    assert.match(result.outside[0], /outside apps\/viewer/);
   });
   withRepo({ [HINT]: UPSTREAM }, { 'apps/viewer/src/new.ts': 'x\n' }, (repo) => {
-    assert.match(classify(repo).reasons[0], /new upstream file/);
+    assert.match(classify(repo).outside[0], /new upstream file/);
   });
   withRepo({ [HINT]: UPSTREAM }, { [HINT]: null }, (repo) => {
-    assert.match(classify(repo).reasons[0], /deleted upstream file/);
+    assert.match(classify(repo).outside[0], /deleted upstream file/);
   });
 });
 
-test('an upstream sync branch is full whatever it touches', () => {
+test('only a release batch, an upstream sync or the ci:full label runs the full CI', () => {
   withRepo({ [HINT]: UPSTREAM }, { 'apps/viewer/src/aim/x.ts': 'x\n' }, (repo) => {
+    assert.equal(classify(repo).mode, 'aim-only');
     assert.equal(classify({ ...repo, headRef: 'sync/upstream-2026-10-19' }).mode, 'full');
+    assert.equal(classify({ ...repo, headRef: 'release/aim-2026-10-20' }).mode, 'full');
+    assert.equal(classify({ ...repo, headRef: 'claude/release/aim-x' }).mode, 'aim-only');
+    const labelled = classify({ ...repo, labels: ['llm-reviewed', 'ci:full'] });
+    assert.equal(labelled.mode, 'full');
+    assert.deepEqual(labelled.reasons, ['label ci:full']);
+    assert.deepEqual(labelled.relatedTests, []);
   });
 });
 
@@ -173,14 +183,14 @@ test('related tests follow imports transitively, through @/ and relative paths',
   ]);
 });
 
-test('a change that too many viewer tests import is not small', () => {
+test('past the cap the fast lane runs no related tests, and stays the fast lane', () => {
   const sources = new Map([[HINT, 'export const x = 1;']]);
   for (let i = 0; i <= MAX_RELATED_TESTS; i += 1) sources.set(`apps/viewer/src/t${i}.test.ts`, "import { x } from '@/components/Hint';");
   const changed = UPSTREAM.replace('if (hidden()) return null;', 'if (parked()) return null;');
   withRepo({ [HINT]: UPSTREAM }, { [HINT]: changed }, (repo) => {
     const result = classify({ ...repo, readViewerSources: () => sources });
-    assert.equal(result.mode, 'full');
-    assert.match(result.reasons[0], /viewer test files import the edited upstream files/);
+    assert.equal(result.mode, 'fork-blocks');
+    assert.deepEqual(result.relatedTests, []);
   });
 });
 
@@ -189,7 +199,7 @@ test('an AIM module imported far and wide keeps the fast path, without its depen
   const sources = new Map([[AIM, 'export const x = 1;'], ['apps/viewer/src/aim/bridge.test.ts', "import { x } from './bridge';"]]);
   for (let i = 0; i <= MAX_RELATED_TESTS; i += 1) sources.set(`apps/viewer/src/t${i}.test.ts`, "import { x } from '@/aim/bridge';");
   withRepo({ [AIM]: 'export const x = 0;\n' }, { [AIM]: 'export const x = 1;\n' }, (repo) => {
-    assert.deepEqual(classify({ ...repo, readViewerSources: () => sources }), { mode: 'aim-only', reasons: [], relatedTests: [] });
+    assert.deepEqual(classify({ ...repo, readViewerSources: () => sources }), { mode: 'aim-only', reasons: [], outside: [], relatedTests: [] });
   });
   sources.delete(`apps/viewer/src/t${MAX_RELATED_TESTS}.test.ts`);
   withRepo({ [AIM]: 'export const x = 0;\n' }, { [AIM]: 'export const x = 1;\n' }, (repo) => {

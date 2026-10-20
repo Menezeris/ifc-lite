@@ -53,6 +53,7 @@ describe('zoznam z chatu (AIM D-111)', () => {
     assert.equal(parseOpenList(msg({ columns: [{ source: 'sql' as never, propertyName: 'x' }] })), null);
     assert.equal(parseOpenList(msg({ columns: [{ source: 'property', propertyName: 'FireRating' }] })), null);
     assert.equal(parseOpenList(msg({ columns: [] })), null);
+    assert.equal(parseOpenList(msg({ groups: [] })), null);
     assert.equal(parseOpenList(msg({ groups: [{ combinator: 'XOR', rules: [] }] })), null);
     assert.equal(parseOpenList(msg({ name: '' })), null);
   });

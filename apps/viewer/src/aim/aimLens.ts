@@ -13,6 +13,8 @@
  * AIM D-105) dá to isté zjednotenie do kanála ghost (ako tlačidlo "duch" v paneli
  * prvku): vybrané ostanú plné, zvyšok modelu priesvitný.
  * `LENS_QUERY` počká na vyhodnotenie verzie `rev` a vráti počty hosťovi.
+ * D-119 (`aimLensScope.ts`): farby podľa hodnoty len pre prvky filtra (alebo viditeľné),
+ * zapnutie skrytých miestností a zón, ktoré lens zasiahla, a veľká legenda.
  * Načítava sa lenivo z `AimBridge` pri prvej správe Lens.
  */
 
@@ -30,6 +32,7 @@ import {
   type AimIsolation, type ApplyLensMessage, type LensQueryMessage,
 } from './aimLensPlan.js';
 import { noteIssue } from './command-gate.js';
+import { applyLegendSize, autoColorScope, revealAfterLens, revealGatesFor } from './aimLensScope.js';
 
 const SLOT = AUTO_COLOR_FROM_LIST_ID;
 const POLL_MS = 100;
@@ -50,6 +53,10 @@ let rejectedRev: string | null = null;
 /** Chat poslal `APPLY_LENS` (aj bez `rev`): `APPLIED` nesie súhrn lens (D-101). */
 let lensUsed = false;
 let seq = 0;
+/** Poradie farieb podľa hodnoty: rozsah sa počíta asynchrónne, staršia správa po novšej sa zahodí (D-119). */
+let scopeGen = 0;
+/** Verzia, ktorej rozsah sa ešte počíta (drží ju aj `pendingIsolationRev`, aby `LENS_QUERY` počkal). */
+let scopingRev: string | null = null;
 
 type State = ReturnType<typeof useViewerStore.getState>;
 const slotLens = (s: State) => s.savedLenses.find((l) => l.id === SLOT) ?? null;
@@ -82,6 +89,8 @@ async function isolate(msg: ApplyLensMessage, rules: Lens['rules'], tag: string,
   if (gen !== isolationGen) return;
   const raw = new Set<number>();
   for (const ids of matched.values()) for (const id of ids) raw.add(id);
+  // Izolované miestnosti (zóny) sú predvolene vypnutá trieda: bez zapnutia by izolácia ukázala prázdnu scénu (D-119).
+  revealGatesFor(raw);
   const xray = msg.xray === true;
   // `add` k izolácii (X-ray) z chatu rozšíri doterajšiu, nie nahradí (AIM D-101, #95) - ak ju kanál stále
   // drží a je to ten istý kanál. Kanál podľa stavu po vyhodnotení: príkaz hosta počas `await` ho prevezme.
@@ -112,14 +121,17 @@ async function isolate(msg: ApplyLensMessage, rules: Lens['rules'], tag: string,
   };
 }
 
-function applyLens(msg: ApplyLensMessage): void {
+function applyLens(msg: ApplyLensMessage, scope?: Lens['capturedScope']): void {
   rejectedRev = null;
   lensUsed = true;
   const state = useViewerStore.getState();
   const prev = slotLens(state);
   const models = [...state.models.values()].map((m) => ({ name: m.name, fingerprint: m.sourceFingerprint }));
   const tag = msg.rev ?? `s${++seq}`;
-  const next = nextAimLens(prev, msg, SLOT, models, tag);
+  const built = nextAimLens(prev, msg, SLOT, models, tag);
+  // Farby podľa hodnoty len pre zachytené prvky (filter volania alebo viditeľné, D-119).
+  const next = built?.autoColor && scope ? { ...built, capturedScope: scope } : built;
+  if (msg.legend) applyLegendSize(msg.legend);
   appliedRev = msg.rev;
   if (msg.mode === 'clear' || msg.mode === 'unisolate') releaseIsolation();
   const toIsolate = isolationRules(msg, models, tag);
@@ -148,6 +160,32 @@ function applyLens(msg: ApplyLensMessage): void {
     return;
   }
   useViewerStore.setState({ savedLenses: [...others, next], activeLensId: SLOT, lensPanelVisible: true });
+  revealAfterLens(next.rules.map((r) => r.id));
+}
+
+/** Farby podľa hodnoty: najprv rozsah (asynchrónne vyhodnotenie filtra), potom lens (D-119). */
+async function applyAutoColor(msg: ApplyLensMessage): Promise<void> {
+  const gen = ++scopeGen;
+  const rev = msg.rev ?? '*';
+  lensUsed = true;
+  scopingRev = rev;
+  pendingIsolationRev = rev;
+  let result: Awaited<ReturnType<typeof autoColorScope>>;
+  try {
+    result = await autoColorScope(msg.autoColorScope as Parameters<typeof autoColorScope>[0]);
+  } catch (err) {
+    result = { issue: `Lens: rozsah farieb podľa hodnoty zlyhal (${err instanceof Error ? err.message : String(err)})` };
+  }
+  if (gen !== scopeGen) return;
+  endScoping();
+  if (result.issue) noteIssue(result.issue);
+  applyLens(msg, result.scope);
+}
+
+/** Ukončí čakanie na rozsah; čakanie izolácie z inej správy nechá tak. */
+function endScoping(): void {
+  if (scopingRev !== null && pendingIsolationRev === scopingRev) pendingIsolationRev = null;
+  scopingRev = null;
 }
 
 /** Izolácia (X-ray) z chatu pre hosta, bez interných id. */
@@ -197,7 +235,8 @@ export async function settledLensSummary(timeoutMs: number, started = Date.now()
     return settledLensSummary(timeoutMs, started);
   }
   const iso = isolationSummary();
-  return { ...summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, appliedRev, iso), ...(ready ? {} : { pending: true }) };
+  const summary = summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, appliedRev, iso, isolationFailedRev);
+  return { ...summary, ...(ready ? {} : { pending: true }) };
 }
 
 export function handleLensMessage(data: LensInboundMessage, origin: string): void {
@@ -213,8 +252,18 @@ export function handleLensMessage(data: LensInboundMessage, origin: string): voi
     }
     return;
   }
-  if (msg.type === 'LENS_QUERY') answerLensQuery(msg, origin);
-  else applyLens(msg);
+  if (msg.type === 'LENS_QUERY') {
+    answerLensQuery(msg, origin);
+    return;
+  }
+  if (msg.autoColor) {
+    void applyAutoColor(msg);
+    return;
+  }
+  // Novšia správa zruší rozsah, ktorý sa ešte počíta.
+  scopeGen++;
+  endScoping();
+  applyLens(msg);
 }
 
 /** Odpojenie mostu (AimBridge): zruší izoláciu z chatu, vypne AIM chat lens a zabudne verzie. */
@@ -232,6 +281,8 @@ export function resetAimLens(): void {
     });
   }
   appliedRev = undefined;
+  scopeGen++;
+  scopingRev = null;
   lensUsed = false;
   rejectedRev = null;
   pendingIsolationRev = null;

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionCap.ts a/apps/viewer/src/aim/sectionCap.ts
+index 0bdf16f98..e253b1d00 100644
+--- b/apps/viewer/src/aim/sectionCap.ts
++++ a/apps/viewer/src/aim/sectionCap.ts
+@@ -32,7 +32,7 @@ export function isSectionCapMessage(data: unknown): data is SectionCapMessage {
+   const m = data as Record<string, unknown>;
+   return m.source === SOURCE && m.type === 'SET_SECTION_CAP'
+     && (SECTION_CAPS as readonly unknown[]).includes(m.cap)
+-    && (m.fillColor === undefined || typeof m.fillColor === 'string');
++    && (m.fillColor === undefined || (typeof m.fillColor === 'string' && HEX.test(m.fillColor)));
+ }
+ 
+ /** Šrafa, na ktorú sa vráti `hatch`, keď je práve plná výplň (ako Fill slice). */

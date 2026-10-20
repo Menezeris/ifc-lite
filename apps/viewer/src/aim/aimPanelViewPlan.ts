@@ -51,6 +51,19 @@ export function selectPanel(raw: unknown): AimPanelView | undefined | null {
   return raw === undefined || raw === null ? undefined : parsePanelView(raw);
 }
 
+/**
+ * Focus pre panel, len ak je vybraný stále prvok zo `SELECT`: medzičasom iný výber
+ * (rýchly ďalší SELECT, klik) by dostal vlastnosť určenú pre predchádzajúci prvok.
+ */
+export function focusFor(
+  sel: { modelId: string; expressId: number } | null | undefined,
+  target: { modelId: string; expressId: number },
+  focus: { pset: string; property: string },
+): { modelId: string; entityId: number; psetName: string; propName: string } | null {
+  if (!sel || sel.modelId !== target.modelId || sel.expressId !== target.expressId) return null;
+  return { modelId: sel.modelId, entityId: sel.expressId, psetName: focus.pset, propName: focus.property };
+}
+
 /** Čo sa má nastaviť: focus vlastnosti žije v sekcii Properties pod záložkou IFC. */
 export function panelPlan(view: AimPanelView): { tab?: InspectorTab; section?: PanelSection; focus?: { pset: string; property: string } } {
   if (view.focus) return { tab: 'ifc', section: 'properties', focus: view.focus };
