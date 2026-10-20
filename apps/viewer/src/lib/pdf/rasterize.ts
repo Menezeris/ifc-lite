@@ -19,11 +19,13 @@ let pdfjsPromise: Promise<typeof import('pdfjs-dist')> | null = null;
 
 async function loadPdfjs(): Promise<typeof import('pdfjs-dist')> {
   if (!pdfjsPromise) {
-    pdfjsPromise = import('pdfjs-dist').then((pdfjs) => {
+    // >>> AIM-FORK: pdf.js legacy build for Safari < 26.2 / Chrome < 147 (see appearance/pdf/browser-backend.ts, AIM #97)
+    pdfjsPromise = import('pdfjs-dist/legacy/build/pdf.mjs').then((pdfjs) => {
       pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-        'pdfjs-dist/build/pdf.worker.min.mjs',
+        'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
         import.meta.url,
       ).toString();
+    // <<< AIM-FORK
       return pdfjs;
     });
   }
