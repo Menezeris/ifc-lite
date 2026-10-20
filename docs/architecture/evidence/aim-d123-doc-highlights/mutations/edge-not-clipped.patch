@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docRegion.ts a/apps/viewer/src/aim/docRegion.ts
+index 237496579..a9a8c2bf6 100644
+--- b/apps/viewer/src/aim/docRegion.ts
++++ a/apps/viewer/src/aim/docRegion.ts
+@@ -103,7 +103,7 @@ export function normalizeDocHighlights(raw: unknown): DocRegion[] {
+       x,
+       y,
+       // Časť pred okrajom strany sa odreže; rozmer vnútri strany ostáva presný.
+-      w: clamp(w0, MIN_HIGHLIGHT, 1 - x),
++      w: clamp(x0 < 0 ? x0 + w0 : w0, MIN_HIGHLIGHT, 1 - x),
+       h: clamp(y0 < 0 ? y0 + h0 : h0, MIN_HIGHLIGHT, 1 - y),
+     });
+   }
