@@ -158,7 +158,7 @@ export type InboundMessage =
   | { source: typeof SOURCE; type: 'DOCUMENTS_LOAD'; documents: DocumentDescriptorWire[] }
   // Deep link (D-075): open one document as a tab (postMessage-only — the
   // host owns the iframe src, and changing it reloads the whole viewer).
-  | { source: typeof SOURCE; type: 'DOCUMENT_OPEN'; documentId: string; page?: number }
+  | { source: typeof SOURCE; type: 'DOCUMENT_OPEN'; documentId: string; page?: number; region?: unknown } // region: D-117, docRegion.ts
   // Reality Capture pins (D-073): the host pushes capture points with world
   // coords after MODELS_LOADED; the viewer billboards them over the canvas.
   | { source: typeof SOURCE; type: 'CAPTURES_LOAD'; captures: CapturePinWire[] }
