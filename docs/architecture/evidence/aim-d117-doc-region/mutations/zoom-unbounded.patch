@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docRegion.ts a/apps/viewer/src/aim/docRegion.ts
+index 774d190a..648c5847 100644
+--- b/apps/viewer/src/aim/docRegion.ts
++++ a/apps/viewer/src/aim/docRegion.ts
+@@ -59,7 +59,7 @@ export function regionZoom(
+   const h = Math.max(1, viewport.height - MARGIN_PX);
+   const byWidth = w / (region.w * baseWidth);
+   const byHeight = (h * aspect) / (region.h * baseWidth);
+-  return Math.min(byWidth, byHeight);
++  return clamp(Math.min(byWidth, byHeight), REGION_ZOOM_MIN, REGION_ZOOM_MAX);
+ }
+ 
+ /**

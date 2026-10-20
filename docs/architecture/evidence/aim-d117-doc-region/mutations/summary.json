@@ -1,0 +1,86 @@
+{
+  "empty-region-accepted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docRegion.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "7c64a8e2614879a9c2d23736723132b55ea23a23",
+    "production": [
+      "apps/viewer/src/aim/docRegion.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docRegion.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "nonce-reused": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docRegion.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "7c64a8e2614879a9c2d23736723132b55ea23a23",
+    "production": [
+      "apps/viewer/src/aim/docRegion.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docRegion.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "region-not-clamped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docRegion.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "7c64a8e2614879a9c2d23736723132b55ea23a23",
+    "production": [
+      "apps/viewer/src/aim/docRegion.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docRegion.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "scroll-to-corner": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docRegion.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "7c64a8e2614879a9c2d23736723132b55ea23a23",
+    "production": [
+      "apps/viewer/src/aim/docRegion.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docRegion.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "zoom-ignores-height": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docRegion.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "7c64a8e2614879a9c2d23736723132b55ea23a23",
+    "production": [
+      "apps/viewer/src/aim/docRegion.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docRegion.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "zoom-unbounded": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docRegion.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "7c64a8e2614879a9c2d23736723132b55ea23a23",
+    "production": [
+      "apps/viewer/src/aim/docRegion.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docRegion.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

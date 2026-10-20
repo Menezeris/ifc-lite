@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docRegion.ts a/apps/viewer/src/aim/docRegion.ts
+index 3883dc4a..648c5847 100644
+--- b/apps/viewer/src/aim/docRegion.ts
++++ a/apps/viewer/src/aim/docRegion.ts
+@@ -99,7 +99,7 @@ export const useAimDocRegionStore = create<DocRegionState>((set, get) => ({
+         docId,
+         region,
+         ...(page !== undefined ? { page } : {}),
+-        nonce: get().request?.nonce ?? 1,
++        nonce: (get().request?.nonce ?? 0) + 1,
+       },
+     }),
+   clear: (nonce) => {
