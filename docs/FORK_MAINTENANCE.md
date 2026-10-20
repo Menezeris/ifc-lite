@@ -373,7 +373,7 @@ beží na každom PR (bez filtra ciest; výnimka `check-module-size.mjs apps/lan
 
 **Feature PR sa nezlučuje samostatne.** Je pripravený, keď je rýchla cesta zelená a v tele má
 sekciu "Ako vyskúšať" s odkazom `https://ai-mviewer.vercel.app/ifc?viewer=pr-<číslo>` (AIM host
-s náhľadom viewera z PR; výber viewera je v AIMvieweri, D-114 tam). Pravidlá pre agentov: skill
+s náhľadom viewera z PR; výber viewera je v AIMvieweri, D-114 tam, Menezeris/AIMviewer#123). Pravidlá pre agentov: skill
 `steward`.
 
 **Balík** (skill `release-train`): na Samuelov pokyn ("zlúč 73, 74, 76") agent vytvorí
