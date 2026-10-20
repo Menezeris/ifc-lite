@@ -12,7 +12,7 @@
  *   vieweri predvolene vypnuté, takže ich farbenie alebo izolácia z chatu
  *   nebola vidieť. Rovnaký prepínač ako pri FOCUS (`frame-gates.ts`, D-102);
  * - **veľká legenda** (#135): panel Lens ako veľké plávajúce okno (upstream
- *   `floatPanel`), legenda v ňom nie je orezaná.
+ *   `floatPanel`), legenda v ňom nie je orezaná (pravidlo v `assetin-theme.css`).
  */
 
 import type { Lens } from '@ifc-lite/lens';
@@ -123,6 +123,9 @@ function limited(state: State, ids: ReadonlySet<number>): { scope?: CapturedEnti
 /** Veľká legenda: panel Lens ako plávajúce okno cez takmer celý viewer; `normal` ho vráti do lišty. */
 export function applyLegendSize(size: LegendSize): void {
   const state = useViewerStore.getState();
+  // Strop výšky legendy v LensPanel ruší pravidlo v `assetin-theme.css` (upstream súbor ostáva bez zmeny).
+  if (size === 'large') document.documentElement.dataset.aimBigLegend = '1';
+  else delete document.documentElement.dataset.aimBigLegend;
   if (size === 'normal') {
     if (state.floatingPanels.some((p) => p.id === 'lens')) state.closeFloatingPanel('lens');
     useViewerStore.setState({ lensPanelVisible: true });
