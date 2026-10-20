@@ -54,6 +54,8 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/components/viewer/MobileBottomSheet.tsx` | 1 | `z-50` so sheets sit above the full-screen plan/document overlays |
 | `apps/viewer/src/components/viewer/MobileToolbar.tsx` | 2 | `<ViewModeSwitcher />` (D-075) |
 | `apps/viewer/src/components/viewer/PropertiesPanel.tsx` | 8 | AIM \| IFC inspector tabs + `<AimCard />`, native content wrapped, mobile scroll host (D-077); a property focus from the chat highlights the row without entering edit mode (AIM D-113) |
+| `apps/viewer/src/lib/appearance/pdf/browser-backend.ts` | 1 | pdf.js **legacy build** and its worker (AIM #97): the modern build needs `Map.getOrInsertComputed` and `Math.sumPrecise`, so Safari < 26.2 (all of iOS 18) and Chrome < 147 could not draw a page; guarded by `aim/pdfjs-legacy-build.test.ts` |
+| `apps/viewer/src/lib/pdf/rasterize.ts` | 1 | the same legacy build for the drawing underlay rasterizer (AIM #97) |
 | `apps/viewer/src/components/documents/PdfDocumentView.tsx` | 2 | page region from the AIM chat (D-117): one import and one `useAimDocRegion` call from `aim/docRegion.ts`, one-line blocks because the file sits at its module-size budget; the same call draws the text highlights (D-123), no further edit |
 | `apps/viewer/src/components/viewer/HierarchyPanel.tsx` | 2 | AIM tree decorations — row → IFC GlobalId → badge counts (D-077), one import from `aim/hierarchyPanel.ts` because the file sits at its module-size budget; AIM LAYERS moved to the `aim-layers` panel (D-104) |
 | `apps/viewer/src/components/viewer/hierarchy/ModelHeaderRow.tsx` | 2 | `<AimModelRevision />` model revision pill on MODELS rows (D-089) |

@@ -1,8 +1,10 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-import { getDocument, GlobalWorkerOptions, OPS, version } from 'pdfjs-dist';
-import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+// >>> AIM-FORK: pdf.js legacy build (same API) - the modern one needs Map.getOrInsertComputed and Math.sumPrecise, so Safari < 26.2 (all of iOS 18) and Chrome < 147 could not draw a page (AIM #97)
+import { getDocument, GlobalWorkerOptions, OPS, version } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
+// <<< AIM-FORK
 import { PDF_LIMITS, PdfAppearanceError } from './types.js';
 import type { PdfEngineBackend } from './engine.js';
 const resources = import.meta.glob(
