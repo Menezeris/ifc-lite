@@ -30,8 +30,6 @@ import { ZoneOverlay, ZoneAssignmentSyncMount } from './tools/ZoneOverlay';
 import { AnnotationLayer } from './annotations/AnnotationLayer';
 // AIM-FORK (D-073): next line, Reality Capture pin billboard
 const CapturePinLayer = lazy(() => import('../../aim/CapturePinLayer').then((m) => ({ default: m.CapturePinLayer })));
-// AIM-FORK (D-119): next 1 line, fill + label of Lens-coloured rooms in the 2D plan
-const AimRoomFillLayer = lazy(() => import('../../aim/AimRoomFillLayer').then((m) => ({ default: m.AimRoomFillLayer })));
 import { CollabPresenceLayer } from './CollabPresenceLayer';
 import { MeasurementSceneLayer } from './scene/MeasurementSceneLayer';
 import { BasepointOverlay } from './BasepointOverlay';
@@ -857,7 +855,6 @@ export function ViewportContainer() {
         {/* >>> AIM-FORK: Reality Capture pin billboard (D-073) and 2D room fill (D-119) — AIM-owned layers,
             same overlay root as AnnotationLayer so it re-projects over the scene. */}
         <Suspense fallback={null}><CapturePinLayer /></Suspense>
-        <Suspense fallback={null}><AimRoomFillLayer /></Suspense>
         {/* <<< AIM-FORK */}
         <CollabPresenceLayer />
         {bcfOverlayVisible && <BCFOverlay />}
