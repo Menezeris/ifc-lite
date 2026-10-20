@@ -49,7 +49,7 @@ export function AimDocumentsControls({ docs }: { docs: ReadonlyMap<string, Viewe
   const activeGroupBy = groupBy === GROUP_BY_FOLDER || keys.includes(groupBy) ? groupBy : GROUP_BY_FOLDER;
   return (
     <div className="border-b px-3 py-1.5" data-aim-documents-controls>
-      <div className="flex items-center gap-1.5 text-[11px]">
+      <div className="flex items-center gap-1.5 text-2xs">
         <label className="flex min-w-0 flex-1 items-center gap-1 text-muted-foreground">
           <span className="shrink-0">Zoskupiť</span>
           <select
@@ -57,7 +57,7 @@ export function AimDocumentsControls({ docs }: { docs: ReadonlyMap<string, Viewe
             onChange={(e) => setGroupBy(e.target.value)}
             disabled={onlySelection}
             aria-label="Zoskupiť dokumenty podľa"
-            className="h-6 min-w-0 flex-1 rounded border bg-background px-1 text-[11px] text-foreground"
+            className="h-6 min-w-0 flex-1 rounded border bg-background px-1 text-2xs text-foreground"
           >
             <option value={GROUP_BY_FOLDER}>Priečinok</option>
             {keys.map((key) => (
@@ -97,7 +97,7 @@ export function AimSelectionDocuments({ docs, filter }: { docs: ReadonlyMap<stri
   const total = panel.data.documents?.length ?? 0;
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-1" data-aim-selection-documents>
-      <div className="truncate px-1.5 pb-0.5 pt-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground" title={panel.data.title}>
+      <div className="truncate px-1.5 pb-0.5 pt-1.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground" title={panel.data.title}>
         {panel.data.title} · {total}
       </div>
       {items.length === 0 ? (
@@ -113,11 +113,11 @@ export function AimSelectionDocuments({ docs, filter }: { docs: ReadonlyMap<stri
           >
             <FileText className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[11px]">
+              <span className="block truncate text-2xs">
                 {item.name}
-                {item.page && <span className="ml-1.5 text-[10px] text-muted-foreground">s. {item.page}</span>}
+                {item.page && <span className="ml-1.5 text-2xs text-muted-foreground">s. {item.page}</span>}
               </span>
-              {item.via && <span className="block truncate text-[10px] text-muted-foreground">{item.via}</span>}
+              {item.via && <span className="block truncate text-2xs text-muted-foreground">{item.via}</span>}
             </span>
           </button>
         ))
@@ -127,5 +127,5 @@ export function AimSelectionDocuments({ docs, filter }: { docs: ReadonlyMap<stri
 }
 
 function Hint({ children }: { children: ReactNode }) {
-  return <div className="p-6 text-center text-[11px] text-muted-foreground">{children}</div>;
+  return <div className="p-6 text-center text-2xs text-muted-foreground">{children}</div>;
 }

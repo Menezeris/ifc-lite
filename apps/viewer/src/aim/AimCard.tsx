@@ -119,9 +119,9 @@ function AimCardBody({ data }: { data: AimPanelData }) {
                 <span className="flex-1 min-w-0">
                   <span className="block truncate" title={doc.name}>
                     {doc.name}
-                    {doc.page && <span className="ml-1.5 text-[10px] text-muted-foreground">s. {doc.page}</span>}
+                    {doc.page && <span className="ml-1.5 text-2xs text-muted-foreground">s. {doc.page}</span>}
                   </span>
-                  {doc.via && <span className="block truncate text-[10px] text-muted-foreground" title={doc.via}>{doc.via}</span>}
+                  {doc.via && <span className="block truncate text-2xs text-muted-foreground" title={doc.via}>{doc.via}</span>}
                 </span>
                 {doc.badge && (
                   <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">{doc.badge}</Badge>
