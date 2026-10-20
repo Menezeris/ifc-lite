@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimRoomFill.ts a/apps/viewer/src/aim/aimRoomFill.ts
+index 44464a10b..044cad5a0 100644
+--- b/apps/viewer/src/aim/aimRoomFill.ts
++++ a/apps/viewer/src/aim/aimRoomFill.ts
+@@ -73,7 +73,7 @@ export function footprintPath(triangles: readonly Vec3[], project: (p: Vec3) =>
+     if (!a || !b || !c) continue;
+     // Rovnaké otočenie všetkých trojuholníkov, inak by sa pri nonzero navzájom vyrušili.
+     const cross = (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y);
+-    const [p, q] = [b, c];
++    const [p, q] = cross < 0 ? [c, b] : [b, c];
+     out.push(`M${a.x.toFixed(1)} ${a.y.toFixed(1)}L${p.x.toFixed(1)} ${p.y.toFixed(1)}L${q.x.toFixed(1)} ${q.y.toFixed(1)}Z`);
+   }
+   return out.join('');

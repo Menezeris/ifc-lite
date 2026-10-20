@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 284f6b505..1445039ec 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -78,7 +78,7 @@ export function parseLensMessage(data: LensInboundMessage): ApplyLensMessage | L
+   if (m.legend !== undefined && !(LEGEND_SIZES as readonly unknown[]).includes(m.legend)) return null;
+   const hasRules = Array.isArray(m.rules) && m.rules.length > 0;
+   // Samotná zmena legendy (D-119) lens nemení, len panel.
+-  const legendOnly = m.legend !== undefined && !hasRules && m.autoColor === undefined;
++  const legendOnly = m.legend !== undefined && m.mode === 'add' && !hasRules && m.autoColor === undefined;
+   if ((m.mode === 'add' || m.mode === 'replace') && !hasRules && m.autoColor === undefined && !legendOnly) return null;
+   // Pravidlo `isolate` bez príznaku izolácie alebo X-ray by nerobilo nič.
+   if (hasRules && m.isolate !== true && m.xray !== true && (m.rules as { action: string }[]).some((r) => r.action === 'isolate')) return null;
