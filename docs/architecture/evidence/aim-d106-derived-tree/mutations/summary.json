@@ -1,0 +1,86 @@
+{
+  "classes-unsorted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/derivationsTree.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "b22980571d79f2ff9f5d25b543343918682480d1",
+    "production": [
+      "apps/viewer/src/aim/derivationsTree.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/derivationsTree.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "direction-merged": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/derivationsTree.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "b22980571d79f2ff9f5d25b543343918682480d1",
+    "production": [
+      "apps/viewer/src/aim/derivationsTree.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/derivationsTree.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "predefined-type-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/derivationsTree.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "b22980571d79f2ff9f5d25b543343918682480d1",
+    "production": [
+      "apps/viewer/src/aim/derivationsTree.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/derivationsTree.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "predefined-type-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/derivationsTree.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "b22980571d79f2ff9f5d25b543343918682480d1",
+    "production": [
+      "apps/viewer/src/aim/derivations-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/derivationsTree.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "rows-unsorted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/derivationsTree.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "b22980571d79f2ff9f5d25b543343918682480d1",
+    "production": [
+      "apps/viewer/src/aim/derivationsTree.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/derivationsTree.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "rules-duplicated": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/derivationsTree.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "b22980571d79f2ff9f5d25b543343918682480d1",
+    "production": [
+      "apps/viewer/src/aim/derivationsTree.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/derivationsTree.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

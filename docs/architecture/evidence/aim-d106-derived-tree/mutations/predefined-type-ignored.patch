@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/derivationsTree.ts a/apps/viewer/src/aim/derivationsTree.ts
+index debcbcb4..6e993ad7 100644
+--- b/apps/viewer/src/aim/derivationsTree.ts
++++ a/apps/viewer/src/aim/derivationsTree.ts
+@@ -43,7 +43,7 @@ export function derivedRelationLabel(relation: DerivedRelationWire): string {
+ 
+ function classLabel(other: DerivedRelationWire['other']): string {
+   const ifcType = other.ifcType ?? 'bez IFC triedy';
+-  return ifcType;
++  return other.predefinedType ? `${ifcType} / ${other.predefinedType}` : ifcType;
+ }
+ 
+ /**

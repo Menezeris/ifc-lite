@@ -66,6 +66,8 @@ export interface DerivedRelationWire {
     ref: string | null;
     name: string | null;
     ifcType: string | null;
+    /** IFC PredefinedType of the other end (THERMAL, FIRESAFETY...), groups the panel tree (D-106). */
+    predefinedType?: string | null;
   };
   viaSpaceRef?: string | null;
 }
@@ -151,6 +153,7 @@ function isDerivedRelationWire(v: unknown): v is DerivedRelationWire {
   if (r.viaSpaceRef !== undefined && !isNullableString(r.viaSpaceRef)) return false;
   const o = r.other as Record<string, unknown> | undefined;
   if (!o || typeof o !== 'object' || typeof o.objectId !== 'string') return false;
+  if (o.predefinedType !== undefined && !isNullableString(o.predefinedType)) return false;
   return isNullableString(o.guid) && isNullableString(o.ref) && isNullableString(o.name) && isNullableString(o.ifcType);
 }
 

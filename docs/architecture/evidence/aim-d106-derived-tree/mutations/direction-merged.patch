@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/derivationsTree.ts a/apps/viewer/src/aim/derivationsTree.ts
+index 70b67f4a..6e993ad7 100644
+--- b/apps/viewer/src/aim/derivationsTree.ts
++++ a/apps/viewer/src/aim/derivationsTree.ts
+@@ -54,7 +54,7 @@ export function groupDerivedRelations(relations: readonly DerivedRelationWire[])
+   const groups = new Map<string, { group: DerivedRelationGroup; classes: Map<string, DerivedClassGroup> }>();
+   for (const relation of relations) {
+     const label = relation.ifcRelation ?? NO_IFC_RELATION;
+-    const key = label;
++    const key = `${relation.direction}:${label}`;
+     let entry = groups.get(key);
+     if (!entry) {
+       entry = { group: { key, direction: relation.direction, label, rules: [], count: 0, classes: [] }, classes: new Map() };

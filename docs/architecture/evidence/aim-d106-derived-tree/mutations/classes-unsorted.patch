@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/derivationsTree.ts a/apps/viewer/src/aim/derivationsTree.ts
+index 483ea24d..6e993ad7 100644
+--- b/apps/viewer/src/aim/derivationsTree.ts
++++ a/apps/viewer/src/aim/derivationsTree.ts
+@@ -74,6 +74,7 @@ export function groupDerivedRelations(relations: readonly DerivedRelationWire[])
+   return [...groups.values()].map(({ group, classes }) => ({
+     ...group,
+     classes: [...classes.values()]
++      .sort((a, b) => collator.compare(a.label, b.label))
+       .map((c) => ({ ...c, relations: [...c.relations].sort((a, b) => collator.compare(derivedRelationLabel(a), derivedRelationLabel(b))) })),
+   }));
+ }
