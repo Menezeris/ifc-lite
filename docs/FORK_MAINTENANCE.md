@@ -389,7 +389,9 @@ plným CI raz a má vlastný náhľad na vyskúšanie celku. Do `main` ide merge
 pokyn. Samostatné zlúčenie jedného PR len na výslovný pokyn, so štítkom `ci:full`.
 
 **Po zlúčení:**
-- `aim-release.yml` označí merge commit balíka tagom `aim-release-<dátum>-<sha>`.
+- `aim-release.yml` označí merge commit balíka tagom `aim-release-<dátum>-<sha>`. Balík spozná podľa
+  zlúčeného PR s vetvou `release/aim-*`, nie podľa textu commitu (zmenený nadpis merge commitu
+  nechal prvý balík 20. 10. bez tagu). Chýbajúci tag doplní ručné spustenie s `sha` merge commitu.
 - Vercel nasadí produkciu a `aim-smoke.yml` (udalosť `deployment_status`, len Production) ju
   hneď otestuje: `scripts/aim-smoke.mjs` vloží produkčný viewer do iframe ako AIM host, počká na
   `READY` a pošle `QUERY view_state`. Červený beh založí issue (cez `report-scheduled-failure.yml`).

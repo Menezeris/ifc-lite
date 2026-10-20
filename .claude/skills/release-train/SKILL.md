@@ -74,7 +74,9 @@ exceed it together. Over the limit: say so in the batch PR and ask.
 
 ## 6. After the merge
 
-- `aim-release.yml` tags the merge commit `aim-release-<date>-<sha>`.
+- `aim-release.yml` tags the merge commit `aim-release-<date>-<sha>` (it finds the batch by the
+  merged `release/aim-*` pull request). No tag after the merge: run the workflow by hand with the
+  merge commit as `sha`.
 - Vercel deploys production; `aim-smoke.yml` smokes it. Red smoke: open the run, and if
   production is broken roll back first (Vercel, project `ifc-lite-viewer`, Deployments,
   the previous production deployment, Instant Rollback), then fix in a new feature PR.

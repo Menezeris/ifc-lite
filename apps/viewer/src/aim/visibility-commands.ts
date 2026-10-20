@@ -153,6 +153,8 @@ export function runVisibilityCommand(
       return true;
     case 'COLORIZE': {
       const refs = refsForOp(d, msg.type, msg);
+      // Ofarbená miestnosť v skrytej triede by nebola vidieť; zapne sa ako pri Lens (D-119).
+      revealGatesForRefs(refs);
       if (refs.length > 0) bim.viewer.colorize(refs, msg.color);
       return true;
     }
@@ -177,6 +179,7 @@ export function runVisibilityCommand(
     case 'ISOLATE_ADD':
     case 'ISOLATE_REMOVE': {
       const refs = refsForOp(d, msg.type, msg);
+      if (msg.type === 'ISOLATE_ADD') revealGatesForRefs(refs);
       if (refs.length > 0) changeIsolation(bim, refs, msg.type === 'ISOLATE_ADD' ? 'add' : 'remove');
       return true;
     }
