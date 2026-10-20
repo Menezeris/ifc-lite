@@ -144,6 +144,7 @@ function selectedEntityInfo(state: State, id: number, g: GuidHelpers): SelectedE
   const guid = g.guidForEntity(state.models, ref) ?? null;
   if (!store) return { guid, name: null, ifc_type: null, storey: null, model: model?.name ?? null, parent: null };
   const { entities } = store;
+  // @raw-entity-enumeration-ok point lookup of the selected element's storey for a read-only answer to the AIM host
   const storeyId = store.spatialHierarchy?.elementToStorey.get(ref.expressId);
   const parentId = store.relationships?.getRelated(ref.expressId, RelationshipType.Aggregates, 'inverse')[0];
   return {

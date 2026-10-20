@@ -68,6 +68,7 @@ function roomsToFill(state: State, meshes: Map<number, MeshData[]>, footprints: 
     if (ref && store && storeyGuid) {
       // Miestnosť z iného podlažia nie je v reze tohto pôdorysu.
       const storey = store.entities.getExpressIdByGlobalId(storeyGuid);
+      // @raw-entity-enumeration-ok point lookup of one room's storey for the plan cut; AIM never edits the spatial structure
       const own = store.spatialHierarchy?.elementToStorey.get(ref.expressId);
       if (storey !== -1 && own !== undefined && own !== storey) continue;
     }

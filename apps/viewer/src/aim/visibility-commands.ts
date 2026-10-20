@@ -105,6 +105,7 @@ export function runVisibilityCommand(
       focused = refs;
       const models = useViewerStore.getState().models;
       d.prepareFocusView(refs.map((r) => {
+        // @raw-entity-enumeration-ok point lookup of a focused element's storey to pick the 2D plan; no membership is enumerated
         const storey = models.get(r.modelId)?.ifcDataStore?.spatialHierarchy?.elementToStorey.get(r.expressId);
         return storey === undefined ? null : `${r.modelId}:${storey}`;
       }));
