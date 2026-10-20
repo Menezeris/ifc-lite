@@ -146,7 +146,7 @@ export function AimBridge() {
       }
       if (isDerivationsMessage(e.data)) {
         // AIM layer over the models (D-089): rules + model revisions for the
-        // AIM ribbon tab and the AIM LAYERS tree section.
+        // AIM ribbon tab and the AIM layers panel (D-104).
         useAimDerivationsStore.getState().setLayer(e.data.layer);
         return;
       }

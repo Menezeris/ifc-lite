@@ -10,8 +10,13 @@
 export const aimForkEn = {
   'aimFork.panel.drawingUnderlay': 'Drawing underlays',
   'aimFork.panel.documents': 'Documents',
+  'aimFork.panel.aimLayers': 'AIM layers',
+  /** Rail / ribbon / palette group of the AIM panels (D-104), first of all groups. */
+  'aimFork.panelGroups.aim': 'AIM',
+  'aimFork.panelGroups.aimDescription': 'AIM platform: project documents, derived layers and drawing underlays from the AIM host',
   /** Assistant source picker: why the fork panels are not discussable (#6833 charter). */
   'aimFork.assistant.boundaryDrawingUnderlay': 'Georeferenced PDF plan underlays. Placing or calibrating a drawing produces no analysis result to discuss.',
+  'aimFork.assistant.boundaryAimLayers': 'Derivation rules of the AIM platform. Showing or hiding a rule produces no analysis result; the rules run in the AIM host.',
   'aimFork.assistant.boundaryDocuments': 'Project document library. Opening a PDF or image produces no analysis result; the documents themselves live in the AIM platform.',
   /** Empty first option of the 2D storey picker (it has no visible text). */
   'aimFork.viewMode.noStorey': 'No storey selected',

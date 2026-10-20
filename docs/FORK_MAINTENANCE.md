@@ -54,7 +54,7 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/components/viewer/MobileBottomSheet.tsx` | 1 | `z-50` so sheets sit above the full-screen plan/document overlays |
 | `apps/viewer/src/components/viewer/MobileToolbar.tsx` | 2 | `<ViewModeSwitcher />` (D-075) |
 | `apps/viewer/src/components/viewer/PropertiesPanel.tsx` | 8 | AIM \| IFC inspector tabs + `<AimCard />`, native content wrapped, mobile scroll host (D-077); a property focus from the chat highlights the row without entering edit mode (AIM D-113) |
-| `apps/viewer/src/components/viewer/HierarchyPanel.tsx` | 4 | AIM tree decorations — row → IFC GlobalId → badge counts (D-077); `<AimLayersSection />` (AIM LAYERS) above the footer in both layouts (D-089), one-line blocks and one import from `aim/hierarchyPanel.ts` because the file sits at its module-size budget |
+| `apps/viewer/src/components/viewer/HierarchyPanel.tsx` | 2 | AIM tree decorations — row → IFC GlobalId → badge counts (D-077), one import from `aim/hierarchyPanel.ts` because the file sits at its module-size budget; AIM LAYERS moved to the `aim-layers` panel (D-104) |
 | `apps/viewer/src/components/viewer/hierarchy/ModelHeaderRow.tsx` | 2 | `<AimModelRevision />` model revision pill on MODELS rows (D-089) |
 | `apps/viewer/src/components/viewer/properties/RelationshipsCard.tsx` | 3 | `<AimDerivedRelations />` AIM group in Relationship records + its rows in the card count (D-089) |
 | `apps/viewer/src/components/viewer/hierarchy/HierarchyNode.tsx` | 4 | AIM badge icons + per-GUID counts (D-077) |
@@ -70,8 +70,8 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/store/teardown-registry.ts` | 2 | the fork slices' session-reset teardowns (`slices/*Slice.teardown.ts`) |
 | `apps/viewer/src/store/store-sync.ts` | 1 | fork panels in `SIDEBAR_PANEL_FLAGS` |
 | `apps/viewer/src/store/createViewerActions.ts` | 2 | fork panel flags in `openWorkspacePanel` / properties reveal |
-| `apps/viewer/src/lib/panels/registry.ts` | 3 | fork-only workspace panels `drawing-underlay` + `documents`, appended last |
-| `apps/viewer/src/lib/panels/renderPanelBody.tsx` | 2 | bodies of the two fork panels |
+| `apps/viewer/src/lib/panels/registry.ts` | 5 | AIM rail group `aim`, first of all groups (D-104), and the fork-only workspace panels `documents`, `aim-layers`, `drawing-underlay` in it, appended last |
+| `apps/viewer/src/lib/panels/renderPanelBody.tsx` | 2 | bodies of the three fork panels |
 | `apps/viewer/src/i18n/en.ts` | 2 | fork catalogue `catalogues/aim-fork.en.ts` (panel titles, `ribbon.tab.documents` = "AIM") |
 | `packages/renderer/src/index.ts` | 5 | generic external-overlay hook + registry — **upstream-PR candidate** |
 | `packages/collab-server/src/bin.ts` | 3 | fail-closed startup guard (replaces upstream's warn-only block) |

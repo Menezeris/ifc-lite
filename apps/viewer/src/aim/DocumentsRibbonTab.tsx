@@ -10,7 +10,8 @@
  *   · Documents  — the project document library (D-075), `documents` panel
  *   · Underlays  — georeferenced PDF drawing underlays (D-072)
  *   · 3D | 2D | Split (+ storey) — the workspace view mode (D-075)
- *   · Derivations: the AIM derivations layer (D-089, DerivationsRibbonGroup.tsx)
+ *   · Derivations: the AIM derivations layer (D-089, DerivationsRibbonGroup.tsx),
+ *     whose rules open the `aim-layers` panel (D-104)
  *
  * Nothing new and nothing moved out from under anyone: every button drives
  * the same store action the classic toolbar and the sidebar rail already
@@ -71,13 +72,9 @@ export function DocumentsRibbonTab() {
   const { mode, setMode, storeys } = useViewMode();
   const derivationsLayer = useAimDerivationsStore((s) => s.layer);
   const relationsVisible = useAimDerivationsStore((s) => s.relationsVisible);
-  const layersOpen = useAimDerivationsStore((s) => s.layersOpen);
-  const toggleLayers = () => {
-    const open = !useAimDerivationsStore.getState().layersOpen;
-    useAimDerivationsStore.getState().setLayersOpen(open);
-    // The AIM LAYERS section lives in the tree panel; opening it shows the panel.
-    if (open && useViewerStore.getState().leftPanelCollapsed) useViewerStore.getState().setLeftPanelCollapsed(false);
-  };
+  // AIM layers are a workspace panel of the AIM rail group (D-104), toggled like the library panels.
+  const layersOpen = useViewerStore((s) => s.sidebarActivePanel === 'aim-layers');
+  const toggleLayers = () => useViewerStore.getState().toggleWorkspacePanel('aim-layers', 'ribbon');
   const disabledReason = viewModeDisabledReason({ calibrating, storeyCount: storeys.length });
   // The library buttons run the same registered `panel:*` commands as the
   // command palette (surface-commands-panels.ts), so ribbon and palette share

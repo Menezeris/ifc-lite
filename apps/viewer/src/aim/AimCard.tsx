@@ -8,6 +8,8 @@
  * Purely presentational: the host sends a generic render schema
  * (AimPanelData) and every link is bounced back over the bridge
  * (postAimNavigate) so navigation happens in the parent app, never here.
+ * Exception (D-104): a document the viewer's library holds opens here, at the
+ * card's page, so the 3D view stays; the others still navigate the host.
  * Renders nothing when standalone (not embedded) — zero upstream impact.
  */
 
@@ -16,14 +18,32 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAimPanelStore, postAimNavigate, type AimPanelData } from './aimPanelStore';
+import { useViewerStore } from '@/store';
 
-function AimLink({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) {
+/**
+ * Opens a card document in the viewer at its page when the library has it
+ * (DOCUMENTS_LOAD); null = the row navigates the host instead.
+ */
+function openInViewer(documentId: string | undefined, page: number | undefined): (() => boolean) | null {
+  if (!documentId) return null;
+  return () => {
+    const { viewerDocuments, openDocument } = useViewerStore.getState();
+    if (!viewerDocuments.has(documentId)) return false;
+    openDocument(documentId, { page });
+    return true;
+  };
+}
+
+function AimLink({ href, children, className, onOpen }: {
+  href: string; children: React.ReactNode; className?: string; onOpen?: (() => boolean) | null;
+}) {
   return (
     <a
       href={href}
       className={className}
       onClick={(e) => {
         e.preventDefault();
+        if (onOpen?.()) return;
         postAimNavigate(href);
       }}
     >
@@ -93,9 +113,16 @@ function AimCardBody({ data }: { data: AimPanelData }) {
                 key={`${doc.href}-${i}`}
                 href={doc.href}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 min-w-0"
+                onOpen={openInViewer(doc.documentId, doc.page)}
               >
                 <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span className="truncate flex-1" title={doc.name}>{doc.name}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block truncate" title={doc.name}>
+                    {doc.name}
+                    {doc.page && <span className="ml-1.5 text-[10px] text-muted-foreground">s. {doc.page}</span>}
+                  </span>
+                  {doc.via && <span className="block truncate text-[10px] text-muted-foreground" title={doc.via}>{doc.via}</span>}
+                </span>
                 {doc.badge && (
                   <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">{doc.badge}</Badge>
                 )}

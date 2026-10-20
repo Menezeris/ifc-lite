@@ -7,7 +7,7 @@
  * the AIM layer over the models:
  *
  *   - AIM vzťahy  - local eye: show/hide derived relations in Relationship records
- *   - Pravidlá    - expand/collapse the AIM LAYERS section in the tree panel
+ *   - Pravidlá    - open/close the AIM layers panel of the AIM rail group (D-104)
  *   - Prepočítať  - open `layer.manageUrl` (GitHub workflow `odvodenie`)
  *
  * Nothing here posts to the host: the eye and the section are viewer-local
@@ -67,7 +67,7 @@ export function DerivationsRibbonGroup({ ui, layer, manageUrl, relationsVisible,
         contentSource="extension"
         contentId="aim-derivations:rules"
         data-ribbon-extension="aim-derivations:rules"
-        tooltip={layer ? 'Pravidlá odvodení: sekcia AIM VRSTVY v ľavom paneli' : NO_LAYER}
+        tooltip={layer ? 'Pravidlá odvodení: panel AIM vrstvy v pravej lište' : NO_LAYER}
         active={layer ? layersOpen : undefined}
         disabled={!layer}
         onClick={onToggleLayers}
