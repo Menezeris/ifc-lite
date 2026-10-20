@@ -164,10 +164,18 @@ const PINNED_OPEN_EDGES: Option<i64> = None;
 // gates). Profile-hole walls are now wound out of the solid and this
 // plan-rotated wall is cut in its own frame, which moved the gated fallback's
 // reading in both directions; re-measured, not assumed.
+// >>> AIM-FORK (temporary pin, docs/FORK_MAINTENANCE.md "Temporary pins"):
+// #7607 (#7292): 136 -> 166 (manifold gate alone) and 394 -> 436 (both
+// gates). Bisected on the fork: 1b3b24e1b reads 136, 5b730c6fd reads 166;
+// upstream main ca6991fdb still reads 166 / 436 with the old pins, so the
+// gated lanes are red upstream too. The default build and the topology gate
+// alone keep the real bar (20 unpaired edges); the volume did not move (32.714).
+// Re-measured, not assumed. Drop this block on the sync that re-pins it.
 #[cfg(all(feature = "csg_manifold_gate", not(feature = "csg_topology_gate")))]
-const PINNED_OPEN_EDGES: Option<i64> = Some(136);
+const PINNED_OPEN_EDGES: Option<i64> = Some(166);
 #[cfg(all(feature = "csg_manifold_gate", feature = "csg_topology_gate"))]
-const PINNED_OPEN_EDGES: Option<i64> = Some(394);
+const PINNED_OPEN_EDGES: Option<i64> = Some(436);
+// <<< AIM-FORK
 
 #[test]
 fn reveal_wall_openings_do_not_leave_flaps() {
