@@ -1,8 +1,8 @@
-diff --git b/apps/viewer/src/aim/measureShow.ts a/apps/viewer/src/aim/measureShow.ts
-index f60709fc..99f781d3 100644
---- b/apps/viewer/src/aim/measureShow.ts
-+++ a/apps/viewer/src/aim/measureShow.ts
-@@ -52,7 +52,7 @@ export function addHostMeasurements(
+diff --git b/apps/viewer/src/aim/hostMeasurements.ts a/apps/viewer/src/aim/hostMeasurements.ts
+index 8cb37690..7676705d 100644
+--- b/apps/viewer/src/aim/hostMeasurements.ts
++++ a/apps/viewer/src/aim/hostMeasurements.ts
+@@ -46,7 +46,7 @@ export function addHostMeasurements(
    const pending = get().pendingMeasurePoint;
    const added: string[] = [];
    for (const seg of msg.segments) {
