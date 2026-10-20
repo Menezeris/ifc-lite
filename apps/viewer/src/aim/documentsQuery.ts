@@ -28,7 +28,7 @@ export const META_VALUES_SEPARATOR = '; ';
 
 /** Lowercase without diacritics, so "podorys" finds "Pôdorys". */
 export function foldText(text: string): string {
-  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
 /** `meta` keys present on at least one document, in first-seen order. */
