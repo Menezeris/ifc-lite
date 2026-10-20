@@ -1,0 +1,86 @@
+{
+  "color-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionCap.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "b149c5663c164d4d84932f6a3e321c0819a8f286",
+    "production": [
+      "apps/viewer/src/aim/sectionCap.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionCap.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "fill-alpha-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionCap.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "b149c5663c164d4d84932f6a3e321c0819a8f286",
+    "production": [
+      "apps/viewer/src/aim/sectionCap.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionCap.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "hatch-stays-solid": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionCap.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "b149c5663c164d4d84932f6a3e321c0819a8f286",
+    "production": [
+      "apps/viewer/src/aim/sectionCap.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionCap.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "none-forgets-hatch": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionCap.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "b149c5663c164d4d84932f6a3e321c0819a8f286",
+    "production": [
+      "apps/viewer/src/aim/sectionCap.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionCap.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "show-toggle-skipped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionCap.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "b149c5663c164d4d84932f6a3e321c0819a8f286",
+    "production": [
+      "apps/viewer/src/aim/sectionCap.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionCap.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "unknown-cap-accepted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionCap.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "b149c5663c164d4d84932f6a3e321c0819a8f286",
+    "production": [
+      "apps/viewer/src/aim/sectionCap.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionCap.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

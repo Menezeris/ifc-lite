@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/sectionCap.ts a/apps/viewer/src/aim/sectionCap.ts
+index 6d7acd963..e253b1d00 100644
+--- b/apps/viewer/src/aim/sectionCap.ts
++++ a/apps/viewer/src/aim/sectionCap.ts
+@@ -77,5 +77,5 @@ export function applySectionCap(msg: SectionCapMessage, getState: () => CapStore
+   const plan = planSectionCap(state.sectionPlane, msg, lastHatch);
+   if (plan.remember) lastHatch = plan.remember;
+   if (plan.style) state.setSectionCapStyle(plan.style);
+-  
++  if (state.sectionPlane.showCap !== plan.showCap) state.setSectionShowCap(plan.showCap);
+ }
