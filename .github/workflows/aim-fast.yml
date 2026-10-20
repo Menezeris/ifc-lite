@@ -2,18 +2,20 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-# >>> AIM-FORK (whole file, AIM D-098, D-103): fast checks for a fork pull
-# request on the fast path. scripts/check-aim-fork-only.mjs decides, on the
-# merge commit, between `aim-only` (only the AIM layer), `fork-blocks` (upstream
-# viewer files edited only inside AIM-FORK blocks, plus a pre-approved bundle
-# ceiling raise) and `full`. test.yml's `changes` job (step `aimonly`) runs the
-# same script and turns its heavy lanes off for the first two, so these jobs are
-# what checks the change: AIM unit tests, fork source gates, the viewer
-# typecheck, the viewer tests that import a changed file, and the viewer build
-# with its JS bundle ratchet. A `full` PR skips them; test.yml runs everything.
-# The nightly full run of test.yml on main (aim-nightly-report.yml) covers the
-# lanes this skips. The revert oracle is not run here: keep its evidence in the
-# first push (.claude/skills/aim-feature/SKILL.md, step 4).
+# >>> AIM-FORK (whole file, AIM D-098, D-103, D-114): fast checks for a fork
+# feature pull request. scripts/check-aim-fork-only.mjs decides, on the merge
+# commit, between `aim-only` (only the AIM layer), `fork-blocks` (upstream viewer
+# files edited only inside AIM-FORK blocks, plus a pre-approved bundle ceiling
+# raise), `upstream` (other upstream code too) and `full` (a `release/aim-*`
+# batch, an upstream sync or the `ci:full` label). test.yml's `changes` job (step
+# `aimonly`) runs the same script and turns its heavy lanes off for all but
+# `full`, so for a feature PR these jobs are what checks the change: AIM unit
+# tests, fork source gates, the viewer typecheck, the viewer tests that import a
+# changed file, and the viewer build with its JS bundle ratchet. A feature PR
+# reaches `main` only inside a release batch, which runs the full test.yml once
+# for several PRs (D-114); the nightly full run of test.yml on main
+# (aim-nightly-report.yml) is the last net. The revert oracle runs on the batch:
+# keep its evidence in the feature PR (.claude/skills/aim-feature/SKILL.md, step 4).
 
 name: AIM fast checks
 
@@ -21,18 +23,6 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
-    # Every fast-path PR changes at least one of these (an AIM-layer file, a
-    # viewer file with an AIM-FORK block, or the bundle ceilings); any other PR
-    # is `full` and test.yml checks it alone.
-    paths:
-      - 'apps/viewer/**'
-      - 'docs/architecture/evidence/aim-*/**'
-      - '.claude/skills/aim-feature/**'
-      - '.claude/skills/steward/**'
-      - 'docs/FORK_MAINTENANCE.md'
-      - 'tests/perf-ratchets/bundle.json'
-      - '.github/workflows/aim-fast.yml'
-      - 'scripts/check-aim-fork-only.mjs'
 
 permissions:
   contents: read
@@ -62,7 +52,8 @@ jobs:
         id: mode
         env:
           HEAD_REF: ${{ github.head_ref }}
-        run: node scripts/check-aim-fork-only.mjs --base HEAD~1 --head HEAD --head-ref "$HEAD_REF" --github-output
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: node scripts/check-aim-fork-only.mjs --base HEAD~1 --head HEAD --head-ref "$HEAD_REF" --labels "$LABELS" --github-output
 
   aim:
     name: AIM tests + viewer typecheck
@@ -101,8 +92,8 @@ jobs:
         working-directory: apps/viewer
         run: npx tsc --noEmit -p .
       # Viewer tests that import a changed file, directly or through other viewer
-      # modules (the decision job lists them; it sends a change with more than 40
-      # to the full CI). Same runner flags as the viewer's `test` script, and the
+      # modules (the decision job lists them, none past 40: the release batch runs
+      # the viewer shards). Same runner flags as the viewer's `test` script, and the
       # same WASM runtime and fixtures as test.yml's viewer shards.
       - name: Fetch prebuilt WASM
         id: prebuilt

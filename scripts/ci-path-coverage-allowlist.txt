@@ -67,7 +67,7 @@ scripts/generate-plato-clash.mjs tools/* # `tools` fragment; the generator reads
 #    TypeScript, no test file and no WASM handle. If TypeScript ever lands
 #    there, DELETE THESE LINES and pay the frontend cost.
 # ---------------------------------------------------------------------------
-scripts/check-module-size.mjs apps/landing/** # walks apps/ for .ts/.tsx; apps/landing has none -- see the trade above
+# AIM-FORK (D-114): the check-module-size.mjs apps/landing/** exemption is gone on the fork: aim-fast.yml runs that gate on every PR.
 scripts/check-module-size.test.mjs apps/landing/** # same walk, in the harness
 scripts/check-wasm-disposal.mjs apps/landing/** # walks apps/ for WASM handles; apps/landing holds none
 scripts/check-source-text-assertions.mjs apps/landing/** # walks apps/ for test files; apps/landing has none
