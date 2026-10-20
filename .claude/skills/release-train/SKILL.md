@@ -2,7 +2,7 @@
 name: release-train
 description: >-
   How to ship several fork PRs to main at once as one release batch (AIM
-  D-114): build the `release/aim-<date>` branch from the PRs Samuel names,
+  D-116): build the `release/aim-<date>` branch from the PRs Samuel names,
   resolve conflicts between them, run the full CI once, give Samuel the test
   link, merge on his word, check the deploy. Use when Samuel says which PRs
   to release ("zlúč 73, 74, 76", "pusti balík").
@@ -12,7 +12,7 @@ description: >-
      License, v. 2.0. If a copy of the MPL was not distributed with this
      file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
 
-# Release batch: several PRs, one full CI (AIM D-114)
+# Release batch: several PRs, one full CI (AIM D-116)
 
 Feature PRs run only the fast lane and are **never merged on their own**. They reach
 `main` inside a batch: one PR from `release/aim-<date>` that carries 3-4 of them (or

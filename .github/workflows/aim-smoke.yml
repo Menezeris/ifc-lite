@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-# >>> AIM-FORK (whole file, AIM D-114): smoke test after every production
+# >>> AIM-FORK (whole file, AIM D-116): smoke test after every production
 # deploy. The fork deploys `main` to production on merge (no staging), so a
 # broken merge must show within minutes: scripts/aim-smoke.mjs embeds the live
 # viewer the way the AIM host does, waits for the bridge's READY and asks

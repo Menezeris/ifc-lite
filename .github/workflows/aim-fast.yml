@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-# >>> AIM-FORK (whole file, AIM D-098, D-103, D-114): fast checks for a fork
+# >>> AIM-FORK (whole file, AIM D-098, D-103, D-116): fast checks for a fork
 # feature pull request. scripts/check-aim-fork-only.mjs decides, on the merge
 # commit, between `aim-only` (only the AIM layer), `fork-blocks` (upstream viewer
 # files edited only inside AIM-FORK blocks, plus a pre-approved bundle ceiling
@@ -13,7 +13,7 @@
 # tests, fork source gates, the viewer typecheck, the viewer tests that import a
 # changed file, and the viewer build with its JS bundle ratchet. A feature PR
 # reaches `main` only inside a release batch, which runs the full test.yml once
-# for several PRs (D-114); the nightly full run of test.yml on main
+# for several PRs (D-116); the nightly full run of test.yml on main
 # (aim-nightly-report.yml) is the last net. The revert oracle runs on the batch:
 # keep its evidence in the feature PR (.claude/skills/aim-feature/SKILL.md, step 4).
 

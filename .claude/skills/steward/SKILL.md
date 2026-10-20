@@ -12,7 +12,7 @@ description: >-
      License, v. 2.0. If a copy of the MPL was not distributed with this
      file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
 
-# Driving a fork PR (AIM D-103, D-114)
+# Driving a fork PR (AIM D-103, D-116)
 
 A feature PR runs only the fast lane and ships inside a release batch (skill
 `release-train`): CI on the batch is the gate to production. Review findings are not,

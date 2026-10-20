@@ -139,7 +139,7 @@ jobs:
     # would read `skipped`, and before the map entry above that was a green gate.
     timeout-minutes: 5
     outputs:
-      # >>> AIM-FORK: a fast-path PR (step `aimonly`: every feature PR since D-114)
+      # >>> AIM-FORK: a fast-path PR (step `aimonly`: every feature PR since D-116)
       # turns the heavy lanes off; .github/workflows/aim-fast.yml checks it instead.
       # docs/agents_md/license_headers stay.
       rust: ${{ steps.aimonly.outputs.only == 'true' && 'false' || steps.all.outputs.rust || steps.filter.outputs.rust }}
@@ -573,7 +573,7 @@ jobs:
               - '.github/workflows/docs.yml'
               - '.github/actions/setup-docs-api/**'
 
-      # >>> AIM-FORK: release train (D-114, extends D-098 / D-103). A feature pull
+      # >>> AIM-FORK: release train (D-116, extends D-098 / D-103). A feature pull
       # request skips the heavy lanes (Rust, WASM build, viewer shards, e2e, perf
       # ratchet) through the outputs above; aim-fast.yml runs the AIM tests, viewer
       # typecheck and build, the bundle ratchet and the related viewer tests for

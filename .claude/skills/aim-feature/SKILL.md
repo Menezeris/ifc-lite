@@ -16,7 +16,7 @@ description: >-
 
 Every feature PR runs the fast lane (`aim-fast.yml`, about 10 minutes): AIM tests, source
 gates, viewer typecheck, the viewer tests that import a changed file, and the viewer build with
-its JS bundle ratchet; `test.yml` skips its heavy lanes (D-098, D-103, D-114). The full CI (Rust,
+its JS bundle ratchet; `test.yml` skips its heavy lanes (D-098, D-103, D-116). The full CI (Rust,
 WASM, viewer shards, E2E, revert oracle) runs once on a **release batch** of several PRs (skill
 `release-train`) and every night on `main`. So a feature PR is never merged on its own: it is
 ready when the fast lane is green and its "Ako vyskúšať" link works (`.claude/skills/steward/SKILL.md`).
@@ -45,7 +45,7 @@ Rules and reasons: `docs/FORK_MAINTENANCE.md` ("Fast CI for AIM pull requests", 
   do not copy them. No edits in upstream files; when unavoidable, an `AIM-FORK`
   sentinel and a row in `FORK_MAINTENANCE.md`. To change an upstream line, replace it
   inside a new block (the old line goes, the new one sits between the markers); a
-  changed line outside any block makes the PR `upstream` mode (D-114): still fast, but
+  changed line outside any block makes the PR `upstream` mode (D-116): still fast, but
   a conflict risk at every sync.
 - Anything not needed at boot: dynamic `import()` on first use. The lazy module must
   not import a module the entry imports (pass helpers in from the caller), or the

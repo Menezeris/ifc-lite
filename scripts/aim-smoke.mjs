@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * AIM-FORK (whole file, AIM D-114): smoke test of a deployed viewer, the way
+ * AIM-FORK (whole file, AIM D-116): smoke test of a deployed viewer, the way
  * the AIM host uses it. A host page embeds the viewer in an iframe, waits for
  * the bridge's READY and asks `QUERY view_state`; the deploy passes when the
  * viewer answers `QUERY_RESULT ok`. It runs after every production deploy

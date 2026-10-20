@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * AIM-FORK (whole file, AIM D-103, D-114): tests for check-aim-fork-only.mjs. The
+ * AIM-FORK (whole file, AIM D-103, D-116): tests for check-aim-fork-only.mjs. The
  * classification runs against throwaway git repositories, never this
  * checkout, so a change to the fork's own files cannot make them pass.
  *
@@ -85,7 +85,7 @@ test('an upstream line replaced inside a NEW block is fork-blocks (the documente
   });
 });
 
-test('one changed line outside the blocks is upstream mode, still the fast lane (D-114)', () => {
+test('one changed line outside the blocks is upstream mode, still the fast lane (D-116)', () => {
   const changed = UPSTREAM.replace('const key = pick();', 'const key = pick(1);');
   withRepo({ [HINT]: UPSTREAM }, { [HINT]: changed }, (repo) => {
     const result = classify(repo);

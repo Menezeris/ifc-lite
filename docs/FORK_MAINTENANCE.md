@@ -276,7 +276,7 @@ so they **skip** on our fork instead of failing red:
 If we ever want these on the fork: for docs, enable GitHub Pages (Settings → Pages → build
 from Actions) and drop the guard; for releases/docker, set up our own publish targets first.
 
-## Fast CI for AIM pull requests (AIM D-098, D-103, D-114, Samuel 2026-10-19/20)
+## Fast CI for AIM pull requests (AIM D-098, D-103, D-116, Samuel 2026-10-19/20)
 
 A PR that touches **only** the AIM layer does not need upstream's full matrix (Rust, WASM build,
 16 viewer shards, E2E, perf ratchet: 30-60 minutes per run). Two pieces, both `AIM-FORK`:
@@ -308,7 +308,7 @@ porovná merge commit PR s base a vráti jeden z režimov:
 |---|---|---|
 | `aim-only` | len AIM vrstva: `apps/viewer/src/aim/`, katalóg `i18n/catalogues/aim-fork.*`, `docs/architecture/evidence/aim-*`, skilly `aim-feature` a `steward`, tento súbor | rýchla cesta |
 | `fork-blocks` | navyše zmeny existujúcich súborov v `apps/viewer/` len vnútri AIM-FORK blokov, prípadne predschválené zvýšenie stropov `viewer-entry-js-bytes` / `viewer-eager-js-bytes` v `tests/perf-ratchets/bundle.json` (do 2 kB / 10 kB + tolerancia stropu) | rýchla cesta |
-| `full` | do D-114 čokoľvek iné. **Od D-114** len balík `release/aim-*`, synchronizácia `sync/upstream-*` a štítok `ci:full`; ostatné zmeny sú režim `upstream` (rýchla cesta, pozri Release train nižšie) | plné `test.yml` |
+| `full` | do D-116 čokoľvek iné. **Od D-116** len balík `release/aim-*`, synchronizácia `sync/upstream-*` a štítok `ci:full`; ostatné zmeny sú režim `upstream` (rýchla cesta, pozri Release train nižšie) | plné `test.yml` |
 
 Blok sa posudzuje po hunkoch voči blokom **novej** verzie súboru: pridané riadky musia ležať
 v bloku (vrátane markerov), čisté mazanie musí mať medzeru vnútri bloku alebo mazať riadky
@@ -340,7 +340,7 @@ Revert oracle rýchla cesta nespúšťa: dôkazy mutácií a štítok ostávajú
 Bratislave) a `workflow_dispatch`. Taký beh deklaruje všetky oblasti za zmenené (krok `all`,
 ako merge queue) a spustí všetky lanes vrátane push-only (feature buildy, census, CSG, Plato).
 Výnimky sú len PR lanes upstreamu: viewer E2E a revert oracle bežia len na PR (E2E potrebuje build
-viewera z PR jobu); od D-114 ich dostane každý balíkový PR `release/aim-*`.
+viewera z PR jobu); od D-116 ich dostane každý balíkový PR `release/aim-*`.
 Je to potrebné, lebo merge PR z rýchlej cesty prehrá na `main` verdikt PR (push replay) a
 ťažké lanes by inak nebežali nikdy. Červený nočný beh hlási `aim-nightly-report.yml`
 (`workflow_run` na Test) cez `report-scheduled-failure.yml`. Ten vo forku zakladá issue až po
@@ -359,7 +359,7 @@ sekcie "Follow-up" v tele PR.
 **Bundle perf ratchet** ostáva: na rýchlej ceste ho meria job s buildom, lokálne meranie
 podľa skillu `aim-feature` (krok 3) slúži na prípravu zvýšenia stropu pred prvým pushom.
 
-### Release train D-114: jednotlivé PR rýchlo, plné CI raz na balík (Samuel 2026-10-20)
+### Release train D-116: jednotlivé PR rýchlo, plné CI raz na balík (Samuel 2026-10-20)
 
 Rozširuje D-103. Aplikáciu zatiaľ používa len Samuel a chce nové funkcie skúšať naživo vrátane
 MCP ešte pred zlúčením, a zlučovať ich po 3 až 4 naraz, aby plné CI bežalo raz za balík, nie za
@@ -375,7 +375,7 @@ beží na každom PR (bez filtra ciest; výnimka `check-module-size.mjs apps/lan
 
 **Feature PR sa nezlučuje samostatne.** Je pripravený, keď je rýchla cesta zelená a v tele má
 sekciu "Ako vyskúšať" s odkazom `https://ai-mviewer.vercel.app/ifc?viewer=pr-<číslo>` (AIM host
-s náhľadom viewera z PR; výber viewera je v AIMvieweri, D-114 tam, Menezeris/AIMviewer#123). Pravidlá pre agentov: skill
+s náhľadom viewera z PR; výber viewera je v AIMvieweri, D-116 tam, Menezeris/AIMviewer#123). Pravidlá pre agentov: skill
 `steward`.
 
 **Balík** (skill `release-train`): na Samuelov pokyn ("zlúč 73, 74, 76") agent vytvorí
@@ -402,16 +402,16 @@ Generované z `git grep -n "AIM-FORK" -- .github scripts`; pri synchronizácii n
 
 | Súbor | Čo pridávame |
 |---|---|
-| `.github/workflows/test.yml` | `on.schedule` + `workflow_dispatch` (D-103); výstupy `changes` vypnuté pre rýchlu cestu (D-098, D-103, D-114); krok `aimonly` volá `check-aim-fork-only.mjs` so štítkami PR (D-103, D-114); krok `all` aj pre nočný / ručný beh (D-103); Plato aj v nočnom behu (D-103); brána neskorých changesetov len upstream; thin LTO pre wasm |
-| `.github/workflows/aim-fast.yml` | celý súbor: rýchla cesta, každý PR (D-098, D-103, D-114) |
-| `.github/workflows/aim-smoke.yml`, `scripts/aim-smoke.mjs` (+ test) | celý súbor: smoke po produkčnom nasadení (D-114) |
-| `.github/workflows/aim-release.yml` | celý súbor: tag balíka po zlúčení (D-114) |
+| `.github/workflows/test.yml` | `on.schedule` + `workflow_dispatch` (D-103); výstupy `changes` vypnuté pre rýchlu cestu (D-098, D-103, D-116); krok `aimonly` volá `check-aim-fork-only.mjs` so štítkami PR (D-103, D-116); krok `all` aj pre nočný / ručný beh (D-103); Plato aj v nočnom behu (D-103); brána neskorých changesetov len upstream; thin LTO pre wasm |
+| `.github/workflows/aim-fast.yml` | celý súbor: rýchla cesta, každý PR (D-098, D-103, D-116) |
+| `.github/workflows/aim-smoke.yml`, `scripts/aim-smoke.mjs` (+ test) | celý súbor: smoke po produkčnom nasadení (D-116) |
+| `.github/workflows/aim-release.yml` | celý súbor: tag balíka po zlúčení (D-116) |
 | `.github/workflows/aim-nightly-report.yml` | celý súbor: hlásenie červeného nočného behu (D-103) |
 | `.github/workflows/report-scheduled-failure.yml` | upstream alebo fork s `AIM_SCHEDULED_ISSUES=true` (D-103) |
 | `.github/workflows/release.yml`, `docs.yml`, `docker.yml`, `issue-queue.yml`, `deploy-nightly.yml`, `review-lane-canary.yml` | len upstream (tabuľka vyššie) |
 | `.github/workflows/upstream-sync.yml` | synchronizácia forku |
-| `scripts/check-aim-fork-only.mjs` (+ test) | celý súbor: rozhodnutie o ceste (D-103, D-114) |
-| `scripts/ci-path-coverage-allowlist.txt` | výnimka `check-module-size.mjs apps/landing/**` zrušená, `aim-fast.yml` beží na každom PR (D-114) |
+| `scripts/check-aim-fork-only.mjs` (+ test) | celý súbor: rozhodnutie o ceste (D-103, D-116) |
+| `scripts/ci-path-coverage-allowlist.txt` | výnimka `check-module-size.mjs apps/landing/**` zrušená, `aim-fast.yml` beží na každom PR (D-116) |
 | `scripts/review/lib/review-findings.mjs`, `scripts/review/post-review.test.mjs` | štítok závažnosti nálezu (D-103) |
 | `scripts/check-icon-button-adoption.mjs`, `scripts/lib/presentation-channel-allowlist.mjs` | riadky forku v upstream bránach |
 

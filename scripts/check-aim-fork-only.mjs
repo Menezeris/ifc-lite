@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * AIM-FORK (whole file, AIM D-103 and D-114, extends D-098): which CI a fork
+ * AIM-FORK (whole file, AIM D-103 and D-116, extends D-098): which CI a fork
  * pull request needs.
  *
  *   aim-only     every file is in the AIM layer (apps/viewer/src/aim/, the
@@ -16,7 +16,7 @@
  *                pre-approved raise of the two viewer bundle ceilings.
  *   upstream     anything else in a feature PR (`outside` says where): a
  *                workflow, script, package, new upstream file, a line outside
- *                a block. Still the fast lane: since D-114 such a PR reaches
+ *                a block. Still the fast lane: since D-116 such a PR reaches
  *                `main` only inside a release batch.
  *   full         a release batch (`release/aim-*`), an upstream sync
  *                (`sync/upstream-*`) or a PR labelled `ci:full`.
@@ -52,9 +52,9 @@ export const BUNDLE_RATCHET = 'tests/perf-ratchets/bundle.json';
 export const BUNDLE_RAISE_LIMITS = { 'viewer-entry-js-bytes': 2048, 'viewer-eager-js-bytes': 10240 };
 /** Above this many related viewer test files the fast lane runs none of them. */
 export const MAX_RELATED_TESTS = 40;
-/** A release batch of several PRs (D-114): the one place the full CI runs. */
+/** A release batch of several PRs (D-116): the one place the full CI runs. */
 export const RELEASE_BRANCH = /^release\/aim-/;
-/** A label that asks for the full CI on one PR (D-114). */
+/** A label that asks for the full CI on one PR (D-116). */
 export const FULL_CI_LABEL = 'ci:full';
 
 /**
@@ -199,7 +199,7 @@ export function relatedTests(changed, sources) {
  * The decision, from what git says. `git` is (args) => stdout, so the tests
  * can hand in a fake repository.
  *
- * Since D-114 (release train) only a release batch, an upstream sync or the
+ * Since D-116 (release train) only a release batch, an upstream sync or the
  * `ci:full` label runs the full CI on a pull request. Every other PR gets the
  * fast lane: `aim-only` and `fork-blocks` as in D-103, `upstream` when it also
  * changes upstream code outside AIM-FORK blocks (`outside` lists where). Such a

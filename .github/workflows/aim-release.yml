@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-# >>> AIM-FORK (whole file, AIM D-114): tag each release batch. When a
+# >>> AIM-FORK (whole file, AIM D-116): tag each release batch. When a
 # `release/aim-*` pull request is merged into main, the merge commit gets the
 # tag `aim-release-<date>-<short sha>`, so the batch that went to production can
 # be named, compared (`git diff aim-release-A aim-release-B`) and rolled back to.

@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * AIM-FORK (whole file, AIM D-114): tests for the pure parts of
+ * AIM-FORK (whole file, AIM D-116): tests for the pure parts of
  * aim-smoke.mjs. The browser run itself is exercised by aim-smoke.yml against
  * the live deploy.
  *

@@ -2,7 +2,7 @@
      License, v. 2.0. If a copy of the MPL was not distributed with this
      file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
 
-# AIM D-114 release train: dôkazy z chirurgických mutácií
+# AIM D-116 release train: dôkazy z chirurgických mutácií
 
 PR pridáva nový skript `scripts/aim-smoke.mjs` (smoke po nasadení) a mení rozhodovanie
 v `scripts/check-aim-fork-only.mjs`. Test `scripts/aim-smoke.test.mjs` importuje nový modul,
@@ -35,7 +35,7 @@ s "the viewer never sent READY".
 ```bash
 node scripts/check-test-revert-oracle.mjs --base origin/main \
   --only scripts/aim-smoke.mjs --test scripts/aim-smoke.test.mjs \
-  --mutation /tmp/d114-mut/smoke-accepts-failed-query.patch --ci --json
+  --mutation /tmp/d116-mut/smoke-accepts-failed-query.patch --ci --json
 ```
 
 Patche `check-aim-fork-only.mjs` používajú `--only scripts/check-aim-fork-only.mjs --test
