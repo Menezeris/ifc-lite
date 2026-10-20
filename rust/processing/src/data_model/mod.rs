@@ -11,6 +11,13 @@ mod materials;
 mod material_units;
 mod material_usages;
 mod metadata;
+pub mod property;
+pub mod quantity;
+pub mod render;
+pub mod rows;
+pub mod spatial_walk;
+pub mod type_assignments;
+mod inherit;
 mod properties;
 mod property_value;
 mod quantities;
@@ -236,17 +243,6 @@ fn log_scan_census(all_entities: &[EntityJob]) {
             rel_count = rel_count,
             "Entity type counts before extraction"
         );
-    }
-}
-
-/// Read an `IfcLogical` / `IfcBoolean` attribute as a tri-state `Option<bool>`
-/// (`.U.` / absent → `None`).
-pub(super) fn read_logical(entity: &DecodedEntity, index: usize) -> Option<bool> {
-    let token = entity.get(index)?.as_enum()?;
-    match token {
-        "T" | "TRUE" | "true" => Some(true),
-        "F" | "FALSE" | "false" => Some(false),
-        _ => None,
     }
 }
 

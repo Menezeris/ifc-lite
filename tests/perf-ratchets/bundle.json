@@ -7,14 +7,14 @@
       "metric": "brotli-bytes",
       "unit": "bytes",
       "description": "packages/wasm/pkg/ifc-lite_bg.wasm, the single-thread engine bundle",
-      "ceiling": 2247626,
+      "ceiling": 2333534,
       "tolerance": {
         "kind": "relative",
         "value": 0.005
       },
       "provenance": {
-        "commit": "d8c110166a07e494be45e509e31db2c614b31217",
-        "measuredAt": "2026-10-16T14:09:08.304Z"
+        "commit": "3046228f3914da251e73aa5f36e24f48ff00d1f3",
+        "measuredAt": "2026-10-19T14:56:42.000Z"
       }
     },
     {
@@ -22,14 +22,14 @@
       "metric": "raw-bytes",
       "unit": "bytes",
       "description": "raw size of the single <script type=\"module\" src> chunk of apps/viewer/dist/index.html",
-      "ceiling": 3161931,
+      "ceiling": 3165867,
       "tolerance": {
         "kind": "relative",
         "value": 0.001
       },
       "provenance": {
-        "commit": "e7cffe5047d6e36582f47c5f3b2b4f2e8c49d3ae",
-        "measuredAt": "2026-10-19T15:25:27.000Z"
+        "commit": "e81e3ca735f4c82b8f701d3ff04e6dd11a6afdc4",
+        "measuredAt": "2026-10-19T19:22:48.000Z"
       }
     },
     {
@@ -37,14 +37,14 @@
       "metric": "raw-bytes",
       "unit": "bytes",
       "description": "summed raw size of every JS file dist/index.html loads eagerly: the module <script src> plus <link rel=modulepreload>",
-      "ceiling": 19323344,
+      "ceiling": 19347507,
       "tolerance": {
         "kind": "relative",
         "value": 0.001
       },
       "provenance": {
-        "commit": "78d1cb26279d6c33ae5461db1a542f885f07f6dd",
-        "measuredAt": "2026-10-18T22:15:00.000Z"
+        "commit": "e81e3ca735f4c82b8f701d3ff04e6dd11a6afdc4",
+        "measuredAt": "2026-10-19T19:22:48.000Z"
       }
     }
   ]

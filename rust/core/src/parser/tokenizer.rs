@@ -148,15 +148,6 @@ fn number(input: &[u8]) -> IResult<&[u8], Token<'_>> {
     }
 }
 
-/// Whether `literal` is exactly one number token this tokenizer reads
-/// ([`number`], i.e. [`read_step_number`]): the shared grammar (`.5` and
-/// `1E5` included), minus an `INTEGER` past `i64`. A raw-byte reader that
-/// must agree with the full decode (`decoder::leaf_read`) checks its literals
-/// here.
-pub(crate) fn is_decodable_number(literal: &[u8]) -> bool {
-    matches!(read_step_number(literal), Some((_, len)) if len == literal.len())
-}
-
 /// Parse enum: .TRUE., .FALSE., .UNKNOWN., .ELEMENT.
 fn enum_value(input: &[u8]) -> IResult<&[u8], Token<'_>> {
     map(
@@ -184,7 +175,7 @@ fn derived(input: &[u8]) -> IResult<&[u8], Token<'_>> {
 /// Each `(` in the input bumps depth by one. Real-world IFC entities rarely
 /// nest beyond 5-10 levels; 256 leaves comfortable headroom while keeping
 /// the stack bounded against pathological inputs.
-const MAX_NESTING_DEPTH: u32 = 256;
+pub(crate) const MAX_NESTING_DEPTH: u32 = 256;
 
 /// Parse typed value: IFCPARAMETERVALUE(0.), IFCBOOLEAN(.T.)
 ///

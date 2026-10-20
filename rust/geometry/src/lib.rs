@@ -68,10 +68,10 @@
 //! - **Complex Breps**: ~200 entities/sec
 //! - **Boolean operations**: ~20 entities/sec
 
-// Module visibility: only 9 modules below are reached externally by sibling
+// Module visibility: only 10 modules below are reached externally by sibling
 // crates via a direct submodule path (`ifc_lite_geometry::<module>::...`) and
 // must stay `pub`: csg, csg_capture, kernel, material_layer_index, math,
-// mesh, projection_outline, rect_fast, space_dcel. Everything else is internal
+// mesh, placement, projection_outline, rect_fast, space_dcel. Everything else is internal
 // wiring; external consumers reach its types through the root-level `pub use`
 // re-exports below, so those modules are `pub(crate)` (see #C3.2).
 pub(crate) mod alignment;
@@ -150,7 +150,9 @@ pub(crate) mod mesh_check;
 /// Cooperative heartbeat from long geometry work to a host that must tell a
 /// slow call from a hung one (see the module docs).
 pub mod progress;
+pub mod representation;
 pub(crate) mod mesh_orient;
+pub mod placement;
 pub(crate) mod processors;
 pub(crate) mod profile;
 pub(crate) mod profile_extractor;
@@ -300,3 +302,5 @@ pub use void_index::{
     build_aggregate_children_index, compute_parts_to_skip, propagate_voids_to_parts,
     propagate_voids_via_aggregates, VoidIndex,
 };
+
+mod exact_topology;

@@ -126,12 +126,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install ifcopenshell + pytest (express_rules needs pytest's assertion rewriter)
-        # >>> AIM-FORK: keep this lane on 0.8.5 until upstream adapts it. #7886 unpinned
-        # the shared lock for parity; on 0.9 the LandXML checks hit removed APIs
-        # (`entity_instance.wrapped_data`, `api.alignment.get_referent_nest`) and the
-        # cant premise test (§13.2) flips. Drop the pin with the sync that fixes that.
-        run: pip install -r tools/ifcopenshell_reference/requirements.lock "ifcopenshell==0.8.5"
-        # <<< AIM-FORK
+        run: pip install -r tools/ifcopenshell_reference/requirements.lock
 
       - name: validate_export.py self-test (vacuity refusals + fault injection)
         working-directory: tools/ifcopenshell_reference
@@ -200,8 +195,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install ifcopenshell + pytest
-        # AIM-FORK (ifcopenshell 0.8.5 pin): next line, same reason as above
-        run: pip install -r tools/ifcopenshell_reference/requirements.lock "ifcopenshell==0.8.5"
+        run: pip install -r tools/ifcopenshell_reference/requirements.lock
 
       - name: Setup WASM build toolchain
         uses: ./.github/actions/setup-wasm-build

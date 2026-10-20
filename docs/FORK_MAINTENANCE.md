@@ -368,7 +368,6 @@ Generované z `git grep -n "AIM-FORK" -- .github scripts`; pri synchronizácii n
 | `.github/workflows/aim-nightly-report.yml` | celý súbor: hlásenie červeného nočného behu (D-103) |
 | `.github/workflows/report-scheduled-failure.yml` | upstream alebo fork s `AIM_SCHEDULED_ISSUES=true` (D-103) |
 | `.github/workflows/release.yml`, `docs.yml`, `docker.yml`, `issue-queue.yml`, `deploy-nightly.yml`, `review-lane-canary.yml` | len upstream (tabuľka vyššie) |
-| `.github/workflows/export-schema-conformance.yml` | pin `ifcopenshell==0.8.5` (dočasné piny nižšie) |
 | `.github/workflows/upstream-sync.yml` | synchronizácia forku |
 | `scripts/check-aim-fork-only.mjs` (+ test) | celý súbor: rozhodnutie o ceste (D-103) |
 | `scripts/review/lib/review-findings.mjs`, `scripts/review/post-review.test.mjs` | štítok závažnosti nálezu (D-103) |
@@ -441,7 +440,7 @@ locally before the first push (`.claude/skills/aim-feature/SKILL.md`).
 
 | Where | Pin | Why | Remove when |
 |---|---|---|---|
-| `.github/workflows/export-schema-conformance.yml` (both `pip install` steps) | `ifcopenshell==0.8.5` | Upstream #7886 (ported 2026-10-18 to fix the nightly parity lane) unpinned the shared `tools/ifcopenshell_reference/requirements.lock`. On 0.9 the LandXML checks hit removed APIs (`entity_instance.wrapped_data`, `api.alignment.get_referent_nest`) and the cant-premise test (§13.2) flips; on 0.8.5 all 11 pass. | An upstream sync adapts `check_alignment.py` / `check_vertical.py` / `check_referents.py` and the cant test to 0.9 (run the lane once without the pin to confirm). |
+| _(none)_ | | The `ifcopenshell==0.8.5` pin in `export-schema-conformance.yml` was dropped with the 2026-10-19 sync: upstream #7899 adapted the LandXML audits to IfcOpenShell 0.9 (LandXML conformance 11/11 and IFC4X3 conformance 2/2 on 0.9.0.post1, run locally). | |
 
 ## Conventions (don't drift)
 
