@@ -18,7 +18,7 @@ export type AimLensMode = (typeof AIM_LENS_MODES)[number];
 
 export interface AimLensRuleWire {
   name: string;
-  /** `isolate` = len do izolácie, bez farby (prvky ostanú v pôvodnom vzhľade). */
+  /** `isolate` = len do izolácie alebo X-ray, bez farby (prvky ostanú v pôvodnom vzhľade). */
   action: 'colorize' | 'transparent' | 'hide' | 'isolate';
   /** Hex `#rrggbb`; pri `isolate` sa nepoužije. */
   color?: string;
@@ -42,6 +42,8 @@ export type LensInboundMessage =
       rules?: AimLensRuleWire[];
       /** Izolovať zjednotenie všetkých pravidiel správy (kanál izolácie viewera, nie farba). */
       isolate?: boolean;
+      /** X-ray context: zjednotenie pravidiel ostane plné, zvyšok priesvitný (kanál ghost viewera, AIM D-105). */
+      xray?: boolean;
       autoColor?: AimAutoColorWire;
     }
   | { source: typeof SOURCE; type: 'LENS_QUERY'; id: string; rev?: string };

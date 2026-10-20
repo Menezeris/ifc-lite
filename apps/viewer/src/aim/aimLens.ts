@@ -9,7 +9,9 @@
  * panel Lens; vyhodnotenie, farby, skrytie a počty robí upstream `useLens`.
  * Izolácia (`isolate: true`) ide mimo lens: pravidlá sa vyhodnotia tým istým
  * federovaným filtrom ako lens a ich zjednotenie sa izoluje kanálom izolácie
- * viewera, takže prvky bez farby ostanú v pôvodnom vzhľade.
+ * viewera, takže prvky bez farby ostanú v pôvodnom vzhľade. X-ray (`xray: true`,
+ * AIM D-105) dá to isté zjednotenie do kanála ghost (ako tlačidlo "duch" v paneli
+ * prvku): vybrané ostanú plné, zvyšok modelu priesvitný.
  * `LENS_QUERY` počká na vyhodnotenie verzie `rev` a vráti počty hosťovi.
  * Načítava sa lenivo z `AimBridge` pri prvej správe Lens.
  */
@@ -37,7 +39,7 @@ const WAIT_MS = 6000;
 let appliedRev: string | undefined;
 /** Verzia, ktorej izolácia ešte beží (vyhodnotenie je asynchrónne). */
 let pendingIsolationRev: string | null = null;
-/** Izolácia z chatu: počty a presné id v kanáli (uvoľní sa len, ak ich kanál stále drží). */
+/** Izolácia alebo X-ray z chatu: počty a presné id v kanáli (uvoľní sa len, ak ich kanál stále drží). */
 let isolation: (AimIsolation & { ids: number[]; raw: number[] }) | null = null;
 /** Poradie izolácií: staršia, ktorá dobehne po novšej alebo po zrušení, sa zahodí. */
 let isolationGen = 0;
@@ -52,12 +54,24 @@ let seq = 0;
 type State = ReturnType<typeof useViewerStore.getState>;
 const slotLens = (s: State) => s.savedLenses.find((l) => l.id === SLOT) ?? null;
 
+/** Drží kanál (izolácia alebo ghost) stále presne to, čo doň dal chat? */
+function ownsChannel(s: State, iso: { ids: number[]; xray?: true }): boolean {
+  return ruleIsolationOwnsChannel(iso.xray ? s.ghostExceptEntities : s.isolatedEntities, iso.ids);
+}
+
+/** Zruší izoláciu alebo X-ray z chatu, ak ich kanál stále drží (inak patrí niekomu inému). */
+function clearOwnedChannel(): void {
+  const state = useViewerStore.getState();
+  if (!isolation || !ownsChannel(state, isolation)) return;
+  if (isolation.xray) state.clearGhost();
+  else state.clearIsolation();
+}
+
 function releaseIsolation(): void {
   isolationGen++;
   pendingIsolationRev = null;
   isolationFailedRev = null;
-  const state = useViewerStore.getState();
-  if (isolation && ruleIsolationOwnsChannel(state.isolatedEntities, isolation.ids)) state.clearIsolation();
+  clearOwnedChannel();
   isolation = null;
 }
 
@@ -68,21 +82,31 @@ async function isolate(msg: ApplyLensMessage, rules: Lens['rules'], tag: string,
   if (gen !== isolationGen) return;
   const raw = new Set<number>();
   for (const ids of matched.values()) for (const id of ids) raw.add(id);
-  // `add` k izolácii z chatu rozšíri doterajšiu, nie nahradí (AIM D-101, #95) - ak ju kanál stále drží.
-  // Kanál podľa stavu po vyhodnotení: izolácia od hosta počas `await` ho prevezme (D-101).
-  const owns = isolation && ruleIsolationOwnsChannel(useViewerStore.getState().isolatedEntities, isolation.ids);
-  const prev = msg.mode === 'add' && owns ? isolation : null;
+  const xray = msg.xray === true;
+  // `add` k izolácii (X-ray) z chatu rozšíri doterajšiu, nie nahradí (AIM D-101, #95) - ak ju kanál stále
+  // drží a je to ten istý kanál. Kanál podľa stavu po vyhodnotení: príkaz hosta počas `await` ho prevezme.
+  const owns = isolation && ownsChannel(useViewerStore.getState(), isolation);
+  const prev = msg.mode === 'add' && owns && !!isolation?.xray === xray ? isolation : null;
   if (prev) for (const id of prev.raw) raw.add(id);
+  // Druhý kanál z chatu (izolácia po X-ray a naopak) uvoľniť, inak by ostal visieť.
+  if (owns && !!isolation?.xray !== xray) clearOwnedChannel();
   // Zostava bez geometrie (schodisko ako kontajner) sa izoluje cez svoje časti, ako v paneli Lens.
   const ids = resolvePresentationIds(useViewerStore.getState().cameraCallbacks.resolveHighlightIds, [...raw]);
   const now = useViewerStore.getState();
-  // `isolateEntities` je prepínač: rovnaká množina v kanáli by izoláciu zrušila.
-  if (ruleIsolationOwnsChannel(now.isolatedEntities, ids)) now.clearIsolation();
-  if (ids.length > 0) now.isolateEntities(ids);
+  if (xray) {
+    // Ghost ruší izoláciu (vzájomne výlučné kanály viewera); prázdna množina by stlmila celý model.
+    if (ids.length > 0) now.setGhostExceptEntities(new Set(ids));
+    else if (owns && isolation?.xray) now.clearGhost();
+  } else {
+    // `isolateEntities` je prepínač: rovnaká množina v kanáli by izoláciu zrušila.
+    if (ruleIsolationOwnsChannel(now.isolatedEntities, ids)) now.clearIsolation();
+    if (ids.length > 0) now.isolateEntities(ids);
+  }
   isolation = {
     ...(msg.rev ? { rev: msg.rev } : {}),
     rules: [...(prev?.rules ?? []), ...rules.map((r) => ({ name: r.name, count: matched.get(r.id)?.size ?? 0 }))],
     isolated: raw.size,
+    ...(xray ? { xray: true as const } : {}),
     ids,
     raw: [...raw],
   };
@@ -126,6 +150,13 @@ function applyLens(msg: ApplyLensMessage): void {
   useViewerStore.setState({ savedLenses: [...others, next], activeLensId: SLOT, lensPanelVisible: true });
 }
 
+/** Izolácia (X-ray) z chatu pre hosta, bez interných id. */
+function isolationSummary(): AimIsolation | null {
+  if (!isolation) return null;
+  const { rev, rules, isolated, xray } = isolation;
+  return { rev, rules, isolated, ...(xray ? { xray } : {}) };
+}
+
 function answerLensQuery(msg: LensQueryMessage, origin: string, started = Date.now()): void {
   const reply = (r: ViewQueryResult) => window.parent.postMessage(r, origin);
   if (rejectedRev !== null && (!msg.rev || rejectedRev === '*' || rejectedRev === msg.rev)) {
@@ -150,7 +181,7 @@ function answerLensQuery(msg: LensQueryMessage, origin: string, started = Date.n
     reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: false, error: 'Izolácia tejto verzie vo vieweri zlyhala.' });
     return;
   }
-  const iso = isolation ? { rev: isolation.rev, rules: isolation.rules, isolated: isolation.isolated } : null;
+  const iso = isolationSummary();
   const summary = summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, msg.rev, iso);
   reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: true, result: { ...summary, ...(ready ? {} : { pending: true }) } });
 }
@@ -165,7 +196,7 @@ export async function settledLensSummary(timeoutMs: number, started = Date.now()
     await new Promise((r) => setTimeout(r, POLL_MS));
     return settledLensSummary(timeoutMs, started);
   }
-  const iso = isolation ? { rev: isolation.rev, rules: isolation.rules, isolated: isolation.isolated } : null;
+  const iso = isolationSummary();
   return { ...summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, appliedRev, iso), ...(ready ? {} : { pending: true }) };
 }
 

@@ -9,7 +9,8 @@
  *
  * Farbu dostanú len pravidlá s farbou (colorize/transparent/hide). Izolácia
  * nejde cez lens: prvky ostanú v pôvodnom vzhľade, viewer ich izoluje vlastným
- * kanálom izolácie (`isolationRules` + `aimLens.ts`).
+ * kanálom izolácie (`isolationRules` + `aimLens.ts`). X-ray (D-105) je to isté
+ * zjednotenie v kanáli ghost: vybrané plné, zvyšok priesvitný.
  */
 
 import { isFilterGroup, type FilterGroup, type FilterRule } from '@ifc-lite/rules';
@@ -47,6 +48,9 @@ export function parseLensMessage(data: LensInboundMessage): ApplyLensMessage | L
   }
   if (!(AIM_LENS_MODES as readonly unknown[]).includes(m.mode) || !optStr(m.rev, 64)) return null;
   if (m.isolate !== undefined && typeof m.isolate !== 'boolean') return null;
+  if (m.xray !== undefined && typeof m.xray !== 'boolean') return null;
+  // Izolácia aj X-ray naraz si odporujú (viewer ich drží ako vzájomne výlučné kanály).
+  if (m.isolate === true && m.xray === true) return null;
   if (m.autoColor !== undefined) {
     const a = m.autoColor as Record<string, unknown> | null;
     if (!a || typeof a !== 'object' || !AUTO_SOURCES.has(a.source as string)) return null;
@@ -67,8 +71,8 @@ export function parseLensMessage(data: LensInboundMessage): ApplyLensMessage | L
   }
   const hasRules = Array.isArray(m.rules) && m.rules.length > 0;
   if ((m.mode === 'add' || m.mode === 'replace') && !hasRules && m.autoColor === undefined) return null;
-  // Pravidlo `isolate` bez príznaku izolácie by nerobilo nič.
-  if (hasRules && m.isolate !== true && (m.rules as { action: string }[]).some((r) => r.action === 'isolate')) return null;
+  // Pravidlo `isolate` bez príznaku izolácie alebo X-ray by nerobilo nič.
+  if (hasRules && m.isolate !== true && m.xray !== true && (m.rules as { action: string }[]).some((r) => r.action === 'isolate')) return null;
   return data as ApplyLensMessage;
 }
 
@@ -112,11 +116,12 @@ function toLensRules(msg: ApplyLensMessage, models: readonly ModelRef[], tag: st
 }
 
 /**
- * Pravidlá, ktorých zjednotenie viewer izoluje (`isolate: true`), vrátane farebných;
- * vyhodnocujú sa ako lens, ale do scény sa nedávajú. Bez izolácie prázdne.
+ * Pravidlá, ktorých zjednotenie viewer izoluje (`isolate: true`) alebo dá do X-ray
+ * (`xray: true`), vrátane farebných; vyhodnocujú sa ako lens, ale do scény sa
+ * nedávajú. Bez izolácie a X-ray prázdne.
  */
 export function isolationRules(msg: ApplyLensMessage, models: readonly ModelRef[], tag: string): LensRule[] {
-  return msg.isolate === true ? toLensRules(msg, models, tag) : [];
+  return msg.isolate === true || msg.xray === true ? toLensRules(msg, models, tag) : [];
 }
 
 /**
@@ -159,6 +164,8 @@ export interface AimIsolation {
   rev?: string;
   rules: { name: string; count: number }[];
   isolated: number;
+  /** Zjednotenie je v X-ray kanáli (zvyšok priesvitný), nie v izolácii (D-105). */
+  xray?: true;
 }
 
 export interface AimLensSummary {
