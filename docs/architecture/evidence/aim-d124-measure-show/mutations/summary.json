@@ -1,0 +1,100 @@
+{
+  "host-never-replaced": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
+    "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
+    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "production": [
+      "apps/viewer/src/aim/measureShow.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/measure-show.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "keep-any-type": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
+    "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
+    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/measure-show.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "keep-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
+    "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
+    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "production": [
+      "apps/viewer/src/aim/measureShow.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/measure-show.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "offset-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
+    "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
+    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "production": [
+      "apps/viewer/src/aim/measureShow.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/measure-show.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "pending-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
+    "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
+    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "production": [
+      "apps/viewer/src/aim/measureShow.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/measure-show.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "segment-limit-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
+    "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
+    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/measure-show.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "user-measurements-deleted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
+    "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
+    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "production": [
+      "apps/viewer/src/aim/measureShow.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/measure-show.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

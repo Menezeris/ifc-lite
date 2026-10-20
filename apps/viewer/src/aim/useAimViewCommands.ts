@@ -46,6 +46,9 @@ const sectionRenderBounds = (state: Parameters<typeof sectionBoundsWith>[0]) => 
 const GUIDS = { resolveGuids, guidForEntity, sectionRenderBounds };
 let camera: Promise<typeof import('./viewCamera.js')> | null = null;
 const loadCamera = () => (camera ??= import('./viewCamera.js'));
+let measure: Promise<typeof import('./measureShow.js')> | null = null;
+/** Kóty od hosta (AIM D-124) - lenivo, mimo vstupného balíka. */
+const loadMeasure = () => (measure ??= import('./measureShow.js'));
 const TARGETS = { resolveGuids, resolveSelector };
 
 /**
@@ -143,6 +146,10 @@ export function useAimViewCommands(bim: BimContext) {
         // Smer, Set view rezu, póza od hosta, rámovanie (AIM D-098) - lenivo.
         const step = cameraStep(msg.preset);
         track(loadCamera().then((c) => c.runCamera(msg, step, bim, TARGETS)));
+        return;
+      }
+      case 'MEASURE_SHOW': {
+        track(loadMeasure().then((m) => m.showMeasurements(msg)));
         return;
       }
       case 'SET_VIEW_MODE': {
