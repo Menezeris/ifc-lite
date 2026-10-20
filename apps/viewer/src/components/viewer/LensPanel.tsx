@@ -79,7 +79,7 @@ function LensCard({
   const isAutoColor = !!lens.autoColor;
   const enabledRuleCount = lens.rules.filter(r => r.enabled).length;
   const [legendSort, setLegendSort] = useState<'count' | 'name-asc' | 'name-desc'>('count');
-  // AIM-FORK (D-119): next line, a floated Lens panel ("big legend" from the AIM chat) lifts the legend height cap
+  // AIM-FORK (D-119): next 1 line, a floated Lens panel ("big legend" from the AIM chat) lifts the legend height cap
   const legendUncapped = useViewerStore((s) => s.floatingPanels.some((p) => p.id === 'lens'));
 
   const legendToShow = useMemo(() => {
@@ -184,7 +184,7 @@ function LensCard({
               {sortLabel}
             </button>
           </div>
-          {/* AIM-FORK (D-119): next line, uncapped legend in a floated panel */}
+          {/* AIM-FORK (D-119): next 1 line, uncapped legend in a floated panel */}
           <div className={cn(legendUncapped ? 'max-h-none' : 'max-h-[220px]', 'overflow-y-auto py-0.5')}>
           {legendToShow.map(entry => (
             <AutoColorRow
