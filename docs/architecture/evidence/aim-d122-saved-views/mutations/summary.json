@@ -4,7 +4,7 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/selection-summary.test.ts; that file has a green, attributable baseline.",
     "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
-    "head": "6799f70d59322b456af057f5115baefe48a3392d",
+    "head": "66c3983a5da0a088c9f542f2e913409c958d5e66",
     "production": [
       "apps/viewer/src/aim/selectionSummary.ts"
     ],
@@ -18,7 +18,7 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/selection-summary.test.ts; that file has a green, attributable baseline.",
     "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
-    "head": "6799f70d59322b456af057f5115baefe48a3392d",
+    "head": "66c3983a5da0a088c9f542f2e913409c958d5e66",
     "production": [
       "apps/viewer/src/aim/selectionSummary.ts"
     ],
@@ -32,7 +32,7 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/selection-summary.test.ts; that file has a green, attributable baseline.",
     "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
-    "head": "6799f70d59322b456af057f5115baefe48a3392d",
+    "head": "66c3983a5da0a088c9f542f2e913409c958d5e66",
     "production": [
       "apps/viewer/src/aim/selectionSummary.ts"
     ],
