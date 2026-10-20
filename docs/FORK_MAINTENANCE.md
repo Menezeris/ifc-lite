@@ -59,7 +59,8 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/components/viewer/properties/RelationshipsCard.tsx` | 3 | `<AimDerivedRelations />` AIM group in Relationship records + its rows in the card count (D-089) |
 | `apps/viewer/src/components/viewer/hierarchy/HierarchyNode.tsx` | 4 | AIM badge icons + per-GUID counts (D-077) |
 | `apps/viewer/src/components/viewer/Viewport.tsx` | 2 | `useDrawingUnderlay` (D-072) |
-| `apps/viewer/src/components/viewer/ViewportContainer.tsx` | 4 | Reality Capture pin layer (D-073), calibration / split-view overlays (D-072) |
+| `apps/viewer/src/components/viewer/ViewportContainer.tsx` | 5 | Reality Capture pin layer (D-073), calibration / split-view overlays (D-072), fill + label of Lens-coloured rooms in the 2D plan (`aim/AimRoomFillLayer.tsx`, AIM D-119) |
+| `apps/viewer/src/components/viewer/LensPanel.tsx` | 2 | one-line blocks: a floated Lens panel ("big legend" from the chat) lifts the 220 px legend height cap (AIM D-119) |
 | `apps/viewer/src/components/viewer/viewport-render-options.ts` | 2 | drawing-view storey cut wins over the Section clip (`aim/underlayCut.ts`, D-072) |
 | `apps/viewer/src/components/viewer/selectionHandlers.ts` | 2 | underlay calibration model-point pick (`aim/underlayPick.ts`, D-072) |
 | `apps/viewer/src/components/viewer/useMouseControls.ts` | 2 | drawing view: drag pans; Ctrl/Cmd+wheel moves the cut while it is active (D-072) |

@@ -69,8 +69,17 @@ export function parseLensMessage(data: LensInboundMessage): ApplyLensMessage | L
     }
     if (ids > MAX_AIM_GLOBAL_IDS) return null;
   }
+  if (m.autoColorScope !== undefined) {
+    // Rozsah má zmysel len pri farbách podľa hodnoty (D-119).
+    if (m.autoColor === undefined || !Array.isArray(m.autoColorScope)) return null;
+    if (m.autoColorScope.length === 0 || m.autoColorScope.length > MAX_GROUPS || !m.autoColorScope.every(isFilterGroup)) return null;
+    if (countGlobalIds(m.autoColorScope as FilterGroup[]) > MAX_AIM_GLOBAL_IDS) return null;
+  }
+  if (m.legend !== undefined && !(LEGEND_SIZES as readonly unknown[]).includes(m.legend)) return null;
   const hasRules = Array.isArray(m.rules) && m.rules.length > 0;
-  if ((m.mode === 'add' || m.mode === 'replace') && !hasRules && m.autoColor === undefined) return null;
+  // Samotná zmena legendy (D-119) lens nemení, len panel.
+  const legendOnly = m.legend !== undefined && m.mode === 'add' && !hasRules && m.autoColor === undefined;
+  if ((m.mode === 'add' || m.mode === 'replace') && !hasRules && m.autoColor === undefined && !legendOnly) return null;
   // Pravidlo `isolate` bez príznaku izolácie alebo X-ray by nerobilo nič.
   if (hasRules && m.isolate !== true && m.xray !== true && (m.rules as { action: string }[]).some((r) => r.action === 'isolate')) return null;
   return data as ApplyLensMessage;
@@ -201,4 +210,15 @@ export function summarizeLens(
     matched: rules.reduce((s, r) => s + r.count, 0) + legend.reduce((s, l) => s + l.count, 0),
     ...iso,
   };
+}
+
+/** Veľkosť legendy z chatu (D-119). */
+export const LEGEND_SIZES = ['large', 'normal'] as const;
+export type LegendSize = (typeof LEGEND_SIZES)[number];
+
+/** Plávajúce okno veľkej legendy: takmer celý viewer, najviac 960 px široké. */
+export function legendPanelRect(width: number, height: number): { x: number; y: number; w: number; h: number } {
+  const w = Math.max(320, Math.min(960, width - 96));
+  const h = Math.max(320, height - 160);
+  return { x: Math.max(16, Math.round((width - w) / 2)), y: 96, w, h };
 }

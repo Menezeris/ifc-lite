@@ -15,7 +15,7 @@ import { useViewerStore } from '../store/index.js';
 import { fromGlobalIdFromModels, toGlobalIdFromModels } from '../store/globalId.js';
 import type { InboundMessage, OpsSelector, resolveGuids, resolveSelector } from './bridge-protocol.js';
 import { nextIsolation, type CommandInboundMessage } from './command-protocol.js';
-import { frameRefs } from './frame-refs.js';
+import { frameRefs, revealGatesForRefs } from './frame-refs.js';
 import { applyPanelView } from './aimPanelView.js';
 import { selectPanel } from './aimPanelViewPlan.js';
 
@@ -163,11 +163,14 @@ export function runVisibilityCommand(
     }
     case 'SHOW': {
       const refs = refsForOp(d, msg.type, msg);
+      // "Zobraz miestnosti": skrytá trieda (IfcSpace, IfcSpatialZone) sa zapne, inak by show nemal čo ukázať (D-119).
+      revealGatesForRefs(refs);
       if (refs.length > 0) bim.viewer.show(refs);
       return true;
     }
     case 'ISOLATE': {
       const refs = refsForOp(d, msg.type, msg);
+      revealGatesForRefs(refs);
       if (refs.length > 0) isolateExactly(bim, refs);
       return true;
     }
