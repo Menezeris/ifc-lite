@@ -1,0 +1,13 @@
+diff --git a/apps/viewer/src/aim/documentsQuery.ts b/apps/viewer/src/aim/documentsQuery.ts
+index 4504b54fc..39b7b7405 100644
+--- a/apps/viewer/src/aim/documentsQuery.ts
++++ b/apps/viewer/src/aim/documentsQuery.ts
+@@ -28,7 +28,7 @@ export const META_VALUES_SEPARATOR = '; ';
+ 
+ /** Lowercase without diacritics, so "podorys" finds "Pôdorys". */
+ export function foldText(text: string): string {
+-  return text.toLowerCase();
++  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+ }
+ 
+ /** `meta` keys present on at least one document, in first-seen order. */

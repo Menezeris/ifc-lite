@@ -21,15 +21,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { IdentifierLinkSettings } from '@/components/viewer/IdentifierLinkSettings';
 import { useViewerStore, type ViewerDocument } from '@/store';
 import { useViewMode } from '@/hooks/useViewMode';
+// >>> AIM-FORK: grouping by host metadata, metadata search, documents of the selection (D-104)
+import { AimDocumentsControls, AimSelectionDocuments, useAimDocumentsView } from '@/aim/AimDocumentsControls';
+import { groupDocuments } from '@/aim/documentsQuery';
+// <<< AIM-FORK
 
 interface DocumentsPanelProps {
   onClose: () => void;
 }
 
-/** Group key: host-defined folder path, or a catch-all bucket. */
-function groupLabel(doc: ViewerDocument): string {
-  return doc.folder && doc.folder.length > 0 ? doc.folder.join(' / ') : '';
-}
+// >>> AIM-FORK: group keys (folder path or a host meta key) live in aim/documentsQuery.ts (D-104)
+// <<< AIM-FORK
 
 function kindOfFile(file: File): ViewerDocument['kind'] {
   // Extension fallback: some platforms hand over files with an empty type.
@@ -49,22 +51,11 @@ export function DocumentsPanel({ onClose }: DocumentsPanelProps) {
   const [dragOver, setDragOver] = useState(false);
   const [showLinkSettings, setShowLinkSettings] = useState(false);
 
-  const groups = useMemo(() => {
-    const needle = filter.trim().toLowerCase();
-    const byGroup = new Map<string, ViewerDocument[]>();
-    for (const doc of docs.values()) {
-      if (needle && !doc.name.toLowerCase().includes(needle)) continue;
-      const key = groupLabel(doc);
-      const list = byGroup.get(key);
-      if (list) list.push(doc);
-      else byGroup.set(key, [doc]);
-    }
-    for (const list of byGroup.values()) list.sort((a, b) => a.name.localeCompare(b.name));
-    // Named folders first (alphabetical), the catch-all bucket last.
-    return [...byGroup.entries()].sort(([a], [b]) =>
-      a === '' ? 1 : b === '' ? -1 : a.localeCompare(b),
-    );
-  }, [docs, filter]);
+  // >>> AIM-FORK: folder or host meta key, search over name and metadata (D-104)
+  const groupBy = useAimDocumentsView((s) => s.groupBy);
+  const onlySelection = useAimDocumentsView((s) => s.onlySelection);
+  const groups = useMemo(() => groupDocuments(docs.values(), { filter, groupBy }), [docs, filter, groupBy]);
+  // <<< AIM-FORK
 
   // ── Local files (standalone use + testing without a host) ───────────────
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -186,7 +177,11 @@ export function DocumentsPanel({ onClose }: DocumentsPanelProps) {
           className="h-6 w-full rounded border bg-background px-2 text-[11px]"
         />
       </div>
+      {/* >>> AIM-FORK: group by and documents of the selection; the filter above also searches metadata (D-104) */}
+      <AimDocumentsControls docs={docs} />
+      {onlySelection ? <AimSelectionDocuments docs={docs} filter={filter} /> : (
       <ScrollArea className="min-h-0 flex-1">
+      {/* <<< AIM-FORK */}
         {groups.length === 0 ? (
           <div className="p-6 text-center text-[11px] text-muted-foreground">
             {docs.size === 0
@@ -223,7 +218,10 @@ export function DocumentsPanel({ onClose }: DocumentsPanelProps) {
             ))}
           </div>
         )}
+      {/* >>> AIM-FORK: end of the library list (D-104) */}
       </ScrollArea>
+      )}
+      {/* <<< AIM-FORK */}
       {dragOver && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center border-2 border-dashed border-primary/60 bg-primary/5 text-xs font-medium text-primary">
           Drop PDF / image files

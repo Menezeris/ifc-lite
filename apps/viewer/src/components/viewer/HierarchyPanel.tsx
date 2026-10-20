@@ -14,8 +14,8 @@ import { useIfcLoader } from '@/hooks/useIfcLoader';
 import { useIfcFederation } from '@/hooks/useIfcFederation';
 import { useEntityListMultiSelect } from '@/hooks/useEntityListMultiSelect';
 import { Rule, activeGroupRules, type FilterRule } from '@ifc-lite/rules';
-// >>> AIM-FORK: AIM dekorácie stromu (D-077) + sekcia AIM VRSTVY (D-089)
-import { useAimDecorationsStore, guidForEntity, AimLayersSection, type AimTreeDecoration } from '@/aim/hierarchyPanel';
+// >>> AIM-FORK: AIM dekorácie stromu (D-077); AIM vrstvy sú vlastný panel (D-104)
+import { useAimDecorationsStore, guidForEntity, type AimTreeDecoration } from '@/aim/hierarchyPanel';
 // <<< AIM-FORK
 import { toast } from '@/components/ui/toast';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -640,7 +640,6 @@ export function HierarchyPanel() {
           </div>
         </div>}
 
-        {/* >>> AIM-FORK: AIM LAYERS (D-089) */}<AimLayersSection />{/* <<< AIM-FORK */}
         {/* Footer status */}
         <HierarchyFooterStatus
           hasActiveFilters={hasActiveFilters} selectedStoreys={selectedStoreys} classFilter={classFilter}
@@ -707,7 +706,6 @@ export function HierarchyPanel() {
         </div>
       </div>)}
 
-      {/* >>> AIM-FORK: AIM LAYERS (D-089) */}<AimLayersSection />{/* <<< AIM-FORK */}
       {/* Footer status */}
       <HierarchyFooterStatus
         hasActiveFilters={hasActiveFilters} selectedStoreys={selectedStoreys} classFilter={classFilter}

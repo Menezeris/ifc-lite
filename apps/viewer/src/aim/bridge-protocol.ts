@@ -40,7 +40,7 @@ export interface AimPanelData {
     label: string;
     rows: { label: string; value: string; href?: string; mono?: boolean }[];
   }[];
-  documents?: { name: string; href: string; badge?: string }[];
+  documents?: import('./documentsQuery.js').AimCardDocumentWire[]; // documentId/page/via: D-104
   actions?: { label: string; href: string; primary?: boolean }[];
   // --- v2 typed sections (D-077: AIM inspector) ---
   /** Responsible persons/organizations for the element (host DB roles). */

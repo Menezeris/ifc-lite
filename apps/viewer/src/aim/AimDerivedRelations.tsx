@@ -8,7 +8,7 @@
  * group next to the file's own IfcRel records. An AIM badge stands where the
  * file rows show the entity number: these relations live in the AIM database,
  * not in the IFC file. The eye toggles (global in the AIM ribbon tab, per rule
- * in AIM LAYERS) filter the list locally.
+ * in the AIM layers panel) filter the list locally.
  *
  * Mounted by AIM-FORK lines in RelationshipsCard (`useAimDerivedRelationCount`
  * folds the rows into the card count so the card also shows when the file

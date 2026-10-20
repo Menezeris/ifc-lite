@@ -15,7 +15,7 @@ import { SOURCE } from './bridge-protocol.js';
 
 /**
  * One derivation rule of the AIM layer (D-089, host `derivation_rules`) with
- * its state for the AIM ribbon tab and the AIM LAYERS tree section.
+ * its state for the AIM ribbon tab and the AIM layers panel.
  * `enabled` / `mode` are display-only here: changing them is a data change
  * done at `manageUrl` until the viewer may write (phase 3).
  */

@@ -1,0 +1,100 @@
+{
+  "aim-group-last": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimRailGroup.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "8f1d83b41df2607e59ea51dc2d6f7930ab74d6c1",
+    "production": [
+      "apps/viewer/src/lib/panels/registry.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimRailGroup.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "catch-all-first": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "8f1d83b41df2607e59ea51dc2d6f7930ab74d6c1",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "filter-name-only": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "8f1d83b41df2607e59ea51dc2d6f7930ab74d6c1",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "fold-keeps-diacritics": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "8f1d83b41df2607e59ea51dc2d6f7930ab74d6c1",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "multi-value-not-split": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "8f1d83b41df2607e59ea51dc2d6f7930ab74d6c1",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "selection-drops-page": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "8f1d83b41df2607e59ea51dc2d6f7930ab74d6c1",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "selection-ignores-library": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "8f1d83b41df2607e59ea51dc2d6f7930ab74d6c1",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

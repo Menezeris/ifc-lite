@@ -1,0 +1,13 @@
+diff --git a/apps/viewer/src/aim/documentsQuery.ts b/apps/viewer/src/aim/documentsQuery.ts
+index ef62817d0..39b7b7405 100644
+--- a/apps/viewer/src/aim/documentsQuery.ts
++++ b/apps/viewer/src/aim/documentsQuery.ts
+@@ -50,7 +50,7 @@ function groupLabels(doc: QueryDocument, groupBy: string): string[] {
+   if (groupBy === GROUP_BY_FOLDER) return [doc.folder && doc.folder.length > 0 ? doc.folder.join(' / ') : ''];
+   const value = doc.meta?.[groupBy];
+   if (!value) return [''];
+-  return [value];
++  return [...new Set(value.split(META_VALUES_SEPARATOR).map((v) => v.trim()).filter(Boolean))];
+ }
+ 
+ /**

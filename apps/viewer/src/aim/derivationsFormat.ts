@@ -4,7 +4,7 @@
 
 /**
  * Display helper of the AIM derivations layer used only by the lazily loaded
- * AimLayersSectionBody, kept apart from derivations.ts (imported by the entry
+ * AimLayersPanelBody, kept apart from derivations.ts (imported by the entry
  * chunk) so the lazy chunk does not pull an entry module out into a shared one.
  */
 

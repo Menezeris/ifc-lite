@@ -22,8 +22,8 @@ import type { ExtensionExporter } from '@/components/extensions/useExtensionExpo
 export type RightPanel =
   | 'bcf' | 'validation' | 'lens' | 'clash' | 'compare' | 'cost' | 'extensions' | 'layers'
   | 'collab' | 'sources' | 'zones' | 'loadReport' | 'appearance' | 'pointclouds' | 'measurements' | 'changes' | 'model' | 'changeSets' | 'semantic' | 'review' | 'assistant' | 'idsStudio'
-  // >>> AIM-FORK: fork-only panels (D-072 underlays, D-075 documents)
-  | 'drawing-underlay' | 'documents';
+  // >>> AIM-FORK: fork-only panels (D-072 underlays, D-075 documents, D-089 AIM layers)
+  | 'drawing-underlay' | 'documents' | 'aim-layers';
   // <<< AIM-FORK
 
 export interface CommandPaletteBuildParams {

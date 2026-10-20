@@ -19,7 +19,7 @@ const PANEL_IDS = [
   'panel:zones', 'panel:loadReport', 'panel:pointclouds', 'panel:measurements',
   'panel:appearance', 'panel:collab', 'panel:extensions',
   // >>> AIM-FORK: fork-only panel rows (D-072, D-075)
-  'panel:drawing-underlay', 'panel:documents',
+  'panel:drawing-underlay', 'panel:documents', 'panel:aim-layers',
   // <<< AIM-FORK
 ] as const;
 

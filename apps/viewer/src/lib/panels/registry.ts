@@ -22,8 +22,8 @@
 // `~icons/viewer/*` virtual modules (#6315 broke that build).
 import { BarChart3, Box, CalendarRange, ClipboardCheck, ClipboardPen, Cloud, Coins, Crosshair, DraftingCompass, FileText, FileWarning, GitBranch, GitCompareArrows, History, Info, Link2, Layers as LayersIcon, ListChecks, ListTree, MessageSquare, Move3d, Palette, PencilRuler, Presentation, Puzzle, Ruler, Scan, Sun, Table2, Terminal, type LucideIcon, Users, Workflow } from 'lucide-react';
 import type { TranslationKey } from '@/i18n';
-// >>> AIM-FORK: icons for the fork-only panels below (D-072, D-075)
-import { Map as MapIcon, Files } from 'lucide-react';
+// >>> AIM-FORK: icons for the fork-only panels below (D-072, D-075, D-089)
+import { Map as MapIcon, Files, GitBranch as AimLayersIcon } from 'lucide-react';
 // <<< AIM-FORK
 
 /** Every panel reachable from the unified sidebar rail. `properties` is the
@@ -66,15 +66,21 @@ export type WorkspacePanelId =
   | 'review'
   | 'assistant'
   | 'idsStudio'
-  // >>> AIM-FORK: fork-only panels (D-072 underlays, D-075 documents)
+  // >>> AIM-FORK: fork-only panels (D-072 underlays, D-075 documents, D-089 AIM layers)
   | 'drawing-underlay'
-  | 'documents';
+  | 'documents'
+  | 'aim-layers';
   // <<< AIM-FORK
 
 /** Shared task grouping for the rail, ribbon panel browser, and palette commands (#5873). */
-export type PanelGroup = 'coordinate' | 'check' | 'quantify' | 'automate' | 'site' | 'author';
+// >>> AIM-FORK: the AIM group (D-104 in the AIM repo) leads the rail, above upstream's groups.
+export type PanelGroup = 'aim' | 'coordinate' | 'check' | 'quantify' | 'automate' | 'site' | 'author';
+// <<< AIM-FORK
 
 export const PANEL_GROUPS = [
+  // >>> AIM-FORK: AIM panels open at the top of the right rail (D-104 in the AIM repo)
+  { id: 'aim', labelKey: 'aimFork.panelGroups.aim', descriptionKey: 'aimFork.panelGroups.aimDescription' },
+  // <<< AIM-FORK
   { id: 'coordinate', labelKey: 'shellChrome.panelGroups.coordinate', descriptionKey: 'shellChrome.panelGroups.coordinateDescription' },
   { id: 'check', labelKey: 'shellChrome.panelGroups.check', descriptionKey: 'shellChrome.panelGroups.checkDescription' },
   { id: 'quantify', labelKey: 'shellChrome.panelGroups.quantify', descriptionKey: 'shellChrome.panelGroups.quantifyDescription' },
@@ -220,12 +226,15 @@ export const WORKSPACE_PANELS: readonly WorkspacePanelDef[] = [
   // authored before any model is loaded.
   { id: 'idsStudio', titleKey: 'idsStudio.title', Icon: ClipboardPen, group: 'check', region: 'side', prefersWide: true },
   // >>> AIM-FORK: fork-only panels, kept last so upstream keeps appending above us.
-  // Georeferenced PDF drawing underlays (D-072 in the AIM repo). APPENDED so
-  // the frozen Alt+1..0 mapping stays intact (no Alt shortcut).
-  { id: 'drawing-underlay', titleKey: 'aimFork.panel.drawingUnderlay', Icon: MapIcon, group: 'author', region: 'side' },
-  // Project documents library (D-075 in the AIM repo): PDFs & images open as
-  // tabs in the center document pane. APPENDED — frozen Alt mapping untouched.
-  { id: 'documents', titleKey: 'aimFork.panel.documents', Icon: Files, group: 'coordinate', region: 'side' },
+  // All three form the AIM group at the top of the rail (D-104 in the AIM repo),
+  // in this order. APPENDED so the frozen Alt+1..0 mapping stays intact.
+  // Project documents library (D-075): PDFs & images open as tabs in the center
+  // document pane, grouped and searched by the host's metadata.
+  { id: 'documents', titleKey: 'aimFork.panel.documents', Icon: Files, group: 'aim', region: 'side' },
+  // AIM layers (D-089): derivation rules of the AIM host, moved out of the tree panel.
+  { id: 'aim-layers', titleKey: 'aimFork.panel.aimLayers', Icon: AimLayersIcon, group: 'aim', region: 'side' },
+  // Georeferenced PDF drawing underlays (D-072).
+  { id: 'drawing-underlay', titleKey: 'aimFork.panel.drawingUnderlay', Icon: MapIcon, group: 'aim', region: 'side' },
   // <<< AIM-FORK
 ];
 

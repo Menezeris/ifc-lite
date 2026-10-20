@@ -45,6 +45,7 @@ import { useViewerStore } from '@/store';
 // the e2e boot smoke covers that the current one does not.
 const DrawingUnderlayPanel = lazy(() => import('@/components/viewer/DrawingUnderlayPanel').then((m) => ({ default: m.DrawingUnderlayPanel })));
 const DocumentsPanel = lazy(() => import('@/components/documents/DocumentsPanel').then((m) => ({ default: m.DocumentsPanel })));
+const AimLayersPanel = lazy(() => import('@/aim/AimLayersPanel').then((m) => ({ default: m.AimLayersPanel })));
 // <<< AIM-FORK
 // Lazy: the Layers panel pulls in @ifc-lite/merge (engine + blake3); a
 // dynamic chunk keeps it out of the initial bundle until first opened.
@@ -219,6 +220,7 @@ function panelBody(id: WorkspacePanelId, onClose: () => void): ReactNode {
     // >>> AIM-FORK: fork-only panels
     case 'drawing-underlay': return <ChunkErrorBoundary label="Drawing underlays panel"><Suspense fallback={null}><DrawingUnderlayPanel onClose={onClose} /></Suspense></ChunkErrorBoundary>;
     case 'documents': return <ChunkErrorBoundary label="Documents panel"><Suspense fallback={null}><DocumentsPanel onClose={onClose} /></Suspense></ChunkErrorBoundary>;
+    case 'aim-layers': return <ChunkErrorBoundary label="AIM layers panel"><Suspense fallback={null}><AimLayersPanel onClose={onClose} /></Suspense></ChunkErrorBoundary>;
     // <<< AIM-FORK
   }
 }

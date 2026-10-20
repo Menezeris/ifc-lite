@@ -8,7 +8,7 @@
  * toggles. A standalone zustand store like aimDecorationsStore: everything AIM
  * lives under src/aim (D-071).
  *
- * The eye toggles and the open AIM LAYERS section are local view state only;
+ * The eye toggles are local view state only;
  * nothing here is ever posted back. Enabling a rule is a data change made at
  * `layer.manageUrl` (viewer-side writes come in phase 3).
  */
@@ -24,12 +24,9 @@ interface AimDerivationsState {
   relationsVisible: boolean;
   /** Per-rule eye: rule ids whose relations are hidden. */
   hiddenRuleIds: string[];
-  /** The AIM LAYERS section in the tree panel is expanded. */
-  layersOpen: boolean;
   setLayer: (layer: DerivationsLayerWire) => void;
   toggleRelationsVisible: () => void;
   toggleRuleVisible: (ruleId: string) => void;
-  setLayersOpen: (open: boolean) => void;
   clear: () => void;
 }
 
@@ -37,7 +34,6 @@ export const useAimDerivationsStore = create<AimDerivationsState>((set) => ({
   layer: null,
   relationsVisible: true,
   hiddenRuleIds: [],
-  layersOpen: true,
   // A re-push (new revision, changed rule) keeps the local toggles; ids of
   // rules the host no longer sends are dropped so they cannot linger hidden.
   setLayer: (layer) =>
@@ -52,7 +48,6 @@ export const useAimDerivationsStore = create<AimDerivationsState>((set) => ({
         ? s.hiddenRuleIds.filter((id) => id !== ruleId)
         : [...s.hiddenRuleIds, ruleId],
     })),
-  setLayersOpen: (layersOpen) => set({ layersOpen }),
   // Teardown (bridge unmount): back to the initial state, local toggles included.
-  clear: () => set({ layer: null, relationsVisible: true, hiddenRuleIds: [], layersOpen: true }),
+  clear: () => set({ layer: null, relationsVisible: true, hiddenRuleIds: [] }),
 }));

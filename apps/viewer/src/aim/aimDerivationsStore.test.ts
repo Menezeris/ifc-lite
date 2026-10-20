@@ -25,12 +25,11 @@ const initial = useAimDerivationsStore.getState();
 describe('aimDerivationsStore', () => {
   beforeEach(() => useAimDerivationsStore.setState(initial, true));
 
-  it('starts without a layer, relations shown and the section open', () => {
+  it('starts without a layer and with relations shown', () => {
     const s = useAimDerivationsStore.getState();
     assert.equal(s.layer, null);
     assert.equal(s.relationsVisible, true);
     assert.deepEqual(s.hiddenRuleIds, []);
-    assert.equal(s.layersOpen, true);
   });
 
   it('stores the pushed layer and replaces it on a re-push', () => {
@@ -60,10 +59,8 @@ describe('aimDerivationsStore', () => {
     assert.deepEqual(useAimDerivationsStore.getState().hiddenRuleIds, ['b']);
   });
 
-  it('opens/closes the AIM LAYERS section and resets everything on teardown', () => {
+  it('resets everything on teardown', () => {
     const s = useAimDerivationsStore.getState();
-    s.setLayersOpen(false);
-    assert.equal(useAimDerivationsStore.getState().layersOpen, false);
     s.setLayer(layer('a'));
     s.toggleRuleVisible('a');
     s.toggleRelationsVisible();
@@ -73,6 +70,5 @@ describe('aimDerivationsStore', () => {
     assert.equal(after.layer, null);
     assert.deepEqual(after.hiddenRuleIds, []);
     assert.equal(after.relationsVisible, true);
-    assert.equal(after.layersOpen, true);
   });
 });

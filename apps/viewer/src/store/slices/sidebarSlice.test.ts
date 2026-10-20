@@ -7,6 +7,11 @@ import assert from 'node:assert';
 import { createStore } from 'zustand/vanilla';
 import { createSidebarSlice, type SidebarSlice } from './sidebarSlice.js';
 import { WORKSPACE_PANELS } from '@/lib/panels/registry';
+// >>> AIM-FORK: the AIM rail group sits above upstream's groups (D-104)
+import { getPanelDef } from '@/lib/panels/registry';
+const firstUpstreamPanel = (order: readonly string[]) =>
+  order.find((id) => getPanelDef(id as SidebarSlice['sidebarOrder'][number])?.group !== 'aim');
+// <<< AIM-FORK
 
 const make = () => createStore<SidebarSlice>(createSidebarSlice);
 
@@ -135,14 +140,18 @@ describe('sidebarSlice (#1208)', () => {
     assert.deepStrictEqual(s.getState().sidebarHiddenIds, []);
     // Hierarchy (#1267) is the default top of the rail, even though it's the
     // last *registry* entry (so the Alt+1..0 mapping stays frozen).
-    assert.strictEqual(s.getState().sidebarOrder[0], 'hierarchy');
+    // >>> AIM-FORK: the AIM group leads the rail (D-104); Hierarchy leads upstream's groups.
+    assert.strictEqual(firstUpstreamPanel(s.getState().sidebarOrder), 'hierarchy');
+    // <<< AIM-FORK
   });
 });
 
 describe('sidebarSlice ordering (#1267)', () => {
   it('defaults Hierarchy to the top of the rail order', () => {
     const s = make();
-    assert.strictEqual(s.getState().sidebarOrder[0], 'hierarchy');
+    // >>> AIM-FORK: the AIM group leads the rail (D-104); Hierarchy leads upstream's groups.
+    assert.strictEqual(firstUpstreamPanel(s.getState().sidebarOrder), 'hierarchy');
+    // <<< AIM-FORK
   });
 
   it('keeps every registry panel present after reordering Hierarchy', () => {
@@ -184,7 +193,9 @@ describe('sidebarSlice task group migration (#5873)', () => {
     const original = make();
     original.getState().applySidebarLayout({ order: previousDefault });
     const migrated = original.getState().sidebarOrder;
-    assert.strictEqual(migrated[0], 'hierarchy');
+    // >>> AIM-FORK: the AIM group leads the rail (D-104); Hierarchy leads upstream's groups.
+    assert.strictEqual(firstUpstreamPanel(migrated), 'hierarchy');
+    // <<< AIM-FORK
     assert.notDeepStrictEqual(migrated, previousDefault);
     assert.strictEqual(new Set(migrated).size, WORKSPACE_PANELS.length);
 
