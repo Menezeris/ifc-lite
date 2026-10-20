@@ -1,0 +1,23 @@
+diff --git a/apps/viewer/src/lib/panels/registry.ts b/apps/viewer/src/lib/panels/registry.ts
+index c6afd901c..642d50c80 100644
+--- a/apps/viewer/src/lib/panels/registry.ts
++++ b/apps/viewer/src/lib/panels/registry.ts
+@@ -78,15 +78,15 @@ export type PanelGroup = 'aim' | 'coordinate' | 'check' | 'quantify' | 'automate
+ // <<< AIM-FORK
+ 
+ export const PANEL_GROUPS = [
++  // >>> AIM-FORK: AIM panels open at the top of the right rail (D-104 in the AIM repo)
++  { id: 'aim', labelKey: 'aimFork.panelGroups.aim', descriptionKey: 'aimFork.panelGroups.aimDescription' },
++  // <<< AIM-FORK
+   { id: 'coordinate', labelKey: 'shellChrome.panelGroups.coordinate', descriptionKey: 'shellChrome.panelGroups.coordinateDescription' },
+   { id: 'check', labelKey: 'shellChrome.panelGroups.check', descriptionKey: 'shellChrome.panelGroups.checkDescription' },
+   { id: 'quantify', labelKey: 'shellChrome.panelGroups.quantify', descriptionKey: 'shellChrome.panelGroups.quantifyDescription' },
+   { id: 'automate', labelKey: 'shellChrome.panelGroups.automate', descriptionKey: 'shellChrome.panelGroups.automateDescription' },
+   { id: 'site', labelKey: 'shellChrome.panelGroups.site', descriptionKey: 'shellChrome.panelGroups.siteDescription' },
+   { id: 'author', labelKey: 'shellChrome.panelGroups.author', descriptionKey: 'shellChrome.panelGroups.authorDescription' },
+-  // >>> AIM-FORK: AIM panels open at the top of the right rail (D-104 in the AIM repo)
+-  { id: 'aim', labelKey: 'aimFork.panelGroups.aim', descriptionKey: 'aimFork.panelGroups.aimDescription' },
+-  // <<< AIM-FORK
+ ] as const satisfies readonly { id: PanelGroup; labelKey: TranslationKey; descriptionKey: TranslationKey }[];
+ 
+ export function panelGroupDefinition(id: PanelGroup): (typeof PANEL_GROUPS)[number] {

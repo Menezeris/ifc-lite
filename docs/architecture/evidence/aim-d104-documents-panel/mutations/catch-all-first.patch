@@ -1,0 +1,13 @@
+diff --git a/apps/viewer/src/aim/documentsQuery.ts b/apps/viewer/src/aim/documentsQuery.ts
+index db198623c..39b7b7405 100644
+--- a/apps/viewer/src/aim/documentsQuery.ts
++++ b/apps/viewer/src/aim/documentsQuery.ts
+@@ -72,7 +72,7 @@ export function groupDocuments<D extends QueryDocument>(
+   }
+   const collator = new Intl.Collator('sk', { numeric: true });
+   for (const list of byGroup.values()) list.sort((a, b) => collator.compare(a.name, b.name));
+-  return [...byGroup.entries()].sort(([a], [b]) => collator.compare(a, b));
++  return [...byGroup.entries()].sort(([a], [b]) => (a === '' ? 1 : b === '' ? -1 : collator.compare(a, b)));
+ }
+ 
+ /**

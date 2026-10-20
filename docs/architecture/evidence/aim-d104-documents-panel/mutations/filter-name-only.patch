@@ -1,0 +1,13 @@
+diff --git a/apps/viewer/src/aim/documentsQuery.ts b/apps/viewer/src/aim/documentsQuery.ts
+index 36e20110c..39b7b7405 100644
+--- a/apps/viewer/src/aim/documentsQuery.ts
++++ b/apps/viewer/src/aim/documentsQuery.ts
+@@ -42,7 +42,7 @@ export function metaKeys(docs: Iterable<QueryDocument>): string[] {
+ export function matchesFilter(doc: QueryDocument, filter: string): boolean {
+   const words = foldText(filter).split(/\s+/).filter(Boolean);
+   if (words.length === 0) return true;
+-  const haystack = foldText(doc.name);
++  const haystack = foldText([doc.name, ...(doc.folder ?? []), ...Object.values(doc.meta ?? {})].join(' '));
+   return words.every((word) => haystack.includes(word));
+ }
+ 

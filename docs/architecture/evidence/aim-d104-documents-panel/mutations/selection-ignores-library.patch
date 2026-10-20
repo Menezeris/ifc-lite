@@ -1,0 +1,15 @@
+diff --git a/apps/viewer/src/aim/documentsQuery.ts b/apps/viewer/src/aim/documentsQuery.ts
+index 8087680f5..39b7b7405 100644
+--- a/apps/viewer/src/aim/documentsQuery.ts
++++ b/apps/viewer/src/aim/documentsQuery.ts
+@@ -117,8 +117,8 @@ export function selectionDocuments<D extends QueryDocument>(
+     const probe: QueryDocument = {
+       id: entry.documentId ?? entry.href,
+       name: [entry.name, entry.via ?? ''].join(' '),
+-      folder: undefined,
+-      meta: undefined,
++      folder: doc?.folder,
++      meta: doc?.meta,
+     };
+     if (!matchesFilter(probe, filter)) return;
+     out.push({

@@ -72,6 +72,8 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/store/createViewerActions.ts` | 2 | fork panel flags in `openWorkspacePanel` / properties reveal |
 | `apps/viewer/src/lib/panels/registry.ts` | 5 | AIM rail group `aim`, first of all groups (D-104), and the fork-only workspace panels `documents`, `aim-layers`, `drawing-underlay` in it, appended last |
 | `apps/viewer/src/lib/panels/renderPanelBody.tsx` | 2 | bodies of the three fork panels |
+| `apps/viewer/src/components/documents/DocumentsPanel.tsx` | 5 | fork file (D-075); grouping by host `meta`, metadata search and documents of the selection come from `aim/documentsQuery.ts` and `aim/AimDocumentsControls.tsx` (D-104) |
+| `apps/viewer/src/store/slices/sidebarSlice.test.ts` | 4 | the AIM rail group leads the rail (D-104), so Hierarchy is asserted first among upstream's groups |
 | `apps/viewer/src/i18n/en.ts` | 2 | fork catalogue `catalogues/aim-fork.en.ts` (panel titles, `ribbon.tab.documents` = "AIM") |
 | `packages/renderer/src/index.ts` | 5 | generic external-overlay hook + registry — **upstream-PR candidate** |
 | `packages/collab-server/src/bin.ts` | 3 | fail-closed startup guard (replaces upstream's warn-only block) |
