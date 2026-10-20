@@ -134,4 +134,15 @@ export function applyLegendSize(size: LegendSize): void {
   useViewerStore.setState({ lensPanelVisible: true });
   state.floatPanel('lens');
   state.setFloatingPanelRect('lens', legendPanelRect(window.innerWidth, window.innerHeight));
+  scrollToLegend();
+}
+
+/** Legenda je pod kartami predvolených lens: posunúť panel na ňu, keď ju useLens vykreslí. */
+function scrollToLegend(started = Date.now()): void {
+  const legend = document.querySelector('[data-tour="lens-legend"]');
+  if (legend) {
+    legend.scrollIntoView({ block: 'start' });
+    return;
+  }
+  if (Date.now() - started < WAIT_MS) setTimeout(() => scrollToLegend(started), POLL_MS * 2);
 }
