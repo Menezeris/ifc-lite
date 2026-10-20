@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimPanelViewPlan.ts a/apps/viewer/src/aim/aimPanelViewPlan.ts
+index 4d784be5..f94cac2b 100644
+--- b/apps/viewer/src/aim/aimPanelViewPlan.ts
++++ a/apps/viewer/src/aim/aimPanelViewPlan.ts
+@@ -53,6 +53,6 @@ export function selectPanel(raw: unknown): AimPanelView | undefined | null {
+ 
+ /** Čo sa má nastaviť: focus vlastnosti žije v sekcii Properties pod záložkou IFC. */
+ export function panelPlan(view: AimPanelView): { tab?: InspectorTab; section?: PanelSection; focus?: { pset: string; property: string } } {
+-  if (view.focus) return { tab: view.tab ?? 'ifc', section: view.section ?? 'properties', focus: view.focus };
++  if (view.focus) return { tab: 'ifc', section: 'properties', focus: view.focus };
+   return { ...(view.tab ? { tab: view.tab } : {}), ...(view.section ? { tab: view.tab ?? 'ifc', section: view.section } : {}) };
+ }

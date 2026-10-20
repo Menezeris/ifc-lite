@@ -89,7 +89,7 @@ import { useCopyValue } from './properties/useCopyValue';
 import { SelectionSummaryPanel } from './properties/SelectionSummaryPanel';
 import { AssistantAction } from './assistant/AssistantAction';
 // >>> AIM-FORK: AIM asset card, rendered only inside the AIM host (see docs/FORK_MAINTENANCE.md)
-import { AimInspectorTabs, useAimNativeHidden } from '@/aim/AimInspectorTabs';
+import { AimInspectorTabs, isReadOnlyFocus, useAimNativeHidden } from '@/aim/AimInspectorTabs';
 // <<< AIM-FORK
 
 // >>> AIM-FORK: mobile scroll host (bottom sheet owns the single scroll surface)
@@ -215,7 +215,7 @@ export function PropertiesPanel() {
     // Match on the same raw modelId + expressId the selection carries; a stale
     // focus for a different entity is left untouched (never consumed here).
     if (focus.modelId !== selectedEntity.modelId || focus.entityId !== selectedEntity.expressId) return;
-    setEditEnabled(true);
+    if (!isReadOnlyFocus(focus)) setEditEnabled(true); // >>> AIM-FORK: focus z chatu (D-113) nezapína úpravy <<< AIM-FORK
     setFind(''); // A prior query must not hide the row bSDD asked us to reveal.
     // entityId-qualified key so it can only ever highlight the occurrence row
     // (not an inherited type pset that happens to share the name).

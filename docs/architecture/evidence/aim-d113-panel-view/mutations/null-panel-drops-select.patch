@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelViewPlan.ts a/apps/viewer/src/aim/aimPanelViewPlan.ts
+index 95b08fa0..f94cac2b 100644
+--- b/apps/viewer/src/aim/aimPanelViewPlan.ts
++++ a/apps/viewer/src/aim/aimPanelViewPlan.ts
+@@ -48,7 +48,7 @@ export function parsePanelView(raw: unknown): AimPanelView | null {
+  * výsledok `null` = neplatný panel, správa sa zahodí celá (nič sa nevyberie).
+  */
+ export function selectPanel(raw: unknown): AimPanelView | undefined | null {
+-  return raw === undefined ? undefined : parsePanelView(raw);
++  return raw === undefined || raw === null ? undefined : parsePanelView(raw);
+ }
+ 
+ /** Čo sa má nastaviť: focus vlastnosti žije v sekcii Properties pod záložkou IFC. */

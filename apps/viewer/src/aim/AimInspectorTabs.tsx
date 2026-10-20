@@ -13,25 +13,15 @@
  */
 
 import { lazy, Suspense } from 'react';
-import { create } from 'zustand';
 import { Database, FileBox } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useViewerStore } from '@/store';
 import { useAimPanelStore } from './aimPanelStore';
+import { useAimInspectorStore, type InspectorTab } from './aimInspectorStore';
+// PropertiesPanel ho berie cez existujúci import tohto modulu (súbor je na strope veľkosti).
+export { isReadOnlyFocus } from './aimInspectorStore';
 // Lazy: the card only renders under the AIM tab inside the AIM host.
 const AimCard = lazy(() => import('./AimCard').then((m) => ({ default: m.AimCard })));
-
-type InspectorTab = 'aim' | 'ifc';
-
-interface AimInspectorState {
-  tab: InspectorTab;
-  setTab: (tab: InspectorTab) => void;
-}
-
-const useAimInspectorStore = create<AimInspectorState>((set) => ({
-  tab: 'aim',
-  setTab: (tab) => set({ tab }),
-}));
 
 /** True while the tab bar is active AND the AIM tab is selected — the
  *  PropertiesPanel hides its native content subtree for that state. */
