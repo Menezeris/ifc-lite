@@ -29,6 +29,7 @@ import {
   renderPdfTextLayer,
 } from '@/lib/pdf/rasterize';
 import { PageIdentifierLinks } from './PageIdentifierLinks';
+import { useAimDocRegion } from '@/aim/docRegion'; // >>> AIM-FORK (D-117) <<< AIM-FORK
 
 /**
  * Raster ceiling (longest edge, device px). Deep zoom into drawings needs
@@ -266,8 +267,7 @@ export function PdfDocumentView({ docId, url }: PdfDocumentViewProps) {
     if (page > 1) pageElsRef.current.get(page)?.scrollIntoView({ block: 'start' });
   }, [pdf, pageWidth]);
 
-  // Deep-link jump for an ALREADY-open tab (DOCUMENT_OPEN with a page): the
-  // store view is only read at mount, so jumps arrive as one-shot requests.
+  useAimDocRegion({ docId, pdf, bodyWidth, aspects, zoom, currentPage, scrollRef, pageElsRef, zoomTo: () => zoomTo }); // >>> AIM-FORK (D-117): page region from chat. Below: one-shot page jump for an open tab (view is read at mount) <<< AIM-FORK
   const docJump = useViewerStore((s) => s.docJump);
   const clearDocJump = useViewerStore((s) => s.clearDocJump);
   useEffect(() => {

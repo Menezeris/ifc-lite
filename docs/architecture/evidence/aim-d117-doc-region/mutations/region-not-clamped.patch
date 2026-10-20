@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docRegion.ts a/apps/viewer/src/aim/docRegion.ts
+index c397099f..648c5847 100644
+--- b/apps/viewer/src/aim/docRegion.ts
++++ a/apps/viewer/src/aim/docRegion.ts
+@@ -41,7 +41,7 @@ export function normalizeDocRegion(raw: unknown): DocRegion | null {
+   if (w0 <= 0 || h0 <= 0) return null;
+   const x = clamp(x0, 0, 1 - MIN_SIZE);
+   const y = clamp(y0, 0, 1 - MIN_SIZE);
+-  return { x, y, w: clamp(w0, MIN_SIZE, 1), h: clamp(h0, MIN_SIZE, 1) };
++  return { x, y, w: clamp(w0, MIN_SIZE, 1 - x), h: clamp(h0, MIN_SIZE, 1 - y) };
+ }
+ 
+ /**

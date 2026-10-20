@@ -32,6 +32,7 @@ import { isCommandMessage, type AppliedMessage, type CommandInboundMessage } fro
 import { createCommandGate, noteIssue, resetCommandState, settled, takeIssues, track } from './command-gate.js';
 import { useAimPanelStore } from './aimPanelStore.js';
 import { useCapturePinsStore } from './capturePinsStore.js';
+import { normalizeDocRegion, useAimDocRegionStore } from './docRegion.js';
 import { useAimDecorationsStore } from './aimDecorationsStore.js';
 import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
@@ -199,13 +200,17 @@ export function AimBridge() {
           useViewerStore.getState().setViewerDocuments(docs);
           break;
         }
-        case 'DOCUMENT_OPEN':
+        case 'DOCUMENT_OPEN': {
           // Deep link (D-075): otvor dokument ako kartu. Neznáme id je no-op
           // (openDocument si to ustráži) — host mohol poslať staršiu linku.
           useViewerStore
             .getState()
             .openDocument(e.data.documentId, e.data.page !== undefined ? { page: e.data.page } : undefined);
+          // Výrez strany z chatu (D-117): karta sa priblíži, keď je PDF otvorené.
+          const region = normalizeDocRegion(e.data.region);
+          if (region) useAimDocRegionStore.getState().requestRegion(e.data.documentId, region, e.data.page);
           break;
+        }
         case 'CAPTURES_LOAD':
           // Reality Capture pins (D-073): host pushes capture points with world
           // coords; the billboard layer (CapturePinLayer) renders them.
@@ -252,6 +257,7 @@ export function AimBridge() {
       useCapturePinsStore.getState().setPins([]);
       useAimDecorationsStore.getState().clear();
       useAimDerivationsStore.getState().clear();
+      useAimDocRegionStore.setState({ request: null }); // D-117: čakajúci výrez nepatrí ďalšej relácii
       resetLensFromChat(); // D-096: izolácia a AIM chat lens neprežijú odpojenie mostu
       setFocusProvider(undefined);
       resetCommandState(); // problémy a kroky z predošlej relácie nepatria do ďalšieho APPLIED
