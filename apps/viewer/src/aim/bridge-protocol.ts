@@ -182,7 +182,11 @@ export type OutboundMessage =
   | { source: typeof SOURCE; type: 'CAPTURE_PIN_CLICK'; captureId: string }
   // A document tab was opened/closed in the viewer (D-075) — host-side
   // recents / analytics; the viewer expects no reply.
-  | { source: typeof SOURCE; type: 'DOCUMENT_EVENT'; documentId: string; event: 'opened' | 'closed' };
+  | { source: typeof SOURCE; type: 'DOCUMENT_EVENT'; documentId: string; event: 'opened' | 'closed' }
+  // "Ukázať v 3D" on an open document (D-104 step 4 in the AIM repo): the host
+  // resolves the elements the page (or the whole document) refers to from its
+  // graph and answers with APPLY_LENS; the viewer holds no document links.
+  | { source: typeof SOURCE; type: 'DOCUMENT_SHOW_3D'; documentId: string; page?: number };
 
 /**
  * Narrow untrusted `MessageEvent.data` to a bridge message we handle.

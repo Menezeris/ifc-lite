@@ -20,6 +20,9 @@ export interface QueryDocument {
   meta?: Readonly<Record<string, string>>;
 }
 
+/** Id prefix of a document the user opened from disk (not sent by the host). */
+export const LOCAL_DOCUMENT_PREFIX = 'local:';
+
 /** Group by the host's folder path (default) or by a `meta` key. */
 export const GROUP_BY_FOLDER = '';
 
@@ -131,4 +134,15 @@ export function selectionDocuments<D extends QueryDocument>(
     });
   });
   return out;
+}
+
+/**
+ * Payload of DOCUMENT_SHOW_3D for an open document: only host documents (a file
+ * opened locally has no elements in the host's graph), the page only when it is
+ * a real 1-based page. The host falls back to the whole document when the page
+ * has no elements of its own.
+ */
+export function show3dTarget(documentId: string, page: number | undefined): { documentId: string; page?: number } | null {
+  if (!documentId || documentId.startsWith(LOCAL_DOCUMENT_PREFIX)) return null;
+  return page && Number.isInteger(page) && page >= 1 ? { documentId, page } : { documentId };
 }

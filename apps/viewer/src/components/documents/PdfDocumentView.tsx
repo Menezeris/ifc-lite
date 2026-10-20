@@ -29,6 +29,9 @@ import {
   renderPdfTextLayer,
 } from '@/lib/pdf/rasterize';
 import { PageIdentifierLinks } from './PageIdentifierLinks';
+// >>> AIM-FORK: "Ukázať v 3D" for the page being read (D-104 step 4)
+import { AimDocumentShow3d } from '@/aim/AimDocumentShow3d';
+// <<< AIM-FORK
 
 /**
  * Raster ceiling (longest edge, device px). Deep zoom into drawings needs
@@ -427,6 +430,9 @@ export function PdfDocumentView({ docId, url }: PdfDocumentViewProps) {
           {numPages > 0 ? `${currentPage} / ${numPages}` : '…'}
         </span>
         <div className="flex-1" />
+        {/* >>> AIM-FORK: elements of this page in 3D, answered by the AIM host (D-104 step 4) */}
+        <AimDocumentShow3d docId={docId} page={currentPage} />
+        {/* <<< AIM-FORK */}
         <Button
           variant="ghost"
           size="icon"

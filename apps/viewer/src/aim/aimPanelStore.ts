@@ -79,6 +79,15 @@ export const useAimPanelStore = create<AimPanelStore>((set, get) => ({
   },
 }));
 
+/** "Ukázať v 3D" on an open document (D-104): the host answers with APPLY_LENS. */
+export function postAimDocumentShow3d(target: { documentId: string; page?: number }) {
+  const { parentOrigin } = useAimPanelStore.getState();
+  window.parent.postMessage(
+    { source: SOURCE, type: 'DOCUMENT_SHOW_3D', ...target } satisfies OutboundMessage,
+    parentOrigin ?? '*',
+  );
+}
+
 /** Click on any AIM link — the parent app navigates; the iframe never does. */
 export function postAimNavigate(href: string) {
   const { parentOrigin } = useAimPanelStore.getState();
