@@ -19,6 +19,9 @@ import { useViewerStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { PdfDocumentView } from './PdfDocumentView';
 import { ImageDocumentView } from './ImageDocumentView';
+// >>> AIM-FORK: "Ukázať v 3D" for the page being read, answered by the AIM host (D-104 step 4)
+import { AimDocumentShow3d } from '@/aim/AimDocumentShow3d';
+// <<< AIM-FORK
 
 export function DocumentPane() {
   const docs = useViewerStore((s) => s.viewerDocuments);
@@ -36,7 +39,10 @@ export function DocumentPane() {
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden border-l bg-background">
-      <div role="tablist" aria-label="Open documents" className="flex items-stretch overflow-x-auto border-b">
+      {/* >>> AIM-FORK: the tab strip shares its row with "Ukázať v 3D" (D-104 step 4) */}
+      <div className="flex items-stretch border-b">
+      <div role="tablist" aria-label="Open documents" className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
+      {/* <<< AIM-FORK */}
         {tabs.map((tab) => {
           const doc = docs.get(tab.docId);
           const active = tab.docId === activeId;
@@ -76,6 +82,10 @@ export function DocumentPane() {
           );
         })}
       </div>
+      {/* >>> AIM-FORK: elements of the page in 3D, rendered only inside the AIM host (D-104 step 4) */}
+      {activeId && <AimDocumentShow3d docId={activeId} />}
+      </div>
+      {/* <<< AIM-FORK */}
       <div className="min-h-0 flex-1">
         {/* Route on `kind` alone — both ingestion points (the host adapter
             and the local file picker) already classify; a second extension

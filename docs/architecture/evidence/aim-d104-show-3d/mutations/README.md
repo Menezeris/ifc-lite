@@ -4,7 +4,7 @@
 
 # AIM D-104 step 4 "Ukázať v 3D": surgical mutation evidence
 
-The change adds a "Ukázať v 3D" button to the toolbar of an open PDF. A click posts `DOCUMENT_SHOW_3D {documentId, page}` with the page being read; the AIM host resolves the elements that page (or, without own elements, the whole document) refers to and answers with `APPLY_LENS`. The payload is decided by the new pure function `show3dTarget` in `apps/viewer/src/aim/documentsQuery.ts`; its test imports that new export, so reverting production to the base makes the test fail to load and the CI revert oracle (`Changed tests observe production`) reports INCONCLUSIVE. Each decision of the function was instead checked with a surgical mutation.
+The change adds a "Ukázať v 3D" button at the end of the document tab strip. A click posts `DOCUMENT_SHOW_3D {documentId, page}` with the page being read; the AIM host resolves the elements that page (or, without own elements, the whole document) refers to and answers with `APPLY_LENS`. The payload is decided by the new pure function `show3dTarget` in `apps/viewer/src/aim/documentsQuery.ts`; its test imports that new export, so reverting production to the base makes the test fail to load and the CI revert oracle (`Changed tests observe production`) reports INCONCLUSIVE. Each decision of the function was instead checked with a surgical mutation.
 
 Each patch is written mutant→fixed (the orientation of `git diff base...head`); the oracle reverse-applies it. Every run ended `OBSERVED` (exit 0) with restoration verified, against base `origin/main`. The full records are in `summary.json`.
 
@@ -14,7 +14,7 @@ Each patch is written mutant→fixed (the orientation of `git diff base...head`)
 | `show3d-any-page.patch` | `documentsQuery.ts` | any truthy page is sent, also a fractional one | `documentsQuery.test.ts` |
 | `show3d-drops-page.patch` | `documentsQuery.ts` | the page being read is never sent, so the host always shows the whole document | `documentsQuery.test.ts` |
 
-`AimDocumentShow3d.tsx` (the button, rendered only inside the AIM host), `postAimDocumentShow3d` in `aimPanelStore.ts` and the `PdfDocumentView.tsx` block are UI glue without a unit test; they are checked live in the embedded viewer as described in the pull request ("Ako vyskúšať").
+`AimDocumentShow3d.tsx` (the button at the end of the tab strip, rendered only inside the AIM host), `postAimDocumentShow3d` in `aimPanelStore.ts` and the `DocumentPane.tsx` blocks are UI glue without a unit test; they are checked live in the embedded viewer as described in the pull request ("Ako vyskúšať").
 
 ## Replay
 
