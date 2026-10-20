@@ -26,6 +26,7 @@ test('the host page embeds the viewer and only trusts its origin', () => {
   const page = hostPage('https://ifc-lite-viewer.vercel.app/?x="1"');
   assert.match(page, /<iframe id="v" src="https:\/\/ifc-lite-viewer\.vercel\.app\/\?x=%221%22"/);
   assert.match(page, /const origin = "https:\/\/ifc-lite-viewer\.vercel\.app";/);
+  assert.match(page, /if \(e\.origin !== origin \|\| /, 'a message from another origin is ignored');
   assert.match(page, /query: 'view_state'/);
   assert.throws(() => hostPage('not a url'));
 });
