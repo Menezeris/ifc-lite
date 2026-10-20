@@ -14,26 +14,26 @@ description: >-
 
 # AIM feature in the fork: get CI green on the first run
 
-A PR that touches only the AIM layer (`apps/viewer/src/aim/`, `docs/architecture/evidence/aim-*`,
-the AIM skills, `docs/FORK_MAINTENANCE.md`) runs the fast lane (D-098). Since D-103 so does a PR
-whose other changes are edits **inside `AIM-FORK` blocks** of existing `apps/viewer/` files, plus
-a pre-approved raise of the two viewer bundle ceilings. `scripts/check-aim-fork-only.mjs` decides;
-run it before pushing to see which lane you get:
+Every feature PR runs the fast lane (`aim-fast.yml`, about 10 minutes): AIM tests, source
+gates, viewer typecheck, the viewer tests that import a changed file, and the viewer build with
+its JS bundle ratchet; `test.yml` skips its heavy lanes (D-098, D-103, D-114). The full CI (Rust,
+WASM, viewer shards, E2E, revert oracle) runs once on a **release batch** of several PRs (skill
+`release-train`) and every night on `main`. So a feature PR is never merged on its own: it is
+ready when the fast lane is green and its "Ako vyskúšať" link works (`.claude/skills/steward/SKILL.md`).
+See which mode the script gives your branch before pushing:
 
 ```bash
 node scripts/check-aim-fork-only.mjs --base origin/main --head HEAD
 ```
 
-The fast lane (`aim-fast.yml`, about 10-15 minutes) runs the AIM tests, source gates, viewer
-typecheck, the viewer tests that import a changed file, and the viewer build with its JS bundle
-ratchet; `test.yml` skips its heavy lanes, and a nightly full run on `main` catches the rest.
-One line changed outside a block, a new upstream file, a package, a script or a workflow brings
-back upstream's full CI (Rust, WASM, viewer shards, E2E, revert oracle: 30-60 minutes per run),
-so wrap every upstream edit in a block (step 1). The fast lane does not run the revert oracle, so
-step 4 stays mandatory; step 3 prepares the ceiling raise before the first push. Everything below
-runs locally in a few minutes; do it **before the first push**. Rules and reasons:
-`docs/FORK_MAINTENANCE.md` ("Fast CI for AIM pull requests", "Pre-approved raises for new AIM
-features").
+`aim-only` and `fork-blocks` (upstream viewer files edited only inside `AIM-FORK` blocks) are
+the tidy cases; `upstream` (a line outside a block, a new upstream file, a package, a script,
+a workflow) still takes the fast lane, but every such edit makes the next upstream sync and the
+batch harder, so wrap upstream edits in a block (step 1). The fast lane does not run the revert
+oracle, so step 4 stays mandatory for the batch; step 3 prepares the ceiling raise before the
+first push. Everything below runs locally in a few minutes; do it **before the first push**.
+Rules and reasons: `docs/FORK_MAINTENANCE.md` ("Fast CI for AIM pull requests", "Release train",
+"Pre-approved raises for new AIM features").
 
 ## 1. Where the code goes
 
@@ -45,7 +45,8 @@ features").
   do not copy them. No edits in upstream files; when unavoidable, an `AIM-FORK`
   sentinel and a row in `FORK_MAINTENANCE.md`. To change an upstream line, replace it
   inside a new block (the old line goes, the new one sits between the markers); a
-  changed line outside any block sends the PR to the full CI (D-103).
+  changed line outside any block makes the PR `upstream` mode (D-114): still fast, but
+  a conflict risk at every sync.
 - Anything not needed at boot: dynamic `import()` on first use. The lazy module must
   not import a module the entry imports (pass helpers in from the caller), or the
   bundler splits that module out and the entry grows anyway.
@@ -118,5 +119,7 @@ wait or retry.
   (D-103): do not push only for them. Reply once, resolve the thread, list them under
   "Follow-up" in the PR body once CI has finished; they are fixed together in a later PR. A finding labelled
   **blocker (security)** is fixed in this PR. Details: `.claude/skills/steward/SKILL.md`.
-- The PR merges into `main` with a merge commit; production deploys from `main`,
-  so merging needs Samuel's consent.
+- Add the **"Ako vyskúšať"** section to the PR body (steward skill): the link
+  `https://ai-mviewer.vercel.app/ifc?viewer=pr-<number>` and the steps to try, checked
+  live by you first where you can. Do not merge the PR: it ships in a release batch when
+  Samuel names it (skill `release-train`).
