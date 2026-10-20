@@ -852,7 +852,7 @@ export function ViewportContainer() {
           two roots until `ToolOverlays` (#5502) consolidated here). */}
       <SceneOverlayRoot>
         <AnnotationLayer />
-        {/* >>> AIM-FORK: Reality Capture pin billboard (D-073) — AIM-owned layer,
+        {/* >>> AIM-FORK: Reality Capture pin billboard (D-073) and 2D room fill (D-119) — AIM-owned layers,
             same overlay root as AnnotationLayer so it re-projects over the scene. */}
         <Suspense fallback={null}><CapturePinLayer /></Suspense>
         {/* <<< AIM-FORK */}
