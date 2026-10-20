@@ -5,24 +5,39 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, it } from 'node:test';
 
-import { createMeasurementSlice, type MeasurementSlice } from '../store/slices/measurementSlice.js';
 import type { MeasurePoint } from '../store/types.js';
-import { addHostMeasurements } from './measureShow.js';
+import { addHostMeasurements, type MeasureStore } from './hostMeasurements.js';
 import { isViewMessage } from './view-protocol.js';
 
 const S = 'aim-bridge';
 const seg = (ax: number, bx: number) => ({ a: { x: ax, y: 2, z: 3 }, b: { x: bx, y: 2, z: 3 } });
 
 describe('kóta od hosta, MEASURE_SHOW (AIM D-124)', () => {
-  let state: MeasurementSlice;
+  let state: MeasureStore;
   const get = () => state;
-  const setPending = (p: MeasurePoint | null) => { state = { ...state, pendingMeasurePoint: p }; };
+  const setPending = (p: MeasurePoint | null) => { state.pendingMeasurePoint = p; };
+
+  // Ako `measurementSlice` (bez neho: jeho importy ťahajú WASM, ktorý rýchla cesta CI nemá).
+  function store(): MeasureStore {
+    let n = 0;
+    const s: MeasureStore = {
+      measurements: [],
+      pendingMeasurePoint: null,
+      addMeasurePoint: (p) => { s.pendingMeasurePoint = p; },
+      completeMeasurement: (end) => {
+        const start = s.pendingMeasurePoint;
+        if (!start) return;
+        const distance = Math.hypot(end.x - start.x, end.y - start.y, end.z - start.z);
+        s.measurements = [...s.measurements, { id: `m-${++n}`, start, end, distance }];
+        s.pendingMeasurePoint = null;
+      },
+      deleteMeasurement: (id) => { s.measurements = s.measurements.filter((m) => m.id !== id); },
+    };
+    return s;
+  }
 
   beforeEach(() => {
-    const set = (partial: Partial<MeasurementSlice> | ((s: MeasurementSlice) => Partial<MeasurementSlice>)) => {
-      state = { ...state, ...(typeof partial === 'function' ? partial(state) : partial) };
-    };
-    state = createMeasurementSlice(set as never, get as never, {} as never);
+    state = store();
     // Vyprázdni pamäť kót od hosta z predošlého testu (správa bez keep ich nahrádza).
     addHostMeasurements(get, setPending, { segments: [] }, { x: 0, y: 0, z: 0 });
   });
