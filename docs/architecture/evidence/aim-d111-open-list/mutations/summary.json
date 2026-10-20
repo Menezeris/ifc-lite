@@ -1,0 +1,72 @@
+{
+  "empty-columns-accepted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimListPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "50af36ee48502212579059551a783066f3ddecbf",
+    "production": [
+      "apps/viewer/src/aim/aimListPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimListPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "envelope-drops-open-list": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimListPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "50af36ee48502212579059551a783066f3ddecbf",
+    "production": [
+      "apps/viewer/src/aim/lens-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimListPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "model-rule-unresolved": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimListPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "50af36ee48502212579059551a783066f3ddecbf",
+    "production": [
+      "apps/viewer/src/aim/aimListPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimListPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "property-without-pset": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimListPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "50af36ee48502212579059551a783066f3ddecbf",
+    "production": [
+      "apps/viewer/src/aim/aimListPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimListPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "unknown-column-source": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimListPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "d2e88ea81c70f2b0d4f2e2f2a048f2cfd4650407",
+    "head": "50af36ee48502212579059551a783066f3ddecbf",
+    "production": [
+      "apps/viewer/src/aim/aimListPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimListPlan.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

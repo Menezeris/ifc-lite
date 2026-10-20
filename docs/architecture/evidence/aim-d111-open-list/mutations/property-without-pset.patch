@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimListPlan.ts a/apps/viewer/src/aim/aimListPlan.ts
+index 67b8f3d1..144b64ed 100644
+--- b/apps/viewer/src/aim/aimListPlan.ts
++++ a/apps/viewer/src/aim/aimListPlan.ts
+@@ -39,6 +39,7 @@ export function parseOpenList(data: LensInboundMessage): OpenListMessage | null
+     if (!c || typeof c !== 'object' || !SOURCES.has(c.source as ColumnDefinition['source'])) return null;
+     if (typeof c.propertyName !== 'string' || c.propertyName.length > 200) return null;
+     if (c.psetName !== undefined && !shortStr(c.psetName, 200)) return null;
++    if (NEEDS_SET.has(c.source as ColumnDefinition['source']) && c.psetName === undefined) return null;
+     if (c.label !== undefined && !shortStr(c.label, 120)) return null;
+   }
+   return data as OpenListMessage;

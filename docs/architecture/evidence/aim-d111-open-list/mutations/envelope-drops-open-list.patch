@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/lens-protocol.ts a/apps/viewer/src/aim/lens-protocol.ts
+index de9e2ccd..ebeec725 100644
+--- b/apps/viewer/src/aim/lens-protocol.ts
++++ a/apps/viewer/src/aim/lens-protocol.ts
+@@ -67,7 +67,7 @@ export interface AimListColumnWire {
+ export function isLensEnvelope(data: unknown): data is LensInboundMessage {
+   if (!data || typeof data !== 'object') return false;
+   const m = data as Record<string, unknown>;
+-  return m.source === SOURCE && (m.type === 'APPLY_LENS' || m.type === 'LENS_QUERY');
++  return m.source === SOURCE && (m.type === 'APPLY_LENS' || m.type === 'LENS_QUERY' || m.type === 'OPEN_LIST');
+ }
+ 
+ /** Modul Lens z chatu sa načíta až pri prvej správe, aby vstupný balík nerástol. */

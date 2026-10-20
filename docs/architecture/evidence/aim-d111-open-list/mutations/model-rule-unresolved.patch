@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimListPlan.ts a/apps/viewer/src/aim/aimListPlan.ts
+index 93a321c8..144b64ed 100644
+--- b/apps/viewer/src/aim/aimListPlan.ts
++++ a/apps/viewer/src/aim/aimListPlan.ts
+@@ -61,7 +61,7 @@ export function listDefinitionFromChat(msg: OpenListMessage, models: readonly Mo
+     updatedAt: now,
+     // Bez triedy = každý prvok modelu; triedu, podlažie a ostatné nesú filtre.
+     entityTypes: [],
+-    groups: msg.groups as FilterGroup[],
++    groups: resolveModelRules(msg.groups as FilterGroup[], models),
+     columns,
+   };
+ }
