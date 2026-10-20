@@ -140,6 +140,7 @@ export function runVisibilityCommand(
       bim.viewer.resetColors(); // plný reset zhodí aj focus - filter ho nahrádza
       focused = [];
       const refs = d.resolveGuids(useViewerStore.getState().models, msg.guids);
+      revealGatesForRefs(refs); // ako COLORIZE: miestnosť v skrytej triede by inak nebolo vidieť
       if (refs.length > 0) bim.viewer.colorize(refs, d.FILTER_COLOR);
       return true;
     }
