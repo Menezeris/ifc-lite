@@ -1,0 +1,13 @@
+diff --git b/scripts/aim-smoke.mjs a/scripts/aim-smoke.mjs
+index 627cb8fd..e112a5ab 100644
+--- b/scripts/aim-smoke.mjs
++++ a/scripts/aim-smoke.mjs
+@@ -43,7 +43,7 @@ export function hostPage(viewerUrl) {
+ 
+ /** Turn what the page saw into a verdict: null on a pass, else the reason. */
+ export function verdict(state) {
+-  if (!state) return 'the viewer never sent READY: the AIM bridge did not start';
++  if (!state || !state.ready) return 'the viewer never sent READY: the AIM bridge did not start';
+   if (!state.result) return 'READY came, but QUERY view_state got no QUERY_RESULT';
+   if (state.result.ok !== true) return `QUERY view_state failed: ${state.result.error ?? 'no error text'}`;
+   return null;
