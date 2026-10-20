@@ -54,7 +54,9 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/components/viewer/MobileBottomSheet.tsx` | 1 | `z-50` so sheets sit above the full-screen plan/document overlays |
 | `apps/viewer/src/components/viewer/MobileToolbar.tsx` | 2 | `<ViewModeSwitcher />` (D-075) |
 | `apps/viewer/src/components/viewer/PropertiesPanel.tsx` | 8 | AIM \| IFC inspector tabs + `<AimCard />`, native content wrapped, mobile scroll host (D-077); a property focus from the chat highlights the row without entering edit mode (AIM D-113) |
-| `apps/viewer/src/components/documents/PdfDocumentView.tsx` | 2 | page region from the AIM chat (D-117): one import and one `useAimDocRegion` call from `aim/docRegion.ts`, one-line blocks because the file sits at its module-size budget |
+| `apps/viewer/src/lib/appearance/pdf/browser-backend.ts` | 1 | pdf.js **legacy build** and its worker (AIM #97): the modern build needs `Map.getOrInsertComputed` and `Math.sumPrecise`, so Safari < 26.2 (all of iOS 18) and Chrome < 147 could not draw a page; guarded by `aim/pdfjs-legacy-build.test.ts` |
+| `apps/viewer/src/lib/pdf/rasterize.ts` | 1 | the same legacy build for the drawing underlay rasterizer (AIM #97) |
+| `apps/viewer/src/components/documents/PdfDocumentView.tsx` | 2 | page region from the AIM chat (D-117): one import and one `useAimDocRegion` call from `aim/docRegion.ts`, one-line blocks because the file sits at its module-size budget; the same call draws the text highlights (D-123), no further edit |
 | `apps/viewer/src/components/viewer/HierarchyPanel.tsx` | 2 | AIM tree decorations — row → IFC GlobalId → badge counts (D-077), one import from `aim/hierarchyPanel.ts` because the file sits at its module-size budget; AIM LAYERS moved to the `aim-layers` panel (D-104) |
 | `apps/viewer/src/components/viewer/hierarchy/ModelHeaderRow.tsx` | 2 | `<AimModelRevision />` model revision pill on MODELS rows (D-089) |
 | `apps/viewer/src/components/viewer/properties/RelationshipsCard.tsx` | 3 | `<AimDerivedRelations />` AIM group in Relationship records + its rows in the card count (D-089) |
@@ -74,6 +76,7 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/lib/panels/registry.ts` | 5 | AIM rail group `aim`, first of all groups (D-104), and the fork-only workspace panels `documents`, `aim-layers`, `drawing-underlay` in it, appended last |
 | `apps/viewer/src/lib/panels/renderPanelBody.tsx` | 2 | bodies of the three fork panels |
 | `apps/viewer/src/components/documents/DocumentsPanel.tsx` | 5 | fork file (D-075); grouping by host `meta`, metadata search and documents of the selection come from `aim/documentsQuery.ts` and `aim/AimDocumentsControls.tsx` (D-104) |
+| `apps/viewer/src/components/documents/DocumentPane.tsx` | 3 | fork file (D-075); "Ukázať v 3D" at the end of the tab strip for the page being read, `aim/AimDocumentShow3d.tsx` posts `DOCUMENT_SHOW_3D` (D-104 step 4) |
 | `apps/viewer/src/store/slices/sidebarSlice.test.ts` | 4 | the AIM rail group leads the rail (D-104), so Hierarchy is asserted first among upstream's groups |
 | `apps/viewer/src/i18n/en.ts` | 2 | fork catalogue `catalogues/aim-fork.en.ts` (panel titles, `ribbon.tab.documents` = "AIM") |
 | `packages/renderer/src/index.ts` | 5 | generic external-overlay hook + registry — **upstream-PR candidate** |
@@ -388,7 +391,9 @@ plným CI raz a má vlastný náhľad na vyskúšanie celku. Do `main` ide merge
 pokyn. Samostatné zlúčenie jedného PR len na výslovný pokyn, so štítkom `ci:full`.
 
 **Po zlúčení:**
-- `aim-release.yml` označí merge commit balíka tagom `aim-release-<dátum>-<sha>`.
+- `aim-release.yml` označí merge commit balíka tagom `aim-release-<dátum>-<sha>`. Balík spozná podľa
+  zlúčeného PR s vetvou `release/aim-*`, nie podľa textu commitu (zmenený nadpis merge commitu
+  nechal prvý balík 20. 10. bez tagu). Chýbajúci tag doplní ručné spustenie s `sha` merge commitu.
 - Vercel nasadí produkciu a `aim-smoke.yml` (udalosť `deployment_status`, len Production) ju
   hneď otestuje: `scripts/aim-smoke.mjs` vloží produkčný viewer do iframe ako AIM host, počká na
   `READY` a pošle `QUERY view_state`. Červený beh založí issue (cez `report-scheduled-failure.yml`).
@@ -487,6 +492,7 @@ locally before the first push (`.claude/skills/aim-feature/SKILL.md`).
 |---|---|---|---|
 | `rust/geometry/tests/issue_098_reveal_wall.rs`, `rust/geometry/tests/issue_098_v5c.rs` (AIM-FORK blocks) | `PINNED_OPEN_EDGES` under `csg_manifold_gate`: wall 136 -> 166 (manifold alone), 394 -> 436 (both gates); V5C 214 -> 224 (manifold alone) | Upstream #7607 (`5b730c6fd`, admin-landed on 2026-10-18) moved the gated fallback's reading and kept the old pins, so "Rust tests (feature builds)" and "CSG accept gates (feature builds)" are red on upstream main too. Bisected locally (`1b3b24e1b` 136, `5b730c6fd` 166); all four feature combinations pass with the new pins. | The upstream sync whose tests re-pin these values (or fix the fallback): take upstream's version and drop the AIM-FORK blocks. |
 | `tests/perf-ratchets/native-instructions-large.json` | `issue-129.geometry` ceiling 28 618 524 182 -> 34 034 218 597 Ir, `issue-129.total` 28 956 296 791 -> 34 294 290 206 Ir (fork main `cf6b117bd`, CI "Measure main and lower ceilings" 2026-10-20) | The same upstream #7607 (`5b730c6fd`) costs +26.5 % geometry instructions on ISSUE_129 (bisected: `db45d7172` 28.09 G, `5b730c6fd` 35.54 G); upstream documented the cost and admin-merged it without raising the ceiling, so "Perf ratchet lowering" is red on upstream main too. Raise approved by Samuel on 2026-10-20 (human approval the ratchet rule requires). | The upstream sync that raises this ceiling or makes #7607 cheaper: take upstream's entries. |
+| `rust/geometry/src/mesh_check/closure.rs`, `rust/geometry/src/csg/topology_diagnostic.rs`, `rust/geometry/tests/issue_960_segmented_roof_clip.rs` and the `GLOBAL_CAP_LOCK` test holders (early port, not AIM-FORK blocks) | Upstream `cb3d8abff` (#7986, closes their #7982) cherry-picked ahead of the sync, minus two hunks: the revert-oracle `elif` in `.github/workflows/test.yml` (left out so the port does not change workflows and force a full run on `main`; its `tests/evidence/issue-7982/unit-grid.oracle.patch` is kept) and `rust/geometry/src/kernel/budget_state_tests.rs` (that file comes with upstream #7957, which the fork does not have yet) | The closure audit snapped vertices to the metre 0.1 mm grid in any unit, so under `csg_topology_gate` the millimetre #7292 cut came back `GateRejected` and "CSG accept gates (feature builds)" was red on fork `main` after the 2026-10-20 batch (1 real failure + 14 `PoisonError`). Approved by Samuel on 2026-10-20 (through the orchestrator). | The upstream sync that brings `cb3d8abff`: take upstream's files as they are (the core files are identical) and its `test.yml` oracle hunk with them. |
 
 ## Conventions (don't drift)
 

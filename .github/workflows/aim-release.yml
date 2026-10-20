@@ -6,12 +6,23 @@
 # `release/aim-*` pull request is merged into main, the merge commit gets the
 # tag `aim-release-<date>-<short sha>`, so the batch that went to production can
 # be named, compared (`git diff aim-release-A aim-release-B`) and rolled back to.
+#
+# The batch is recognised by the pull request the commit came from (its head
+# branch), not by the commit message: a merge with an edited title has no
+# `from <owner>/release/aim-...` line, and the first batch (2026-10-20) went
+# untagged that way. `workflow_dispatch` with a commit tags a batch afterwards.
 
 name: AIM release tag
 
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Merge commit of a release batch on main (full SHA)
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -19,24 +30,50 @@ permissions:
 jobs:
   tag:
     name: Tag the release batch
-    if: github.repository != 'LTplus-AG/ifc-lite' && contains(github.event.head_commit.message, '/release/aim-')
+    if: github.repository != 'LTplus-AG/ifc-lite'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: write
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SHA: ${{ inputs.sha || github.sha }}
     steps:
+      - name: Find the release batch pull request
+        id: batch
+        run: |
+          [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::sha must be a full 40-character commit"; exit 1; }
+          # The merged pull request whose merge commit this is; only a release batch is tagged.
+          pr=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/pulls" \
+            --jq "[.[] | select(.merged_at != null and .merge_commit_sha == \"$SHA\" and (.head.ref | startswith(\"release/aim-\")))][0] | .number // empty")
+          if [ -z "$pr" ]; then
+            echo "Not a release batch merge: $SHA" >> "$GITHUB_STEP_SUMMARY"
+            echo "pr=" >> "$GITHUB_OUTPUT"
+          else
+            echo "pr=$pr" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.batch.outputs.pr != ''
         with:
+          ref: ${{ env.SHA }}
           lfs: false
           fetch-depth: 1
       - name: Create and push the tag
+        if: steps.batch.outputs.pr != ''
         env:
-          SHA: ${{ github.sha }}
+          PR: ${{ steps.batch.outputs.pr }}
         run: |
-          tag="aim-release-$(date -u +%Y-%m-%d)-${SHA::7}"
+          existing=$(git ls-remote --tags origin 'refs/tags/aim-release-*' | awk -v sha="$SHA" '$1 == sha { print $2 }')
+          if [ -n "$existing" ]; then
+            echo "Already tagged: $existing" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # The date of the merge, not of this run, so a later backfill names the batch the same way.
+          tag="aim-release-$(TZ=UTC git log -1 --date=format-local:%Y-%m-%d --format=%cd "$SHA")-${SHA::7}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$tag" -m "AIM release batch ($(git log -1 --format=%s))" "$SHA"
+          git tag -a "$tag" -m "AIM release batch #$PR ($(git log -1 --format=%s "$SHA"))" "$SHA"
           git push origin "refs/tags/$tag"
-          echo "Tagged $SHA as $tag" >> "$GITHUB_STEP_SUMMARY"
+          echo "Tagged $SHA as $tag (batch #$PR)" >> "$GITHUB_STEP_SUMMARY"
 # <<< AIM-FORK

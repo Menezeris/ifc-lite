@@ -1,0 +1,12 @@
+diff --git a/apps/viewer/src/aim/documentsQuery.ts b/apps/viewer/src/aim/documentsQuery.ts
+index cdfa2fb..ca17e6a 100644
+--- a/apps/viewer/src/aim/documentsQuery.ts
++++ b/apps/viewer/src/aim/documentsQuery.ts
+@@ -143,6 +143,6 @@ export function selectionDocuments<D extends QueryDocument>(
+  * has no elements of its own.
+  */
+ export function show3dTarget(documentId: string, page: number | undefined): { documentId: string; page?: number } | null {
+-  if (!documentId) return null;
++  if (!documentId || documentId.startsWith(LOCAL_DOCUMENT_PREFIX)) return null;
+   return page && Number.isInteger(page) && page >= 1 ? { documentId, page } : { documentId };
+ }

@@ -160,7 +160,13 @@ function applyLens(msg: ApplyLensMessage, scope?: Lens['capturedScope']): void {
     return;
   }
   useViewerStore.setState({ savedLenses: [...others, next], activeLensId: SLOT, lensPanelVisible: true });
-  revealAfterLens(next.rules.map((r) => r.id));
+  revealAfterLens(next.rules.map((r) => r.id), () => {
+    // Len ak je to stále tá istá aktívna lens; nahradená lens nič nehlási.
+    const now = useViewerStore.getState();
+    if (now.activeLensId === SLOT && slotLens(now) === next) {
+      noteIssue('Lens: pravidlá sa do 6 s nevyhodnotili, skryté triedy (miestnosti, zóny) sa nezaplí');
+    }
+  });
 }
 
 /** Farby podľa hodnoty: najprv rozsah (asynchrónne vyhodnotenie filtra), potom lens (D-119). */

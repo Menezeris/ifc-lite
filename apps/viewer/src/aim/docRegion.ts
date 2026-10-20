@@ -8,6 +8,11 @@
  * aby výrez vyplnil plochu, a vycentruje ho. Upstream `docJump` nesie len
  * stranu, preto má výrez vlastný store; PdfDocumentView volá len
  * `useAimDocRegion` (jeden riadok v bloku AIM-FORK, súbor je na limite veľkosti).
+ *
+ * Rámiky okolo nájdeného textu (AIM D-123): DOCUMENT_OPEN môže niesť aj
+ * `highlights` (obdĺžniky v zlomkoch strany, napr. riadky zo search_documents).
+ * Hook ich nakreslí ako vrstvu nad stranou (vedľa textovej vrstvy pdf.js, tiež
+ * imperatívne) a drží ich, kým nepríde ďalší DOCUMENT_OPEN.
  */
 
 import { useEffect, useRef, type RefObject } from 'react';
@@ -76,6 +81,49 @@ export function regionScroll(
   return { left: Math.max(0, cx - viewport.width / 2), top: Math.max(0, cy - viewport.height / 2) };
 }
 
+/** Najviac rámikov naraz; viac by výkres zakrylo. */
+export const MAX_HIGHLIGHTS = 20;
+/** Najmenší rámik (0,1 % strany): riadok textu býva vysoký 0,4-1 %. */
+const MIN_HIGHLIGHT = 0.001;
+
+/** Rámiky z drôtu (nedôveryhodný postMessage): neplatné vynechá, najviac MAX_HIGHLIGHTS. */
+export function normalizeDocHighlights(raw: unknown): DocRegion[] {
+  if (!Array.isArray(raw)) return [];
+  const out: DocRegion[] = [];
+  for (const item of raw.slice(0, MAX_HIGHLIGHTS)) {
+    if (!item || typeof item !== 'object') continue;
+    const r = item as Record<string, unknown>;
+    const nums = [r.x, r.y, r.w, r.h];
+    if (!nums.every((n) => typeof n === 'number' && Number.isFinite(n))) continue;
+    const [x0, y0, w0, h0] = nums as number[];
+    if (w0 <= 0 || h0 <= 0 || x0 >= 1 || y0 >= 1 || x0 + w0 <= 0 || y0 + h0 <= 0) continue;
+    const x = clamp(x0, 0, 1 - MIN_HIGHLIGHT);
+    const y = clamp(y0, 0, 1 - MIN_HIGHLIGHT);
+    out.push({
+      x,
+      y,
+      // Časť pred okrajom strany sa odreže; rozmer vnútri strany ostáva presný.
+      w: clamp(x0 < 0 ? x0 + w0 : w0, MIN_HIGHLIGHT, 1 - x),
+      h: clamp(y0 < 0 ? y0 + h0 : h0, MIN_HIGHLIGHT, 1 - y),
+    });
+  }
+  return out;
+}
+
+/** Inline štýl rámiku v % strany (rodič = element strany, `position: relative`). */
+export function highlightStyle(r: DocRegion): Record<'left' | 'top' | 'width' | 'height', string> {
+  const pct = (v: number) => `${+(v * 100).toFixed(3)}%`;
+  return { left: pct(r.x), top: pct(r.y), width: pct(r.w), height: pct(r.h) };
+}
+
+export interface DocHighlights {
+  docId: string;
+  /** Strana rámikov; bez nej strana, na ktorej karta je pri prvom kreslení. */
+  page?: number;
+  rects: DocRegion[];
+  nonce: number;
+}
+
 export interface DocRegionRequest {
   docId: string;
   /** Strana výrezu; bez nej strana, na ktorej karta práve je. */
@@ -87,12 +135,29 @@ export interface DocRegionRequest {
 
 interface DocRegionState {
   request: DocRegionRequest | null;
+  /** Rámiky okolo textu (D-123); null = žiadne. */
+  highlights: DocHighlights | null;
   requestRegion: (docId: string, region: DocRegion, page?: number) => void;
+  /** Nahradí rámiky; prázdny zoznam ich zruší (každý DOCUMENT_OPEN). */
+  setHighlights: (docId: string, rects: DocRegion[], page?: number) => void;
   clear: (nonce: number) => void;
 }
 
 export const useAimDocRegionStore = create<DocRegionState>((set, get) => ({
   request: null,
+  highlights: null,
+  setHighlights: (docId, rects, page) =>
+    set({
+      highlights:
+        rects.length === 0
+          ? null
+          : {
+              docId,
+              rects,
+              ...(page !== undefined ? { page } : {}),
+              nonce: (get().highlights?.nonce ?? 0) + 1,
+            },
+    }),
   requestRegion: (docId, region, page) =>
     set({
       request: {
@@ -133,7 +198,18 @@ const CONTENT_PADDING_PX = 24;
  */
 export function useAimDocRegion(v: DocRegionViewInputs): void {
   const request = useAimDocRegionStore((s) => (s.request?.docId === v.docId ? s.request : null));
+  const highlights = useAimDocRegionStore((s) => (s.highlights?.docId === v.docId ? s.highlights : null));
   const zoomedRef = useRef<number | null>(null);
+  const highlightPageRef = useRef<{ nonce: number; page: number } | null>(null);
+  useEffect(() => {
+    // Rámiky (D-123): stranu zafixuje prvé kreslenie, aby nepreskakovali pri listovaní.
+    if (!highlights) {
+      highlightPageRef.current = null;
+    } else if (highlightPageRef.current?.nonce !== highlights.nonce) {
+      highlightPageRef.current = { nonce: highlights.nonce, page: highlights.page ?? v.currentPage };
+    }
+    syncHighlightLayer(v.pageElsRef.current, highlights, highlightPageRef.current?.page);
+  });
   useEffect(() => {
     const root = v.scrollRef.current;
     if (!request || !v.pdf || v.bodyWidth <= 0 || !root) return;
@@ -166,4 +242,45 @@ export function useAimDocRegion(v: DocRegionViewInputs): void {
     root.scrollTop = pos.top;
     useAimDocRegionStore.getState().clear(request.nonce);
   });
+}
+
+const LAYER_ATTR = 'data-aim-highlights';
+
+/**
+ * Vrstva rámikov nad stranou (D-123). Imperatívne ako textová vrstva pdf.js:
+ * element strany vlastní PdfDocumentView, vrstva je posledné dieťa a React ju
+ * nerieši. Kreslí sa znova len pri novom `nonce`; vrstvy na iných stranách zmizne.
+ */
+function syncHighlightLayer(
+  pageEls: Map<number, HTMLDivElement> | null,
+  highlights: DocHighlights | null,
+  page: number | undefined,
+): void {
+  if (!pageEls) return;
+  for (const [p, el] of pageEls) {
+    const layer = el.querySelector<HTMLDivElement>(`:scope > [${LAYER_ATTR}]`);
+    const want = highlights && p === page ? String(highlights.nonce) : null;
+    if (!want) {
+      layer?.remove();
+      continue;
+    }
+    if (layer?.getAttribute(LAYER_ATTR) === want) continue;
+    layer?.remove();
+    const next = document.createElement('div');
+    next.setAttribute(LAYER_ATTR, want);
+    Object.assign(next.style, { position: 'absolute', inset: '0', pointerEvents: 'none', zIndex: '3' });
+    for (const r of highlights!.rects) {
+      const box = document.createElement('div');
+      Object.assign(box.style, {
+        position: 'absolute',
+        ...highlightStyle(r),
+        outline: '2px solid #f59e0b',
+        outlineOffset: '2px',
+        background: 'rgba(245, 158, 11, 0.18)',
+        borderRadius: '2px',
+      });
+      next.appendChild(box);
+    }
+    el.appendChild(next);
+  }
 }

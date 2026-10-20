@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docRegion.ts a/apps/viewer/src/aim/docRegion.ts
+index b4ca98743..a9a8c2bf6 100644
+--- b/apps/viewer/src/aim/docRegion.ts
++++ a/apps/viewer/src/aim/docRegion.ts
+@@ -96,7 +96,7 @@ export function normalizeDocHighlights(raw: unknown): DocRegion[] {
+     const nums = [r.x, r.y, r.w, r.h];
+     if (!nums.every((n) => typeof n === 'number' && Number.isFinite(n))) continue;
+     const [x0, y0, w0, h0] = nums as number[];
+-    if (w0 <= 0 || h0 <= 0) continue;
++    if (w0 <= 0 || h0 <= 0 || x0 >= 1 || y0 >= 1 || x0 + w0 <= 0 || y0 + h0 <= 0) continue;
+     const x = clamp(x0, 0, 1 - MIN_HIGHLIGHT);
+     const y = clamp(y0, 0, 1 - MIN_HIGHLIGHT);
+     out.push({
