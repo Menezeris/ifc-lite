@@ -118,6 +118,7 @@ export const PANEL_SURFACE_COMMANDS = [
   // >>> AIM-FORK: palette rows of the fork-only panels (D-072, D-075), kept last so upstream keeps appending above us.
   rightCommand('panel:drawing-underlay', 'drawing-underlay', 'drawing underlay pdf plan georeference calibrate overlay floor plan sheet', MapIcon, true),
   rightCommand('panel:documents', 'documents', 'documents library pdf image drawing sheet open tab project files', Files, true),
-  rightCommand('panel:aim-layers', 'aim-layers', 'aim layers derivation rules derived relations space zone', AimLayersIcon, true),
+  // Palette only: the AIM ribbon tab opens it from its own Derivations > Pravidlá button.
+  rightCommand('panel:aim-layers', 'aim-layers', 'aim layers derivation rules derived relations space zone', AimLayersIcon),
   // <<< AIM-FORK
 ] as const satisfies readonly SurfaceCommandDefinition[];
