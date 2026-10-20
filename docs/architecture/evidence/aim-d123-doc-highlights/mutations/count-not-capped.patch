@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docRegion.ts a/apps/viewer/src/aim/docRegion.ts
+index 851203967..a9a8c2bf6 100644
+--- b/apps/viewer/src/aim/docRegion.ts
++++ a/apps/viewer/src/aim/docRegion.ts
+@@ -90,7 +90,7 @@ const MIN_HIGHLIGHT = 0.001;
+ export function normalizeDocHighlights(raw: unknown): DocRegion[] {
+   if (!Array.isArray(raw)) return [];
+   const out: DocRegion[] = [];
+-  for (const item of raw) {
++  for (const item of raw.slice(0, MAX_HIGHLIGHTS)) {
+     if (!item || typeof item !== 'object') continue;
+     const r = item as Record<string, unknown>;
+     const nums = [r.x, r.y, r.w, r.h];

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docRegion.ts a/apps/viewer/src/aim/docRegion.ts
+index 7e5e7b660..a9a8c2bf6 100644
+--- b/apps/viewer/src/aim/docRegion.ts
++++ a/apps/viewer/src/aim/docRegion.ts
+@@ -149,7 +149,7 @@ export const useAimDocRegionStore = create<DocRegionState>((set, get) => ({
+   setHighlights: (docId, rects, page) =>
+     set({
+       highlights:
+-        false
++        rects.length === 0
+           ? null
+           : {
+               docId,

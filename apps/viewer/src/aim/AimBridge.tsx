@@ -32,7 +32,7 @@ import { isCommandMessage, type AppliedMessage, type CommandInboundMessage } fro
 import { createCommandGate, noteIssue, resetCommandState, settled, takeIssues, track } from './command-gate.js';
 import { useAimPanelStore } from './aimPanelStore.js';
 import { useCapturePinsStore } from './capturePinsStore.js';
-import { normalizeDocRegion, useAimDocRegionStore } from './docRegion.js';
+import { normalizeDocHighlights, normalizeDocRegion, useAimDocRegionStore } from './docRegion.js';
 import { useAimDecorationsStore } from './aimDecorationsStore.js';
 import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
@@ -211,6 +211,10 @@ export function AimBridge() {
           // Výrez strany z chatu (D-117): karta sa priblíži, keď je PDF otvorené.
           const region = normalizeDocRegion(e.data.region);
           if (region) useAimDocRegionStore.getState().requestRegion(e.data.documentId, region, e.data.page);
+          // Rámiky okolo nájdeného textu (D-123); DOCUMENT_OPEN bez nich staré zruší.
+          useAimDocRegionStore
+            .getState()
+            .setHighlights(e.data.documentId, normalizeDocHighlights(e.data.highlights), e.data.page);
           break;
         }
         case 'CAPTURES_LOAD':
@@ -259,7 +263,7 @@ export function AimBridge() {
       useCapturePinsStore.getState().setPins([]);
       useAimDecorationsStore.getState().clear();
       useAimDerivationsStore.getState().clear();
-      useAimDocRegionStore.setState({ request: null }); // D-117: čakajúci výrez nepatrí ďalšej relácii
+      useAimDocRegionStore.setState({ request: null, highlights: null }); // D-117/D-123: výrez ani rámiky nepatria ďalšej relácii
       resetLensFromChat(); // D-096: izolácia a AIM chat lens neprežijú odpojenie mostu
       setFocusProvider(undefined);
       resetCommandState(); // problémy a kroky z predošlej relácie nepatria do ďalšieho APPLIED

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docRegion.ts a/apps/viewer/src/aim/docRegion.ts
+index 701a6a2fe..a9a8c2bf6 100644
+--- b/apps/viewer/src/aim/docRegion.ts
++++ a/apps/viewer/src/aim/docRegion.ts
+@@ -84,7 +84,7 @@ export function regionScroll(
+ /** Najviac rámikov naraz; viac by výkres zakrylo. */
+ export const MAX_HIGHLIGHTS = 20;
+ /** Najmenší rámik (0,1 % strany): riadok textu býva vysoký 0,4-1 %. */
+-const MIN_HIGHLIGHT = 0.01;
++const MIN_HIGHLIGHT = 0.001;
+ 
+ /** Rámiky z drôtu (nedôveryhodný postMessage): neplatné vynechá, najviac MAX_HIGHLIGHTS. */
+ export function normalizeDocHighlights(raw: unknown): DocRegion[] {

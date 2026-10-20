@@ -5,6 +5,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  highlightStyle,
+  MAX_HIGHLIGHTS,
+  normalizeDocHighlights,
   normalizeDocRegion,
   regionScroll,
   regionZoom,
@@ -88,5 +91,61 @@ describe('useAimDocRegionStore (D-117)', () => {
     assert.equal(useAimDocRegionStore.getState().request?.nonce, second.nonce);
     useAimDocRegionStore.getState().clear(second.nonce);
     assert.equal(useAimDocRegionStore.getState().request, null);
+  });
+});
+
+describe('normalizeDocHighlights (D-123)', () => {
+  it('keeps thin text-line rectangles without inflating them to the region minimum', () => {
+    assert.deepEqual(normalizeDocHighlights([{ x: 0.383, y: 0.5605, w: 0.0075, h: 0.012 }]), [
+      { x: 0.383, y: 0.5605, w: 0.0075, h: 0.012 },
+    ]);
+  });
+
+  it('drops invalid and off-page rectangles and accepts only arrays', () => {
+    assert.deepEqual(normalizeDocHighlights(undefined), []);
+    assert.deepEqual(normalizeDocHighlights({ x: 0.1, y: 0.1, w: 0.1, h: 0.1 }), []);
+    assert.deepEqual(
+      normalizeDocHighlights([
+        null,
+        { x: 0.1, y: 0.1, w: 0, h: 0.1 },
+        { x: 1.2, y: 0.1, w: 0.1, h: 0.1 },
+        { x: -0.5, y: 0.1, w: 0.2, h: 0.1 },
+        { x: '0.1', y: 0.1, w: 0.1, h: 0.1 },
+      ]),
+      [],
+    );
+  });
+
+  it('clips a rectangle that crosses the page edge and caps the count', () => {
+    const [r] = normalizeDocHighlights([{ x: -0.1, y: 0.95, w: 0.3, h: 0.2 }]);
+    assert.equal(r.x, 0);
+    assert.ok(Math.abs(r.w - 0.2) < 1e-9);
+    assert.ok(Math.abs(r.h - 0.05) < 1e-9);
+    const many = Array.from({ length: MAX_HIGHLIGHTS + 5 }, () => ({ x: 0.1, y: 0.1, w: 0.1, h: 0.1 }));
+    assert.equal(normalizeDocHighlights(many).length, MAX_HIGHLIGHTS);
+  });
+
+  it('positions a frame in page percent', () => {
+    assert.deepEqual(highlightStyle({ x: 0.383, y: 0.5605, w: 0.0075, h: 0.012 }), {
+      left: '38.3%',
+      top: '56.05%',
+      width: '0.75%',
+      height: '1.2%',
+    });
+  });
+});
+
+describe('useAimDocRegionStore highlights (D-123)', () => {
+  it('replaces frames on every open and clears them with an empty list', () => {
+    const store = useAimDocRegionStore.getState();
+    store.setHighlights('doc-1', [{ x: 0.1, y: 0.1, w: 0.1, h: 0.1 }], 1);
+    const first = useAimDocRegionStore.getState().highlights!;
+    assert.equal(first.page, 1);
+    store.setHighlights('doc-1', [{ x: 0.2, y: 0.2, w: 0.1, h: 0.1 }]);
+    const second = useAimDocRegionStore.getState().highlights!;
+    assert.equal(second.nonce, first.nonce + 1);
+    assert.equal(second.page, undefined);
+    store.setHighlights('doc-2', []);
+    assert.equal(useAimDocRegionStore.getState().highlights, null);
   });
 });
