@@ -177,6 +177,8 @@ export interface AimLensSummary {
   /** Prvky zafarbené alebo skryté niektorým pravidlom. */
   matched: number;
   isolation?: AimIsolation;
+  /** Verzia, ktorej izolácia z chatu zlyhala: súhrn ju nesmie hlásiť ako platnú. */
+  isolationFailed?: string;
 }
 
 export function summarizeLens(
@@ -185,8 +187,10 @@ export function summarizeLens(
   legend: readonly AutoColorLegendEntry[],
   rev?: string,
   isolation?: AimIsolation | null,
+  isolationFailed?: string | null,
 ): AimLensSummary {
-  const iso = isolation ? { isolation } : {};
+  // Zlyhaná izolácia: stará izolácia v súhrne by vyzerala ako úspech novej.
+  const iso = isolationFailed ? { isolationFailed } : isolation ? { isolation } : {};
   if (!lens) return { active: false, rules: [], legend: [], matched: 0, ...iso };
   const rules = lens.rules
     .filter((r) => r.enabled)

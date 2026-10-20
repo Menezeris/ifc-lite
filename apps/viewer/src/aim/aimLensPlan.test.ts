@@ -182,5 +182,9 @@ describe('isEvaluated + summarizeLens (AIM D-096)', () => {
     const none = summarizeLens(null, new Map(), [], undefined, iso);
     assert.deepEqual([none.active, none.isolation?.isolated], [false, 40]);
     assert.equal('isolation' in summarizeLens(null, new Map(), []), false);
+    // Zlyhaná izolácia: stará izolácia sa nehlási, súhrn nesie verziu, ktorá zlyhala.
+    const failed = summarizeLens(null, new Map(), [], undefined, iso, 'r2');
+    assert.equal('isolation' in failed, false);
+    assert.equal(failed.isolationFailed, 'r2');
   });
 });

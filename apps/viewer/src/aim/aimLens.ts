@@ -197,7 +197,8 @@ export async function settledLensSummary(timeoutMs: number, started = Date.now()
     return settledLensSummary(timeoutMs, started);
   }
   const iso = isolationSummary();
-  return { ...summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, appliedRev, iso), ...(ready ? {} : { pending: true }) };
+  const summary = summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, appliedRev, iso, isolationFailedRev);
+  return { ...summary, ...(ready ? {} : { pending: true }) };
 }
 
 export function handleLensMessage(data: LensInboundMessage, origin: string): void {
