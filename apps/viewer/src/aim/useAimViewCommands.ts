@@ -20,7 +20,7 @@ import { useViewMode } from '@/hooks/useViewMode';
 import type { BimContext } from '@ifc-lite/sdk';
 import { guidForEntity, resolveGuids, resolveSelector } from './bridge-protocol.js';
 import type { ViewInboundMessage } from './view-protocol.js';
-import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCommands.js';
+import { VIEWER_AXIS, cameraStep, focusViewStep, pickStorey, storeyCutPercent } from './viewCommands.js';
 import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
 import { sectionRenderBounds as sectionBoundsWith } from './sectionRange.js';
 import { noteIssue, track } from './command-gate.js';
@@ -30,6 +30,12 @@ type FocusSummary = () => { count: number; guids: string[] };
 let focusProvider: FocusSummary | undefined;
 export function setFocusProvider(f: FocusSummary | undefined): void {
   focusProvider = f;
+}
+
+/** Pohľad pre FOCUS (#97, V1): nastaví ho hook s najnovším režimom a podlažiami, volá ho lenivý FOCUS. */
+let focusView: ((storeyKeys: readonly (string | null)[]) => void) | undefined;
+export function prepareFocusView(storeyKeys: readonly (string | null)[]): void {
+  focusView?.(storeyKeys);
 }
 
 /** D-085 (obálky, stav, rez cez prvok) sa načíta až pri prvom použití - mimo vstupného balíka. */
@@ -70,7 +76,7 @@ export async function appliedViewState(): Promise<Record<string, unknown>> {
 
 
 export function useAimViewCommands(bim: BimContext) {
-  const { setMode, storeys } = useViewMode();
+  const { mode, setMode, setStorey, storeys, activeStorey } = useViewMode();
   const sectionToken = useRef(0);
   // Voľba widgetu patrí relácii mosta: nová relácia (iný `bim`) začína s predvoleným widgetom.
   useEffect(() => {
@@ -158,6 +164,14 @@ export function useAimViewCommands(bim: BimContext) {
   // Najnovšie podlažia a setMode bez re-registrácie listenera v AimBridge.
   useEffect(() => {
     ref.current = run;
+    focusView = (keys) => {
+      const step = focusViewStep(mode, keys, activeStorey?.key ?? null, new Set(storeys.map((s) => s.key)));
+      if (step.kind === '3d') setMode('3d');
+      else if (step.kind === 'storey') {
+        const storey = storeys.find((s) => s.key === step.key);
+        if (storey) setStorey(storey);
+      }
+    };
   });
   return ref;
 }

@@ -40,12 +40,12 @@ import { applySectionCap, isSectionCapMessage } from './sectionCap.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
 import { isBcfLoadMessage, loadBcfTopics } from './bcf-protocol.js';
 import { dispatchLensMessage, isLensEnvelope, lensSettled, resetLensFromChat } from './lens-protocol.js';
-import { appliedViewState, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
+import { appliedViewState, prepareFocusView, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
 
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
 /** Helpery zo vstupného balíka pre lenivý modul príkazov viditeľnosti. */
-const VIS_DEPS = { resolveGuids, resolveSelector, selectPickedGlobalId, noteIssue, track, FOCUS_COLOR, FILTER_COLOR };
+const VIS_DEPS = { resolveGuids, resolveSelector, selectPickedGlobalId, noteIssue, track, FOCUS_COLOR, FILTER_COLOR, prepareFocusView };
 let visibility: Promise<typeof import('./visibility-commands.js')> | null = null;
 const loadVisibility = () => (visibility ??= import('./visibility-commands.js'));
 
@@ -69,10 +69,6 @@ export function AimBridge() {
     graceFromRef.current = Date.now();
     setTimeout(() => gateRef.current.flush(), STREAM_GRACE_MS + 50);
   };
-  // Selekcie nastavené hostovým FOCUS-om — tie sa hostovi NEposielajú späť
-  // ako ENTITY_SELECTED (echo by z jeho vlastného príkazu spravilo "user
-  // pick" a prirodzená host implementácia by sa zacyklila FOCUS→SELECTED).
-  const programmaticSelectionRef = useRef<Set<string> | null>(null);
   // Pohľad (AIM D-083): rez, kamera, režim 3D|2D|Split - vlastný protokol.
   const viewCommands = useAimViewCommands(bim);
 
@@ -100,8 +96,8 @@ export function AimBridge() {
       setFocusProvider(m.focusSummary);
     });
     const runVisibility = (msg: InboundMessage | CommandInboundMessage) => {
-      if (vis) vis.runVisibilityCommand(msg, bim, programmaticSelectionRef, VIS_DEPS);
-      else track(loadVisibility().then((m) => m.runVisibilityCommand(msg, bim, programmaticSelectionRef, VIS_DEPS)));
+      if (vis) vis.runVisibilityCommand(msg, bim, VIS_DEPS);
+      else track(loadVisibility().then((m) => m.runVisibilityCommand(msg, bim, VIS_DEPS)));
     };
 
     // `ACK_REQUEST` ide bránou za príkazmi, preto ich vidí vykonané; počká ešte na ich asynchrónne kroky.
@@ -361,16 +357,10 @@ export function AimBridge() {
       return;
     }
     hadSelectionRef.current = true;
-    // Selekcia vyvolaná hostovým FOCUS-om sa neechuje späť (viď ref vyššie).
-    if (programmaticSelectionRef.current?.has(`${selectedEntity.modelId}:${selectedEntity.expressId}`)) {
-      programmaticSelectionRef.current = null;
-      return;
-    }
-    programmaticSelectionRef.current = null;
+    // FOCUS výber nemení (#97 V1), každá selekcia je teda používateľova alebo zo SELECT.
     // Mobil v embede (D-077 dodatok): tap síce prvok vyberie, ale Properties
     // bottom sheet sa sám neotvorí a plávajúce tlačidlo je ľahké prehliadnuť —
-    // po používateľskej selekcii (nie FOCUS z hosta, guard vyššie) sheet
-    // otvoríme; default tab je AIM inspector. Standalone sa nemení (guard
+    // po selekcii sheet otvoríme; default tab je AIM inspector. Standalone sa nemení (guard
     // embeddedRef na začiatku effectu).
     {
       const store = useViewerStore.getState();

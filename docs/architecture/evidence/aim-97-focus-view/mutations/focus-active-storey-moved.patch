@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/viewCommands.ts a/apps/viewer/src/aim/viewCommands.ts
+index 4ab77cde..da31f5e8 100644
+--- b/apps/viewer/src/aim/viewCommands.ts
++++ a/apps/viewer/src/aim/viewCommands.ts
+@@ -76,6 +76,6 @@ export function focusViewStep(
+   if (mode === '3d' || targets.length === 0) return { kind: 'keep' };
+   const keys = new Set(targets);
+   const [only] = keys;
+-  if (keys.size === 1 && only && known.has(only)) return { kind: 'storey', key: only };
++  if (keys.size === 1 && only && known.has(only)) return only === active ? { kind: 'keep' } : { kind: 'storey', key: only };
+   return { kind: '3d' };
+ }
