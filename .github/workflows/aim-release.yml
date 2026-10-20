@@ -1,0 +1,42 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+# >>> AIM-FORK (whole file, AIM D-114): tag each release batch. When a
+# `release/aim-*` pull request is merged into main, the merge commit gets the
+# tag `aim-release-<date>-<short sha>`, so the batch that went to production can
+# be named, compared (`git diff aim-release-A aim-release-B`) and rolled back to.
+
+name: AIM release tag
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tag:
+    name: Tag the release batch
+    if: github.repository != 'LTplus-AG/ifc-lite' && contains(github.event.head_commit.message, '/release/aim-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          lfs: false
+          fetch-depth: 1
+      - name: Create and push the tag
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          tag="aim-release-$(date -u +%Y-%m-%d)-${SHA::7}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "AIM release batch ($(git log -1 --format=%s))" "$SHA"
+          git push origin "refs/tags/$tag"
+          echo "Tagged $SHA as $tag" >> "$GITHUB_STEP_SUMMARY"
+# <<< AIM-FORK
