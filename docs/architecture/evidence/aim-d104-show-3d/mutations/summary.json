@@ -1,0 +1,44 @@
+{
+  "show3d-local-docs": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
+    "head": "868c49dbe692164ef29b06191e2f3263fa01bac9",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "show3d-any-page": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
+    "head": "868c49dbe692164ef29b06191e2f3263fa01bac9",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "show3d-drops-page": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
+    "head": "868c49dbe692164ef29b06191e2f3263fa01bac9",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

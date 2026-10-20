@@ -4,7 +4,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { foldText, GROUP_BY_FOLDER, groupDocuments, matchesFilter, metaKeys, selectionDocuments, type QueryDocument } from './documentsQuery';
+import { foldText, GROUP_BY_FOLDER, groupDocuments, matchesFilter, metaKeys, selectionDocuments, show3dTarget, type QueryDocument } from './documentsQuery';
 
 const plan3: QueryDocument = {
   id: 'd3', name: 'D.1.1.03 Pôdorys 3NP', folder: ['D.1.1 ASR'],
@@ -78,5 +78,14 @@ describe('documentsQuery (D-104)', () => {
     assert.deepEqual(selectionDocuments([{ name: 'x', href: '/x', documentId: 'd3' }], library, 'vykres').length, 1);
     assert.deepEqual(selectionDocuments([{ name: 'x', href: '/x', via: 'cez zónu NJ - 3NP' }], library, 'zonu').length, 1);
     assert.deepEqual(selectionDocuments(undefined, library), []);
+  });
+
+  it('asks the host for elements of the page being read, only for host documents', () => {
+    assert.deepEqual(show3dTarget('d9', 3), { documentId: 'd9', page: 3 });
+    assert.deepEqual(show3dTarget('d9', 0), { documentId: 'd9' });
+    assert.deepEqual(show3dTarget('d9', 2.5), { documentId: 'd9' });
+    assert.deepEqual(show3dTarget('d9', undefined), { documentId: 'd9' });
+    assert.equal(show3dTarget('local:x.pdf:1', 1), null);
+    assert.equal(show3dTarget('', 1), null);
   });
 });
