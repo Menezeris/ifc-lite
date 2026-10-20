@@ -13,7 +13,7 @@
 
 import { useViewerStore } from '../store/index.js';
 import { markReadOnlyFocus, useAimInspectorStore } from './aimInspectorStore.js';
-import { panelPlan, type AimPanelView } from './aimPanelViewPlan.js';
+import { focusFor, panelPlan, type AimPanelView } from './aimPanelViewPlan.js';
 
 const SETTLE_TIMEOUT_MS = 5000;
 
@@ -37,12 +37,9 @@ export function applyPanelView(view: AimPanelView, target: { modelId: string; ex
     const arm = () => {
       requestAnimationFrame(() =>
         requestAnimationFrame(() => {
-          const sel = store.getState().selectedEntity;
-          if (sel) {
-            store.getState().setPendingPropertyFocus(
-              markReadOnlyFocus({ modelId: sel.modelId, entityId: sel.expressId, psetName: focus.pset, propName: focus.property }),
-            );
-          }
+          const next = focusFor(store.getState().selectedEntity, target, focus);
+          if (next) store.getState().setPendingPropertyFocus(markReadOnlyFocus(next));
+          else noteIssue('SELECT: výber sa zmenil skôr, než sa zvýraznila vlastnosť');
           resolve();
         }),
       );

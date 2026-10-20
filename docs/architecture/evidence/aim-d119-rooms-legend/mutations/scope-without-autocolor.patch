@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 260ce64c2..1445039ec 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -71,7 +71,7 @@ export function parseLensMessage(data: LensInboundMessage): ApplyLensMessage | L
+   }
+   if (m.autoColorScope !== undefined) {
+     // Rozsah má zmysel len pri farbách podľa hodnoty (D-119).
+-    if (!Array.isArray(m.autoColorScope)) return null;
++    if (m.autoColor === undefined || !Array.isArray(m.autoColorScope)) return null;
+     if (m.autoColorScope.length === 0 || m.autoColorScope.length > MAX_GROUPS || !m.autoColorScope.every(isFilterGroup)) return null;
+     if (countGlobalIds(m.autoColorScope as FilterGroup[]) > MAX_AIM_GLOBAL_IDS) return null;
+   }

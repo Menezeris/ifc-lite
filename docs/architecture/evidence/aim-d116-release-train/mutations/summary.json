@@ -1,0 +1,100 @@
+{
+  "cap-runs-all-tests": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in scripts/check-aim-fork-only.test.mjs; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "3ecb28e4c49be83de8f0a3e76962f42ed9fa4944",
+    "production": [
+      "scripts/check-aim-fork-only.mjs"
+    ],
+    "tests": [
+      "scripts/check-aim-fork-only.test.mjs"
+    ],
+    "restoration": "verified"
+  },
+  "full-ci-label-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in scripts/check-aim-fork-only.test.mjs; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "3ecb28e4c49be83de8f0a3e76962f42ed9fa4944",
+    "production": [
+      "scripts/check-aim-fork-only.mjs"
+    ],
+    "tests": [
+      "scripts/check-aim-fork-only.test.mjs"
+    ],
+    "restoration": "verified"
+  },
+  "outside-change-is-fork-blocks": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in scripts/check-aim-fork-only.test.mjs; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "3ecb28e4c49be83de8f0a3e76962f42ed9fa4944",
+    "production": [
+      "scripts/check-aim-fork-only.mjs"
+    ],
+    "tests": [
+      "scripts/check-aim-fork-only.test.mjs"
+    ],
+    "restoration": "verified"
+  },
+  "release-branch-not-full": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in scripts/check-aim-fork-only.test.mjs; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "3ecb28e4c49be83de8f0a3e76962f42ed9fa4944",
+    "production": [
+      "scripts/check-aim-fork-only.mjs"
+    ],
+    "tests": [
+      "scripts/check-aim-fork-only.test.mjs"
+    ],
+    "restoration": "verified"
+  },
+  "smoke-accepts-failed-query": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in scripts/aim-smoke.test.mjs; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "dee2a7017bc840bd571129cf58b5572ffb7e2581",
+    "production": [
+      "scripts/aim-smoke.mjs"
+    ],
+    "tests": [
+      "scripts/aim-smoke.test.mjs"
+    ],
+    "restoration": "verified"
+  },
+  "smoke-ready-not-required": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in scripts/aim-smoke.test.mjs; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "dee2a7017bc840bd571129cf58b5572ffb7e2581",
+    "production": [
+      "scripts/aim-smoke.mjs"
+    ],
+    "tests": [
+      "scripts/aim-smoke.test.mjs"
+    ],
+    "restoration": "verified"
+  },
+  "smoke-trusts-any-origin": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in scripts/aim-smoke.test.mjs; that file has a green, attributable baseline.",
+    "base": "cf6b117bdaf49e935e45fbed2b33c8f67a669075",
+    "head": "dee2a7017bc840bd571129cf58b5572ffb7e2581",
+    "production": [
+      "scripts/aim-smoke.mjs"
+    ],
+    "tests": [
+      "scripts/aim-smoke.test.mjs"
+    ],
+    "restoration": "verified"
+  }
+}

@@ -32,18 +32,20 @@ import { isCommandMessage, type AppliedMessage, type CommandInboundMessage } fro
 import { createCommandGate, noteIssue, resetCommandState, settled, takeIssues, track } from './command-gate.js';
 import { useAimPanelStore } from './aimPanelStore.js';
 import { useCapturePinsStore } from './capturePinsStore.js';
+import { normalizeDocRegion, useAimDocRegionStore } from './docRegion.js';
 import { useAimDecorationsStore } from './aimDecorationsStore.js';
 import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
+import { applySectionCap, isSectionCapMessage } from './sectionCap.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
 import { isBcfLoadMessage, loadBcfTopics } from './bcf-protocol.js';
 import { dispatchLensMessage, isLensEnvelope, lensSettled, resetLensFromChat } from './lens-protocol.js';
-import { appliedViewState, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
+import { appliedViewState, prepareFocusView, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
 
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
 /** Helpery zo vstupného balíka pre lenivý modul príkazov viditeľnosti. */
-const VIS_DEPS = { resolveGuids, resolveSelector, selectPickedGlobalId, noteIssue, track, FOCUS_COLOR, FILTER_COLOR };
+const VIS_DEPS = { resolveGuids, resolveSelector, selectPickedGlobalId, noteIssue, track, FOCUS_COLOR, FILTER_COLOR, prepareFocusView };
 let visibility: Promise<typeof import('./visibility-commands.js')> | null = null;
 const loadVisibility = () => (visibility ??= import('./visibility-commands.js'));
 
@@ -67,10 +69,6 @@ export function AimBridge() {
     graceFromRef.current = Date.now();
     setTimeout(() => gateRef.current.flush(), STREAM_GRACE_MS + 50);
   };
-  // Selekcie nastavené hostovým FOCUS-om — tie sa hostovi NEposielajú späť
-  // ako ENTITY_SELECTED (echo by z jeho vlastného príkazu spravilo "user
-  // pick" a prirodzená host implementácia by sa zacyklila FOCUS→SELECTED).
-  const programmaticSelectionRef = useRef<Set<string> | null>(null);
   // Pohľad (AIM D-083): rez, kamera, režim 3D|2D|Split - vlastný protokol.
   const viewCommands = useAimViewCommands(bim);
 
@@ -98,8 +96,8 @@ export function AimBridge() {
       setFocusProvider(m.focusSummary);
     });
     const runVisibility = (msg: InboundMessage | CommandInboundMessage) => {
-      if (vis) vis.runVisibilityCommand(msg, bim, programmaticSelectionRef, VIS_DEPS);
-      else track(loadVisibility().then((m) => m.runVisibilityCommand(msg, bim, programmaticSelectionRef, VIS_DEPS)));
+      if (vis) vis.runVisibilityCommand(msg, bim, VIS_DEPS);
+      else track(loadVisibility().then((m) => m.runVisibilityCommand(msg, bim, VIS_DEPS)));
     };
 
     // `ACK_REQUEST` ide bránou za príkazmi, preto ich vidí vykonané; počká ešte na ich asynchrónne kroky.
@@ -131,6 +129,11 @@ export function AimBridge() {
         // Otázky odpovedajú hneď (aj počas načítania), príkazy idú bránou.
         if (msg.type === 'QUERY') viewCommands.current(msg, origin());
         else gate.run(() => viewCommands.current(msg, origin()));
+        return;
+      }
+      if (isSectionCapMessage(e.data)) {
+        const msg = e.data; // Vzhľad reznej plochy (D-120)
+        gate.run(() => applySectionCap(msg, useViewerStore.getState));
         return;
       }
       if (isLensEnvelope(e.data)) {
@@ -199,13 +202,17 @@ export function AimBridge() {
           useViewerStore.getState().setViewerDocuments(docs);
           break;
         }
-        case 'DOCUMENT_OPEN':
+        case 'DOCUMENT_OPEN': {
           // Deep link (D-075): otvor dokument ako kartu. Neznáme id je no-op
           // (openDocument si to ustráži) — host mohol poslať staršiu linku.
           useViewerStore
             .getState()
             .openDocument(e.data.documentId, e.data.page !== undefined ? { page: e.data.page } : undefined);
+          // Výrez strany z chatu (D-117): karta sa priblíži, keď je PDF otvorené.
+          const region = normalizeDocRegion(e.data.region);
+          if (region) useAimDocRegionStore.getState().requestRegion(e.data.documentId, region, e.data.page);
           break;
+        }
         case 'CAPTURES_LOAD':
           // Reality Capture pins (D-073): host pushes capture points with world
           // coords; the billboard layer (CapturePinLayer) renders them.
@@ -252,6 +259,7 @@ export function AimBridge() {
       useCapturePinsStore.getState().setPins([]);
       useAimDecorationsStore.getState().clear();
       useAimDerivationsStore.getState().clear();
+      useAimDocRegionStore.setState({ request: null }); // D-117: čakajúci výrez nepatrí ďalšej relácii
       resetLensFromChat(); // D-096: izolácia a AIM chat lens neprežijú odpojenie mostu
       setFocusProvider(undefined);
       resetCommandState(); // problémy a kroky z predošlej relácie nepatria do ďalšieho APPLIED
@@ -349,16 +357,10 @@ export function AimBridge() {
       return;
     }
     hadSelectionRef.current = true;
-    // Selekcia vyvolaná hostovým FOCUS-om sa neechuje späť (viď ref vyššie).
-    if (programmaticSelectionRef.current?.has(`${selectedEntity.modelId}:${selectedEntity.expressId}`)) {
-      programmaticSelectionRef.current = null;
-      return;
-    }
-    programmaticSelectionRef.current = null;
+    // FOCUS výber nemení (#97 V1), každá selekcia je teda používateľova alebo zo SELECT.
     // Mobil v embede (D-077 dodatok): tap síce prvok vyberie, ale Properties
     // bottom sheet sa sám neotvorí a plávajúce tlačidlo je ľahké prehliadnuť —
-    // po používateľskej selekcii (nie FOCUS z hosta, guard vyššie) sheet
-    // otvoríme; default tab je AIM inspector. Standalone sa nemení (guard
+    // po selekcii sheet otvoríme; default tab je AIM inspector. Standalone sa nemení (guard
     // embeddedRef na začiatku effectu).
     {
       const store = useViewerStore.getState();

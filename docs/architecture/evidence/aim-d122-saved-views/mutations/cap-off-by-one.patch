@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/selectionSummary.ts a/apps/viewer/src/aim/selectionSummary.ts
+index 3937db9a..a890ed9d 100644
+--- b/apps/viewer/src/aim/selectionSummary.ts
++++ a/apps/viewer/src/aim/selectionSummary.ts
+@@ -145,7 +145,7 @@ export function visibilityGuids(
+ ): string[] {
+   const out = new Set<string>();
+   for (const id of ids) {
+-    if (out.size > max) break;
++    if (out.size >= max) break;
+     const guid = guidOf(id);
+     if (guid) out.add(guid);
+   }

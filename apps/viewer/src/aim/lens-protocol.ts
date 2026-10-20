@@ -45,6 +45,13 @@ export type LensInboundMessage =
       /** X-ray context: zjednotenie pravidiel ostane plné, zvyšok priesvitný (kanál ghost viewera, AIM D-105). */
       xray?: boolean;
       autoColor?: AimAutoColorWire;
+      /**
+       * Rozsah farieb podľa hodnoty (AIM D-119): `FilterGroup[]` ako pri pravidlách; legenda a
+       * počty len za tieto prvky. Bez neho pri zúženom pohľade (izolácia, skrytie) viditeľné prvky.
+       */
+      autoColorScope?: unknown[];
+      /** Veľkosť legendy (AIM D-119): `large` = panel Lens ako veľké plávajúce okno, `normal` = späť do lišty. */
+      legend?: 'large' | 'normal';
     }
   | { source: typeof SOURCE; type: 'LENS_QUERY'; id: string; rev?: string }
   | {

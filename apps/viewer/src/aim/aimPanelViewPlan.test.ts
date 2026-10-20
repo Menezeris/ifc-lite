@@ -6,7 +6,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
 import { isInboundMessage } from './bridge-protocol.js';
-import { panelPlan, parsePanelView, selectPanel } from './aimPanelViewPlan.js';
+import { focusFor, panelPlan, parsePanelView, selectPanel } from './aimPanelViewPlan.js';
 
 const S = 'aim-bridge' as const;
 const GUID = '0MJFXziqDE$gGyPWwro9fJ';
@@ -42,5 +42,16 @@ describe('panel vlastností z chatu (AIM D-113)', () => {
     assert.deepEqual(panelPlan({ section: 'quantities' }), { tab: 'ifc', section: 'quantities' });
     assert.deepEqual(panelPlan({ tab: 'aim' }), { tab: 'aim' });
     assert.deepEqual(panelPlan({}), {});
+  });
+
+  it('focus len pre prvok zo SELECT, nie pre medzičasom iný výber', () => {
+    const target = { modelId: 'm1', expressId: 7 };
+    const focus = { pset: 'Pset_WallCommon', property: 'FireRating' };
+    assert.deepEqual(focusFor({ modelId: 'm1', expressId: 7 }, target, focus), {
+      modelId: 'm1', entityId: 7, psetName: 'Pset_WallCommon', propName: 'FireRating',
+    });
+    assert.strictEqual(focusFor({ modelId: 'm1', expressId: 8 }, target, focus), null);
+    assert.strictEqual(focusFor({ modelId: 'm2', expressId: 7 }, target, focus), null);
+    assert.strictEqual(focusFor(null, target, focus), null);
   });
 });

@@ -1,0 +1,13 @@
+diff --git b/scripts/aim-smoke.mjs a/scripts/aim-smoke.mjs
+index fdf0d78e..e112a5ab 100644
+--- b/scripts/aim-smoke.mjs
++++ a/scripts/aim-smoke.mjs
+@@ -30,7 +30,7 @@ export function hostPage(viewerUrl) {
+   window.smoke = { ready: false, result: null };
+   const origin = ${JSON.stringify(target.origin)};
+   addEventListener('message', (e) => {
+-    if (!e.data || e.data.source !== ${JSON.stringify(SOURCE)}) return;
++    if (e.origin !== origin || !e.data || e.data.source !== ${JSON.stringify(SOURCE)}) return;
+     if (e.data.type === 'READY' && !window.smoke.ready) {
+       window.smoke.ready = true;
+       document.getElementById('v').contentWindow.postMessage(

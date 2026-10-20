@@ -29,6 +29,18 @@ function renderableIds(refs: readonly EntityRef[]): number[] {
   return resolve ? resolvePresentationIds(resolve, picked) : picked;
 }
 
+/** Zapne skryté triedy (miestnosti, zóny) prvkov, aby boli v scéne (D-102; z Lens a SHOW D-119). */
+export function revealGatesForRefs(refs: Iterable<EntityRef>): void {
+  const state = useViewerStore.getState();
+  const types = new Set<string>();
+  for (const r of refs) {
+    const store = state.models.get(r.modelId)?.ifcDataStore ?? state.ifcDataStore;
+    const type = store?.entities?.getTypeName?.(r.expressId);
+    if (type) types.add(type);
+  }
+  for (const key of gatesToReveal([...types], state.typeVisibility)) state.toggleTypeVisibility(key);
+}
+
 export async function frameRefs(
   bim: BimContext,
   refs: readonly EntityRef[],
@@ -36,9 +48,8 @@ export async function frameRefs(
   noteIssue: (text: string) => void,
   sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms)),
 ): Promise<void> {
+  revealGatesForRefs(refs);
   const state = useViewerStore.getState();
-  const types = refs.map((r) => state.models.get(r.modelId)?.ifcDataStore?.entities?.getTypeName?.(r.expressId) ?? '');
-  for (const key of gatesToReveal(types, state.typeVisibility)) state.toggleTypeVisibility(key);
   // Bez prepínača ide priblíženie hneď; po zapnutí triedy až keď má cieľ v scéne geometriu.
   const resolvable = Boolean(state.cameraCallbacks?.resolveHighlightIds);
   for (let waited = 0; resolvable && renderableIds(refs).length === 0; waited += POLL_MS) {

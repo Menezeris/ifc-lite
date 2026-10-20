@@ -45,6 +45,9 @@ export const SECTION_OFFSET_RANGE = { min: -5, max: 20 } as const;
 const MAX_GUIDS = 600;
 /** Obálky sa vracajú po prvkoch, preto menej než pri ofarbení. */
 export const MAX_QUERY_GUIDS = 100;
+/** Najviac kót v jednom `MEASURE_SHOW` - rovnaký limit ako host (AIM D-124). */
+export const MAX_MEASURE_SEGMENTS = 12;
+type Vec3Wire = { x: number; y: number; z: number };
 
 export type ViewInboundMessage =
   | {
@@ -77,7 +80,9 @@ export type ViewInboundMessage =
       viewpoint?: BridgeViewpoint;
     }
   | { source: typeof SOURCE; type: 'SET_VIEW_MODE'; mode: BridgeViewMode; storeyGuid?: string }
-  | { source: typeof SOURCE; type: 'QUERY'; id: string; query: ViewQuery; guids?: string[] };
+  | { source: typeof SOURCE; type: 'QUERY'; id: string; query: ViewQuery; guids?: string[] }
+  /** Kóty v IFC svete (Z hore, m) do nástroja Measure (AIM D-124); `keep` = pridať k predošlým od hosta. */
+  | { source: typeof SOURCE; type: 'MEASURE_SHOW'; segments: { a: Vec3Wire; b: Vec3Wire }[]; keep?: boolean };
 
 /** Odpoveď viewera na `QUERY` (viewer -> host). */
 export type ViewQueryResult =
@@ -158,6 +163,12 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
     }
     case 'SET_VIEW_MODE':
       return (VIEW_MODES as readonly unknown[]).includes(m.mode) && optional(m.storeyGuid, isStr);
+    case 'MEASURE_SHOW':
+      return Array.isArray(m.segments)
+        && m.segments.length > 0
+        && m.segments.length <= MAX_MEASURE_SEGMENTS
+        && m.segments.every((s) => !!s && typeof s === 'object' && isVec((s as { a?: unknown }).a) && isVec((s as { b?: unknown }).b))
+        && optional(m.keep, (k) => typeof k === 'boolean');
     case 'QUERY':
       return isId(m.id)
         && (VIEW_QUERIES as readonly unknown[]).includes(m.query)

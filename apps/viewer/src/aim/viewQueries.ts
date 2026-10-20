@@ -22,7 +22,7 @@ import type { AxisBounds } from '@/lib/section/section-distance';
 import { expandToGeometryBearingIds } from '@/utils/aggregation';
 import { deriveViewMode } from '@/hooks/viewModeCore';
 import { RelationshipType } from '@ifc-lite/data';
-import { summarizeSelection, type SelectedEntityInfo } from './selectionSummary.js';
+import { summarizeSelection, visibilityGuids, type SelectedEntityInfo } from './selectionSummary.js';
 import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import type { SectionPlaneAxis } from '@/store/types';
 import type { SectionAxis, SectionFit, ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
@@ -144,6 +144,7 @@ function selectedEntityInfo(state: State, id: number, g: GuidHelpers): SelectedE
   const guid = g.guidForEntity(state.models, ref) ?? null;
   if (!store) return { guid, name: null, ifc_type: null, storey: null, model: model?.name ?? null, parent: null };
   const { entities } = store;
+  // @raw-entity-enumeration-ok point lookup of the selected element's storey for a read-only answer to the AIM host
   const storeyId = store.spatialHierarchy?.elementToStorey.get(ref.expressId);
   const parentId = store.relationships?.getRelated(ref.expressId, RelationshipType.Aggregates, 'inverse')[0];
   return {
@@ -160,7 +161,7 @@ function selectedEntityInfo(state: State, id: number, g: GuidHelpers): SelectedE
   };
 }
 
-/** `QUERY view_state`: rez, kamera, režim, výber a viditeľnosť. */
+/** `QUERY view_state`: rez, kamera, režim, výber a viditeľnosť (počty aj GUIDy skrytých a izolovaných). */
 export function queryViewState(state: State, g: GuidHelpers) {
   const mode = deriveViewMode({
     splitView: state.underlaySplitView,
@@ -185,6 +186,7 @@ export function queryViewState(state: State, g: GuidHelpers) {
     ? [...state.selectedEntityIds]
     : state.selectedEntityId !== null ? [state.selectedEntityId] : [];
   const bbox = renderBoundsOfIds(state, selected);
+  const guidOf = (id: number) => g.guidForEntity(state.models, resolveEntityRef(id));
   return {
     frame: 'ifc_world', units: 'm',
     mode, storey_guid: state.underlayActiveStoreyGuid ?? state.underlayLastStoreyGuid ?? null,
@@ -193,6 +195,9 @@ export function queryViewState(state: State, g: GuidHelpers) {
     selection: { ...summarizeSelection(selected.map((id) => selectedEntityInfo(state, id, g))), ...(bbox ? { bbox: describeBox(renderBoxToIfc(bbox, offset)) } : {}) },
     hidden_count: state.hiddenEntities.size,
     isolated_count: state.isolatedEntities ? state.isolatedEntities.size : null,
+    // GUIDy do stropu mosta: host z nich uloží a obnoví pohľad (AIM D-122); APPLIED ich nenesie.
+    hidden_guids: visibilityGuids(state.hiddenEntities, guidOf),
+    isolated_guids: state.isolatedEntities ? visibilityGuids(state.isolatedEntities, guidOf) : null,
     // Oranžové zvýraznenie z FOCUS (#94): bez neho sa nedalo povedať, čo je to za farbu.
     ...(g.focus ? { focus: g.focus() } : {}),
   };

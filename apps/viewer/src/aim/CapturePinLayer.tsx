@@ -18,6 +18,7 @@ import { Camera, Orbit } from 'lucide-react';
 
 import { useViewerStore } from '../store/index.js';
 import { useCapturePinsStore } from './capturePinsStore.js';
+import { AimRoomFillLayer } from './AimRoomFillLayer.js';
 
 interface ProjectedPin {
   id: string;
@@ -112,11 +113,14 @@ export function CapturePinLayer() {
     // (new/removed pins need an immediate re-projection).
   }, [cameraCallbacks, pins.length]);
 
+  // Výplň miestností v 2D (D-119) ide v tom istom lenivom module: ViewportContainer je na strope veľkosti.
   if (!bounds) {
-    return <div ref={containerRef} className="absolute inset-0 pointer-events-none" />;
+    return <><AimRoomFillLayer /><div ref={containerRef} className="absolute inset-0 pointer-events-none" /></>;
   }
 
   return (
+    <>
+    <AimRoomFillLayer />
     <div
       ref={containerRef}
       className="absolute inset-0 pointer-events-none overflow-hidden"
@@ -152,5 +156,6 @@ export function CapturePinLayer() {
         );
       })}
     </div>
+    </>
   );
 }

@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimRoomFill.ts a/apps/viewer/src/aim/aimRoomFill.ts
+index 84cf7559a..044cad5a0 100644
+--- b/apps/viewer/src/aim/aimRoomFill.ts
++++ a/apps/viewer/src/aim/aimRoomFill.ts
+@@ -46,6 +46,7 @@ export function spaceFootprint(
+     const [ox, oy, oz] = [origin?.[0] ?? 0, origin?.[1] ?? 0, origin?.[2] ?? 0];
+     for (let t = 0; t + 2 < idx.length; t += 3) {
+       const v = [idx[t], idx[t + 1], idx[t + 2]].map((i) => ({ x: pos[i * 3] + ox, y: pos[i * 3 + 1] + oy, z: pos[i * 3 + 2] + oz }));
++      if (v.some((p) => p.y - minY > eps)) continue;
+       const a = Math.abs((v[1].x - v[0].x) * (v[2].z - v[0].z) - (v[2].x - v[0].x) * (v[1].z - v[0].z)) / 2;
+       if (a < 1e-9) continue;
+       triangles.push(...v);

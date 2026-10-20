@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionCap.ts a/apps/viewer/src/aim/sectionCap.ts
+index 3a08b51f4..e253b1d00 100644
+--- b/apps/viewer/src/aim/sectionCap.ts
++++ a/apps/viewer/src/aim/sectionCap.ts
+@@ -59,7 +59,7 @@ export function planSectionCap(
+   };
+   if (msg.fillColor) {
+     const n = parseInt(msg.fillColor.slice(1), 16);
+-    style.fillColor = [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, 1];
++    style.fillColor = [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, current.capStyle.fillColor[3]];
+   }
+   return { showCap: true, style, ...(remember ? { remember } : {}) };
+ }

@@ -130,3 +130,24 @@ export function summarizeSelection(infos: readonly SelectedEntityInfo[]): Viewer
     },
   };
 }
+
+/**
+ * Strop GUID skrytých a izolovaných prvkov v `view_state` (AIM D-122): rovnaký
+ * ako HIDE/ISOLATE v moste, takže uložený pohľad sa vráti jednou správou.
+ */
+export const MAX_VISIBILITY_GUIDS = 600;
+
+/** GUIDy prvkov kanála viditeľnosti do stropu, bez duplicít; prvok bez GUID sa preskočí. */
+export function visibilityGuids(
+  ids: Iterable<number>,
+  guidOf: (id: number) => string | null | undefined,
+  max = MAX_VISIBILITY_GUIDS,
+): string[] {
+  const out = new Set<string>();
+  for (const id of ids) {
+    if (out.size >= max) break;
+    const guid = guidOf(id);
+    if (guid) out.add(guid);
+  }
+  return [...out];
+}

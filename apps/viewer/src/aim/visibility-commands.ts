@@ -15,7 +15,7 @@ import { useViewerStore } from '../store/index.js';
 import { fromGlobalIdFromModels, toGlobalIdFromModels } from '../store/globalId.js';
 import type { InboundMessage, OpsSelector, resolveGuids, resolveSelector } from './bridge-protocol.js';
 import { nextIsolation, type CommandInboundMessage } from './command-protocol.js';
-import { frameRefs } from './frame-refs.js';
+import { frameRefs, revealGatesForRefs } from './frame-refs.js';
 import { applyPanelView } from './aimPanelView.js';
 import { selectPanel } from './aimPanelViewPlan.js';
 
@@ -26,6 +26,8 @@ export interface VisibilityDeps {
   selectPickedGlobalId: (globalId: number | null) => void;
   noteIssue: (text: string) => void;
   track: (p: Promise<unknown>) => void;
+  /** Pohľad pred zarámovaním (2D/split na podlaží cieľa alebo 3D, #97 V1); kľúč podlažia `modelId:expressId`. */
+  prepareFocusView: (storeyKeys: readonly (string | null)[]) => void;
   FOCUS_COLOR: string;
   FILTER_COLOR: string;
 }
@@ -82,14 +84,10 @@ function changeIsolation(bim: BimContext, refs: EntityRef[], op: 'add' | 'remove
   isolateExactly(bim, nextRefs);
 }
 
-/**
- * Vykoná príkaz; false = správa nie je príkaz viditeľnosti (AimBridge ju spracuje sám).
- * `programmatic` = selekcie z FOCUS, ktoré sa hostovi neposielajú späť ako ENTITY_SELECTED.
- */
+/** Vykoná príkaz; false = správa nie je príkaz viditeľnosti (AimBridge ju spracuje sám). */
 export function runVisibilityCommand(
   msg: InboundMessage | CommandInboundMessage,
   bim: BimContext,
-  programmatic: { current: Set<string> | null },
   d: VisibilityDeps,
 ): boolean {
   switch (msg.type) {
@@ -101,12 +99,16 @@ export function runVisibilityCommand(
         if (msg.guids.length > 0) d.noteIssue('FOCUS: vo vieweri sa nenašiel žiadny prvok');
         return true;
       }
-      // Explicitné ofarbenie (oranžová ako v pôvodnom AIM three.js vieweri):
-      // multi-select cez SDK highlight v 3D sám nezobrazí.
+      // Explicitné ofarbenie (oranžová ako v pôvodnom AIM three.js vieweri). Výber
+      // nemení: zvýraznenie a výber sú pre hosta dva príkazy (FOCUS / SELECT, #97 V1).
       bim.viewer.colorize(refs, d.FOCUS_COLOR);
       focused = refs;
-      programmatic.current = new Set(refs.map((r) => `${r.modelId}:${r.expressId}`));
-      bim.viewer.select(refs);
+      const models = useViewerStore.getState().models;
+      d.prepareFocusView(refs.map((r) => {
+        // @raw-entity-enumeration-ok point lookup of a focused element's storey to pick the 2D plan; no membership is enumerated
+        const storey = models.get(r.modelId)?.ifcDataStore?.spatialHierarchy?.elementToStorey.get(r.expressId);
+        return storey === undefined ? null : `${r.modelId}:${storey}`;
+      }));
       d.track(frameRefs(bim, refs, 'FOCUS', d.noteIssue));
       return true;
     }
@@ -124,7 +126,6 @@ export function runVisibilityCommand(
         return true;
       }
       clearFocus(bim); // oranžová by prekryla selekčné zvýraznenie
-      programmatic.current = null;
       d.selectPickedGlobalId(toGlobalIdFromModels(state.models, ref.modelId, ref.expressId));
       useViewerStore.getState().openPanelInHome('properties', 'programmatic');
       d.track(frameRefs(bim, [ref], 'SELECT', d.noteIssue));
@@ -133,7 +134,6 @@ export function runVisibilityCommand(
     }
     case 'CLEAR_SELECTION':
       // Ako klik do prázdna: výber zruší a hostovi ide ENTITY_DESELECTED (D-102).
-      programmatic.current = null;
       d.selectPickedGlobalId(null);
       return true;
     case 'HIGHLIGHT_FILTER': {
@@ -163,11 +163,14 @@ export function runVisibilityCommand(
     }
     case 'SHOW': {
       const refs = refsForOp(d, msg.type, msg);
+      // "Zobraz miestnosti": skrytá trieda (IfcSpace, IfcSpatialZone) sa zapne, inak by show nemal čo ukázať (D-119).
+      revealGatesForRefs(refs);
       if (refs.length > 0) bim.viewer.show(refs);
       return true;
     }
     case 'ISOLATE': {
       const refs = refsForOp(d, msg.type, msg);
+      revealGatesForRefs(refs);
       if (refs.length > 0) isolateExactly(bim, refs);
       return true;
     }

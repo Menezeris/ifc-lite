@@ -1,0 +1,13 @@
+diff --git b/scripts/check-aim-fork-only.mjs a/scripts/check-aim-fork-only.mjs
+index 4b510e52..740fe541 100644
+--- b/scripts/check-aim-fork-only.mjs
++++ a/scripts/check-aim-fork-only.mjs
+@@ -244,7 +244,7 @@ export function classify({ base, head, headRef = '', labels = [], git, readViewe
+   const upstream = related(changed.filter((p) => !AIM_LAYER.test(p)));
+   const all = related(changed);
+   const tests = all.length <= MAX_RELATED_TESTS ? all : upstream.length <= MAX_RELATED_TESTS ? upstream : [];
+-  const mode = blocks ? 'fork-blocks' : 'aim-only';
++  const mode = outside.length > 0 ? 'upstream' : blocks ? 'fork-blocks' : 'aim-only';
+   return { mode, reasons, outside, relatedTests: tests };
+ }
+ 

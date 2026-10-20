@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/hostMeasurements.ts a/apps/viewer/src/aim/hostMeasurements.ts
+index 1fe5aaf9..7676705d 100644
+--- b/apps/viewer/src/aim/hostMeasurements.ts
++++ a/apps/viewer/src/aim/hostMeasurements.ts
+@@ -38,7 +38,7 @@ export function addHostMeasurements(
+   msg: Pick<MeasureMessage, 'segments' | 'keep'>,
+   offset: Vec3,
+ ): string[] {
+-  {
++  if (!msg.keep) {
+     const present = new Set(get().measurements.map((m) => m.id));
+     for (const id of hostIds) if (present.has(id)) get().deleteMeasurement(id);
+     hostIds = [];
