@@ -35,6 +35,7 @@ import { useCapturePinsStore } from './capturePinsStore.js';
 import { useAimDecorationsStore } from './aimDecorationsStore.js';
 import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
+import { applySectionCap, isSectionCapMessage } from './sectionCap.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
 import { isBcfLoadMessage, loadBcfTopics } from './bcf-protocol.js';
 import { dispatchLensMessage, isLensEnvelope, lensSettled, resetLensFromChat } from './lens-protocol.js';
@@ -131,6 +132,11 @@ export function AimBridge() {
         // Otázky odpovedajú hneď (aj počas načítania), príkazy idú bránou.
         if (msg.type === 'QUERY') viewCommands.current(msg, origin());
         else gate.run(() => viewCommands.current(msg, origin()));
+        return;
+      }
+      if (isSectionCapMessage(e.data)) {
+        const msg = e.data; // Vzhľad reznej plochy (D-120)
+        gate.run(() => applySectionCap(msg, useViewerStore.getState));
         return;
       }
       if (isLensEnvelope(e.data)) {
