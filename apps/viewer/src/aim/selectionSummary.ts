@@ -132,7 +132,7 @@ export function summarizeSelection(infos: readonly SelectedEntityInfo[]): Viewer
 }
 
 /**
- * Strop GUID skrytých a izolovaných prvkov v `view_state` (AIM D-117): rovnaký
+ * Strop GUID skrytých a izolovaných prvkov v `view_state` (AIM D-122): rovnaký
  * ako HIDE/ISOLATE v moste, takže uložený pohľad sa vráti jednou správou.
  */
 export const MAX_VISIBILITY_GUIDS = 600;

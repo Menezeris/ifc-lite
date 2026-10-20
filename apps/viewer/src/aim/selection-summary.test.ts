@@ -83,7 +83,7 @@ describe('súhrn výberu pre view_state (AIM D-093)', () => {
   });
 });
 
-describe('skryté a izolované GUIDy pre view_state (AIM D-117)', () => {
+describe('skryté a izolované GUIDy pre view_state (AIM D-122)', () => {
   const guidOf = (id: number) => (id % 10 === 0 ? null : `G${id % 700}`);
 
   it('vráti GUIDy v poradí kanála, bez prvkov bez GUID a bez duplicít', () => {

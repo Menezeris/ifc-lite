@@ -2,7 +2,7 @@
      License, v. 2.0. If a copy of the MPL was not distributed with this
      file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
 
-# AIM D-117 saved views: surgical mutation evidence
+# AIM D-122 saved views: surgical mutation evidence
 
 The AIM host can now save and restore a view (AIMviewer #72). To restore isolation and hidden elements it needs their GlobalIds, so `QUERY view_state` now also returns `hidden_guids` and `isolated_guids` (capped at 600, the same limit as `HIDE`/`ISOLATE` on the bridge, so a restore is one message each). `APPLIED` keeps sending only the counts. The pure part is the new `visibilityGuids` in `selectionSummary.ts`; its test (`selection-summary.test.ts`) imports it, so reverting production to the base makes the test fail to load and the CI revert oracle reports `REVERT-BROKE-BUILD`. Each behavioural decision was instead checked with a surgical mutation.
 
@@ -24,5 +24,5 @@ Use a clean checkout of the branch with dependencies installed. Copy the patches
 node scripts/check-test-revert-oracle.mjs --base origin/main \
   --only apps/viewer/src/aim/selectionSummary.ts \
   --test apps/viewer/src/aim/selection-summary.test.ts \
-  --mutation /tmp/d117-mut/cap-ignored.patch --ci --json
+  --mutation /tmp/d122-mut/cap-ignored.patch --ci --json
 ```

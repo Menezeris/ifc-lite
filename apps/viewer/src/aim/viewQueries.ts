@@ -194,7 +194,7 @@ export function queryViewState(state: State, g: GuidHelpers) {
     selection: { ...summarizeSelection(selected.map((id) => selectedEntityInfo(state, id, g))), ...(bbox ? { bbox: describeBox(renderBoxToIfc(bbox, offset)) } : {}) },
     hidden_count: state.hiddenEntities.size,
     isolated_count: state.isolatedEntities ? state.isolatedEntities.size : null,
-    // GUIDy do stropu mosta: host z nich uloží a obnoví pohľad (AIM D-117); APPLIED ich nenesie.
+    // GUIDy do stropu mosta: host z nich uloží a obnoví pohľad (AIM D-122); APPLIED ich nenesie.
     hidden_guids: visibilityGuids(state.hiddenEntities, guidOf),
     isolated_guids: state.isolatedEntities ? visibilityGuids(state.isolatedEntities, guidOf) : null,
     // Oranžové zvýraznenie z FOCUS (#94): bez neho sa nedalo povedať, čo je to za farbu.
