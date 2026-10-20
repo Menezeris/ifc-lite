@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/view-protocol.ts a/apps/viewer/src/aim/view-protocol.ts
+index 0ed3f90b..2f47bd2e 100644
+--- b/apps/viewer/src/aim/view-protocol.ts
++++ a/apps/viewer/src/aim/view-protocol.ts
+@@ -168,7 +168,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
+         && m.segments.length > 0
+         && m.segments.length <= MAX_MEASURE_SEGMENTS
+         && m.segments.every((s) => !!s && typeof s === 'object' && isVec((s as { a?: unknown }).a) && isVec((s as { b?: unknown }).b))
+-        && true;
++        && optional(m.keep, (k) => typeof k === 'boolean');
+     case 'QUERY':
+       return isId(m.id)
+         && (VIEW_QUERIES as readonly unknown[]).includes(m.query)

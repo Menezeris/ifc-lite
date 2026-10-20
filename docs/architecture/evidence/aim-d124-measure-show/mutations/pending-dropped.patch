@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/measureShow.ts a/apps/viewer/src/aim/measureShow.ts
+index bbdd822c..99f781d3 100644
+--- b/apps/viewer/src/aim/measureShow.ts
++++ a/apps/viewer/src/aim/measureShow.ts
+@@ -57,7 +57,7 @@ export function addHostMeasurements(
+     const last = get().measurements.at(-1);
+     if (last) added.push(last.id);
+   }
+-  void pending;
++  setPending(pending);
+   hostIds.push(...added);
+   return added;
+ }

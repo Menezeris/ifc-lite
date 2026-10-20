@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/measureShow.ts a/apps/viewer/src/aim/measureShow.ts
+index f60709fc..99f781d3 100644
+--- b/apps/viewer/src/aim/measureShow.ts
++++ a/apps/viewer/src/aim/measureShow.ts
+@@ -52,7 +52,7 @@ export function addHostMeasurements(
+   const pending = get().pendingMeasurePoint;
+   const added: string[] = [];
+   for (const seg of msg.segments) {
+-    get().addMeasurePoint(at(ifcPointToRender(seg.a, { x: 0, y: 0, z: 0 })));
++    get().addMeasurePoint(at(ifcPointToRender(seg.a, offset)));
+     get().completeMeasurement(at(ifcPointToRender(seg.b, offset)));
+     const last = get().measurements.at(-1);
+     if (last) added.push(last.id);
