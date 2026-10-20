@@ -1,0 +1,58 @@
+{
+  "focus-3d-not-kept": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/focus-view.test.ts; that file has a green, attributable baseline.",
+    "base": "43e65b3cfac4553dbb6d9e185e6aeaa742940f5e",
+    "head": "09f929fa95ac6e729d8cb707717dcb8ceb1ea4b2",
+    "production": [
+      "apps/viewer/src/aim/viewCommands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/focus-view.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "focus-active-storey-moved": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/focus-view.test.ts; that file has a green, attributable baseline.",
+    "base": "43e65b3cfac4553dbb6d9e185e6aeaa742940f5e",
+    "head": "09f929fa95ac6e729d8cb707717dcb8ceb1ea4b2",
+    "production": [
+      "apps/viewer/src/aim/viewCommands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/focus-view.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "focus-many-storeys-first": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/focus-view.test.ts; that file has a green, attributable baseline.",
+    "base": "43e65b3cfac4553dbb6d9e185e6aeaa742940f5e",
+    "head": "09f929fa95ac6e729d8cb707717dcb8ceb1ea4b2",
+    "production": [
+      "apps/viewer/src/aim/viewCommands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/focus-view.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "focus-unknown-storey-trusted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/focus-view.test.ts; that file has a green, attributable baseline.",
+    "base": "43e65b3cfac4553dbb6d9e185e6aeaa742940f5e",
+    "head": "09f929fa95ac6e729d8cb707717dcb8ceb1ea4b2",
+    "production": [
+      "apps/viewer/src/aim/viewCommands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/focus-view.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}
