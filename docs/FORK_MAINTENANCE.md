@@ -339,6 +339,8 @@ Revert oracle rýchla cesta nespúšťa: dôkazy mutácií a štítok ostávajú
 **Nočné plné CI.** `test.yml` má vo forku `schedule` (00:41 UTC, teda 01:41 / 02:41 v
 Bratislave) a `workflow_dispatch`. Taký beh deklaruje všetky oblasti za zmenené (krok `all`,
 ako merge queue) a spustí všetky lanes vrátane push-only (feature buildy, census, CSG, Plato).
+Výnimky sú len PR lanes upstreamu: viewer E2E a revert oracle bežia len na PR (E2E potrebuje build
+viewera z PR jobu); od D-114 ich dostane každý balíkový PR `release/aim-*`.
 Je to potrebné, lebo merge PR z rýchlej cesty prehrá na `main` verdikt PR (push replay) a
 ťažké lanes by inak nebežali nikdy. Červený nočný beh hlási `aim-nightly-report.yml`
 (`workflow_run` na Test) cez `report-scheduled-failure.yml`. Ten vo forku zakladá issue až po
