@@ -79,11 +79,19 @@ export const useAimPanelStore = create<AimPanelStore>((set, get) => ({
   },
 }));
 
-/** "Ukázať v 3D" on an open document (D-104): the host answers with APPLY_LENS. */
+/**
+ * Viewer -> host: "Ukázať v 3D" on an open document (D-104 step 4 in the AIM
+ * repo). The host resolves the elements the page (or the whole document) refers
+ * to from its graph and answers with APPLY_LENS; the viewer holds no document
+ * links. Declared here, not in bridge-protocol.ts, which sits at its
+ * module-size budget.
+ */
+export type DocumentShow3dMessage = { source: typeof SOURCE; type: 'DOCUMENT_SHOW_3D'; documentId: string; page?: number };
+
 export function postAimDocumentShow3d(target: { documentId: string; page?: number }) {
   const { parentOrigin } = useAimPanelStore.getState();
   window.parent.postMessage(
-    { source: SOURCE, type: 'DOCUMENT_SHOW_3D', ...target } satisfies OutboundMessage,
+    { source: SOURCE, type: 'DOCUMENT_SHOW_3D', ...target } satisfies DocumentShow3dMessage,
     parentOrigin ?? '*',
   );
 }
