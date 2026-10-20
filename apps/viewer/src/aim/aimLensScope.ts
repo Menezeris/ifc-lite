@@ -44,13 +44,15 @@ export function revealGatesFor(globalIds: Iterable<number>): void {
 
 /**
  * Po vyhodnotení pravidiel lens (useLens zapíše `lensRuleEntityIds`) zapne
- * triedy ich prvkov. Lens nahradená skôr, než sa vyhodnotila, nezapne nič.
+ * triedy ich prvkov. Lens nahradená skôr, než sa vyhodnotila, nezapne nič;
+ * `onTimeout` volajúci použije na hlásenie, ak lens ešte platí.
  */
-export function revealAfterLens(ruleIds: readonly string[], started = Date.now()): void {
+export function revealAfterLens(ruleIds: readonly string[], onTimeout?: () => void, started = Date.now()): void {
   if (ruleIds.length === 0) return;
   const done = useViewerStore.getState().lensRuleEntityIds;
   if (!ruleIds.every((id) => done.has(id))) {
-    if (Date.now() - started < WAIT_MS) setTimeout(() => revealAfterLens(ruleIds, started), POLL_MS);
+    if (Date.now() - started < WAIT_MS) setTimeout(() => revealAfterLens(ruleIds, onTimeout, started), POLL_MS);
+    else onTimeout?.();
     return;
   }
   revealGatesFor(ruleIds.flatMap((id) => done.get(id) ?? []));
