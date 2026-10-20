@@ -4,9 +4,9 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
     "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
-    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "head": "f24f9eb58328eb06fbbeb02861dcc4c9c6e77ec4",
     "production": [
-      "apps/viewer/src/aim/measureShow.ts"
+      "apps/viewer/src/aim/hostMeasurements.ts"
     ],
     "tests": [
       "apps/viewer/src/aim/measure-show.test.ts"
@@ -18,7 +18,7 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
     "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
-    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "head": "f24f9eb58328eb06fbbeb02861dcc4c9c6e77ec4",
     "production": [
       "apps/viewer/src/aim/view-protocol.ts"
     ],
@@ -32,9 +32,9 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
     "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
-    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "head": "f24f9eb58328eb06fbbeb02861dcc4c9c6e77ec4",
     "production": [
-      "apps/viewer/src/aim/measureShow.ts"
+      "apps/viewer/src/aim/hostMeasurements.ts"
     ],
     "tests": [
       "apps/viewer/src/aim/measure-show.test.ts"
@@ -46,9 +46,9 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
     "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
-    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "head": "f24f9eb58328eb06fbbeb02861dcc4c9c6e77ec4",
     "production": [
-      "apps/viewer/src/aim/measureShow.ts"
+      "apps/viewer/src/aim/hostMeasurements.ts"
     ],
     "tests": [
       "apps/viewer/src/aim/measure-show.test.ts"
@@ -60,9 +60,9 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
     "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
-    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "head": "f24f9eb58328eb06fbbeb02861dcc4c9c6e77ec4",
     "production": [
-      "apps/viewer/src/aim/measureShow.ts"
+      "apps/viewer/src/aim/hostMeasurements.ts"
     ],
     "tests": [
       "apps/viewer/src/aim/measure-show.test.ts"
@@ -74,7 +74,7 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
     "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
-    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "head": "f24f9eb58328eb06fbbeb02861dcc4c9c6e77ec4",
     "production": [
       "apps/viewer/src/aim/view-protocol.ts"
     ],
@@ -88,9 +88,9 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/measure-show.test.ts; that file has a green, attributable baseline.",
     "base": "8245b769db83f2d5fdd47e57446c7fea3dfa6275",
-    "head": "cbc0aa2f31bb08ba5dba3a0fed578a5b0982eced",
+    "head": "f24f9eb58328eb06fbbeb02861dcc4c9c6e77ec4",
     "production": [
-      "apps/viewer/src/aim/measureShow.ts"
+      "apps/viewer/src/aim/hostMeasurements.ts"
     ],
     "tests": [
       "apps/viewer/src/aim/measure-show.test.ts"
