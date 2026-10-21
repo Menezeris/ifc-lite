@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/documentsQuery.ts a/apps/viewer/src/aim/documentsQuery.ts
+index 1efd43cd7..64121f1ef 100644
+--- b/apps/viewer/src/aim/documentsQuery.ts
++++ a/apps/viewer/src/aim/documentsQuery.ts
+@@ -175,7 +175,7 @@ export function selectionMedia(
+     const probe: QueryDocument = { id: item.id, name: [item.name, item.kindLabel, item.via ?? '', item.capturedAt ?? ''].join(' ') };
+     if (!matchesFilter(probe, filter)) continue;
+     const { thumbUrl, ...rest } = item;
+-    const safe = thumbUrl ? { ...rest, thumbUrl } : rest;
++    const safe = thumbUrl && /^https?:\/\//i.test(thumbUrl) ? { ...rest, thumbUrl } : rest;
+     const label = item.kindLabel || item.kind;
+     const list = byKind.get(label);
+     if (list) list.push(safe);

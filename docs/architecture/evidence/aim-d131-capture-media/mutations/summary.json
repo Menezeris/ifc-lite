@@ -1,0 +1,44 @@
+{
+  "media-filter-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "4052aaecf2a8039ea703da96e52851ca1c5ce4c7",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "media-groups-unsorted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "4052aaecf2a8039ea703da96e52851ca1c5ce4c7",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "media-unsafe-thumb-kept": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "4052aaecf2a8039ea703da96e52851ca1c5ce4c7",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}
