@@ -3,75 +3,44 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * AIM | IFC inspector switch (D-077) — the tab bar shown at the top of the
- * PropertiesPanel when the viewer is embedded in the AIM host and an element
- * is selected. "AIM" shows the host-fed AimCard (platform data), "IFC" shows
- * the panel's native file-derived content; PropertiesPanel hides its native
- * subtree via `useAimNativeHidden` (a `hidden`/`contents` wrapper, so the
- * upstream layout is untouched when the tab bar is inactive). Standalone
- * (non-embedded) mode renders nothing — zero upstream impact.
+ * AIM block in the PropertiesPanel (D-077; AIM D-127 dropped the AIM | IFC tab
+ * bar, #169). The panel always shows its native IFC content; the host-fed
+ * AimCard (platform data: documents via zone/storey/type, responsibilities,
+ * GUID history, "open full detail") sits above it as one collapsed row, so no
+ * AIM data leaves the viewer. `useAimNativeHidden` stays for the existing
+ * AIM-FORK wiring in PropertiesPanel and is always false now. Standalone
+ * (non-embedded) mode renders nothing: zero upstream impact.
  */
 
 import { lazy, Suspense } from 'react';
-import { Database, FileBox } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useViewerStore } from '@/store';
 import { useAimPanelStore } from './aimPanelStore';
-import { useAimInspectorStore, type InspectorTab } from './aimInspectorStore';
+import { useAimInspectorStore } from './aimInspectorStore';
 // PropertiesPanel ho berie cez existujúci import tohto modulu (súbor je na strope veľkosti).
 export { isReadOnlyFocus } from './aimInspectorStore';
-// Lazy: the card only renders under the AIM tab inside the AIM host.
+// Lazy: the card only renders inside the AIM host.
 const AimCard = lazy(() => import('./AimCard').then((m) => ({ default: m.AimCard })));
 
-/** True while the tab bar is active AND the AIM tab is selected — the
- *  PropertiesPanel hides its native content subtree for that state. */
+/** Native IFC content is never hidden since AIM D-127 (one panel, IFC). */
 export function useAimNativeHidden(): boolean {
-  const embedded = useAimPanelStore((s) => s.embedded);
-  const panel = useAimPanelStore((s) => s.panel);
-  const tab = useAimInspectorStore((s) => s.tab);
-  return embedded && panel.status !== 'idle' && tab === 'aim';
+  return false;
 }
 
 export function AimInspectorTabs() {
   const embedded = useAimPanelStore((s) => s.embedded);
   const panel = useAimPanelStore((s) => s.panel);
-  const tab = useAimInspectorStore((s) => s.tab);
-  const setTab = useAimInspectorStore((s) => s.setTab);
-  // On mobile the panel is one scroll column owned by the bottom sheet, so the
-  // AIM card must flow at natural height. A `flex-1` internal scroller would be
-  // squeezed by the header/tab bar above it (same failure the IFC tab hit).
+  const open = useAimInspectorStore((s) => s.cardOpen);
+  const setOpen = useAimInspectorStore((s) => s.setCardOpen);
+  // On mobile the panel is one scroll column owned by the bottom sheet: the card flows at natural height.
   const isMobile = useViewerStore((s) => s.isMobile);
 
-  // No host / no selection: no tab bar, PropertiesPanel shows native content.
+  // No host / no selection: nothing above the native content.
   if (!embedded || panel.status === 'idle') return null;
 
+  // `data-aim-inspector` marks the panel body for the chat property focus (aimPanelView.ts).
   return (
-    <>
-      <Tabs value={tab} onValueChange={(v) => setTab(v as InspectorTab)} className="shrink-0">
-        <TabsList className="properties-tabs-list w-full shrink-0">
-          <TabsTrigger
-            value="aim"
-            title="AIM platforma"
-            className="properties-tab-trigger flex-1 min-w-0 uppercase text-[11px] tracking-wide"
-          >
-            <Database className="h-3 w-3 shrink-0 panel-compact-icon" />
-            <span className="panel-compact-text">AIM</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="ifc"
-            title="Natívne IFC dáta"
-            className="properties-tab-trigger flex-1 min-w-0 uppercase text-[11px] tracking-wide"
-          >
-            <FileBox className="h-3 w-3 shrink-0 panel-compact-icon" />
-            <span className="panel-compact-text">IFC</span>
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-      {tab === 'aim' && (
-        <div className={isMobile ? '' : 'flex-1 min-h-0 overflow-y-auto'}>
-          <Suspense fallback={null}><AimCard /></Suspense>
-        </div>
-      )}
-    </>
+    <div data-aim-inspector className={open && !isMobile ? 'shrink-0 max-h-[50%] overflow-y-auto' : 'shrink-0'}>
+      <Suspense fallback={null}><AimCard open={open} onOpenChange={setOpen} /></Suspense>
+    </div>
   );
 }

@@ -9,8 +9,11 @@ import {
   MAX_HIGHLIGHTS,
   normalizeDocHighlights,
   normalizeDocRegion,
+  regionApplied,
+  regionInside,
   regionScroll,
   regionZoom,
+  visiblePart,
   useAimDocRegionStore,
   REGION_ZOOM_MAX,
   REGION_ZOOM_MIN,
@@ -147,5 +150,44 @@ describe('useAimDocRegionStore highlights (D-123)', () => {
     assert.equal(second.page, undefined);
     store.setHighlights('doc-2', []);
     assert.equal(useAimDocRegionStore.getState().highlights, null);
+  });
+});
+
+describe('viditeľný rozsah karty (AIM D-127, #166)', () => {
+  it('časť strany v ploche karty v zlomkoch, mimo záberu null', () => {
+    const page = { left: -500, top: -1000, width: 2000, height: 4000 };
+    assert.deepEqual(visiblePart(page, { left: 0, top: 0, width: 400, height: 800 }), { x: 0.25, y: 0.25, w: 0.2, h: 0.2 });
+    assert.deepEqual(visiblePart({ left: 0, top: 0, width: 100, height: 100 }, { left: -50, top: -50, width: 500, height: 500 }), { x: 0, y: 0, w: 1, h: 1 });
+    assert.equal(visiblePart({ left: 1000, top: 0, width: 100, height: 100 }, { left: 0, top: 0, width: 500, height: 500 }), null);
+    assert.equal(visiblePart({ left: 0, top: 0, width: 0, height: 100 }, { left: 0, top: 0, width: 500, height: 500 }), null);
+  });
+
+  it('výrez je celý v zábere len vnútri viditeľnej časti (tolerancia zaokrúhlenia)', () => {
+    const visible = { x: 0.6, y: 0.6, w: 0.45, h: 0.45 };
+    assert.equal(regionInside({ x: 0.7, y: 0.7, w: 0.3, h: 0.3 }, visible), true);
+    assert.equal(regionInside({ x: 0.598, y: 0.7, w: 0.3, h: 0.3 }, visible), true);
+    assert.equal(regionInside({ x: 0.5, y: 0.7, w: 0.3, h: 0.3 }, visible), false);
+    assert.equal(regionInside({ x: 0.7, y: 0.7, w: 0.3, h: 0.3 }, null), false);
+  });
+
+  it('úzka karta: zoom podľa jej skutočnej šírky dá celý výrez do záberu', () => {
+    // Karta 300 x 900 px, strana pri zoome 1 široká 276 px (A1 na šírku), výrez 30 % x 30 %.
+    const region = { x: 0.7, y: 0.7, w: 0.3, h: 0.3 };
+    const viewport = { width: 300, height: 900 };
+    const zoom = regionZoom(region, 276, viewport, 1.414);
+    const pageW = 276 * zoom;
+    assert.ok(region.w * pageW <= viewport.width - 24 + 1e-6);
+    assert.ok((region.h * pageW) / 1.414 <= viewport.height - 24 + 1e-6);
+  });
+
+  it('requestRegion vráti nonce, clear ho potvrdí čakajúcemu; bez clear vyprší', async () => {
+    const store = useAimDocRegionStore.getState();
+    const nonce = store.requestRegion('doc-a', { x: 0.1, y: 0.1, w: 0.2, h: 0.2 });
+    const applied = regionApplied(nonce, 1000);
+    useAimDocRegionStore.getState().clear(nonce);
+    assert.equal(await applied, true);
+    const other = useAimDocRegionStore.getState().requestRegion('doc-a', { x: 0.1, y: 0.1, w: 0.2, h: 0.2 });
+    assert.ok(other > nonce);
+    assert.equal(await regionApplied(other, 10), false);
   });
 });

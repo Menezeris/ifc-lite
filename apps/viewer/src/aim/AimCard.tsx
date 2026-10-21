@@ -13,7 +13,7 @@
  * Renders nothing when standalone (not embedded) — zero upstream impact.
  */
 
-import { Database, FileText, ExternalLink, Users, Camera, History } from 'lucide-react';
+import { ChevronDown, Database, FileText, ExternalLink, Users, Camera, History } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -222,20 +222,25 @@ function AimCardBody({ data }: { data: AimPanelData }) {
   );
 }
 
-export function AimCard() {
+/** `open` / `onOpenChange` = controlled by the PropertiesPanel block (AIM D-127, collapsed by default). */
+export function AimCard({ open, onOpenChange }: { open?: boolean; onOpenChange?: (open: boolean) => void } = {}) {
   const embedded = useAimPanelStore((s) => s.embedded);
   const panel = useAimPanelStore((s) => s.panel);
 
   if (!embedded || panel.status === 'idle') return null;
 
   return (
-    <Collapsible defaultOpen className="border-b border-l-2 border-l-amber-500">
-      <CollapsibleTrigger className="flex items-center gap-2 w-full p-3 hover:bg-muted/50 text-left">
+    <Collapsible
+      {...(open === undefined ? { defaultOpen: true } : { open, onOpenChange })}
+      className="border-b border-l-2 border-l-amber-500"
+    >
+      <CollapsibleTrigger className="group/disclosure flex items-center gap-2 w-full p-3 hover:bg-muted/50 text-left">
         <Database className="h-4 w-4 text-amber-600 dark:text-amber-500" />
         <span className="font-medium text-sm">AIM</span>
         <Badge variant="outline" className="text-[9px] px-1 py-0 uppercase tracking-wider border-amber-500/50 text-amber-700 dark:text-amber-400">
           platforma
         </Badge>
+        <ChevronDown className="size-3 ml-auto shrink-0 transition-transform group-data-[state=closed]/disclosure:-rotate-90" aria-hidden="true" />
       </CollapsibleTrigger>
       <CollapsibleContent>
         {panel.status === 'loading' && (

@@ -6,7 +6,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
 import { isInboundMessage } from './bridge-protocol.js';
-import { focusFor, panelPlan, parsePanelView, selectPanel } from './aimPanelViewPlan.js';
+import { focusSections, isQuantitySetName, matchName, panelPlan, parsePanelView, propKeyEntity, selectPanel } from './aimPanelViewPlan.js';
 
 const S = 'aim-bridge' as const;
 const GUID = '0MJFXziqDE$gGyPWwro9fJ';
@@ -33,25 +33,41 @@ describe('panel vlastností z chatu (AIM D-113)', () => {
     assert.strictEqual(parsePanelView({ focus: { pset: 'P', property: 'x'.repeat(201) } }), null);
   });
 
-  it('plán: focus vždy pod IFC v sekcii Properties, sekcia bez záložky ide pod IFC', () => {
+  it('plán (AIM D-127): sekcia podľa sady vlastnosti, záložka sa už nenastavuje', () => {
     assert.deepEqual(panelPlan({ tab: 'aim', section: 'quantities', focus: { pset: 'P', property: 'X' } }), {
-      tab: 'ifc',
       section: 'properties',
       focus: { pset: 'P', property: 'X' },
     });
-    assert.deepEqual(panelPlan({ section: 'quantities' }), { tab: 'ifc', section: 'quantities' });
-    assert.deepEqual(panelPlan({ tab: 'aim' }), { tab: 'aim' });
+    assert.deepEqual(panelPlan({ focus: { pset: 'Qto_DoorBaseQuantities', property: 'Width' } }), {
+      section: 'quantities',
+      focus: { pset: 'Qto_DoorBaseQuantities', property: 'Width' },
+    });
+    assert.deepEqual(panelPlan({ section: 'quantities' }), { section: 'quantities' });
+    assert.deepEqual(panelPlan({ tab: 'aim' }), {});
     assert.deepEqual(panelPlan({}), {});
   });
 
-  it('focus len pre prvok zo SELECT, nie pre medzičasom iný výber', () => {
-    const target = { modelId: 'm1', expressId: 7 };
-    const focus = { pset: 'Pset_WallCommon', property: 'FireRating' };
-    assert.deepEqual(focusFor({ modelId: 'm1', expressId: 7 }, target, focus), {
-      modelId: 'm1', entityId: 7, psetName: 'Pset_WallCommon', propName: 'FireRating',
-    });
-    assert.strictEqual(focusFor({ modelId: 'm1', expressId: 8 }, target, focus), null);
-    assert.strictEqual(focusFor({ modelId: 'm2', expressId: 7 }, target, focus), null);
-    assert.strictEqual(focusFor(null, target, focus), null);
+  it('výmery: Qto_ a BaseQuantities sa hľadajú najprv v Quantities, ostatné v Properties', () => {
+    assert.equal(isQuantitySetName('Qto_WallBaseQuantities'), true);
+    assert.equal(isQuantitySetName('qto_x'), true);
+    assert.equal(isQuantitySetName('BaseQuantities'), true);
+    assert.equal(isQuantitySetName('AIM_FireSafety'), false);
+    assert.deepEqual(focusSections('Qto_SpaceBaseQuantities'), ['quantities', 'properties']);
+    assert.deepEqual(focusSections('AIM_FireSafety'), ['properties', 'quantities']);
+  });
+
+  it('kľúč riadka panela: výskyt aj typ, presne aj bez ohľadu na veľkosť písmen', () => {
+    assert.equal(propKeyEntity('412:AIM_FireSafety:FireCompartments', 'AIM_FireSafety', 'FireCompartments'), 412);
+    assert.equal(propKeyEntity('90:Pset_DoorCommon:FireRating', 'pset_doorcommon', 'firerating'), 90);
+    assert.equal(propKeyEntity('412:AIM_FireSafety:FireCompartment', 'AIM_FireSafety', 'FireCompartments'), null);
+    assert.equal(propKeyEntity('412:Other:FireCompartments', 'AIM_FireSafety', 'FireCompartments'), null);
+    assert.equal(propKeyEntity(':AIM_FireSafety:FireCompartments', 'AIM_FireSafety', 'FireCompartments'), null);
+    assert.equal(propKeyEntity('x:AIM_FireSafety:FireCompartments', 'AIM_FireSafety', 'FireCompartments'), null);
+  });
+
+  it('meno sady alebo riadka: presná zhoda má prednosť pred voľnou', () => {
+    assert.equal(matchName(['width', 'Width'], 'Width'), 1);
+    assert.equal(matchName(['Height', ' width '], 'Width'), 1);
+    assert.equal(matchName([null, undefined, 'Area'], 'Width'), -1);
   });
 });

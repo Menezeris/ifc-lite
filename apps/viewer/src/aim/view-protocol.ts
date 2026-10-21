@@ -40,6 +40,20 @@ export type SectionFit = (typeof SECTION_FITS)[number];
 export const VIEW_QUERIES = ['bounds', 'view_state'] as const;
 export type ViewQuery = (typeof VIEW_QUERIES)[number];
 
+/** Panely z chatu (AIM D-127): mená na drôte, mapovanie a vykonanie v `aimPanelsPlan.ts` / `aimPanels.ts`. */
+export const PANEL_KEYS = ['lens', 'properties', 'underlays', 'documents', 'lists', 'model_tree'] as const;
+export type PanelKey = (typeof PANEL_KEYS)[number];
+const PANEL_ACTIONS: readonly unknown[] = ['open', 'close', 'toggle'];
+export type PanelsRequest = Partial<Record<PanelKey | 'all', 'open' | 'close' | 'toggle'>>;
+
+/** `panels` zo správy hosta: aspoň jedna položka, `all` len `close` (čistý pohľad). */
+export function isPanelsRequest(raw: unknown): raw is PanelsRequest {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+  const entries = Object.entries(raw as Record<string, unknown>);
+  return entries.length > 0 && entries.every(([k, v]) =>
+    PANEL_ACTIONS.includes(v) && ((PANEL_KEYS as readonly string[]).includes(k) || (k === 'all' && v === 'close')));
+}
+
 /** Výška rezu nad úrovňou podlažia v metroch - rovnaký rozsah ako host. */
 export const SECTION_OFFSET_RANGE = { min: -5, max: 20 } as const;
 const MAX_GUIDS = 600;
@@ -81,6 +95,8 @@ export type ViewInboundMessage =
     }
   | { source: typeof SOURCE; type: 'SET_VIEW_MODE'; mode: BridgeViewMode; storeyGuid?: string }
   | { source: typeof SOURCE; type: 'QUERY'; id: string; query: ViewQuery; guids?: string[] }
+  /** Panely z chatu (AIM D-127): otvoriť, zavrieť, prepnúť; `all` len zavrieť. */
+  | { source: typeof SOURCE; type: 'SET_PANELS'; panels: PanelsRequest }
   /** Kóty v IFC svete (Z hore, m) do nástroja Measure (AIM D-124); `keep` = pridať k predošlým od hosta. */
   | { source: typeof SOURCE; type: 'MEASURE_SHOW'; segments: { a: Vec3Wire; b: Vec3Wire }[]; keep?: boolean };
 
@@ -169,6 +185,8 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
         && m.segments.length <= MAX_MEASURE_SEGMENTS
         && m.segments.every((s) => !!s && typeof s === 'object' && isVec((s as { a?: unknown }).a) && isVec((s as { b?: unknown }).b))
         && optional(m.keep, (k) => typeof k === 'boolean');
+    case 'SET_PANELS':
+      return isPanelsRequest(m.panels);
     case 'QUERY':
       return isId(m.id)
         && (VIEW_QUERIES as readonly unknown[]).includes(m.query)

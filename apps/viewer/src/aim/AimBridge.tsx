@@ -32,7 +32,7 @@ import { isCommandMessage, type AppliedMessage, type CommandInboundMessage } fro
 import { createCommandGate, noteIssue, resetCommandState, settled, takeIssues, track } from './command-gate.js';
 import { useAimPanelStore } from './aimPanelStore.js';
 import { useCapturePinsStore } from './capturePinsStore.js';
-import { normalizeDocHighlights, normalizeDocRegion, useAimDocRegionStore } from './docRegion.js';
+import { normalizeDocHighlights, normalizeDocRegion, regionApplied, useAimDocRegionStore } from './docRegion.js';
 import { useAimDecorationsStore } from './aimDecorationsStore.js';
 import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
@@ -51,6 +51,8 @@ const loadVisibility = () => (visibility ??= import('./visibility-commands.js'))
 
 /** Najdlhšie čakanie `APPLIED` na asynchrónne kroky (rez cez prvok, kamera, Lens); host čaká 3 s. */
 const ACK_WAIT_MS = 2500;
+/** Výrez strany z chatu čaká na otvorenie PDF; dlhšie ako ACK by APPLIED len oneskorilo. */
+const REGION_WAIT_MS = 2200;
 /** Ak geometria po ohlásení modelov neprestane prúdiť, príkazy sa pustia aj tak. */
 const STREAM_GRACE_MS = 30_000;
 
@@ -210,7 +212,11 @@ export function AimBridge() {
             .openDocument(e.data.documentId, e.data.page !== undefined ? { page: e.data.page } : undefined);
           // Výrez strany z chatu (D-117): karta sa priblíži, keď je PDF otvorené.
           const region = normalizeDocRegion(e.data.region);
-          if (region) useAimDocRegionStore.getState().requestRegion(e.data.documentId, region, e.data.page);
+          if (region) {
+            const nonce = useAimDocRegionStore.getState().requestRegion(e.data.documentId, region, e.data.page);
+            // APPLIED (D-101) počká, kým karta výrez naozaj ukáže, a nesie viditeľný rozsah (AIM D-127).
+            track(regionApplied(nonce, REGION_WAIT_MS).then((ok) => { if (!ok) noteIssue('DOCUMENT_OPEN: výrez strany sa ešte nepoužil (dokument sa načítava)'); }));
+          }
           // Rámiky okolo nájdeného textu (D-123); DOCUMENT_OPEN bez nich staré zruší.
           useAimDocRegionStore
             .getState()

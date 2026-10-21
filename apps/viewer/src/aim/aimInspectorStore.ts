@@ -3,24 +3,38 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * Stav prepínača AIM | IFC (D-077) a značka "focus z chatu" (AIM D-113), bez
- * UI: číta ho `AimInspectorTabs` aj lenivý `visibility-commands` (SELECT s
- * `panel`), takže lenivý modul nepotiahne komponent záložiek.
+ * Stav AIM karty v paneli vlastností (D-077; od AIM D-127 bez prepínača AIM | IFC,
+ * karta je zbalený blok nad IFC obsahom) a výsledok zvýraznenia vlastnosti z chatu
+ * (AIM D-113, D-127), bez UI: číta ho `AimInspectorTabs`, lenivý `aimPanelView`
+ * aj `view_state` (APPLIED), takže lenivé moduly nepotiahnu komponent karty.
  */
 
 import { create } from 'zustand';
 import type { PropertyFocusTarget } from '../store/slices/uiSlice.js';
 
-export type InspectorTab = 'aim' | 'ifc';
+/** Zvýraznená vlastnosť z chatu (AIM D-127): kde sa našla, alebo že na prvku nie je. */
+export interface PropertyFocusState {
+  pset: string;
+  property: string;
+  found: boolean;
+  section?: 'properties' | 'quantities';
+  /** true = riadok je v psete zdedenom z typu. */
+  from_type?: boolean;
+}
 
 interface AimInspectorState {
-  tab: InspectorTab;
-  setTab: (tab: InspectorTab) => void;
+  /** AIM karta nad IFC obsahom: predvolene zbalená (AIM D-127). */
+  cardOpen: boolean;
+  setCardOpen: (open: boolean) => void;
+  propertyFocus: PropertyFocusState | null;
+  setPropertyFocus: (focus: PropertyFocusState | null) => void;
 }
 
 export const useAimInspectorStore = create<AimInspectorState>((set) => ({
-  tab: 'aim',
-  setTab: (tab) => set({ tab }),
+  cardOpen: false,
+  setCardOpen: (cardOpen) => set({ cardOpen }),
+  propertyFocus: null,
+  setPropertyFocus: (propertyFocus) => set({ propertyFocus }),
 }));
 
 /**

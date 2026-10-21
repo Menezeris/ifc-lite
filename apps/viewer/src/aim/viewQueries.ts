@@ -23,6 +23,9 @@ import { expandToGeometryBearingIds } from '@/utils/aggregation';
 import { deriveViewMode } from '@/hooks/viewModeCore';
 import { RelationshipType } from '@ifc-lite/data';
 import { summarizeSelection, visibilityGuids, type SelectedEntityInfo } from './selectionSummary.js';
+import { describePanels } from './aimPanelsPlan.js';
+import { useAimInspectorStore } from './aimInspectorStore.js';
+import { useAimDocRegionStore } from './docRegion.js';
 import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import type { SectionPlaneAxis } from '@/store/types';
 import type { SectionAxis, SectionFit, ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
@@ -200,6 +203,10 @@ export function queryViewState(state: State, g: GuidHelpers) {
     isolated_guids: state.isolatedEntities ? visibilityGuids(state.isolatedEntities, guidOf) : null,
     // Oranžové zvýraznenie z FOCUS (#94): bez neho sa nedalo povedať, čo je to za farbu.
     ...(g.focus ? { focus: g.focus() } : {}),
+    // AIM D-127: panely (#179), zvýraznená vlastnosť v paneli (#168) a viditeľný výrez karty dokumentu (#166).
+    panels: describePanels(state),
+    property_focus: useAimInspectorStore.getState().propertyFocus,
+    document: useAimDocRegionStore.getState().visible,
   };
 }
 

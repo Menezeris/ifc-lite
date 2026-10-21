@@ -13,6 +13,11 @@
  * `highlights` (obdĺžniky v zlomkoch strany, napr. riadky zo search_documents).
  * Hook ich nakreslí ako vrstvu nad stranou (vedľa textovej vrstvy pdf.js, tiež
  * imperatívne) a drží ich, kým nepríde ďalší DOCUMENT_OPEN.
+ *
+ * Skutočná veľkosť karty (AIM D-127, #166): výrez sa prepočíta, keď sa plocha
+ * karty po otvorení zmení (split, ukotvenie, šírka stĺpca) alebo keď prídu
+ * skutočné rozmery strany, kým používateľ kartou sám nepohne. Viditeľný rozsah
+ * strany (a či je výrez celý v zábere) ide do `view_state` / `APPLIED`.
  */
 
 import { useEffect, useRef, type RefObject } from 'react';
@@ -81,6 +86,46 @@ export function regionScroll(
   return { left: Math.max(0, cx - viewport.width / 2), top: Math.max(0, cy - viewport.height / 2) };
 }
 
+/**
+ * Viditeľná časť strany v zlomkoch (0-1): `page` a `viewport` sú obdĺžniky v
+ * súradniciach okna (getBoundingClientRect). null = strana nie je v zábere.
+ */
+export function visiblePart(
+  page: { left: number; top: number; width: number; height: number },
+  viewport: { left: number; top: number; width: number; height: number },
+): DocRegion | null {
+  if (page.width <= 0 || page.height <= 0) return null;
+  const x0 = clamp((viewport.left - page.left) / page.width, 0, 1);
+  const y0 = clamp((viewport.top - page.top) / page.height, 0, 1);
+  const x1 = clamp((viewport.left + viewport.width - page.left) / page.width, 0, 1);
+  const y1 = clamp((viewport.top + viewport.height - page.top) / page.height, 0, 1);
+  return x1 > x0 && y1 > y0 ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } : null;
+}
+
+/** Je výrez celý vnútri viditeľnej časti (tolerancia 0,5 % strany na zaokrúhlenie)? */
+export function regionInside(region: DocRegion, visible: DocRegion | null): boolean {
+  if (!visible) return false;
+  const eps = 0.005;
+  return region.x >= visible.x - eps && region.y >= visible.y - eps
+    && region.x + region.w <= visible.x + visible.w + eps && region.y + region.h <= visible.y + visible.h + eps;
+}
+
+/** Zlomky -> percentá strany (ako `region` v open_drawing), na dve desatinné miesta. */
+const toPct = (r: DocRegion) => ({ x: +(r.x * 100).toFixed(2), y: +(r.y * 100).toFixed(2), width: +(r.w * 100).toFixed(2), height: +(r.h * 100).toFixed(2) });
+
+/** Stav karty pre `view_state` (AIM D-127): čo z aktívnej strany je naozaj vidno. */
+export interface DocVisibleState {
+  document_id: string;
+  page: number;
+  zoom_percent: number;
+  /** Plocha karty v px. */
+  card: { width: number; height: number };
+  /** Viditeľná časť strany v % strany; null = strana mimo záberu. */
+  visible: { x: number; y: number; width: number; height: number } | null;
+  region?: { x: number; y: number; width: number; height: number };
+  region_fully_visible?: boolean;
+}
+
 /** Najviac rámikov naraz; viac by výkres zakrylo. */
 export const MAX_HIGHLIGHTS = 20;
 /** Najmenší rámik (0,1 % strany): riadok textu býva vysoký 0,4-1 %. */
@@ -135,16 +180,40 @@ export interface DocRegionRequest {
 
 interface DocRegionState {
   request: DocRegionRequest | null;
+  /** Viditeľný rozsah otvorenej karty (AIM D-127); null = žiadna karta s PDF. */
+  visible: DocVisibleState | null;
   /** Rámiky okolo textu (D-123); null = žiadne. */
   highlights: DocHighlights | null;
-  requestRegion: (docId: string, region: DocRegion, page?: number) => void;
+  /** Vráti `nonce` požiadavky (na čakanie cez `regionApplied`). */
+  requestRegion: (docId: string, region: DocRegion, page?: number) => number;
   /** Nahradí rámiky; prázdny zoznam ich zruší (každý DOCUMENT_OPEN). */
   setHighlights: (docId: string, rects: DocRegion[], page?: number) => void;
   clear: (nonce: number) => void;
 }
 
+let lastNonce = 0;
+
+/** Čakajúci na vykonanie výrezu podľa `nonce` (APPLIED čaká, kým karta výrez naozaj ukáže). */
+const waiters = new Map<number, () => void>();
+
+/** true = výrez s týmto `nonce` sa vykonal do `timeoutMs`. */
+export function regionApplied(nonce: number, timeoutMs: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      waiters.delete(nonce);
+      resolve(false);
+    }, timeoutMs);
+    waiters.set(nonce, () => {
+      clearTimeout(timer);
+      waiters.delete(nonce);
+      resolve(true);
+    });
+  });
+}
+
 export const useAimDocRegionStore = create<DocRegionState>((set, get) => ({
   request: null,
+  visible: null,
   highlights: null,
   setHighlights: (docId, rects, page) =>
     set({
@@ -158,17 +227,14 @@ export const useAimDocRegionStore = create<DocRegionState>((set, get) => ({
               nonce: (get().highlights?.nonce ?? 0) + 1,
             },
     }),
-  requestRegion: (docId, region, page) =>
-    set({
-      request: {
-        docId,
-        region,
-        ...(page !== undefined ? { page } : {}),
-        nonce: (get().request?.nonce ?? 0) + 1,
-      },
-    }),
+  requestRegion: (docId, region, page) => {
+    const nonce = ++lastNonce;
+    set({ request: { docId, region, ...(page !== undefined ? { page } : {}), nonce } });
+    return nonce;
+  },
   clear: (nonce) => {
     if (get().request?.nonce === nonce) set({ request: null });
+    waiters.get(nonce)?.();
   },
 }));
 
@@ -201,6 +267,10 @@ export function useAimDocRegion(v: DocRegionViewInputs): void {
   const highlights = useAimDocRegionStore((s) => (s.highlights?.docId === v.docId ? s.highlights : null));
   const zoomedRef = useRef<number | null>(null);
   const highlightPageRef = useRef<{ nonce: number; page: number } | null>(null);
+  /** Posledný výrez z chatu: platí, kým kartou nepohne používateľ (#166). */
+  const fitRef = useRef<{ region: DocRegion; page: number; width: number; height: number; aspect: number } | null>(null);
+  const zoomRef = useRef(v.zoom);
+  zoomRef.current = v.zoom;
   useEffect(() => {
     // Rámiky (D-123): stranu zafixuje prvé kreslenie, aby nepreskakovali pri listovaní.
     if (!highlights) {
@@ -215,9 +285,9 @@ export function useAimDocRegion(v: DocRegionViewInputs): void {
     if (!request || !v.pdf || v.bodyWidth <= 0 || !root) return;
     const page = request.page ?? v.currentPage;
     const viewport = { width: root.clientWidth, height: root.clientHeight };
+    const aspect = v.aspects.get(page) ?? v.aspects.get(0) ?? 1 / 1.414;
     if (zoomedRef.current !== request.nonce) {
       zoomedRef.current = request.nonce;
-      const aspect = v.aspects.get(page) ?? v.aspects.get(0) ?? 1 / 1.414;
       const target = regionZoom(request.region, v.bodyWidth - CONTENT_PADDING_PX, viewport, aspect);
       if (Math.abs(target - v.zoom) > 1e-3) {
         v.zoomTo()(target);
@@ -240,7 +310,77 @@ export function useAimDocRegion(v: DocRegionViewInputs): void {
     );
     root.scrollLeft = pos.left;
     root.scrollTop = pos.top;
+    fitRef.current = { region: request.region, page, ...viewport, aspect };
+    publishVisible(v.docId, root, v.pageElsRef.current, page, zoomRef.current, request.region);
     useAimDocRegionStore.getState().clear(request.nonce);
+  });
+  // Plocha karty sa po otvorení mení (split, ukotvenie, šírka stĺpca) a skutočný pomer
+  // strany príde až s PDF: výrez z chatu sa vtedy prepočíta, kým kartou nepohne používateľ.
+  const aspectKey = fitRef.current ? (v.aspects.get(fitRef.current.page) ?? v.aspects.get(0) ?? 0) : 0;
+  useEffect(() => {
+    const root = v.scrollRef.current;
+    if (!root) return;
+    const refit = () => {
+      const fit = fitRef.current;
+      if (!fit || useAimDocRegionStore.getState().request) return;
+      const aspect = v.aspects.get(fit.page) ?? v.aspects.get(0) ?? fit.aspect;
+      const moved = Math.abs(root.clientWidth - fit.width) > 2 || Math.abs(root.clientHeight - fit.height) > 2;
+      if (moved || Math.abs(aspect - fit.aspect) > 1e-3) useAimDocRegionStore.getState().requestRegion(v.docId, fit.region, fit.page);
+    };
+    const release = () => {
+      fitRef.current = null;
+    };
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const page = fitRef.current?.page ?? v.currentPage;
+        publishVisible(v.docId, root, v.pageElsRef.current, page, zoomRef.current, fitRef.current?.region);
+      });
+    };
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(refit);
+    ro?.observe(root);
+    refit();
+    const gestures = ['wheel', 'pointerdown', 'keydown', 'touchstart'] as const;
+    for (const g of gestures) root.addEventListener(g, release, { passive: true });
+    root.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      ro?.disconnect();
+      for (const g of gestures) root.removeEventListener(g, release);
+      root.removeEventListener('scroll', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [v.docId, v.scrollRef, v.pageElsRef, v.currentPage, v.aspects, aspectKey]);
+  // Zatvorená karta už nič neukazuje.
+  useEffect(() => () => {
+    if (useAimDocRegionStore.getState().visible?.document_id === v.docId) useAimDocRegionStore.setState({ visible: null });
+  }, [v.docId]);
+}
+
+/** Zapíše, čo zo strany `page` je v ploche karty vidno (AIM D-127). */
+function publishVisible(
+  docId: string,
+  root: HTMLElement,
+  pageEls: Map<number, HTMLDivElement> | null,
+  page: number,
+  zoom: number,
+  region: DocRegion | undefined,
+): void {
+  const el = pageEls?.get(page);
+  if (!el) return;
+  const rootRect = root.getBoundingClientRect();
+  const viewport = { left: rootRect.left, top: rootRect.top, width: root.clientWidth, height: root.clientHeight };
+  const part = visiblePart(el.getBoundingClientRect(), viewport);
+  useAimDocRegionStore.setState({
+    visible: {
+      document_id: docId,
+      page,
+      zoom_percent: Math.round(zoom * 100),
+      card: { width: Math.round(viewport.width), height: Math.round(viewport.height) },
+      visible: part && toPct(part),
+      ...(region ? { region: toPct(region), region_fully_visible: regionInside(region, part) } : {}),
+    },
   });
 }
 
