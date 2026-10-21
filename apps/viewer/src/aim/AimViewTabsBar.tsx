@@ -21,7 +21,7 @@ import { useAimViewTabs } from './viewTabsStore.js';
 import { activate, beside, close, openPlan, syncDocs } from './viewTabsApply.js';
 
 const ICON: Record<ViewTabKind, typeof Box> = { '3d': Box, plan: LayoutTemplate, view: Scan, doc: FileText };
-const SELECT = 'h-6 max-w-40 rounded border bg-background px-1 text-[11px] text-muted-foreground';
+const SELECT = 'h-6 max-w-40 rounded border bg-background px-1 text-2xs text-muted-foreground';
 const warn = (issue: string) => console.warn('[aim-tabs]', issue);
 
 export function AimViewTabsBar() {
@@ -77,13 +77,13 @@ export function AimViewTabsBar() {
                 onClick={() => activate(tab.id, warn)}
                 onAuxClick={(e) => { if (e.button === 1 && tab.kind !== '3d') close(tab.id, warn); }}
                 className={cn(
-                  'flex min-w-0 items-center gap-1 py-1 pl-2 pr-1 text-[11px]',
+                  'flex min-w-0 items-center gap-1 py-1 pl-2 pr-1 text-2xs',
                   isActive ? 'font-medium' : 'text-muted-foreground',
                 )}
               >
                 <Icon className="size-3 shrink-0" aria-hidden />
                 <span className="truncate">{tab.label}</span>
-                {isBeside && <span className="text-[10px] text-muted-foreground">vedľa</span>}
+                {isBeside && <span className="text-2xs text-muted-foreground">vedľa</span>}
               </button>
               {tab.kind !== '3d' && (
                 <button
