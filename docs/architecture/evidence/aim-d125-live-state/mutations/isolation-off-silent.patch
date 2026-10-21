@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewDelta.ts a/apps/viewer/src/aim/viewDelta.ts
+index 3e01b954..89037865 100644
+--- b/apps/viewer/src/aim/viewDelta.ts
++++ a/apps/viewer/src/aim/viewDelta.ts
+@@ -27,7 +27,7 @@ export interface ViewSnapshot {
+ 
+ const count = (label: string, a: number | null, b: number | null): string | null => {
+   if (a === b) return null;
+-  if (b === null) return null;
++  if (b === null) return `${label} zrušená (bolo ${a} prvkov)`;
+   if (a === null) return `${label} zapnutá (${b} prvkov)`;
+   return `${label} zmenená (${a} -> ${b} prvkov)`;
+ };

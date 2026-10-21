@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewDelta.ts a/apps/viewer/src/aim/viewDelta.ts
+index bb7db412..89037865 100644
+--- b/apps/viewer/src/aim/viewDelta.ts
++++ a/apps/viewer/src/aim/viewDelta.ts
+@@ -38,7 +38,7 @@ export function describeViewChanges(prev: ViewSnapshot, now: ViewSnapshot): stri
+     count('izolácia', prev.isolated, now.isolated),
+     count('X-ray', prev.xray, now.xray),
+     prev.hidden !== now.hidden ? `skryté prvky ${prev.hidden} -> ${now.hidden}` : null,
+-    false ? `rez ${prev.section ?? 'žiadny'} -> ${now.section ?? 'zrušený'}` : null,
++    prev.section !== now.section ? `rez ${prev.section ?? 'žiadny'} -> ${now.section ?? 'zrušený'}` : null,
+     prev.selection !== now.selection ? `výber ${prev.selection} -> ${now.selection} prvkov` : null,
+     prev.mode !== now.mode ? `režim ${prev.mode} -> ${now.mode}` : null,
+     prev.lens !== now.lens ? `lens ${prev.lens ?? 'žiadna'} -> ${now.lens ?? 'vypnutá'}` : null,

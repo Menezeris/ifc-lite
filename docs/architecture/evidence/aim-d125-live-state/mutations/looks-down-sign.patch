@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimRoomFill.ts a/apps/viewer/src/aim/aimRoomFill.ts
+index e1f06793..cfc94144 100644
+--- b/apps/viewer/src/aim/aimRoomFill.ts
++++ a/apps/viewer/src/aim/aimRoomFill.ts
+@@ -70,7 +70,7 @@ export function spaceFootprint(
+ export function looksDown(position: Vec3, target: Vec3, minCos = 0.95): boolean {
+   const d = { x: target.x - position.x, y: target.y - position.y, z: target.z - position.z };
+   const len = Math.hypot(d.x, d.y, d.z);
+-  return len > 0 && Math.abs(d.y) / len >= minCos;
++  return len > 0 && -d.y / len >= minCos;
+ }
+ 
+ /** Pretína vodorovný rez vo výške `cutY` miestnosť (od podlahy po strop)? */

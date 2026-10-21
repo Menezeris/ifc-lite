@@ -8,6 +8,7 @@
  * Lens je v pôdoryse len v pásoch. Vrstva `AimRoomFillLayer` ju preto kreslí
  * nad scénou z trojuholníkov spodnej plochy geometrie miestnosti. Čistá
  * matematika bez store; viewer je Y-up, takže "spodná" = najnižšie Y.
+ * D-125 (#175): aj v 3D pri vodorovnom reze a pohľade zhora, len preťaté miestnosti.
  */
 
 export type Vec3 = { x: number; y: number; z: number };
@@ -18,6 +19,8 @@ export interface Footprint {
   triangles: Vec3[];
   /** Ťažisko plochy (stred popisu). */
   anchor: Vec3;
+  /** Najvyšší bod geometrie miestnosti (Y): rez nad ním miestnosť nepretína (D-125). */
+  top: number;
 }
 
 /** Tolerancia výšky vrcholu spodnej plochy, m. */
@@ -32,9 +35,13 @@ export function spaceFootprint(
   eps = FLOOR_EPS,
 ): Footprint | null {
   let minY = Infinity;
+  let maxY = -Infinity;
   for (const p of parts) {
     const oy = p.origin?.[1] ?? 0;
-    for (let i = 1; i < p.positions.length; i += 3) minY = Math.min(minY, p.positions[i] + oy);
+    for (let i = 1; i < p.positions.length; i += 3) {
+      minY = Math.min(minY, p.positions[i] + oy);
+      maxY = Math.max(maxY, p.positions[i] + oy);
+    }
   }
   if (!Number.isFinite(minY)) return null;
   const triangles: Vec3[] = [];
@@ -56,7 +63,19 @@ export function spaceFootprint(
     }
   }
   if (area === 0) return null;
-  return { triangles, anchor: { x: cx / area, y: minY, z: cz / area } };
+  return { triangles, anchor: { x: cx / area, y: minY, z: cz / area }, top: maxY };
+}
+
+/** Kamera hľadí zhora (pôdorys v 3D, D-125): smer pohľadu takmer kolmo nadol (viewer je Y-up). */
+export function looksDown(position: Vec3, target: Vec3, minCos = 0.95): boolean {
+  const d = { x: target.x - position.x, y: target.y - position.y, z: target.z - position.z };
+  const len = Math.hypot(d.x, d.y, d.z);
+  return len > 0 && -d.y / len >= minCos;
+}
+
+/** Pretína vodorovný rez vo výške `cutY` miestnosť (od podlahy po strop)? */
+export function cutsRoom(footprint: Footprint, cutY: number): boolean {
+  return footprint.anchor.y <= cutY && cutY <= footprint.top;
 }
 
 /**

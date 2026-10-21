@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 8b07d190..1ee44f14 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -187,7 +187,7 @@ export function withVolumeVariants(rules: readonly LensRule[]): LensRule[] {
+         ...r,
+         id: `${r.id}${VOLUME_SUFFIX}`,
+         name: `${r.name} (miestnosti)`,
+-        action: 'colorize',
++        action: 'transparent',
+         groups: r.groups.map((g) => ({ ...g, rules: [...g.rules, only] })),
+       });
+     }

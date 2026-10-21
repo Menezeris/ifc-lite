@@ -40,7 +40,8 @@ import { applySectionCap, isSectionCapMessage } from './sectionCap.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
 import { isBcfLoadMessage, loadBcfTopics } from './bcf-protocol.js';
 import { dispatchLensMessage, isLensEnvelope, lensSettled, resetLensFromChat } from './lens-protocol.js';
-import { appliedViewState, prepareFocusView, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
+import { appliedViewState, prepareFocusView, setChangesProvider, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
+import { createViewChangeTracker } from './viewChanges.js';
 
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
@@ -88,6 +89,8 @@ export function AimBridge() {
 
     const origin = () => parentOriginRef.current ?? '*';
     const gate = gateRef.current;
+    const changes = createViewChangeTracker(setChangesProvider); // zmeny pohľadu mimo príkazov (D-125)
+    const command = (fn: () => void) => gate.run(() => { changes.beforeCommand(); fn(); });
     // Modul príkazov viditeľnosti sa načíta hneď (mimo vstupného balíka); brána drží príkazy
     // až do načítania modelov, takže je vtedy pripravený a príkazy idú synchrónne v poradí.
     let vis: Awaited<ReturnType<typeof loadVisibility>> | null = null;
@@ -115,7 +118,8 @@ export function AimBridge() {
       // Problémy až po stave a Lens, aby ich chyby patrili do tohto potvrdenia.
       const issues = takeIssues();
       if (!done) issues.push('niektoré kroky vo vieweri ešte bežia');
-      const applied: AppliedMessage = { source: SOURCE, type: 'APPLIED', cmdId, ok: issues.length === 0, issues, state: state && { ...state, ...(lens ? { lens } : {}) } };
+      const extra = { ...(lens ? { lens } : {}), ...changes.ackedState() };
+      const applied: AppliedMessage = { source: SOURCE, type: 'APPLIED', cmdId, ok: issues.length === 0, issues, state: state && { ...state, ...extra } };
       window.parent.postMessage(applied, origin());
     }
 
@@ -128,23 +132,23 @@ export function AimBridge() {
         const msg = e.data;
         // Otázky odpovedajú hneď (aj počas načítania), príkazy idú bránou.
         if (msg.type === 'QUERY') viewCommands.current(msg, origin());
-        else gate.run(() => viewCommands.current(msg, origin()));
+        else command(() => viewCommands.current(msg, origin()));
         return;
       }
       if (isSectionCapMessage(e.data)) {
         const msg = e.data; // Vzhľad reznej plochy (D-120)
-        gate.run(() => applySectionCap(msg, useViewerStore.getState));
+        command(() => applySectionCap(msg, useViewerStore.getState));
         return;
       }
       if (isLensEnvelope(e.data)) {
         const msg = e.data; // Lens z chatu (D-096)
         if (msg.type === 'LENS_QUERY') void dispatchLensMessage(msg, origin());
-        else gate.run(() => track(dispatchLensMessage(msg, origin())));
+        else command(() => track(dispatchLensMessage(msg, origin())));
         return;
       }
       if (isCommandMessage(e.data)) {
         const msg = e.data;
-        gate.run(() => (msg.type === 'ACK_REQUEST' ? void answerAck(msg.cmdId) : runVisibility(msg)));
+        if (msg.type === 'ACK_REQUEST') gate.run(() => void answerAck(msg.cmdId)); else command(() => runVisibility(msg));
         return;
       }
       if (isDerivationsMessage(e.data)) {
@@ -160,7 +164,7 @@ export function AimBridge() {
       if (!isInboundMessage(e.data)) return;
       if (VISIBILITY.has(e.data.type)) {
         const msg = e.data;
-        gate.run(() => runVisibility(msg));
+        command(() => runVisibility(msg));
         return;
       }
 
@@ -266,6 +270,7 @@ export function AimBridge() {
       useAimDocRegionStore.setState({ request: null, highlights: null }); // D-117/D-123: výrez ani rámiky nepatria ďalšej relácii
       resetLensFromChat(); // D-096: izolácia a AIM chat lens neprežijú odpojenie mostu
       setFocusProvider(undefined);
+      setChangesProvider(undefined);
       resetCommandState(); // problémy a kroky z predošlej relácie nepatria do ďalšieho APPLIED
       void visibility?.then((m) => m.forgetFocus());
     };
