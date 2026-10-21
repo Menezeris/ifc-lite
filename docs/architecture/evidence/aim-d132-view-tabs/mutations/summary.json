@@ -1,0 +1,156 @@
+{
+  "box-and-guids": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionBox.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "f277e90d46492e56b627b37b55a6839a30cba765",
+    "production": [
+      "apps/viewer/src/aim/sectionBox.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionBox.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "close-3d": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTabsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "f277e90d46492e56b627b37b55a6839a30cba765",
+    "production": [
+      "apps/viewer/src/aim/viewTabsPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTabsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "close-to-3d": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTabsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "f277e90d46492e56b627b37b55a6839a30cba765",
+    "production": [
+      "apps/viewer/src/aim/viewTabsPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTabsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "doc-beside-collapses": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTabsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "f277e90d46492e56b627b37b55a6839a30cba765",
+    "production": [
+      "apps/viewer/src/aim/viewTabsLayout.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTabsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "doc-open-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTabsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "f277e90d46492e56b627b37b55a6839a30cba765",
+    "production": [
+      "apps/viewer/src/aim/viewTabsPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTabsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "layout-default-split": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTabsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "f277e90d46492e56b627b37b55a6839a30cba765",
+    "production": [
+      "apps/viewer/src/aim/tabs-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTabsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "margin-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionBox.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "f277e90d46492e56b627b37b55a6839a30cba765",
+    "production": [
+      "apps/viewer/src/aim/sectionBox.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionBox.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "plan-beside-any": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTabsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "f277e90d46492e56b627b37b55a6839a30cba765",
+    "production": [
+      "apps/viewer/src/aim/viewTabsLayout.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTabsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "ref-case-sensitive": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTabsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "f277e90d46492e56b627b37b55a6839a30cba765",
+    "production": [
+      "apps/viewer/src/aim/viewTabsPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTabsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "two-scenes-beside": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTabsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "f277e90d46492e56b627b37b55a6839a30cba765",
+    "production": [
+      "apps/viewer/src/aim/viewTabsPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTabsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "view-without-label": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTabsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "f277e90d46492e56b627b37b55a6839a30cba765",
+    "production": [
+      "apps/viewer/src/aim/tabs-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTabsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

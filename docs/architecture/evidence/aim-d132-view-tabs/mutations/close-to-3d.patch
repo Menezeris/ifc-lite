@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTabsPlan.ts a/apps/viewer/src/aim/viewTabsPlan.ts
+index 6eb7febaf..723d9f86c 100644
+--- b/apps/viewer/src/aim/viewTabsPlan.ts
++++ a/apps/viewer/src/aim/viewTabsPlan.ts
+@@ -99,7 +99,7 @@ export function closeTab(s: ViewTabsState, id: string): ViewTabsState {
+   const tabs = s.tabs.filter((t) => t.id !== id);
+   if (id === s.besideId) return { ...s, tabs, besideId: null };
+   if (id !== s.activeId) return { ...s, tabs };
+-  const fallback = TAB_3D.id;
++  const fallback = s.besideId ?? tabs[Math.max(0, idx - 1)]?.id ?? TAB_3D.id;
+   return { tabs, activeId: fallback, besideId: null };
+ }
+ 
