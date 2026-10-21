@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/documentsQuery.ts a/apps/viewer/src/aim/documentsQuery.ts
+index a4548a8c..78fbc7fb 100644
+--- b/apps/viewer/src/aim/documentsQuery.ts
++++ a/apps/viewer/src/aim/documentsQuery.ts
+@@ -134,6 +134,7 @@ export function selectionDocuments<D extends QueryDocument>(
+       doc,
+       ...(entry.page ? { page: entry.page } : {}),
+       ...(entry.via ? { via: entry.via } : {}),
++      ...(entry.aim === true ? { aim: true } : {}),
+       href: entry.href,
+     });
+   });

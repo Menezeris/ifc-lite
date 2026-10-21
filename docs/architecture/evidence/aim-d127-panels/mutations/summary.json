@@ -1,4 +1,18 @@
 {
+  "aim-badge-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "9871b0cf05b98acde2c5ee32bce9fcc8448c9b02",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  },
   "all-closes-explicit": {
     "verdict": "OBSERVED",
     "exitCode": 0,

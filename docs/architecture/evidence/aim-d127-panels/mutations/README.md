@@ -4,9 +4,9 @@
 
 # AIM D-127 panels: surgical mutation evidence
 
-AIM D-127 changes the AIM layer in `apps/viewer/src/aim/`:
+AIM D-127 changes the AIM layer in `apps/viewer/src/aim/` (#169 follows AIM D-129):
 - A chat property focus (`SELECT` `panel.focus`) stays highlighted until the next selection. It also reaches quantities and type psets.
-- The AIM | IFC tab bar is gone; the AIM card is a collapsed row.
+- The AIM | IFC tab bar and the AIM card are gone. The element's last recipe change and its GUID history are AIM layer rows with an AIM badge, and inherited documents carry an AIM badge in the Documents panel.
 - `SET_PANELS` opens, closes or toggles panels.
 - A chat page region re-fits when the card is resized, and `view_state` reports the visible part of the page.
 
@@ -26,6 +26,7 @@ Each patch is written mutant->fixed and reverse-applied by the oracle. Every run
 | `inside-no-tolerance.patch` | `docRegion.ts` | "region fully visible" has no rounding tolerance | `docRegion.test.ts` |
 | `visible-unclamped.patch` | `docRegion.ts` | the visible part is not clamped to the page | `docRegion.test.ts` |
 | `clear-no-waiter.patch` | `docRegion.ts` | clearing a region request never resolves `regionApplied` | `docRegion.test.ts` |
+| `aim-badge-dropped.patch` | `documentsQuery.ts` | a document inherited through a relation loses its AIM flag (D-129) | `documentsQuery.test.ts` |
 
 The following is store, DOM and renderer glue with no unit test, and was verified live:
 - `aimPanelView.ts`: DOM focus with a MutationObserver.
@@ -38,9 +39,9 @@ The live check ran in a local fork viewer embedded in a host page with the `BURK
 - `SET_PANELS all=close` hid every panel. Lens, the tree and lists opened, and their reported state matched the screen.
 - `DOCUMENT_OPEN` with a 30 % region in a 378 px card reported `region_fully_visible: true`. Narrowing the card to 264 px kept the region in view.
 
-Bundle (`vite build` of branch and `main`, same machine):
-- `viewer-entry-js-bytes` 3,164,374, which is -2,354 B against `main` (the tab bar is gone).
-- `viewer-eager-js-bytes` +2,665 B.
+Bundle (`vite build` of branch and `main`, same machine, after the D-129 commit):
+- `viewer-entry-js-bytes` 3,164,980, which is -1,748 B against `main` (the tab bar and the card are gone).
+- `viewer-eager-js-bytes` +3,211 B, inside the tolerance.
 - `perf-ratchet check` passes without a ceiling raise.
 
 ## Replay
