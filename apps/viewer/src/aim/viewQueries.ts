@@ -64,7 +64,7 @@ export const SECTION_AXIS_IN_IFC = { x: 'IFC X', y: 'IFC Z (výška)', z: 'IFC Y
 export const worldOffset = (state: State): Vec3 => bcfWorldOffset(state.models, state.geometryResult);
 
 /** Render-rámcová obálka prvkov viewera (globálne id; zostava bez geometrie = jej časti). */
-function renderBoundsOfIds(state: State, ids: readonly number[]): Box3 | null {
+export function renderBoundsOfIds(state: State, ids: readonly number[]): Box3 | null {
   const scene = getGlobalRenderer()?.getScene();
   if (!scene || ids.length === 0) return null;
   const boxOf = (id: number): Box3 | null => scene.getEntityBoundingBox(id) ?? scene.getInstancedEntityBounds(id) ?? null;
