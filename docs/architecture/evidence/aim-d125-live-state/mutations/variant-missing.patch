@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index b4a7e163..1ee44f14 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -170,7 +170,7 @@ export function nextAimLens(
+   // Lens farbí prvou zhodou: novšie pravidlá idú dopredu, aby nová farba prebila staršiu.
+   let rules = [...added, ...keep];
+   if (rules.length > MAX_AIM_RULES) rules = rules.slice(0, MAX_AIM_RULES);
+-  return rules.length > 0 ? { id: slotId, name: AIM_LENS_NAME, rules } : null;
++  return rules.length > 0 ? { id: slotId, name: AIM_LENS_NAME, rules: withVolumeVariants(rules) } : null;
+ }
+ 
+ /**

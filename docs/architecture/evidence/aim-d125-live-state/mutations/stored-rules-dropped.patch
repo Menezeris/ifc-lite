@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 8a84c859..1ee44f14 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -248,7 +248,7 @@ export function summarizeLens(
+     const off = isAimLens(stored) ? stored.rules.filter((r) => !isVariant(r)).length + (stored.autoColor ? 1 : 0) : 0;
+     return {
+       active: false, rules: [], legend: [], matched: 0, ...iso,
+-      ...(off < 0 ? { stored_rules: off, note: 'AIM chat lens je uložená, ale vypnutá (používateľ prepol lens), farby nevidno' } : {}),
++      ...(off > 0 ? { stored_rules: off, note: 'AIM chat lens je uložená, ale vypnutá (používateľ prepol lens), farby nevidno' } : {}),
+     };
+   }
+   // Varianta pre miestnosti sa počíta pod svoje pravidlo.

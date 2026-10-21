@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 68e8d61d..1ee44f14 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -256,7 +256,7 @@ export function summarizeLens(
+     .filter((r) => r.enabled && !isVariant(r))
+     .map((r) => {
+       const count = (counts.get(r.id) ?? 0) + (counts.get(`${r.id}${VOLUME_SUFFIX}`) ?? 0);
+-      return { name: r.name, action: r.action, color: r.color, count, ...(count < 0 ? { inactive: true as const } : {}) };
++      return { name: r.name, action: r.action, color: r.color, count, ...(count === 0 ? { inactive: true as const } : {}) };
+     });
+   const legendOut = legend.slice(0, 50).map((l) => ({ name: l.name, color: l.color, count: l.count }));
+   const inactive = rules.some((r) => r.inactive) && !lens.autoColor;
