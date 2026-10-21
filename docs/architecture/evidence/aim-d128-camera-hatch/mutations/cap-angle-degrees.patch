@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionCap.ts a/apps/viewer/src/aim/sectionCap.ts
+index d81767b64..c64483c6a 100644
+--- b/apps/viewer/src/aim/sectionCap.ts
++++ a/apps/viewer/src/aim/sectionCap.ts
+@@ -77,7 +77,7 @@ export function planSectionCap(
+     pattern: msg.cap === 'solid' ? 'solid' : msg.pattern ?? remember ?? lastHatch,
+   };
+   if (msg.cap === 'hatch' && msg.pattern) {
+-    const rad = (deg: number) => deg;
++    const rad = (deg: number) => (deg * Math.PI) / 180;
+     if (msg.angleDeg !== undefined) style.angleRad = rad(msg.angleDeg);
+     if (msg.secondaryAngleDeg !== undefined) style.secondaryAngleRad = rad(msg.secondaryAngleDeg);
+     if (msg.spacingPx !== undefined) style.spacingPx = msg.spacingPx;

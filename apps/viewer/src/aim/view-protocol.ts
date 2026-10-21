@@ -23,6 +23,11 @@ export type CameraPreset = (typeof CAMERA_PRESETS)[number];
 /** Rámovanie pri zachovanom smere: viditeľné prvky (`fitAll`) alebo výber (`frameSelection`). */
 export const CAMERA_FITS = ['visible', 'selection'] as const;
 export type CameraFit = (typeof CAMERA_FITS)[number];
+/** Časť cieľa podľa smeru pohľadu (AIM D-128): tretina obrazu po šírke, výške alebo hĺbke. */
+export const CAMERA_AREAS = ['left', 'right', 'top', 'bottom', 'front', 'back'] as const;
+export type CameraArea = (typeof CAMERA_AREAS)[number];
+/** Násobok obálky pri rámovaní s okrajom (1 = od hrany po hranu, host posiela 1 + okraj v %). */
+export const CAMERA_PADDING = { min: 1, max: 4 } as const;
 /** Presná póza kamery v IFC svete (Z hore, m); host ju počíta pre relatívne kroky (AIM D-098). */
 export interface BridgeViewpoint {
   position: { x: number; y: number; z: number };
@@ -92,6 +97,10 @@ export type ViewInboundMessage =
       selector?: OpsSelector;
       fit?: CameraFit;
       viewpoint?: BridgeViewpoint;
+      /** Okraj rámovania cieľa alebo výberu (AIM D-128), pre `frameBounds`. */
+      padding?: number;
+      /** Zarámovať len prvky cieľa alebo výberu v danej tretine obrazu (AIM D-128). */
+      area?: CameraArea;
     }
   | { source: typeof SOURCE; type: 'SET_VIEW_MODE'; mode: BridgeViewMode; storeyGuid?: string }
   | { source: typeof SOURCE; type: 'QUERY'; id: string; query: ViewQuery; guids?: string[] }
@@ -168,7 +177,9 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
         && optional(m.guids, isGuidList)
         && optional(m.selector, isSelector)
         && optional(m.fit, (f) => (CAMERA_FITS as readonly unknown[]).includes(f))
-        && optional(m.viewpoint, isViewpoint);
+        && optional(m.viewpoint, isViewpoint)
+        && optional(m.padding, (p) => inRange(p, CAMERA_PADDING.min, CAMERA_PADDING.max))
+        && optional(m.area, (a) => (CAMERA_AREAS as readonly unknown[]).includes(a));
       if (!valid) return false;
       // Jeden cieľ rámovania; póza nahrádza smer presetu.
       const targets = [m.guids !== undefined && (m.guids as string[]).length > 0, m.selector !== undefined, m.fit !== undefined];

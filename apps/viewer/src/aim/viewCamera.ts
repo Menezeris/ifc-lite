@@ -7,12 +7,14 @@
  * smer cez `cameraCallbacks` (preset, home, fitAll), pohľad kolmo na rez ako
  * tlačidlo Set view (#7545, `presetViewForAxis` / `customPlaneViewpoint`),
  * póza od hosta cez `applyViewpoint` (tá istá cesta ako BCF), rámovanie cez
- * `bim.viewer.flyTo`, `fitAll` (viditeľné, #5884) a `frameSelection`.
+ * `bim.viewer.flyTo`, `fitAll` (viditeľné, #5884) a `frameSelection`. Okraj a
+ * časť cieľa (AIM D-128) rámuje `frameBounds` s okrajom nad obálkami prvkov.
  * Relatívny zoom/orbit/posun počíta host a pošle hotovú pózu. Lenivý modul -
  * vo vstupnom balíku nie je.
  */
 
 import { useViewerStore } from '@/store';
+import { toGlobalIdFromModels } from '@/store/globalId';
 import { activeSectionPlane } from '@/store/section-active';
 import { bcfWorldOffset } from '@/hooks/bcf/viewpoint-world-frame';
 import { customPlaneViewpoint } from '@/lib/section/section-set-view';
@@ -21,7 +23,9 @@ import type { BimContext } from '@ifc-lite/sdk';
 import type { resolveGuids, resolveSelector } from './bridge-protocol.js';
 import type { BridgeViewpoint, ViewInboundMessage } from './view-protocol.js';
 import type { CameraStep } from './viewCommands.js';
-import { ifcDirToRender, ifcPointToRender } from './viewFrame.js';
+import { ifcDirToRender, ifcPointToRender, unionBoxes, type Box3 } from './viewFrame.js';
+import { renderBoundsOfIds } from './viewQueries.js';
+import { pickArea, screenAxes } from './cameraArea.js';
 import { noteIssue } from './command-gate.js';
 
 type State = ReturnType<typeof useViewerStore.getState>;
@@ -35,6 +39,8 @@ const FRAME_SLACK_MS = 50;
 /** Rovnaké trvanie ako tlačidlo Set view. */
 const SECTION_VIEW_MS = 400;
 const VIEWPOINT_MS = 300;
+/** Rámovanie cieľa (`flyTo`, `fitAll`, `frameSelection`, `frameBounds`) animuje 300 ms. */
+const FRAME_MS = 300;
 
 /** Novší príkaz zruší rámovanie, ktoré ešte čaká na koniec animácie staršieho. */
 let latest = 0;
@@ -95,8 +101,57 @@ function setDirection(state: State, msg: CameraMessage, step: CameraStep): numbe
   }
 }
 
-function frameTarget(msg: CameraMessage, bim: BimContext, g: TargetHelpers): void {
+/** Obálky cieľa alebo výberu po prvkoch (zostava = jej časti), render rámec; prvky bez geometrie vypadnú. */
+function frameBoxes(state: State, msg: CameraMessage, g: TargetHelpers): Box3[] {
+  let ids: number[];
+  if (msg.guids?.length || msg.selector) {
+    const refs = msg.guids?.length ? g.resolveGuids(state.models, msg.guids) : g.resolveSelector(state.models, msg.selector!);
+    ids = refs.map((r) => toGlobalIdFromModels(state.models, r.modelId, r.expressId));
+  } else {
+    ids = state.selectedEntityIds.size > 0
+      ? [...state.selectedEntityIds]
+      : state.selectedEntityId !== null ? [state.selectedEntityId] : [];
+  }
+  return ids.map((id) => renderBoundsOfIds(state, [id])).filter((b): b is Box3 => b !== null);
+}
+
+/**
+ * Okraj a časť cieľa (AIM D-128): z obálok prvkov vyberie časť podľa aktuálneho
+ * smeru (`pickArea`) a zarámuje ich `frameBounds` s okrajom; smer ostáva.
+ * Promise skončí po animácii, aby `APPLIED` hlásilo koncovú pózu.
+ */
+async function frameWithMargin(msg: CameraMessage, g: TargetHelpers): Promise<void> {
   const state = useViewerStore.getState();
+  const cam = state.cameraCallbacks;
+  let boxes = frameBoxes(state, msg, g);
+  if (boxes.length === 0) {
+    noteIssue(msg.fit === 'selection' ? 'SET_CAMERA: výber bez geometrie' : 'SET_CAMERA: cieľ bez prvkov');
+    return;
+  }
+  if (msg.area) {
+    const vp = cam.getViewpoint?.();
+    const axes = vp ? screenAxes(vp) : null;
+    if (!axes) {
+      cameraNotReady('area');
+      return;
+    }
+    boxes = pickArea(boxes, msg.area, axes).map((i) => boxes[i]);
+  }
+  const box = unionBoxes(boxes);
+  if (!box || !cam.frameBounds) {
+    cameraNotReady('frame');
+    return;
+  }
+  const ok = await cam.frameBounds(box.min, box.max, { padding: msg.padding, durationMs: FRAME_MS });
+  if (!ok) noteIssue('SET_CAMERA: cieľ bez platnej obálky');
+}
+
+function frameTarget(msg: CameraMessage, bim: BimContext, g: TargetHelpers): Promise<void> {
+  const state = useViewerStore.getState();
+  if (msg.padding !== undefined || msg.area) {
+    if (msg.guids?.length || msg.selector || msg.fit === 'selection') return frameWithMargin(msg, g);
+    noteIssue('SET_CAMERA: okraj a časť potrebujú cieľ alebo výber');
+  }
   if (msg.guids?.length || msg.selector) {
     const refs = msg.guids?.length ? g.resolveGuids(state.models, msg.guids) : g.resolveSelector(state.models, msg.selector!);
     if (refs.length > 0) bim.viewer.flyTo(refs);
@@ -106,6 +161,8 @@ function frameTarget(msg: CameraMessage, bim: BimContext, g: TargetHelpers): voi
   } else if (msg.fit === 'selection') {
     state.cameraCallbacks.frameSelection?.();
   }
+  // Rámovanie animuje; `APPLIED` (D-101) čítalo kameru pred koncom a hlásilo pózu presetu (AIMviewer#172).
+  return new Promise<void>((r) => setTimeout(r, FRAME_MS + FRAME_SLACK_MS));
 }
 
 /**
@@ -121,12 +178,7 @@ export function runCamera(msg: CameraMessage, step: CameraStep, bim: BimContext,
   // Promise skončí po animácii a rámovaní, aby `APPLIED` (D-101) hlásilo koncovú pózu.
   const settle = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
   if (!msg.guids?.length && !msg.selector && !msg.fit) return wait > 0 ? settle(wait + FRAME_SLACK_MS) : Promise.resolve();
-  const frame = () => {
-    if (token === latest) frameTarget(msg, bim, g);
-  };
-  if (wait <= 0) {
-    frame();
-    return Promise.resolve();
-  }
+  const frame = () => (token === latest ? frameTarget(msg, bim, g) : Promise.resolve());
+  if (wait <= 0) return frame();
   return settle(wait + FRAME_SLACK_MS).then(frame);
 }

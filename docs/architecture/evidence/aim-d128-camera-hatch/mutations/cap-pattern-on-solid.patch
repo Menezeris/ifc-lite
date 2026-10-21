@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionCap.ts a/apps/viewer/src/aim/sectionCap.ts
+index 5970d13e1..c64483c6a 100644
+--- b/apps/viewer/src/aim/sectionCap.ts
++++ a/apps/viewer/src/aim/sectionCap.ts
+@@ -50,7 +50,7 @@ export function isSectionCapMessage(data: unknown): data is SectionCapMessage {
+   return m.source === SOURCE && m.type === 'SET_SECTION_CAP'
+     && (SECTION_CAPS as readonly unknown[]).includes(m.cap)
+     && (m.fillColor === undefined || (typeof m.fillColor === 'string' && HEX.test(m.fillColor)))
+-    && (m.pattern === undefined || ((HATCHES as readonly unknown[]).includes(m.pattern)))
++    && (m.pattern === undefined || (m.cap === 'hatch' && (HATCHES as readonly unknown[]).includes(m.pattern)))
+     && (Object.keys(RANGES) as (keyof typeof RANGES)[]).every((k) => inRange(m[k], RANGES[k]));
+ }
+ 

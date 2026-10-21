@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/cameraArea.ts a/apps/viewer/src/aim/cameraArea.ts
+index 94092d798..7dfa34883 100644
+--- b/apps/viewer/src/aim/cameraArea.ts
++++ a/apps/viewer/src/aim/cameraArea.ts
+@@ -66,7 +66,7 @@ export function pickArea(boxes: readonly Box3[], area: CameraArea, axes: ScreenA
+   const lo = Math.min(...spans.map((s) => s.lo));
+   const hi = Math.max(...spans.map((s) => s.hi));
+   const third = (hi - lo) / 3;
+-  const picked = spans.flatMap((s, i) => ((high ? s.mid >= (lo + hi) / 2 : s.mid <= (lo + hi) / 2) ? [i] : []));
++  const picked = spans.flatMap((s, i) => ((high ? s.mid >= hi - third : s.mid <= lo + third) ? [i] : []));
+   if (picked.length > 0) return picked;
+   let best = 0;
+   spans.forEach((s, i) => {

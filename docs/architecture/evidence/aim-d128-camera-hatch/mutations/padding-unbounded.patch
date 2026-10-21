@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/view-protocol.ts a/apps/viewer/src/aim/view-protocol.ts
+index c24fb4a03..70270680d 100644
+--- b/apps/viewer/src/aim/view-protocol.ts
++++ a/apps/viewer/src/aim/view-protocol.ts
+@@ -162,7 +162,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
+         && optional(m.selector, isSelector)
+         && optional(m.fit, (f) => (CAMERA_FITS as readonly unknown[]).includes(f))
+         && optional(m.viewpoint, isViewpoint)
+-        && optional(m.padding, (p) => typeof p === "number")
++        && optional(m.padding, (p) => inRange(p, CAMERA_PADDING.min, CAMERA_PADDING.max))
+         && optional(m.area, (a) => (CAMERA_AREAS as readonly unknown[]).includes(a));
+       if (!valid) return false;
+       // Jeden cieľ rámovania; póza nahrádza smer presetu.
