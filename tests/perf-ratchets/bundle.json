@@ -22,14 +22,14 @@
       "metric": "raw-bytes",
       "unit": "bytes",
       "description": "raw size of the single <script type=\"module\" src> chunk of apps/viewer/dist/index.html",
-      "ceiling": 3165867,
+      "ceiling": 3169867,
       "tolerance": {
         "kind": "relative",
         "value": 0.001
       },
       "provenance": {
-        "commit": "e81e3ca735f4c82b8f701d3ff04e6dd11a6afdc4",
-        "measuredAt": "2026-10-19T19:22:48.000Z"
+        "commit": "5313b1eb5ab5f110a1b576d762c0cbda6f4281b7",
+        "measuredAt": "2026-10-21T13:48:53.000Z"
       }
     },
     {
@@ -37,14 +37,14 @@
       "metric": "raw-bytes",
       "unit": "bytes",
       "description": "summed raw size of every JS file dist/index.html loads eagerly: the module <script src> plus <link rel=modulepreload>",
-      "ceiling": 19347507,
+      "ceiling": 19369949,
       "tolerance": {
         "kind": "relative",
         "value": 0.001
       },
       "provenance": {
-        "commit": "e81e3ca735f4c82b8f701d3ff04e6dd11a6afdc4",
-        "measuredAt": "2026-10-19T19:22:48.000Z"
+        "commit": "5313b1eb5ab5f110a1b576d762c0cbda6f4281b7",
+        "measuredAt": "2026-10-21T13:48:53.000Z"
       }
     }
   ]

@@ -11,6 +11,10 @@
  * nejde cez lens: prvky ostanú v pôvodnom vzhľade, viewer ich izoluje vlastným
  * kanálom izolácie (`isolationRules` + `aimLens.ts`). X-ray (D-105) je to isté
  * zjednotenie v kanáli ghost: vybrané plné, zvyšok priesvitný.
+ *
+ * AIM D-125: farebné pravidlo má pre miestnosti a zóny priesvitnú variantu (inak
+ * by plný kváder zakryl prvky v miestnosti) a súhrn hlási pravidlá bez zhody a
+ * vypnutú lens, aby sa stav v odpovedi zhodoval s obrazovkou.
  */
 
 import { isFilterGroup, type FilterGroup, type FilterRule } from '@ifc-lite/rules';
@@ -27,6 +31,11 @@ const NO_MODEL = '__aim_no_model__';
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const AUTO_SOURCES = new Set(['ifcType', 'attribute', 'property', 'quantity', 'classification', 'material', 'model', 'group']);
 const ACTIONS = new Set(['colorize', 'transparent', 'hide', 'isolate']);
+/** Triedy, ktoré viewer kreslí ako priehľadný objem: plná farba by zakryla prvky v nich (D-125). */
+export const VOLUME_CLASSES = ['IfcSpace', 'IfcSpatialZone'];
+/** Prípona id priesvitnej varianty pravidla pre miestnosti a zóny. */
+export const VOLUME_SUFFIX = '~vol';
+const isVariant = (r: LensRule) => r.id.endsWith(VOLUME_SUFFIX);
 
 export type ApplyLensMessage = Extract<LensInboundMessage, { type: 'APPLY_LENS' }>;
 export type LensQueryMessage = Extract<LensInboundMessage, { type: 'LENS_QUERY' }>;
@@ -153,13 +162,38 @@ export function nextAimLens(
     return { id: slotId, name: AIM_LENS_NAME, rules: [], autoColor };
   }
   const added = toLensRules(msg, models, tag).filter((_, i) => msg.rules?.[i].action !== 'isolate');
-  // Tá istá verzia znova (host ops po obnovení stránky) pravidlá nezdvojí.
-  const keep = msg.mode === 'add' && own && !own.autoColor ? own.rules.filter((r) => !r.id.startsWith(`aim-${tag}-`)) : [];
+  // Tá istá verzia znova (host ops po obnovení stránky) pravidlá nezdvojí; varianty sa odvodia znova.
+  const keep = msg.mode === 'add' && own && !own.autoColor
+    ? own.rules.filter((r) => !isVariant(r) && !r.id.startsWith(`aim-${tag}-`))
+    : [];
   if (msg.mode === 'add' && added.length === 0) return own;
   // Lens farbí prvou zhodou: novšie pravidlá idú dopredu, aby nová farba prebila staršiu.
   let rules = [...added, ...keep];
   if (rules.length > MAX_AIM_RULES) rules = rules.slice(0, MAX_AIM_RULES);
-  return rules.length > 0 ? { id: slotId, name: AIM_LENS_NAME, rules } : null;
+  return rules.length > 0 ? { id: slotId, name: AIM_LENS_NAME, rules: withVolumeVariants(rules) } : null;
+}
+
+/**
+ * Pred každé farebné pravidlo jeho priesvitná varianta pre miestnosti a zóny (D-125):
+ * Lens farbí prvou zhodou, takže miestnosť dostane farbu s alfou `transparent` a prvky
+ * v nej ostanú vidieť. Skupiny OR by podmienka triedy rozšírila, tie ostanú bez varianty.
+ */
+export function withVolumeVariants(rules: readonly LensRule[]): LensRule[] {
+  const out: LensRule[] = [];
+  for (const r of rules) {
+    if (r.action === 'colorize' && r.groups.length > 0 && r.groups.every((g) => g.combinator === 'AND')) {
+      const only: FilterRule = { kind: 'ifcType', op: 'in', values: VOLUME_CLASSES };
+      out.push({
+        ...r,
+        id: `${r.id}${VOLUME_SUFFIX}`,
+        name: `${r.name} (miestnosti)`,
+        action: 'transparent',
+        groups: r.groups.map((g) => ({ ...g, rules: [...g.rules, only] })),
+      });
+    }
+    out.push(r);
+  }
+  return out;
 }
 
 /** Vyhodnotil už useLens práve túto verziu lens? */
@@ -175,20 +209,29 @@ export interface AimIsolation {
   isolated: number;
   /** Zjednotenie je v X-ray kanáli (zvyšok priesvitný), nie v izolácii (D-105). */
   xray?: true;
+  /** false = kanál už izoláciu z chatu nedrží (zrušil ju používateľ alebo iný príkaz, D-125). */
+  active?: false;
+  note?: string;
 }
 
 export interface AimLensSummary {
   active: boolean;
   name?: string;
   rev?: string;
-  rules: { name: string; action: string; color: string; count: number }[];
+  /** `inactive` = pravidlo nezasiahlo nič (prekryté novším pravidlom alebo filter nič nenašiel, D-125). */
+  rules: { name: string; action: string; color: string; count: number; inactive?: true }[];
   legend: { name: string; color: string; count: number }[];
   /** Prvky zafarbené alebo skryté niektorým pravidlom. */
   matched: number;
   isolation?: AimIsolation;
   /** Verzia, ktorej izolácia z chatu zlyhala: súhrn ju nesmie hlásiť ako platnú. */
   isolationFailed?: string;
+  /** Počet pravidiel AIM chat lens, ktorá je uložená, ale vypnutá (používateľ prepol lens, D-125). */
+  stored_rules?: number;
+  note?: string;
 }
+
+const INACTIVE_NOTE = 'pravidlo s inactive nič nezafarbilo: prvky prekrylo novšie pravidlo alebo filter nič nenašiel';
 
 export function summarizeLens(
   lens: Lens | null,
@@ -197,14 +240,26 @@ export function summarizeLens(
   rev?: string,
   isolation?: AimIsolation | null,
   isolationFailed?: string | null,
+  stored?: Lens | null,
 ): AimLensSummary {
   // Zlyhaná izolácia: stará izolácia v súhrne by vyzerala ako úspech novej.
   const iso = isolationFailed ? { isolationFailed } : isolation ? { isolation } : {};
-  if (!lens) return { active: false, rules: [], legend: [], matched: 0, ...iso };
+  if (!lens) {
+    const off = isAimLens(stored) ? stored.rules.filter((r) => !isVariant(r)).length + (stored.autoColor ? 1 : 0) : 0;
+    return {
+      active: false, rules: [], legend: [], matched: 0, ...iso,
+      ...(off > 0 ? { stored_rules: off, note: 'AIM chat lens je uložená, ale vypnutá (používateľ prepol lens), farby nevidno' } : {}),
+    };
+  }
+  // Varianta pre miestnosti sa počíta pod svoje pravidlo.
   const rules = lens.rules
-    .filter((r) => r.enabled)
-    .map((r) => ({ name: r.name, action: r.action, color: r.color, count: counts.get(r.id) ?? 0 }));
+    .filter((r) => r.enabled && !isVariant(r))
+    .map((r) => {
+      const count = (counts.get(r.id) ?? 0) + (counts.get(`${r.id}${VOLUME_SUFFIX}`) ?? 0);
+      return { name: r.name, action: r.action, color: r.color, count, ...(count === 0 ? { inactive: true as const } : {}) };
+    });
   const legendOut = legend.slice(0, 50).map((l) => ({ name: l.name, color: l.color, count: l.count }));
+  const inactive = rules.some((r) => r.inactive) && !lens.autoColor;
   return {
     active: true,
     name: lens.name,
@@ -213,11 +268,12 @@ export function summarizeLens(
     legend: legendOut,
     matched: rules.reduce((s, r) => s + r.count, 0) + legend.reduce((s, l) => s + l.count, 0),
     ...iso,
+    ...(inactive ? { note: INACTIVE_NOTE } : {}),
   };
 }
 
 /** Veľkosť legendy z chatu (D-119). */
-export const LEGEND_SIZES = ['large', 'normal'] as const;
+export const LEGEND_SIZES = ['large', 'normal', 'compact'] as const;
 export type LegendSize = (typeof LEGEND_SIZES)[number];
 
 /** Plávajúce okno veľkej legendy: takmer celý viewer, najviac 960 px široké. */

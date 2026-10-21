@@ -1,0 +1,114 @@
+{
+  "area-fallback-first": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/cameraArea.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "219fa0d6cfea16025999735447a4d40fddd4cc72",
+    "production": [
+      "apps/viewer/src/aim/cameraArea.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/cameraArea.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "area-front-is-far": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/cameraArea.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "219fa0d6cfea16025999735447a4d40fddd4cc72",
+    "production": [
+      "apps/viewer/src/aim/cameraArea.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/cameraArea.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "area-half-not-third": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/cameraArea.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "219fa0d6cfea16025999735447a4d40fddd4cc72",
+    "production": [
+      "apps/viewer/src/aim/cameraArea.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/cameraArea.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "axes-degenerate-accepted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/cameraArea.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "219fa0d6cfea16025999735447a4d40fddd4cc72",
+    "production": [
+      "apps/viewer/src/aim/cameraArea.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/cameraArea.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "cap-angle-degrees": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionCap.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "219fa0d6cfea16025999735447a4d40fddd4cc72",
+    "production": [
+      "apps/viewer/src/aim/sectionCap.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionCap.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "cap-pattern-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionCap.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "219fa0d6cfea16025999735447a4d40fddd4cc72",
+    "production": [
+      "apps/viewer/src/aim/sectionCap.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionCap.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "cap-pattern-on-solid": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionCap.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "219fa0d6cfea16025999735447a4d40fddd4cc72",
+    "production": [
+      "apps/viewer/src/aim/sectionCap.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionCap.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "padding-unbounded": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/view-camera.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "219fa0d6cfea16025999735447a4d40fddd4cc72",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/view-camera.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

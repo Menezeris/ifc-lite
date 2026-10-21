@@ -19,7 +19,6 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { parsePlacement, serializePlacement } from '@ifc-lite/drawing-underlay';
 import { useBim } from '../sdk/BimProvider.js';
 import { useViewerStore } from '../store/index.js';
 import { AUTOLOAD_COMPLETE_EVENT, parseAutoloadUrls } from '../lib/autoload.js';
@@ -32,15 +31,21 @@ import { isCommandMessage, type AppliedMessage, type CommandInboundMessage } fro
 import { createCommandGate, noteIssue, resetCommandState, settled, takeIssues, track } from './command-gate.js';
 import { useAimPanelStore } from './aimPanelStore.js';
 import { useCapturePinsStore } from './capturePinsStore.js';
-import { normalizeDocHighlights, normalizeDocRegion, useAimDocRegionStore } from './docRegion.js';
+import { useAimDocRegionStore } from './docRegion.js';
+import { handleDocumentMessage, wireDocumentEvents } from './docBridge.js';
 import { useAimDecorationsStore } from './aimDecorationsStore.js';
 import { useAimDerivationsStore } from './aimDerivationsStore.js';
 import { isViewMessage } from './view-protocol.js';
+import { withTabs } from './viewTabsStore.js';
 import { applySectionCap, isSectionCapMessage } from './sectionCap.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
 import { isBcfLoadMessage, loadBcfTopics } from './bcf-protocol.js';
 import { dispatchLensMessage, isLensEnvelope, lensSettled, resetLensFromChat } from './lens-protocol.js';
-import { appliedViewState, prepareFocusView, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
+import { appliedViewState, prepareFocusView, runSectionBox, setChangesProvider, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
+import { createViewChangeTracker } from './viewChanges.js';
+
+/** Správy AIM D-132 sa overia až v lenivom module; tu len typ (vstupný balík). */
+const aimTyped = (d: unknown, type: string) => !!d && typeof d === 'object' && (d as { source?: unknown }).source === SOURCE && (d as { type?: unknown }).type === type;
 
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
@@ -88,6 +93,8 @@ export function AimBridge() {
 
     const origin = () => parentOriginRef.current ?? '*';
     const gate = gateRef.current;
+    const changes = createViewChangeTracker(setChangesProvider); // zmeny pohľadu mimo príkazov (D-125)
+    const command = (fn: () => void) => gate.run(() => { changes.beforeCommand(); fn(); });
     // Modul príkazov viditeľnosti sa načíta hneď (mimo vstupného balíka); brána drží príkazy
     // až do načítania modelov, takže je vtedy pripravený a príkazy idú synchrónne v poradí.
     let vis: Awaited<ReturnType<typeof loadVisibility>> | null = null;
@@ -115,7 +122,8 @@ export function AimBridge() {
       // Problémy až po stave a Lens, aby ich chyby patrili do tohto potvrdenia.
       const issues = takeIssues();
       if (!done) issues.push('niektoré kroky vo vieweri ešte bežia');
-      const applied: AppliedMessage = { source: SOURCE, type: 'APPLIED', cmdId, ok: issues.length === 0, issues, state: state && { ...state, ...(lens ? { lens } : {}) } };
+      const extra = { ...(lens ? { lens } : {}), ...changes.ackedState() };
+      const applied: AppliedMessage = { source: SOURCE, type: 'APPLIED', cmdId, ok: issues.length === 0, issues, state: state && { ...state, ...extra } };
       window.parent.postMessage(applied, origin());
     }
 
@@ -128,23 +136,33 @@ export function AimBridge() {
         const msg = e.data;
         // Otázky odpovedajú hneď (aj počas načítania), príkazy idú bránou.
         if (msg.type === 'QUERY') viewCommands.current(msg, origin());
-        else gate.run(() => viewCommands.current(msg, origin()));
+        else command(() => viewCommands.current(msg, origin()));
+        return;
+      }
+      if (aimTyped(e.data, 'VIEW_TABS')) {
+        const raw: unknown = e.data; // Záložky z chatu (D-132), overenie aj vykonanie v lenivom module, v poradí
+        command(() => { const p = withTabs((m) => m.runTabsMessage(raw, noteIssue)); if (p) track(p); });
+        return;
+      }
+      if (aimTyped(e.data, 'SET_SECTION_BOX')) {
+        const raw: unknown = e.data; // Rezný box (D-132)
+        command(() => runSectionBox(raw));
         return;
       }
       if (isSectionCapMessage(e.data)) {
         const msg = e.data; // Vzhľad reznej plochy (D-120)
-        gate.run(() => applySectionCap(msg, useViewerStore.getState));
+        command(() => applySectionCap(msg, useViewerStore.getState));
         return;
       }
       if (isLensEnvelope(e.data)) {
         const msg = e.data; // Lens z chatu (D-096)
         if (msg.type === 'LENS_QUERY') void dispatchLensMessage(msg, origin());
-        else gate.run(() => track(dispatchLensMessage(msg, origin())));
+        else command(() => track(dispatchLensMessage(msg, origin())));
         return;
       }
       if (isCommandMessage(e.data)) {
         const msg = e.data;
-        gate.run(() => (msg.type === 'ACK_REQUEST' ? void answerAck(msg.cmdId) : runVisibility(msg)));
+        if (msg.type === 'ACK_REQUEST') gate.run(() => void answerAck(msg.cmdId)); else command(() => runVisibility(msg));
         return;
       }
       if (isDerivationsMessage(e.data)) {
@@ -160,7 +178,7 @@ export function AimBridge() {
       if (!isInboundMessage(e.data)) return;
       if (VISIBILITY.has(e.data.type)) {
         const msg = e.data;
-        gate.run(() => runVisibility(msg));
+        command(() => runVisibility(msg));
         return;
       }
 
@@ -171,52 +189,6 @@ export function AimBridge() {
         case 'AIM_PANEL_EMPTY':
           useAimPanelStore.getState().resolve(e.data.guid, { reason: e.data.reason });
           break;
-        case 'UNDERLAYS_LOAD': {
-          // Georeferencované PDF podklady (D-072): host posiela zoznam
-          // dokumentov naviazaných na podlažia + perzistované _georef.
-          // Placement JSON je untrusted — validuje ho parsePlacement;
-          // nevalidný georef = výkres bez umiestnenia (kalibruje sa znova).
-          const drawings = e.data.drawings.map((d) => ({
-            id: d.documentId,
-            name: d.name,
-            pdfUrl: d.pdfUrl,
-            placement: d.georef !== undefined ? parsePlacement(d.georef) : null,
-          }));
-          useViewerStore.getState().setUnderlayDrawings(drawings);
-          break;
-        }
-        case 'DOCUMENTS_LOAD': {
-          // Projektové dokumenty (D-075): host posiela knižnicu dokumentov
-          // (výkresy/dokumenty/obrázky) pre in-viewer Documents panel.
-          // Súrodenec UNDERLAYS_LOAD — kalibrované výkresy chodia v oboch.
-          const docs = e.data.documents.map((d) => ({
-            id: d.documentId,
-            name: d.name,
-            kind: d.kind,
-            url: d.url,
-            mime: d.mime,
-            storeyGuid: d.storeyGuid ?? null,
-            folder: d.folder,
-            meta: d.meta,
-          }));
-          useViewerStore.getState().setViewerDocuments(docs);
-          break;
-        }
-        case 'DOCUMENT_OPEN': {
-          // Deep link (D-075): otvor dokument ako kartu. Neznáme id je no-op
-          // (openDocument si to ustráži) — host mohol poslať staršiu linku.
-          useViewerStore
-            .getState()
-            .openDocument(e.data.documentId, e.data.page !== undefined ? { page: e.data.page } : undefined);
-          // Výrez strany z chatu (D-117): karta sa priblíži, keď je PDF otvorené.
-          const region = normalizeDocRegion(e.data.region);
-          if (region) useAimDocRegionStore.getState().requestRegion(e.data.documentId, region, e.data.page);
-          // Rámiky okolo nájdeného textu (D-123); DOCUMENT_OPEN bez nich staré zruší.
-          useAimDocRegionStore
-            .getState()
-            .setHighlights(e.data.documentId, normalizeDocHighlights(e.data.highlights), e.data.page);
-          break;
-        }
         case 'CAPTURES_LOAD':
           // Reality Capture pins (D-073): host pushes capture points with world
           // coords; the billboard layer (CapturePinLayer) renders them.
@@ -226,31 +198,16 @@ export function AimBridge() {
           // Per-GUID badge counts (D-077) — HierarchyPanel rows render pills.
           useAimDecorationsStore.getState().setDecorations(e.data.decorations);
           break;
+        default:
+          handleDocumentMessage(e.data); // podklady, knižnica a karta dokumentu (docBridge.ts)
       }
     }
 
-    // Kalibrácia uložená vo viewri → host ju perzistuje do
-    // documents.properties._georef (D-072). Session-only bez hosta.
-    useViewerStore.getState().setUnderlaySaveHandler((documentId, placement) => {
-      post({
-        source: SOURCE,
-        type: 'UNDERLAY_SAVE',
-        documentId,
-        georef: serializePlacement(placement),
-      });
-    });
+    wireDocumentEvents(post); // kalibrácia podkladu a taby dokumentov -> host (docBridge.ts)
 
     // 3D -> host: a capture pin click opens its gallery/panorama host-side (D-073).
     useCapturePinsStore.getState().setEmitClick((captureId) => {
       post({ source: SOURCE, type: 'CAPTURE_PIN_CLICK', captureId });
-    });
-
-    // Tab dokumentu otvorený/zavretý vo viewri → host recents/analytics (D-075).
-    useViewerStore.getState().setDocumentEventHandler(({ docId, event }) => {
-      // Session-local files never leave the viewer — the host has no use for
-      // (and no way to resolve) `local:` ids.
-      if (docId.startsWith('local:')) return;
-      post({ source: SOURCE, type: 'DOCUMENT_EVENT', documentId: docId, event });
     });
 
     window.addEventListener('message', onMessage);
@@ -266,6 +223,7 @@ export function AimBridge() {
       useAimDocRegionStore.setState({ request: null, highlights: null }); // D-117/D-123: výrez ani rámiky nepatria ďalšej relácii
       resetLensFromChat(); // D-096: izolácia a AIM chat lens neprežijú odpojenie mostu
       setFocusProvider(undefined);
+      setChangesProvider(undefined);
       resetCommandState(); // problémy a kroky z predošlej relácie nepatria do ďalšieho APPLIED
       void visibility?.then((m) => m.forgetFocus());
     };
@@ -372,7 +330,7 @@ export function AimBridge() {
     }
     const guid = guidForEntity(useViewerStore.getState().models, selectedEntity);
     if (guid) {
-      // AimCard shows its skeleton immediately; the host answers with
+      // AIM layer rows wait for the host's answer:
       // AIM_PANEL_DATA / AIM_PANEL_EMPTY (or the store times out quietly).
       useAimPanelStore.getState().beginLoading(guid);
       window.parent.postMessage({ source: SOURCE, type: 'ENTITY_SELECTED', guid } satisfies OutboundMessage, targetOrigin);

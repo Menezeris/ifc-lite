@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimRoomFill.ts a/apps/viewer/src/aim/aimRoomFill.ts
+index ce5a1e59..cfc94144 100644
+--- b/apps/viewer/src/aim/aimRoomFill.ts
++++ a/apps/viewer/src/aim/aimRoomFill.ts
+@@ -75,7 +75,7 @@ export function looksDown(position: Vec3, target: Vec3, minCos = 0.95): boolean
+ 
+ /** Pretína vodorovný rez vo výške `cutY` miestnosť (od podlahy po strop)? */
+ export function cutsRoom(footprint: Footprint, cutY: number): boolean {
+-  return footprint.anchor.y <= cutY;
++  return footprint.anchor.y <= cutY && cutY <= footprint.top;
+ }
+ 
+ /**

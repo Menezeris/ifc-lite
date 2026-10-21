@@ -1,0 +1,156 @@
+{
+  "aim-badge-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/documentsQuery.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "9871b0cf05b98acde2c5ee32bce9fcc8448c9b02",
+    "production": [
+      "apps/viewer/src/aim/documentsQuery.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/documentsQuery.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "all-closes-explicit": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "4c9d2f22d8d85776551781df9a417fa24436a62f",
+    "production": [
+      "apps/viewer/src/aim/aimPanelsPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "all-open-accepted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "4c9d2f22d8d85776551781df9a417fa24436a62f",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "clear-no-waiter": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docRegion.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "105120f7771b21235dffacb9bb49a5db39441bb8",
+    "production": [
+      "apps/viewer/src/aim/docRegion.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docRegion.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "floating-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "4c9d2f22d8d85776551781df9a417fa24436a62f",
+    "production": [
+      "apps/viewer/src/aim/aimPanelsPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "inside-no-tolerance": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docRegion.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "105120f7771b21235dffacb9bb49a5db39441bb8",
+    "production": [
+      "apps/viewer/src/aim/docVisible.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docRegion.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "loose-before-exact": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelViewPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "4c9d2f22d8d85776551781df9a417fa24436a62f",
+    "production": [
+      "apps/viewer/src/aim/aimPanelViewPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelViewPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "open-before-close": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "4c9d2f22d8d85776551781df9a417fa24436a62f",
+    "production": [
+      "apps/viewer/src/aim/aimPanelsPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "propkey-ignores-pset": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelViewPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "4c9d2f22d8d85776551781df9a417fa24436a62f",
+    "production": [
+      "apps/viewer/src/aim/aimPanelViewPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelViewPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "qto-in-properties": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelViewPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "4c9d2f22d8d85776551781df9a417fa24436a62f",
+    "production": [
+      "apps/viewer/src/aim/aimPanelViewPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelViewPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "visible-unclamped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docRegion.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "105120f7771b21235dffacb9bb49a5db39441bb8",
+    "production": [
+      "apps/viewer/src/aim/docVisible.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docRegion.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

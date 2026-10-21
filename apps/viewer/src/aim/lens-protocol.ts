@@ -50,8 +50,11 @@ export type LensInboundMessage =
        * počty len za tieto prvky. Bez neho pri zúženom pohľade (izolácia, skrytie) viditeľné prvky.
        */
       autoColorScope?: unknown[];
-      /** Veľkosť legendy (AIM D-119): `large` = panel Lens ako veľké plávajúce okno, `normal` = späť do lišty. */
-      legend?: 'large' | 'normal';
+      /**
+       * Veľkosť legendy (AIM D-119): `large` = panel Lens ako veľké plávajúce okno, `normal` = späť do lišty,
+       * `compact` = malá karta len s legendou AIM chat lens, panel Lens zavretý (AIM D-125).
+       */
+      legend?: 'large' | 'normal' | 'compact';
     }
   | { source: typeof SOURCE; type: 'LENS_QUERY'; id: string; rev?: string }
   | {

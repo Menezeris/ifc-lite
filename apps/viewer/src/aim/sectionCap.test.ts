@@ -25,6 +25,8 @@ describe('isSectionCapMessage', () => {
       { source: S, type: 'SET_SECTION_CAP', cap: 'none' },
       { source: S, type: 'SET_SECTION_CAP', cap: 'solid', fillColor: '#FFaa00' },
       { source: S, type: 'SET_SECTION_CAP', cap: 'hatch' },
+      { source: S, type: 'SET_SECTION_CAP', cap: 'hatch', pattern: 'crossHatch', angleDeg: 45, secondaryAngleDeg: -45, spacingPx: 8, widthPx: 1 },
+      { source: S, type: 'SET_SECTION_CAP', cap: 'hatch', pattern: 'concrete', spacingPx: 64, widthPx: 16 },
     ]) assert.ok(isSectionCapMessage(m), JSON.stringify(m));
   });
   it('odmietne cudzí zdroj, neznámy vzhľad a zlú farbu', () => {
@@ -34,6 +36,13 @@ describe('isSectionCapMessage', () => {
       { source: S, type: 'SET_SECTION_CAP' },
       { source: S, type: 'SET_SECTION_CAP', cap: 'solid', fillColor: 'red' },
       { source: S, type: 'SET_SECTION_CAP', cap: 'solid', fillColor: '#fff' },
+      // Vzor šrafy len pri hatch, len vzory renderera a rozsahy popoveru Cap (AIM D-128).
+      { source: S, type: 'SET_SECTION_CAP', cap: 'solid', pattern: 'diagonal' },
+      { source: S, type: 'SET_SECTION_CAP', cap: 'hatch', pattern: 'solid' },
+      { source: S, type: 'SET_SECTION_CAP', cap: 'hatch', pattern: 'zigzag' },
+      { source: S, type: 'SET_SECTION_CAP', cap: 'hatch', pattern: 'diagonal', angleDeg: 200 },
+      { source: S, type: 'SET_SECTION_CAP', cap: 'hatch', pattern: 'diagonal', spacingPx: 1 },
+      { source: S, type: 'SET_SECTION_CAP', cap: 'hatch', pattern: 'diagonal', widthPx: '2' },
       null,
     ]) assert.ok(!isSectionCapMessage(m), JSON.stringify(m));
   });
@@ -55,6 +64,20 @@ describe('planSectionCap', () => {
     assert.strictEqual(planSectionCap({ showCap: false, capStyle: style('crossHatch') }, { cap: 'hatch' }).style?.pattern, 'crossHatch');
     assert.strictEqual(planSectionCap({ showCap: true, capStyle: style('solid') }, { cap: 'hatch' }, 'concrete').style?.pattern, 'concrete');
     assert.strictEqual(planSectionCap({ showCap: true, capStyle: style('solid') }, { cap: 'hatch' }).style?.pattern, 'diagonal');
+  });
+  it('hatch so vzorom od hosta zapíše vzor, uhly, rozstup a hrúbku a zapamätá si ho (AIM D-128)', () => {
+    const plan = planSectionCap({ showCap: true, capStyle: { ...style('vertical'), angleRad: 0 } },
+      { cap: 'hatch', pattern: 'crossHatch', angleDeg: 30, secondaryAngleDeg: -60, spacingPx: 12, widthPx: 2 });
+    assert.strictEqual(plan.style?.pattern, 'crossHatch');
+    assert.ok(Math.abs((plan.style?.angleRad ?? 0) - Math.PI / 6) < 1e-12);
+    assert.ok(Math.abs((plan.style?.secondaryAngleRad ?? 0) + Math.PI / 3) < 1e-12);
+    assert.strictEqual(plan.style?.spacingPx, 12);
+    assert.strictEqual(plan.style?.widthPx, 2);
+    assert.strictEqual(plan.remember, 'crossHatch');
+  });
+  it('bez vzoru hatch uhol ani rozstup nemení (staré správanie D-120)', () => {
+    const plan = planSectionCap({ showCap: true, capStyle: style('diagonal') }, { cap: 'hatch', angleDeg: 10, spacingPx: 20 });
+    assert.deepStrictEqual(plan.style, { pattern: 'diagonal' });
   });
 });
 
@@ -78,5 +101,11 @@ describe('applySectionCap', () => {
     const { s, calls } = store(true, 'diagonal');
     applySectionCap({ source: S, type: 'SET_SECTION_CAP', cap: 'none' }, () => s);
     assert.deepStrictEqual(calls, ['show:false']);
+  });
+  it('diagonála 45° od hosta prepíše uložený zvislý vzor (AIMviewer#173)', () => {
+    const { s, calls } = store(false, 'vertical');
+    applySectionCap({ source: S, type: 'SET_SECTION_CAP', cap: 'hatch', pattern: 'diagonal', angleDeg: 45, spacingPx: 8, widthPx: 1 }, () => s);
+    assert.deepStrictEqual(calls, ['style:diagonal', 'show:true']);
+    assert.ok(Math.abs(s.sectionPlane.capStyle.angleRad - Math.PI / 4) < 1e-12);
   });
 });

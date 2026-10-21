@@ -50,7 +50,7 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/bootstrap.tsx` | 1 | assetin design-kit import order — tokens first, after `index.css` (D-070; upstream moved the entry imports here from `main.tsx`) |
 | `apps/viewer/src/App.tsx` | 2 | `import { AimBridge }` + `<AimBridge />` mount inside `SourceHostProvider` |
 | `apps/viewer/src/hooks/useModelUrlAutoload.ts` | 3 | `?models=` federated autoload + origin allowlist (`lib/autoload.ts`), `AUTOLOAD_COMPLETE_EVENT` for AimBridge |
-| `apps/viewer/src/components/viewer/ViewerLayout.tsx` | 6 | D-072 2D plan pane + D-075 document pane in the center split (around upstream's `ModelWorkspaceSplit`), view-mode effects |
+| `apps/viewer/src/components/viewer/ViewerLayout.tsx` | 6 | D-072 2D plan pane + D-075 document pane in the center split (around upstream's `ModelWorkspaceSplit`) and the AIM D-132 view tab bar above it; the pane logic lives in `aim/useAimCenterPanes.ts` |
 | `apps/viewer/src/components/viewer/MobileBottomSheet.tsx` | 1 | `z-50` so sheets sit above the full-screen plan/document overlays |
 | `apps/viewer/src/components/viewer/MobileToolbar.tsx` | 2 | `<ViewModeSwitcher />` (D-075) |
 | `apps/viewer/src/components/viewer/PropertiesPanel.tsx` | 8 | AIM \| IFC inspector tabs + `<AimCard />`, native content wrapped, mobile scroll host (D-077); a property focus from the chat highlights the row without entering edit mode (AIM D-113) |
@@ -76,7 +76,7 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/lib/panels/registry.ts` | 5 | AIM rail group `aim`, first of all groups (D-104), and the fork-only workspace panels `documents`, `aim-layers`, `drawing-underlay` in it, appended last |
 | `apps/viewer/src/lib/panels/renderPanelBody.tsx` | 2 | bodies of the three fork panels |
 | `apps/viewer/src/components/documents/DocumentsPanel.tsx` | 5 | fork file (D-075); grouping by host `meta`, metadata search and documents of the selection come from `aim/documentsQuery.ts` and `aim/AimDocumentsControls.tsx` (D-104) |
-| `apps/viewer/src/components/documents/DocumentPane.tsx` | 3 | fork file (D-075); "Ukázať v 3D" at the end of the tab strip for the page being read, `aim/AimDocumentShow3d.tsx` posts `DOCUMENT_SHOW_3D` (D-104 step 4) |
+| `apps/viewer/src/components/documents/DocumentPane.tsx` | 4 | fork file (D-075); "Ukázať v 3D" at the end of the tab strip for the page being read, `aim/AimDocumentShow3d.tsx` posts `DOCUMENT_SHOW_3D` (D-104 step 4); `hideTabs` hides the strip on desktop, where the AIM D-132 view tab bar lists the documents |
 | `apps/viewer/src/store/slices/sidebarSlice.test.ts` | 4 | the AIM rail group leads the rail (D-104), so Hierarchy is asserted first among upstream's groups |
 | `apps/viewer/src/i18n/en.ts` | 2 | fork catalogue `catalogues/aim-fork.en.ts` (panel titles, `ribbon.tab.documents` = "AIM") |
 | `packages/renderer/src/index.ts` | 5 | generic external-overlay hook + registry — **upstream-PR candidate** |
@@ -461,7 +461,7 @@ fork's current counts as baseline rows instead of rewriting that UI in the same 
 | `check-jsx-a11y` | `scripts/jsx-a11y-baseline.json` | role-based `group` / `radio` widgets and the clickable identifier-link box in the underlay / identifier-link / view-mode UI |
 | `check-type-scale` | `scripts/type-scale-baseline.json` | `text-[Npx]` in the AIM card, documents, underlay and identifier-link panels (upstream itself is at zero) |
 | perf ratchet `bundle` | `tests/perf-ratchets/bundle.json` (`viewer-entry-js-bytes`, `viewer-eager-js-bytes`) | raised in the 2026-10 sync by the fork's boot-path code (~32 kB entry, ~70 kB eager): the AIM bridge and slices, and the AIM-FORK wiring in PropertiesPanel / Viewport / HierarchyPanel / ViewportContainer. Panels, panes and overlays are `lazy()` (−100 kB); the daily lowering job only lowers it again. Entry raised again 2026-10-18 by +3,333 B for AIM D-085 (view queries, section through an element): the feature itself loads lazily, the entry keeps the message checks and the loader (+968 B over `main`, which was already 2,365 B above the old ceiling) |
-| ribbon command guard (`command-labels.guard.test.tsx`) | `rawByTab` (`AIM-FORK` row) | `documents: 3` — the 3D / 2D / Split buttons of the fork's AIM tab (id `documents`), which have no surface-command id yet; the Derivations buttons (D-089) carry `data-ribbon-extension` and do not count |
+| ribbon command guard (`command-labels.guard.test.tsx`) | `rawByTab` (`AIM-FORK` row) | `documents: 0` — the 3D / 2D / Split buttons left the fork's AIM tab (id `documents`) for the AIM D-132 view tab bar; the Derivations buttons (D-089) carry `data-ribbon-extension` and do not count |
 
 They ratchet **down**: moving a panel's copy into `catalogues/aim-fork.en.ts`, switching to
 `IconButton`, or splitting a file lowers its row (`--update`). Never raise a row for new fork

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/cameraArea.ts a/apps/viewer/src/aim/cameraArea.ts
+index d07924551..7dfa34883 100644
+--- b/apps/viewer/src/aim/cameraArea.ts
++++ a/apps/viewer/src/aim/cameraArea.ts
+@@ -40,7 +40,7 @@ const AREA_AXIS: Record<CameraArea, { axis: keyof ScreenAxes; high: boolean }> =
+   right: { axis: 'right', high: true },
+   bottom: { axis: 'up', high: false },
+   top: { axis: 'up', high: true },
+-  front: { axis: 'forward', high: true },
++  front: { axis: 'forward', high: false },
+   back: { axis: 'forward', high: true },
+ };
+ 

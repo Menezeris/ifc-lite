@@ -4,7 +4,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { foldText, GROUP_BY_FOLDER, groupDocuments, matchesFilter, metaKeys, selectionDocuments, show3dTarget, type QueryDocument } from './documentsQuery';
+import { foldText, GROUP_BY_FOLDER, groupDocuments, matchesFilter, metaKeys, selectionDocuments, selectionMedia, show3dTarget, type CaptureMediaWire, type QueryDocument } from './documentsQuery';
 
 const plan3: QueryDocument = {
   id: 'd3', name: 'D.1.1.03 Pôdorys 3NP', folder: ['D.1.1 ASR'],
@@ -78,6 +78,36 @@ describe('documentsQuery (D-104)', () => {
     assert.deepEqual(selectionDocuments([{ name: 'x', href: '/x', documentId: 'd3' }], library, 'vykres').length, 1);
     assert.deepEqual(selectionDocuments([{ name: 'x', href: '/x', via: 'cez zónu NJ - 3NP' }], library, 'zonu').length, 1);
     assert.deepEqual(selectionDocuments(undefined, library), []);
+  });
+
+  it('marks documents inherited through a relation as the AIM layer (AIM D-129)', () => {
+    const items = selectionDocuments(
+      [
+        { name: 'Typový list', href: '/drawing/t1', via: 'cez typ D1' },
+        { name: 'Požiarna správa', href: '/drawing/z1', via: 'cez zónu N1.01', aim: true },
+      ],
+      new Map(),
+    );
+    assert.deepEqual(items.map((i) => i.aim ?? false), [false, true]);
+  });
+
+  it('groups the selection\'s Reality Capture media by kind and filters them (AIM D-131)', () => {
+    const photo = (id: string, name: string, thumbUrl?: string): CaptureMediaWire => ({
+      id, name, kind: 'FOTO', kindLabel: 'Fotografia', href: '/ifc?captures=s1', via: 'v miestnosti 3.12', capturedAt: '2026-10-01',
+      ...(thumbUrl ? { thumbUrl } : {}),
+    });
+    const pano: CaptureMediaWire = { id: 'm3', name: 'Stred', kind: 'PANO360', kindLabel: '360° panoráma', href: '/ifc?captures=s1' };
+    const media = [photo('m2', 'Vstup', 'https://cdn/m2_thumb'), pano, photo('m1', 'Okno', 'javascript:alert(1)')];
+    const groups = selectionMedia(media);
+    assert.deepEqual(groups.map(([label, list]) => [label, list.map((m) => m.id)]), [
+      ['360° panoráma', ['m3']],
+      ['Fotografia', ['m2', 'm1']],
+    ]);
+    assert.equal(groups[1][1][0].thumbUrl, 'https://cdn/m2_thumb');
+    assert.equal('thumbUrl' in groups[1][1][1], false);
+    assert.deepEqual(selectionMedia(media, 'panorama').map(([label]) => label), ['360° panoráma']);
+    assert.deepEqual(selectionMedia(media, 'okno 3.12').map(([, list]) => list.map((m) => m.id)), [['m1']]);
+    assert.deepEqual(selectionMedia(undefined), []);
   });
 
   it('asks the host for elements of the page being read, only for host documents', () => {

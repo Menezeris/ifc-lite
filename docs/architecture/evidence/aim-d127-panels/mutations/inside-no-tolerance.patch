@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docVisible.ts a/apps/viewer/src/aim/docVisible.ts
+index 8401c14d..b128d219 100644
+--- b/apps/viewer/src/aim/docVisible.ts
++++ a/apps/viewer/src/aim/docVisible.ts
+@@ -31,7 +31,7 @@ export function visiblePart(
+ /** Je výrez celý vnútri viditeľnej časti (tolerancia 0,5 % strany na zaokrúhlenie)? */
+ export function regionInside(region: DocRegion, visible: DocRegion | null): boolean {
+   if (!visible) return false;
+-  const eps = 0;
++  const eps = 0.005;
+   return region.x >= visible.x - eps && region.y >= visible.y - eps
+     && region.x + region.w <= visible.x + visible.w + eps && region.y + region.h <= visible.y + visible.h + eps;
+ }

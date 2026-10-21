@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelViewPlan.ts a/apps/viewer/src/aim/aimPanelViewPlan.ts
+index 5529bfc7..49cdb639 100644
+--- b/apps/viewer/src/aim/aimPanelViewPlan.ts
++++ a/apps/viewer/src/aim/aimPanelViewPlan.ts
+@@ -80,7 +80,7 @@ export function propKeyEntity(key: string, pset: string, property: string): numb
+   const id = Number(key.slice(0, i));
+   if (!Number.isInteger(id)) return null;
+   const rest = key.slice(i + 1);
+-  if (rest.endsWith(`:${property}`)) return id;
++  if (same(rest, `${pset}:${property}`) || sameLoose(rest, `${pset}:${property}`)) return id;
+   return null;
+ }
+ 

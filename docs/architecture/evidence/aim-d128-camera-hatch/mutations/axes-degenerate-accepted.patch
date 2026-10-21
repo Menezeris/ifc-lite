@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/cameraArea.ts a/apps/viewer/src/aim/cameraArea.ts
+index 1b3b73cda..7dfa34883 100644
+--- b/apps/viewer/src/aim/cameraArea.ts
++++ a/apps/viewer/src/aim/cameraArea.ts
+@@ -29,7 +29,7 @@ export function screenAxes(pose: { position: Vec3; target: Vec3; up: Vec3 }): Sc
+   if (Math.hypot(f.x, f.y, f.z) < 1e-9) return null;
+   const forward = norm(f);
+   const r = cross(forward, pose.up);
+-
++  if (Math.hypot(r.x, r.y, r.z) < 1e-9) return null;
+   const right = norm(r);
+   return { right, up: norm(cross(right, forward)), forward };
+ }

@@ -12,7 +12,8 @@
  *   vieweri predvolene vypnuté, takže ich farbenie alebo izolácia z chatu
  *   nebola vidieť. Rovnaký prepínač ako pri FOCUS (`frame-gates.ts`, D-102);
  * - **veľká legenda** (#135): panel Lens ako veľké plávajúce okno (upstream
- *   `floatPanel`), legenda v ňom nie je orezaná (pravidlo v `assetin-theme.css`).
+ *   `floatPanel`), legenda v ňom nie je orezaná (pravidlo v `assetin-theme.css`);
+ *   **malá** (`compact`, D-125): karta `AimLensLegendCard` bez panelu Lens.
  */
 
 import type { Lens } from '@ifc-lite/lens';
@@ -25,6 +26,7 @@ import { definedModelTagIdsOf, evaluatorModelsFromState } from '@/lib/model-tags
 import type { EntityRef } from '@ifc-lite/sdk';
 import { revealGatesForRefs } from './frame-refs.js';
 import { legendPanelRect, type LegendSize } from './aimLensPlan.js';
+import { useAimLegendStore } from './aimLegendStore.js';
 
 type State = ReturnType<typeof useViewerStore.getState>;
 
@@ -128,6 +130,13 @@ export function applyLegendSize(size: LegendSize): void {
   // Strop výšky legendy v LensPanel ruší pravidlo v `assetin-theme.css` (upstream súbor ostáva bez zmeny).
   if (size === 'large') document.documentElement.dataset.aimBigLegend = '1';
   else delete document.documentElement.dataset.aimBigLegend;
+  useAimLegendStore.getState().setVisible(size === 'compact');
+  if (size === 'compact') {
+    // Malá karta (D-125) namiesto panelu Lens s predvolenými lenses.
+    if (state.floatingPanels.some((p) => p.id === 'lens')) state.closeFloatingPanel('lens');
+    useViewerStore.setState({ lensPanelVisible: false });
+    return;
+  }
   if (size === 'normal') {
     if (state.floatingPanels.some((p) => p.id === 'lens')) state.closeFloatingPanel('lens');
     useViewerStore.setState({ lensPanelVisible: true });

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelViewPlan.ts a/apps/viewer/src/aim/aimPanelViewPlan.ts
+index 6ba8e8cf..49cdb639 100644
+--- b/apps/viewer/src/aim/aimPanelViewPlan.ts
++++ a/apps/viewer/src/aim/aimPanelViewPlan.ts
+@@ -58,7 +58,7 @@ export const isQuantitySetName = (pset: string): boolean => /^(Qto_|BaseQuantiti
+ 
+ /** Čo sa má nastaviť: sekcia podľa focusu (výmera = Quantities), inak podľa `section`. */
+ export function panelPlan(view: AimPanelView): { section?: PanelSection; focus?: { pset: string; property: string } } {
+-  if (view.focus) return { section: isQuantitySetName(view.focus.pset) ? 'quantities' : 'properties', focus: view.focus, section: 'properties' as PanelSection };
++  if (view.focus) return { section: isQuantitySetName(view.focus.pset) ? 'quantities' : 'properties', focus: view.focus };
+   return view.section ? { section: view.section } : {};
+ }
+ 

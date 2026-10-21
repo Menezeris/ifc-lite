@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { footprintOutline, footprintPath, spaceFootprint } from './aimRoomFill.js';
+import { cutsRoom, footprintOutline, footprintPath, looksDown, spaceFootprint } from './aimRoomFill.js';
 
 /** Kváder 4 x 3 m (x, z), výška 2,5 m (y) od y = 1: 8 vrcholov, 12 trojuholníkov. */
 function box(x0: number, z0: number, w: number, d: number, y0 = 1, h = 2.5) {
@@ -64,5 +64,24 @@ describe('aimRoomFill (AIM D-119)', () => {
     const d = footprintOutline(fp.triangles, (p) => ({ x: p.x, y: p.z }));
     assert.equal(d.split('M').length - 1, 4);
     assert.ok(!d.includes('M0.0 0.0L4.0 3.0') && !d.includes('M4.0 3.0L0.0 0.0'), 'uhlopriečka nie je v obryse');
+  });
+});
+
+describe('aimRoomFill v 3D s rezom (AIM D-125)', () => {
+  it('rez pretína miestnosť od podlahy po strop, nad ňou alebo pod ňou nie', () => {
+    const fp = spaceFootprint([box(0, 0, 4, 3, 1, 2.5)]);
+    assert.ok(fp);
+    assert.equal(fp.top, 3.5);
+    assert.equal(cutsRoom(fp, 2.2), true, 'rez 1,2 m nad podlahou');
+    assert.equal(cutsRoom(fp, 1), true, 'na podlahe');
+    assert.equal(cutsRoom(fp, 0.5), false, 'podlažie nižšie');
+    assert.equal(cutsRoom(fp, 4), false, 'podlažie vyššie');
+  });
+
+  it('pohľad zhora: smer takmer kolmo nadol (Y-up), šikmý ani zdola nie', () => {
+    assert.equal(looksDown({ x: 6, y: 40, z: 4 }, { x: 6, y: 2, z: 4.4 }), true);
+    assert.equal(looksDown({ x: 27, y: 20, z: -17 }, { x: 6, y: 2, z: 4 }), false);
+    assert.equal(looksDown({ x: 0, y: -10, z: 0 }, { x: 0, y: 0, z: 0 }), false);
+    assert.equal(looksDown({ x: 1, y: 1, z: 1 }, { x: 1, y: 1, z: 1 }), false);
   });
 });

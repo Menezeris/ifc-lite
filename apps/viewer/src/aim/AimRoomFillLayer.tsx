@@ -9,6 +9,10 @@
  * 2D bez výkresu nakreslí pôdorys každej miestnosti s farbou aktívnej Lens:
  * polopriehľadná výplň, obrys a názov (LongName, inak Name). Len miestnosti
  * podlažia 2D pohľadu; kliky prechádzajú do scény.
+ *
+ * D-125 (#175): to isté aj v 3D, keď je aktívny vodorovný rez a kamera hľadí
+ * zhora (pôdorys cez `set_section` + `set_camera top`), pre miestnosti preťaté
+ * rezom. Vyplní aj vybranú miestnosť farbou výberu, nielen ofarbenú Lens.
  */
 
 import { useMemo } from 'react';
@@ -17,7 +21,15 @@ import { IfcTypeEnum, type SpatialNode } from '@ifc-lite/data';
 import { useViewerStore } from '../store/index.js';
 import { fromGlobalIdFromModels } from '../store/globalId.js';
 import { useProjectorTick } from '@/components/viewport-ui/scene';
-import { footprintOutline, footprintPath, spaceFootprint, type Footprint, type Vec3 } from './aimRoomFill.js';
+import { activeSectionPlane } from '@/store/section-active';
+import { percentToWorld, sectionAxisRange } from '@/lib/section/section-distance';
+import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
+import { getGlobalRenderer } from '@/hooks/useBCF';
+import { cutsRoom, footprintOutline, footprintPath, looksDown, spaceFootprint, type Footprint, type Vec3 } from './aimRoomFill.js';
+import { sectionRenderBounds } from './sectionRange.js';
+
+/** Farba vybranej miestnosti, ktorú Lens neofarbila. */
+const SELECTED_COLOR = '#2563eb';
 
 type State = ReturnType<typeof useViewerStore.getState>;
 
@@ -56,11 +68,30 @@ function spaceLabels(root: SpatialNode | undefined): Map<number, string> {
   return out;
 }
 
-function roomsToFill(state: State, meshes: Map<number, MeshData[]>, footprints: Map<number, Footprint | null>): Room[] {
-  const storeyGuid = state.underlayActiveStoreyGuid;
+/** Farby miestností: Lens, k tomu vybrané miestnosti farbou výberu (D-125). */
+function roomColors(state: State, meshes: Map<number, MeshData[]>): Map<number, string> {
+  const colors = new Map(state.lensColorMap);
+  const selected = state.selectedEntityIds.size > 0 ? state.selectedEntityIds : state.selectedEntityId !== null ? [state.selectedEntityId] : [];
+  for (const id of selected) if (meshes.has(id) && !colors.has(id)) colors.set(id, SELECTED_COLOR);
+  return colors;
+}
+
+/** Výška vodorovného rezu v render rámci, alebo null (iná os, bez rezu, bez obálky). */
+function horizontalCut(state: State): number | null {
+  const plane = activeSectionPlane(state);
+  if (!plane || plane.axis !== 'down') return null;
+  const range = sectionAxisRange(sectionRenderBounds(state, placementCoordinateInfo), plane.axis);
+  return range ? percentToWorld(plane.position, range) : null;
+}
+
+function roomsToFill(
+  state: State, meshes: Map<number, MeshData[]>, footprints: Map<number, Footprint | null>, cutY: number | null,
+): Room[] {
+  // V 2D podlažie pôdorysu; v 3D s rezom rozhoduje výška rezu.
+  const storeyGuid = cutY === null ? state.underlayActiveStoreyGuid : null;
   const labels = new Map<string, Map<number, string>>();
   const rooms: Room[] = [];
-  for (const [id, color] of state.lensColorMap) {
+  for (const [id, color] of roomColors(state, meshes)) {
     const parts = meshes.get(id);
     if (!parts) continue;
     const ref = fromGlobalIdFromModels(state.models, id);
@@ -77,7 +108,7 @@ function roomsToFill(state: State, meshes: Map<number, MeshData[]>, footprints: 
       fp = spaceFootprint(parts);
       footprints.set(id, fp);
     }
-    if (!fp) continue;
+    if (!fp || (cutY !== null && !cutsRoom(fp, cutY))) continue;
     let byModel = ref ? labels.get(ref.modelId) : undefined;
     if (ref && !byModel) {
       byModel = spaceLabels(store?.spatialHierarchy?.project);
@@ -91,22 +122,32 @@ function roomsToFill(state: State, meshes: Map<number, MeshData[]>, footprints: 
 
 export function AimRoomFillLayer() {
   const planView = useViewerStore((s) => s.underlayViewLocked && !s.underlaySplitView);
+  // Vodorovný rez v 3D (D-125): vrstva sleduje kameru, či hľadí zhora.
+  const downCut = useViewerStore((s) => !planView && activeSectionPlane(s)?.axis === 'down');
   const lensColorMap = useViewerStore((s) => s.lensColorMap);
   const activeLensId = useViewerStore((s) => s.activeLensId);
+  const selectedIds = useViewerStore((s) => s.selectedEntityIds);
+  const selectedId = useViewerStore((s) => s.selectedEntityId);
+  const sectionPlane = useViewerStore((s) => s.sectionPlane);
   const storeyGuid = useViewerStore((s) => s.underlayActiveStoreyGuid);
   const models = useViewerStore((s) => s.models);
   const geometryResult = useViewerStore((s) => s.geometryResult);
   const project = useViewerStore((s) => s.cameraCallbacks.projectToScreen);
-  const active = planView && activeLensId !== null && lensColorMap.size > 0 && !!project;
-  const tick = useProjectorTick(active);
+  const colored = (activeLensId !== null && lensColorMap.size > 0) || selectedIds.size > 0 || selectedId !== null;
+  const tick = useProjectorTick((planView || downCut) && colored && !!project);
+  const camera = downCut ? getGlobalRenderer()?.getCamera() : null;
+  const plan3d = downCut && !!camera && looksDown(camera.getPosition(), camera.getTarget());
+  const active = (planView || plan3d) && colored && !!project;
 
-  // Pôdorys sa počíta raz na geometriu; farby a podlažie len vyberajú.
+  // Pôdorys sa počíta raz na geometriu; farby, výber, rez a podlažie len vyberajú.
   const meshes = useMemo(() => (active ? spaceMeshes(useViewerStore.getState()) : new Map()), [active, models, geometryResult]);
   const footprints = useMemo(() => new Map<number, Footprint | null>(), [meshes]);
-  const rooms = useMemo(
-    () => (active && meshes.size > 0 ? roomsToFill(useViewerStore.getState(), meshes, footprints) : []),
-    [active, meshes, footprints, lensColorMap, storeyGuid],
-  );
+  const rooms = useMemo(() => {
+    if (!active || meshes.size === 0) return [];
+    const state = useViewerStore.getState();
+    const cutY = plan3d ? horizontalCut(state) : null;
+    return plan3d && cutY === null ? [] : roomsToFill(state, meshes, footprints, cutY);
+  }, [active, plan3d, meshes, footprints, lensColorMap, selectedIds, selectedId, sectionPlane, storeyGuid]);
 
   if (!active || rooms.length === 0 || !project) return null;
   void tick; // nový tick = tie isté body na nových súradniciach obrazovky

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTabsPlan.ts a/apps/viewer/src/aim/viewTabsPlan.ts
+index 7ded9e9e2..723d9f86c 100644
+--- b/apps/viewer/src/aim/viewTabsPlan.ts
++++ a/apps/viewer/src/aim/viewTabsPlan.ts
+@@ -66,7 +66,7 @@ export function besidePair(s: ViewTabsState, a: string, b: string): { active: st
+   if (isSceneTab(ta) && tb.kind === 'doc') return { active: ta.id, beside: tb.id };
+   if (ta.kind === 'doc' && isSceneTab(tb)) return { active: ta.id, beside: tb.id };
+   // Pôdorys vedľa voľnej 3D: 3D je aktívna, pôdorys je 2D panel plánu.
+-  if (isSceneTab(ta) && isSceneTab(tb)) return { active: ta.id, beside: tb.id };
++  if (ta.kind === '3d' && tb.kind === 'plan') return { active: ta.id, beside: tb.id };
+   if (ta.kind === 'plan' && tb.kind === '3d') return { active: tb.id, beside: ta.id };
+   return null;
+ }

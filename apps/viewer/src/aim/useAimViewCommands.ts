@@ -20,16 +20,24 @@ import { useViewMode } from '@/hooks/useViewMode';
 import type { BimContext } from '@ifc-lite/sdk';
 import { guidForEntity, resolveGuids, resolveSelector } from './bridge-protocol.js';
 import type { ViewInboundMessage } from './view-protocol.js';
+import { preloadTabs, withTabs } from './viewTabsStore.js';
 import { VIEWER_AXIS, cameraStep, focusViewStep, pickStorey, storeyCutPercent } from './viewCommands.js';
 import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
 import { sectionRenderBounds as sectionBoundsWith } from './sectionRange.js';
 import { noteIssue, track } from './command-gate.js';
+import { waitCameraSettled } from './cameraSettle.js';
 
 type FocusSummary = () => { count: number; guids: string[] };
 /** Zvýraznenie z FOCUS (#94) - poskytne ho AimBridge po lenivom načítaní príkazov viditeľnosti. */
 let focusProvider: FocusSummary | undefined;
 export function setFocusProvider(f: FocusSummary | undefined): void {
   focusProvider = f;
+}
+
+/** Zmeny pohľadu od posledného potvrdeného príkazu (D-125) - poskytne ich AimBridge pre `view_state`. */
+let changesProvider: (() => string[]) | undefined;
+export function setChangesProvider(f: (() => string[]) | undefined): void {
+  changesProvider = f;
 }
 
 /** Pohľad pre FOCUS (#97, V1): nastaví ho hook s najnovším režimom a podlažiami, volá ho lenivý FOCUS. */
@@ -46,6 +54,11 @@ const sectionRenderBounds = (state: Parameters<typeof sectionBoundsWith>[0]) => 
 const GUIDS = { resolveGuids, guidForEntity, sectionRenderBounds };
 let camera: Promise<typeof import('./viewCamera.js')> | null = null;
 const loadCamera = () => (camera ??= import('./viewCamera.js'));
+let panels: Promise<typeof import('./aimPanels.js')> | null = null;
+const loadPanels = () => (panels ??= import('./aimPanels.js'));
+/** Rezný box (AIM D-132): modul stiahnutý pri pripojení, aby box bežal v poradí s ostatnými príkazmi. */
+let boxModules: [typeof import('./viewQueries.js'), typeof import('./sectionBox.js')] | null = null;
+const loadBox = () => Promise.all([loadQueries(), import('./sectionBox.js')]).then((m) => (boxModules = m));
 let measure: Promise<typeof import('./measureShow.js')> | null = null;
 /** Kóty od hosta (AIM D-124) - lenivo, mimo vstupného balíka. */
 const loadMeasure = () => (measure ??= import('./measureShow.js'));
@@ -67,13 +80,28 @@ function applyGizmo(show: boolean | undefined): void {
   if (state.sectionPlane.showGizmo !== want) state.setSectionPlaneShowGizmo(state.sectionPlane.id, want);
 }
 
+/** Rezný box (AIM D-132) - tie isté obálky ako rez cez prvok, lenivo. */
+export function runSectionBox(raw: unknown): void {
+  const run = ([q, b]: NonNullable<typeof boxModules>) => {
+    if (!b.isSectionBoxMessage(raw)) return noteIssue('SET_SECTION_BOX: neplatná správa');
+    track(q.applySectionBox(raw, GUIDS).then((ok) => { if (!ok) noteIssue('SET_SECTION_BOX: prvky bez geometrie'); }));
+  };
+  if (boxModules) run(boxModules);
+  else track(loadBox().then(run));
+}
+
 /** Stav pre `APPLIED` (D-101): rez, režim, výber a viditeľnosť po vykonaní príkazov. */
 export async function appliedViewState(): Promise<Record<string, unknown>> {
   const q = await loadQueries();
+  // Kamera po obnove pohľadu ešte dobieha animáciu; stav má niesť jej cieľ (AIM #97, D-122).
+  const settled = await waitCameraSettled(() => useViewerStore.getState().cameraCallbacks.getViewpoint?.() ?? null);
   const s = q.queryViewState(useViewerStore.getState(), { ...GUIDS, focus: focusProvider });
   return {
     mode: s.mode, storey_guid: s.storey_guid, section: s.section, camera: s.camera,
+    // Limit vypršal počas pohybu (používateľ otáča kamerou): póza nie je cieľ, nech to host vie.
+    ...(settled ? {} : { camera_moving: true }),
     selection_count: s.selection.count, hidden_count: s.hidden_count, isolated_count: s.isolated_count, focus: s.focus,
+    panels: s.panels, tabs: s.tabs, ...(s.property_focus ? { property_focus: s.property_focus } : {}), ...(s.document ? { document: s.document } : {}),
   };
 }
 
@@ -85,6 +113,9 @@ export function useAimViewCommands(bim: BimContext) {
   useEffect(() => {
     // Dotazy stavu sa stiahnu hneď po pripojení: prvé `APPLIED` (D-101) na ne inak čakalo (D-102).
     void loadQueries();
+    // Záložky a rezný box (D-132) tiež: ich príkazy idú synchrónne v poradí s ďalšími.
+    void preloadTabs();
+    void loadBox();
     return () => { lastGizmo = undefined; };
   }, [bim]);
   const run = (msg: ViewInboundMessage, origin = '*') => {
@@ -152,17 +183,29 @@ export function useAimViewCommands(bim: BimContext) {
         track(loadMeasure().then((m) => m.showMeasurements(msg)));
         return;
       }
+      case 'SET_PANELS': {
+        track(loadPanels().then((m) => m.applyPanels(msg.panels, noteIssue)));
+        return;
+      }
       case 'SET_VIEW_MODE': {
         const storey = pickStorey(storeys, msg.storeyGuid);
         if (storey === null) {
           noteIssue('SET_VIEW_MODE: podlažie sa vo vieweri nenašlo');
           return;
         }
-        setMode(msg.mode, storey);
+        // AIM D-132: 3D = záložka 3D, 2D = pôdorys podlažia v záložke, Split = pôdorys vedľa 3D.
+        const target = storey ?? activeStorey ?? storeys[0];
+        const p = withTabs((m) => {
+          if (msg.mode === '3d') { m.activate('3d', noteIssue); m.beside(null, noteIssue); return; }
+          if (!target) return noteIssue('SET_VIEW_MODE: model nemá podlažia');
+          if (msg.mode === 'split') m.activate('3d', noteIssue);
+          m.openPlan(target.guid, { beside: msg.mode === 'split' }, noteIssue);
+        });
+        if (p) track(p);
         return;
       }
       case 'QUERY': {
-        void loadQueries().then((q) => q.answerQuery(msg, origin, { ...GUIDS, focus: focusProvider }));
+        void loadQueries().then((q) => q.answerQuery(msg, origin, { ...GUIDS, focus: focusProvider, changes: changesProvider }));
         return;
       }
     }

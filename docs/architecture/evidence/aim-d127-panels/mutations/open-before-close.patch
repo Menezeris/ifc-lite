@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelsPlan.ts a/apps/viewer/src/aim/aimPanelsPlan.ts
+index 46db511f..b7fde688 100644
+--- b/apps/viewer/src/aim/aimPanelsPlan.ts
++++ a/apps/viewer/src/aim/aimPanelsPlan.ts
+@@ -42,7 +42,7 @@ export function planPanels(req: PanelsRequest, isOpen: (key: PanelKey) => boolea
+     else if (a === 'toggle') want.set(k, !isOpen(k));
+   }
+   const steps = [...want].map(([key, open]) => ({ key, open }));
+-  return [...steps.filter((s) => s.open), ...steps.filter((s) => !s.open)];
++  return [...steps.filter((s) => !s.open), ...steps.filter((s) => s.open)];
+ }
+ 
+ /** Stav store, z ktorého sa číta, kde panel je (podmnožina `ViewerState`). */

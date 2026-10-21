@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTabsLayout.ts a/apps/viewer/src/aim/viewTabsLayout.ts
+index 2e95666cd..45fc62221 100644
+--- b/apps/viewer/src/aim/viewTabsLayout.ts
++++ a/apps/viewer/src/aim/viewTabsLayout.ts
+@@ -55,7 +55,7 @@ export function centerLayout(s: ViewTabsState): CenterLayout {
+   const beside = byId(s, s.besideId);
+   const doc = active?.kind === 'doc' ? active : beside?.kind === 'doc' ? beside : undefined;
+   return {
+-    collapse3d: active?.kind === 'doc',
++    collapse3d: active?.kind === 'doc' && !beside,
+     docPane: !!doc,
+     docId: doc?.docId ?? null,
+     // Len vedľa voľnej 3D; pri dokumente je pôdorys sám 3D stranou (zamknutý pohľad v canvase).

@@ -23,11 +23,17 @@ import { expandToGeometryBearingIds } from '@/utils/aggregation';
 import { deriveViewMode } from '@/hooks/viewModeCore';
 import { RelationshipType } from '@ifc-lite/data';
 import { summarizeSelection, visibilityGuids, type SelectedEntityInfo } from './selectionSummary.js';
+import { describePanels } from './aimPanelsPlan.js';
+import { useAimInspectorStore } from './aimInspectorStore.js';
+import { useAimDocRegionStore } from './docRegion.js';
+import { useAimViewTabs } from './viewTabsStore.js';
+import { describeTabs } from './viewTabsPlan.js';
+import { orderedBox, toSectionBox, type SectionBoxMessage } from './sectionBox.js';
 import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import type { SectionPlaneAxis } from '@/store/types';
 import type { SectionAxis, SectionFit, ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
 import {
-  cutPercent, hostAxis, viewerAxis, ifcCoordinateToRender, renderBoxToIfc, renderDirToIfc, renderPointToIfc, sectionThroughBox, unionBoxes,
+  cutPercent, hostAxis, viewerAxis, ifcCoordinateToRender, ifcPointToRender, renderBoxToIfc, renderDirToIfc, renderPointToIfc, sectionThroughBox, unionBoxes,
   type Box3, type Vec3,
 } from './viewFrame.js';
 
@@ -44,6 +50,8 @@ export interface GuidHelpers {
   sectionRenderBounds: (state: State) => AxisBounds | null;
   /** Zvýraznenie z FOCUS (D-101, #94); podáva ho AimBridge, lenivý modul ho neimportuje. */
   focus?: () => { count: number; guids: string[] };
+  /** Zmeny pohľadu od posledného potvrdeného príkazu (D-125, #180); podáva ich AimBridge. */
+  changes?: () => string[];
 }
 
 /** Výsledok zaokrúhlený na milimetre - Claude ho číta, nie renderer. */
@@ -64,7 +72,7 @@ export const SECTION_AXIS_IN_IFC = { x: 'IFC X', y: 'IFC Z (výška)', z: 'IFC Y
 export const worldOffset = (state: State): Vec3 => bcfWorldOffset(state.models, state.geometryResult);
 
 /** Render-rámcová obálka prvkov viewera (globálne id; zostava bez geometrie = jej časti). */
-function renderBoundsOfIds(state: State, ids: readonly number[]): Box3 | null {
+export function renderBoundsOfIds(state: State, ids: readonly number[]): Box3 | null {
   const scene = getGlobalRenderer()?.getScene();
   if (!scene || ids.length === 0) return null;
   const boxOf = (id: number): Box3 | null => scene.getEntityBoundingBox(id) ?? scene.getInstancedEntityBounds(id) ?? null;
@@ -180,6 +188,12 @@ export function queryViewState(state: State, g: GuidHelpers) {
     const ifc = renderPointToIfc(point, offset);
     const coord = axis === 'x' ? ifc.x : axis === 'y' ? ifc.z : ifc.y;
     section = { axis, crosses: SECTION_AXIS_IN_IFC[axis], position_percent: mm(plane.position), ...(range ? { coordinate: mm(coord) } : {}), flipped: plane.flipped, show_gizmo: plane.showGizmo };
+    // Rezný box (AIM D-132): obálka v IFC svete namiesto roviny.
+    if (plane.box) {
+      const [a, b] = [plane.box.min, plane.box.max].map(([x, y, z]) => renderPointToIfc({ x, y, z }, offset));
+      const box = orderedBox(a, b);
+      section = { box: { min: roundVec(box.min), max: roundVec(box.max) }, show_gizmo: plane.showGizmo };
+    }
   }
   const camera = getGlobalRenderer()?.getCamera();
   const selected = state.selectedEntityIds.size > 0
@@ -200,6 +214,14 @@ export function queryViewState(state: State, g: GuidHelpers) {
     isolated_guids: state.isolatedEntities ? visibilityGuids(state.isolatedEntities, guidOf) : null,
     // Oranžové zvýraznenie z FOCUS (#94): bez neho sa nedalo povedať, čo je to za farbu.
     ...(g.focus ? { focus: g.focus() } : {}),
+    // Čo sa zmenilo mimo príkazov od posledného potvrdeného (napr. izoláciu vypol používateľ, D-125).
+    ...(g.changes ? { changed_since_last_command: g.changes() } : {}),
+    // AIM D-127: panely (#179), zvýraznená vlastnosť v paneli (#168) a viditeľný výrez karty dokumentu (#166).
+    panels: describePanels(state),
+    property_focus: useAimInspectorStore.getState().propertyFocus,
+    document: useAimDocRegionStore.getState().visible,
+    // AIM D-132: záložky (aktívna a tá vedľa).
+    tabs: describeTabs(useAimViewTabs.getState()),
   };
 }
 
@@ -249,6 +271,26 @@ export function cutThroughTarget(msg: TargetSection, isCurrent: () => boolean, g
     return new Promise((r) => setTimeout(r, SECTION_RETRY_MS)).then(() => cutThroughTarget(msg, isCurrent, g, after, attempt + 1));
   }
   console.warn('[aim-bridge] SET_SECTION: prvok bez geometrie alebo bez osi', msg.guids ?? msg.coordinate);
+  return Promise.resolve(false);
+}
+
+/**
+ * `SET_SECTION_BOX` (AIM D-132): box okolo prvkov s okrajom, alebo presná obálka
+ * v IFC svete. Prvky bez geometrie (ešte prúdi) sa skúšajú znova ako rez cez prvok.
+ */
+export function applySectionBox(msg: SectionBoxMessage, g: GuidHelpers, attempt = 0): Promise<boolean> {
+  const state = useViewerStore.getState();
+  if (msg.box) {
+    const offset = worldOffset(state);
+    state.setSectionBox(toSectionBox(orderedBox(ifcPointToRender(msg.box.min, offset), ifcPointToRender(msg.box.max, offset))));
+    return Promise.resolve(true);
+  }
+  const union = renderBoundsOfGuids(state, msg.guids ?? [], g).union;
+  if (union) {
+    state.setSectionBox(toSectionBox(union, msg.marginM ?? 0.5));
+    return Promise.resolve(true);
+  }
+  if (attempt < SECTION_RETRIES) return new Promise((r) => setTimeout(r, SECTION_RETRY_MS)).then(() => applySectionBox(msg, g, attempt + 1));
   return Promise.resolve(false);
 }
 

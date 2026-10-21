@@ -13,12 +13,20 @@
  * of the bidirectional link. The layer is pointer-events:none; each pin opts in.
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Camera, Orbit } from 'lucide-react';
 
 import { useViewerStore } from '../store/index.js';
 import { useCapturePinsStore } from './capturePinsStore.js';
 import { AimRoomFillLayer } from './AimRoomFillLayer.js';
+import { useAimLegendStore } from './aimLegendStore.js';
+
+/** Malá legenda AIM chat lens (D-125) - modul až keď ju chat zapne. */
+const AimLensLegendCard = lazy(() => import('./AimLensLegendCard.js').then((m) => ({ default: m.AimLensLegendCard })));
+function AimLegendSlot() {
+  const visible = useAimLegendStore((s) => s.visible);
+  return visible ? <Suspense fallback={null}><AimLensLegendCard /></Suspense> : null;
+}
 
 interface ProjectedPin {
   id: string;
@@ -113,14 +121,15 @@ export function CapturePinLayer() {
     // (new/removed pins need an immediate re-projection).
   }, [cameraCallbacks, pins.length]);
 
-  // Výplň miestností v 2D (D-119) ide v tom istom lenivom module: ViewportContainer je na strope veľkosti.
+  // Výplň miestností (D-119, D-125) a malá legenda idú v tom istom lenivom module: ViewportContainer je na strope veľkosti.
   if (!bounds) {
-    return <><AimRoomFillLayer /><div ref={containerRef} className="absolute inset-0 pointer-events-none" /></>;
+    return <><AimRoomFillLayer /><AimLegendSlot /><div ref={containerRef} className="absolute inset-0 pointer-events-none" /></>;
   }
 
   return (
     <>
     <AimRoomFillLayer />
+    <AimLegendSlot />
     <div
       ref={containerRef}
       className="absolute inset-0 pointer-events-none overflow-hidden"

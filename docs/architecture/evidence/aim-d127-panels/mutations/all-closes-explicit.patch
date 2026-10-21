@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelsPlan.ts a/apps/viewer/src/aim/aimPanelsPlan.ts
+index 95818620..b7fde688 100644
+--- b/apps/viewer/src/aim/aimPanelsPlan.ts
++++ a/apps/viewer/src/aim/aimPanelsPlan.ts
+@@ -37,7 +37,7 @@ export function planPanels(req: PanelsRequest, isOpen: (key: PanelKey) => boolea
+   if (req.all === 'close') for (const k of PANEL_KEYS) want.set(k, false);
+   for (const k of PANEL_KEYS) {
+     const a = req[k];
+-    if (a === 'open' && req.all !== 'close') want.set(k, true);
++    if (a === 'open') want.set(k, true);
+     else if (a === 'close') want.set(k, false);
+     else if (a === 'toggle') want.set(k, !isOpen(k));
+   }

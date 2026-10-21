@@ -8,8 +8,8 @@ import assert from 'node:assert';
 import type { Lens } from '@ifc-lite/lens';
 import { isLensEnvelope, type LensInboundMessage } from './lens-protocol.js';
 import {
-  AIM_LENS_NAME, MAX_AIM_GLOBAL_IDS, MAX_AIM_RULES, isEvaluated, isolationRules, nextAimLens, parseLensMessage,
-  resolveModelRules, summarizeLens, type ApplyLensMessage,
+  AIM_LENS_NAME, MAX_AIM_GLOBAL_IDS, MAX_AIM_RULES, VOLUME_CLASSES, VOLUME_SUFFIX, isEvaluated, isolationRules, nextAimLens,
+  parseLensMessage, resolveModelRules, summarizeLens, withVolumeVariants, type ApplyLensMessage,
 } from './aimLensPlan.js';
 
 const S = 'aim-bridge' as const;
@@ -30,6 +30,8 @@ const MODELS = [
 
 const apply = (extra: Partial<ApplyLensMessage>): ApplyLensMessage =>
   ({ source: S, type: 'APPLY_LENS', mode: 'add', ...extra }) as ApplyLensMessage;
+/** Pravidlá bez priesvitných variant pre miestnosti (D-125). */
+const base = (lens: Lens) => lens.rules.filter((r) => !r.id.endsWith(VOLUME_SUFFIX));
 const rule = (name: string, color: string, groups: unknown[] = [DUCTS], action = 'colorize') =>
   ({ name, color, action, groups }) as ApplyLensMessage['rules'] extends (infer R)[] | undefined ? R : never;
 
@@ -98,20 +100,20 @@ describe('nextAimLens (AIM D-096)', () => {
   it('nová lens v slote s menom AIM chat a jedinečnými id pravidiel', () => {
     assert.equal(first.id, SLOT);
     assert.equal(first.name, AIM_LENS_NAME);
-    assert.deepEqual(first.rules.map((r) => [r.id, r.color, r.action]), [['aim-r1-0', '#ef4444', 'colorize']]);
+    assert.deepEqual(base(first).map((r) => [r.id, r.color, r.action]), [['aim-r1-0', '#ef4444', 'colorize']]);
   });
 
   it('add pridá pravidlá (novšie vpredu, ich farba vyhrá), replace nahradí, clear vypne', () => {
     const added = nextAimLens(first, apply({ rules: [rule('Odvod', '#3b82f6')] }), SLOT, MODELS, 'r2') as Lens;
-    assert.deepEqual(added.rules.map((r) => r.id), ['aim-r2-0', 'aim-r1-0']);
+    assert.deepEqual(base(added).map((r) => r.id), ['aim-r2-0', 'aim-r1-0']);
     const replaced = nextAimLens(added, apply({ mode: 'replace', rules: [rule('X', '#000000')] }), SLOT, MODELS, 'r3') as Lens;
-    assert.deepEqual(replaced.rules.map((r) => r.id), ['aim-r3-0']);
+    assert.deepEqual(base(replaced).map((r) => r.id), ['aim-r3-0']);
     assert.equal(nextAimLens(added, apply({ mode: 'clear' }), SLOT, MODELS, 'r4'), null);
   });
 
   it('tá istá verzia znova pravidlá nezdvojí', () => {
     const again = nextAimLens(first, apply({ rev: 'r1', rules: [rule('Prívod', '#ef4444', [SUPPLY])] }), SLOT, MODELS, 'r1') as Lens;
-    assert.deepEqual(again.rules.map((r) => r.id), ['aim-r1-0']);
+    assert.deepEqual(base(again).map((r) => r.id), ['aim-r1-0']);
   });
 
   it('izolácia nemení lens: bez farby nič nepridá, farebné pravidlá áno; všetky idú do izolácie', () => {
@@ -121,7 +123,7 @@ describe('nextAimLens (AIM D-096)', () => {
     assert.deepEqual(isolationRules(plain, MODELS, 'r2').map((r) => r.name), ['Zóna']);
     const mixed = apply({ isolate: true, rules: [rule('Prívod', '#ef4444'), { name: 'Zvyšok', action: 'isolate', groups: [DUCTS] } as never] });
     const lens = nextAimLens(first, mixed, SLOT, MODELS, 'r3') as Lens;
-    assert.deepEqual(lens.rules.map((r) => r.id), ['aim-r3-0', 'aim-r1-0']);
+    assert.deepEqual(base(lens).map((r) => r.id), ['aim-r3-0', 'aim-r1-0']);
     assert.deepEqual(isolationRules(mixed, MODELS, 'r3').map((r) => r.id), ['aim-r3-0', 'aim-r3-1']);
     assert.deepEqual(isolationRules(apply({ rules: [rule('A', '#000000')] }), MODELS, 'r4'), []);
     assert.equal(nextAimLens(first, apply({ mode: 'unisolate' }), SLOT, MODELS, 'r5'), first);
@@ -157,9 +159,9 @@ describe('nextAimLens (AIM D-096)', () => {
     assert.deepEqual([auto.rules.length, auto.autoColor?.source], [0, 'group']);
     let lens: Lens | null = null;
     for (let i = 0; i < MAX_AIM_RULES + 3; i++) lens = nextAimLens(lens, apply({ rules: [rule(`R${i}`, '#000000')] }), SLOT, MODELS, `t${i}`);
-    assert.equal(lens!.rules.length, MAX_AIM_RULES);
-    assert.equal(lens!.rules[0].name, `R${MAX_AIM_RULES + 2}`);
-    assert.equal(lens!.rules[MAX_AIM_RULES - 1].name, 'R3');
+    assert.equal(base(lens!).length, MAX_AIM_RULES);
+    assert.equal(base(lens!)[0].name, `R${MAX_AIM_RULES + 2}`);
+    assert.equal(base(lens!)[MAX_AIM_RULES - 1].name, 'R3');
   });
 });
 
@@ -168,7 +170,8 @@ describe('isEvaluated + summarizeLens (AIM D-096)', () => {
 
   it('hotové až keď majú počet všetky pravidlá tejto verzie', () => {
     assert.equal(isEvaluated(lens, new Map([['aim-r1-0', 3]]), []), false);
-    assert.equal(isEvaluated(lens, new Map([['aim-r1-0', 3], ['aim-r1-1', 0]]), []), true);
+    assert.equal(isEvaluated(lens, new Map([['aim-r1-0', 3], ['aim-r1-1', 0]]), []), false, 'varianty pre miestnosti (D-125) tiež');
+    assert.equal(isEvaluated(lens, new Map([['aim-r1-0', 3], ['aim-r1-1', 0], ['aim-r1-0~vol', 0], ['aim-r1-1~vol', 0]]), []), true);
     const auto: Lens = { id: SLOT, name: AIM_LENS_NAME, rules: [], autoColor: { source: 'group' } };
     assert.equal(isEvaluated(auto, new Map(), []), false);
     assert.equal(isEvaluated(auto, new Map(), [{ id: 'a', name: 'Prívod-1NP', color: '#000000', count: 8 }]), true);
@@ -186,5 +189,49 @@ describe('isEvaluated + summarizeLens (AIM D-096)', () => {
     const failed = summarizeLens(null, new Map(), [], undefined, iso, 'r2');
     assert.equal('isolation' in failed, false);
     assert.equal(failed.isolationFailed, 'r2');
+  });
+});
+
+describe('miestnosti a stav v súhrne (AIM D-125)', () => {
+  it('farebné pravidlo má pred sebou priesvitnú variantu len pre IfcSpace a IfcSpatialZone', () => {
+    const lens = nextAimLens(null, apply({ rules: [rule('Prívod', '#ef4444')] }), SLOT, MODELS, 'v1') as Lens;
+    assert.deepEqual(lens.rules.map((r) => [r.id, r.action]), [['aim-v1-0~vol', 'transparent'], ['aim-v1-0', 'colorize']]);
+    const variant = lens.rules[0];
+    assert.equal(variant.color, '#ef4444');
+    assert.deepEqual(variant.groups[0].rules.at(-1), { kind: 'ifcType', op: 'in', values: VOLUME_CLASSES });
+    // Pôvodná skupina ostane nezmenená (variant nesmie zdieľať pole pravidiel).
+    assert.equal(lens.rules[1].groups[0].rules.length, DUCTS.rules.length);
+  });
+
+  it('transparent, hide a skupiny OR variantu nedostanú; add variantu nezdvojí', () => {
+    const own = nextAimLens(null, apply({ rules: [rule('A', '#000000')] }), SLOT, MODELS, 'v1') as Lens;
+    const next = nextAimLens(own, apply({ rules: [rule('B', '#111111', [DUCTS], 'transparent')] }), SLOT, MODELS, 'v2') as Lens;
+    assert.deepEqual(next.rules.map((r) => r.id), ['aim-v2-0', 'aim-v1-0~vol', 'aim-v1-0']);
+    const or = withVolumeVariants([{ id: 'x', name: 'x', enabled: true, action: 'colorize', color: '#000000', groups: [{ combinator: 'OR', rules: [] }] }]);
+    assert.equal(or.length, 1);
+  });
+
+  it('počet varianty patrí pôvodnému pravidlu; pravidlo bez zhody je inactive s poznámkou', () => {
+    const lens = nextAimLens(null, apply({ rules: [rule('Nové', '#ef4444'), rule('Staré', '#3b82f6')] }), SLOT, MODELS, 'v1') as Lens;
+    const s = summarizeLens(lens, new Map([['aim-v1-0', 3], ['aim-v1-0~vol', 1], ['aim-v1-1', 0], ['aim-v1-1~vol', 0]]), []);
+    assert.deepEqual(s.rules.map((r) => [r.name, r.count, r.inactive ?? false]), [['Nové', 4, false], ['Staré', 0, true]]);
+    assert.equal(s.matched, 4);
+    assert.match(s.note ?? '', /prekrylo novšie pravidlo/);
+    const all = summarizeLens(lens, new Map([['aim-v1-0', 3], ['aim-v1-1', 2]]), []);
+    assert.equal(all.note, undefined);
+  });
+
+  it('vypnutá AIM chat lens: active false a stored_rules, cudzia lens v slote nie', () => {
+    const stored = nextAimLens(null, apply({ rules: [rule('A', '#000000'), rule('B', '#111111')] }), SLOT, MODELS, 'v1') as Lens;
+    const off = summarizeLens(null, new Map(), [], undefined, null, null, stored);
+    assert.deepEqual([off.active, off.stored_rules], [false, 2]);
+    assert.match(off.note ?? '', /vypnutá/);
+    const foreign: Lens = { id: SLOT, name: 'Color by Material', rules: [], autoColor: { source: 'material' } };
+    assert.equal(summarizeLens(null, new Map(), [], undefined, null, null, foreign).stored_rules, undefined);
+  });
+
+  it('legenda compact je platná správa (D-125)', () => {
+    assert.ok(parseLensMessage(apply({ legend: 'compact' as never })));
+    assert.equal(parseLensMessage(apply({ legend: 'tiny' as never })), null);
   });
 });

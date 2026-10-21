@@ -15,6 +15,8 @@
  * `LENS_QUERY` počká na vyhodnotenie verzie `rev` a vráti počty hosťovi.
  * D-119 (`aimLensScope.ts`): farby podľa hodnoty len pre prvky filtra (alebo viditeľné),
  * zapnutie skrytých miestností a zón, ktoré lens zasiahla, a veľká legenda.
+ * D-125: súhrn povie, keď izoláciu z chatu už kanál nedrží (zrušil ju používateľ) a keď je
+ * AIM chat lens vypnutá; malá legenda (`compact`) nahradí panel Lens kartou.
  * Načítava sa lenivo z `AimBridge` pri prvej správe Lens.
  */
 
@@ -33,6 +35,7 @@ import {
 } from './aimLensPlan.js';
 import { noteIssue } from './command-gate.js';
 import { applyLegendSize, autoColorScope, revealAfterLens, revealGatesFor } from './aimLensScope.js';
+import { useAimLegendStore } from './aimLegendStore.js';
 
 const SLOT = AUTO_COLOR_FROM_LIST_ID;
 const POLL_MS = 100;
@@ -135,6 +138,8 @@ function applyLens(msg: ApplyLensMessage, scope?: Lens['capturedScope']): void {
   appliedRev = msg.rev;
   if (msg.mode === 'clear' || msg.mode === 'unisolate') releaseIsolation();
   const toIsolate = isolationRules(msg, models, tag);
+  // Izolácia z chatu, ktorú kanál už nedrží, sa po ďalšej lens nehlási (zmenu ohlásil `APPLIED`, D-125).
+  if (toIsolate.length === 0 && isolation && pendingIsolationRev === null && !ownsChannel(state, isolation)) isolation = null;
   if (toIsolate.length > 0) {
     const rev = msg.rev ?? tag;
     pendingIsolationRev = rev;
@@ -159,7 +164,9 @@ function applyLens(msg: ApplyLensMessage, scope?: Lens['capturedScope']): void {
     useViewerStore.setState({ savedLenses: others, activeLensId: state.activeLensId === SLOT ? null : state.activeLensId });
     return;
   }
-  useViewerStore.setState({ savedLenses: [...others, next], activeLensId: SLOT, lensPanelVisible: true });
+  // Malá legenda (D-125) panel Lens neotvára; karta ukáže novú lens.
+  const compact = useAimLegendStore.getState().visible;
+  useViewerStore.setState({ savedLenses: [...others, next], activeLensId: SLOT, ...(compact ? {} : { lensPanelVisible: true }) });
   revealAfterLens(next.rules.map((r) => r.id), () => {
     // Len ak je to stále tá istá aktívna lens; nahradená lens nič nehlási.
     const now = useViewerStore.getState();
@@ -198,7 +205,12 @@ function endScoping(): void {
 function isolationSummary(): AimIsolation | null {
   if (!isolation) return null;
   const { rev, rules, isolated, xray } = isolation;
-  return { rev, rules, isolated, ...(xray ? { xray } : {}) };
+  // Kanál drží niečo iné alebo nič (kláves A, Zobraziť všetko, iná izolácia): izolácia z chatu už neplatí (D-125).
+  const gone = pendingIsolationRev === null && !ownsChannel(useViewerStore.getState(), isolation);
+  return {
+    rev, rules, isolated, ...(xray ? { xray } : {}),
+    ...(gone ? { active: false as const, note: `${xray ? 'X-ray' : 'izolácia'} z chatu už vo vieweri nie je (zrušil ju používateľ alebo iný príkaz)` } : {}),
+  };
 }
 
 function answerLensQuery(msg: LensQueryMessage, origin: string, started = Date.now()): void {
@@ -226,7 +238,7 @@ function answerLensQuery(msg: LensQueryMessage, origin: string, started = Date.n
     return;
   }
   const iso = isolationSummary();
-  const summary = summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, msg.rev, iso);
+  const summary = summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, msg.rev, iso, null, slotLens(state));
   reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: true, result: { ...summary, ...(ready ? {} : { pending: true }) } });
 }
 
@@ -241,7 +253,7 @@ export async function settledLensSummary(timeoutMs: number, started = Date.now()
     return settledLensSummary(timeoutMs, started);
   }
   const iso = isolationSummary();
-  const summary = summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, appliedRev, iso, isolationFailedRev);
+  const summary = summarizeLens(lens, state.lensRuleCounts, state.lensAutoColorLegend, appliedRev, iso, isolationFailedRev, slotLens(state));
   return { ...summary, ...(ready ? {} : { pending: true }) };
 }
 
@@ -286,6 +298,7 @@ export function resetAimLens(): void {
       ...(wasActive ? { lensPanelVisible: false } : {}),
     });
   }
+  useAimLegendStore.getState().setVisible(false);
   appliedRev = undefined;
   scopeGen++;
   scopingRev = null;

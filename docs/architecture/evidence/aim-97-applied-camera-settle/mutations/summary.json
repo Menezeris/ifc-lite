@@ -1,0 +1,58 @@
+{
+  "no-camera-not-settled": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/cameraSettle.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "8f6c87bf3af3299b25d4b270f9e838977af7a00a",
+    "production": [
+      "apps/viewer/src/aim/cameraSettle.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/cameraSettle.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "no-wait": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/cameraSettle.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "8f6c87bf3af3299b25d4b270f9e838977af7a00a",
+    "production": [
+      "apps/viewer/src/aim/cameraSettle.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/cameraSettle.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "target-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/cameraSettle.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "8f6c87bf3af3299b25d4b270f9e838977af7a00a",
+    "production": [
+      "apps/viewer/src/aim/cameraSettle.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/cameraSettle.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "timeout-reports-settled": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/cameraSettle.test.ts; that file has a green, attributable baseline.",
+    "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
+    "head": "8f6c87bf3af3299b25d4b270f9e838977af7a00a",
+    "production": [
+      "apps/viewer/src/aim/cameraSettle.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/cameraSettle.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

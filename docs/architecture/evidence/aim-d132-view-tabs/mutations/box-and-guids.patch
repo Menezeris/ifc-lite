@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionBox.ts a/apps/viewer/src/aim/sectionBox.ts
+index b9c9f24c7..0c754b8b2 100644
+--- b/apps/viewer/src/aim/sectionBox.ts
++++ a/apps/viewer/src/aim/sectionBox.ts
+@@ -43,7 +43,7 @@ export function isSectionBoxMessage(data: unknown): data is SectionBoxMessage {
+   const box = m.box as { min?: unknown; max?: unknown } | undefined;
+   const byBox = !!box && typeof box === 'object' && isVec(box.min) && isVec(box.max)
+     && box.min.x < box.max.x && box.min.y < box.max.y && box.min.z < box.max.z;
+-  if (!byGuids && !byBox) return false;
++  if (byGuids === byBox) return false; // práve jeden cieľ
+   return m.marginM === undefined || (byGuids && num(m.marginM, BOX_MARGIN_RANGE.min, BOX_MARGIN_RANGE.max));
+ }
+ 

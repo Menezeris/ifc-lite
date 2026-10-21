@@ -1,0 +1,14 @@
+diff --git b/apps/viewer/src/aim/docLinks.ts a/apps/viewer/src/aim/docLinks.ts
+index 1d11797a8..3b7fb7e35 100644
+--- b/apps/viewer/src/aim/docLinks.ts
++++ a/apps/viewer/src/aim/docLinks.ts
+@@ -114,7 +114,8 @@ function normalizeLink(raw: unknown): DocLink | null {
+   if (w0 <= 0 || h0 <= 0 || x0 >= 1 || y0 >= 1 || x0 + w0 <= 0 || y0 + h0 <= 0) return null;
+   const targets = (Array.isArray(l.targets) ? l.targets : [])
+     .map(normalizeTarget)
+-    .filter((t): t is DocLinkTarget => t !== null);
++    .filter((t): t is DocLinkTarget => t !== null)
++    .slice(0, MAX_TARGETS);
+   if (targets.length === 0) return null;
+   const x = Math.max(0, x0);
+   const y = Math.max(0, y0);

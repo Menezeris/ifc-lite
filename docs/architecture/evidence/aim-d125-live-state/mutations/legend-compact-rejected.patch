@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPlan.ts a/apps/viewer/src/aim/aimLensPlan.ts
+index 42047b96..1ee44f14 100644
+--- b/apps/viewer/src/aim/aimLensPlan.ts
++++ a/apps/viewer/src/aim/aimLensPlan.ts
+@@ -273,7 +273,7 @@ export function summarizeLens(
+ }
+ 
+ /** Veľkosť legendy z chatu (D-119). */
+-export const LEGEND_SIZES = ['large', 'normal'] as const;
++export const LEGEND_SIZES = ['large', 'normal', 'compact'] as const;
+ export type LegendSize = (typeof LEGEND_SIZES)[number];
+ 
+ /** Plávajúce okno veľkej legendy: takmer celý viewer, najviac 960 px široké. */

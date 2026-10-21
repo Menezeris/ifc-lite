@@ -23,6 +23,10 @@ describe('SET_CAMERA kamera (AIM D-098)', () => {
       { source: S, type: 'SET_CAMERA', preset: 'keep', selector: { model: 'VZT' } },
       { source: S, type: 'SET_CAMERA', preset: 'keep', viewpoint: VP },
       { source: S, type: 'SET_CAMERA', preset: 'keep', viewpoint: { ...VP, orthoSize: 12.5 }, projection: 'orthographic' },
+      // Okraj a časť cieľa (AIM D-128).
+      { source: S, type: 'SET_CAMERA', preset: 'section', guids: [G], padding: 1.4, area: 'left' },
+      { source: S, type: 'SET_CAMERA', preset: 'front', fit: 'selection', padding: 1, area: 'back' },
+      { source: S, type: 'SET_CAMERA', preset: 'keep', selector: { types: ['IfcWall'] }, padding: 4 },
     ]) {
       assert.equal(isViewMessage(msg), true, JSON.stringify(msg));
     }
@@ -44,6 +48,10 @@ describe('SET_CAMERA kamera (AIM D-098)', () => {
       { source: S, type: 'SET_CAMERA', preset: 'keep', viewpoint: { ...VP, position: { x: Number.NaN, y: 0, z: 0 } } },
       { source: S, type: 'SET_CAMERA', preset: 'keep', viewpoint: { ...VP, orthoSize: 0 } },
       { source: S, type: 'SET_CAMERA', preset: 'keep', viewpoint: { position: VP.position, target: VP.target } },
+      { source: S, type: 'SET_CAMERA', preset: 'section', guids: [G], padding: 0.5 },
+      { source: S, type: 'SET_CAMERA', preset: 'section', guids: [G], padding: 5 },
+      { source: S, type: 'SET_CAMERA', preset: 'section', guids: [G], padding: '1.4' },
+      { source: S, type: 'SET_CAMERA', preset: 'section', guids: [G], area: 'middle' },
     ]) {
       assert.equal(isViewMessage(msg), false, JSON.stringify(msg));
     }

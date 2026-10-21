@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelsPlan.ts a/apps/viewer/src/aim/aimPanelsPlan.ts
+index b8cde543..b7fde688 100644
+--- b/apps/viewer/src/aim/aimPanelsPlan.ts
++++ a/apps/viewer/src/aim/aimPanelsPlan.ts
+@@ -70,7 +70,7 @@ export function panelInfo(s: PanelsStateLike, key: PanelKey): PanelInfo {
+   const id = PANEL_ID[key];
+   if (key === 'model_tree') return s.leftPanelCollapsed ? { open: false } : { open: true, where: 'left' };
+   const floating = s.floatingPanels.find((p) => p.id === id);
+-  if (floating && false) return { open: true, where: 'floating', snap: floating.snap, size: { w: Math.round(floating.w), h: Math.round(floating.h) } };
++  if (floating) return { open: true, where: 'floating', snap: floating.snap, size: { w: Math.round(floating.w), h: Math.round(floating.h) } };
+   if (s.poppedOutIds.includes(id)) return { open: true, where: 'window' };
+   if (key === 'lists') return s.listPanelVisible ? { open: true, where: 'bottom' } : { open: false };
+   const docked = s.sidebarMode !== 'collapsed' && (s.sidebarActivePanel === id || s.sidebarSecondaryPanel === id);

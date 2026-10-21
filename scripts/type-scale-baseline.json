@@ -1,6 +1,4 @@
 {
-  "apps/viewer/src/aim/AimCard.tsx": 8,
-  "apps/viewer/src/aim/AimInspectorTabs.tsx": 2,
   "apps/viewer/src/components/documents/DocumentPane.tsx": 1,
   "apps/viewer/src/components/documents/DocumentsPanel.tsx": 5,
   "apps/viewer/src/components/documents/PdfDocumentView.tsx": 3,
