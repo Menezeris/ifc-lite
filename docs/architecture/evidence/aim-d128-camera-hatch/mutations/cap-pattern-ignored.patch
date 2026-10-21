@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionCap.ts a/apps/viewer/src/aim/sectionCap.ts
+index 1ecb54b19..c64483c6a 100644
+--- b/apps/viewer/src/aim/sectionCap.ts
++++ a/apps/viewer/src/aim/sectionCap.ts
+@@ -74,7 +74,7 @@ export function planSectionCap(
+   const remember = pattern !== 'solid' ? pattern : undefined;
+   if (msg.cap === 'none') return { showCap: false, ...(remember ? { remember } : {}) };
+   const style: Partial<SectionCapStyle> = {
+-    pattern: msg.cap === 'solid' ? 'solid' : remember ?? lastHatch,
++    pattern: msg.cap === 'solid' ? 'solid' : msg.pattern ?? remember ?? lastHatch,
+   };
+   if (msg.cap === 'hatch' && msg.pattern) {
+     const rad = (deg: number) => (deg * Math.PI) / 180;
