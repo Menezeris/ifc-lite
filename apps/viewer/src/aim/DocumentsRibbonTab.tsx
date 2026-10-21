@@ -9,7 +9,7 @@
  *
  *   · Documents  — the project document library (D-075), `documents` panel
  *   · Underlays  — georeferenced PDF drawing underlays (D-072)
- *   · 3D | 2D | Split (+ storey) — the workspace view mode (D-075)
+ *   · (the 3D | 2D | Split switch moved to the view tab bar above the center, AIM D-132)
  *   · Derivations: the AIM derivations layer (D-089, DerivationsRibbonGroup.tsx),
  *     whose rules open the `aim-layers` panel (D-104)
  *
@@ -26,12 +26,9 @@
  */
 
 import { lazy, Suspense } from 'react';
-import { Columns2, Files, Map as MapIcon } from 'lucide-react';
-import { DisplayAll, HideSelected, IsometricView, List, Refresh, TopView } from '@/icons';
+import { Files, Map as MapIcon } from 'lucide-react';
+import { DisplayAll, HideSelected, List, Refresh } from '@/icons';
 import { useViewerStore } from '@/store';
-import { useViewMode } from '@/hooks/useViewMode';
-import { viewModeDisabledReason } from '@/hooks/viewModeCore';
-import { VIEW_MODES, StoreyPicker } from '@/components/viewer/ViewModeSwitcher';
 import {
   RibbonGroup,
   RibbonGroupDivider,
@@ -54,28 +51,18 @@ const DERIVATIONS_UI: DerivationsRibbonUi = {
   icons: { shown: DisplayAll, hidden: HideSelected, rules: List, recompute: Refresh },
 };
 
-/** Ribbon icons for the view modes, keyed by the shared `VIEW_MODES` ids. */
-const MODE_ICONS = {
-  '3d': IsometricView,
-  '2d': TopView,
-  split: Columns2,
-} as const;
-
 export function DocumentsRibbonTab() {
   // The two fork panels are single-tenant sidebar panels like every other
   // one, so their store flag IS the latched state (same read the mobile
   // toolbar uses); `toggleWorkspacePanel` handles the docking rules.
   const documentsPanelVisible = useViewerStore((s) => s.documentsPanelVisible);
   const underlayPanelVisible = useViewerStore((s) => s.underlayPanelVisible);
-  const calibrating = useViewerStore((s) => s.underlayCalibration !== null);
 
-  const { mode, setMode, storeys } = useViewMode();
   const derivationsLayer = useAimDerivationsStore((s) => s.layer);
   const relationsVisible = useAimDerivationsStore((s) => s.relationsVisible);
   // AIM layers are a workspace panel of the AIM rail group (D-104), toggled like the library panels.
   const layersOpen = useViewerStore((s) => s.sidebarActivePanel === 'aim-layers');
   const toggleLayers = () => useViewerStore.getState().toggleWorkspacePanel('aim-layers', 'ribbon');
-  const disabledReason = viewModeDisabledReason({ calibrating, storeyCount: storeys.length });
   // The library buttons run the same registered `panel:*` commands as the
   // command palette (surface-commands-panels.ts), so ribbon and palette share
   // one label and one action.
@@ -100,29 +87,6 @@ export function DocumentsRibbonTab() {
           active={underlayPanelVisible}
           commandContext={commandContext}
         />
-      </RibbonGroup>
-
-      <RibbonGroupDivider />
-
-      {/* Same control as the classic toolbar's segmented switcher, in ribbon
-          shape: identical modes, identical gating, identical storey picker. */}
-      <RibbonGroup label="View mode">
-        {VIEW_MODES.map((m) => (
-          <RibbonContentLargeButton
-            key={m.id}
-            icon={MODE_ICONS[m.id]}
-            contentLabel={m.label}
-            contentSource="extension"
-            contentId={`aim-view-mode:${m.id}`}
-            tooltip={disabledReason ?? m.title}
-            active={mode === m.id}
-            disabled={disabledReason !== null}
-            onClick={() => setMode(m.id)}
-          />
-        ))}
-        <div className="flex h-full items-center pl-1">
-          <StoreyPicker className="h-7" />
-        </div>
       </RibbonGroup>
 
       <RibbonGroupDivider />

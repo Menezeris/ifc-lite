@@ -26,11 +26,14 @@ import { summarizeSelection, visibilityGuids, type SelectedEntityInfo } from './
 import { describePanels } from './aimPanelsPlan.js';
 import { useAimInspectorStore } from './aimInspectorStore.js';
 import { useAimDocRegionStore } from './docRegion.js';
+import { useAimViewTabs } from './viewTabsStore.js';
+import { describeTabs } from './viewTabsPlan.js';
+import { orderedBox, toSectionBox, type SectionBoxMessage } from './sectionBox.js';
 import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import type { SectionPlaneAxis } from '@/store/types';
 import type { SectionAxis, SectionFit, ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
 import {
-  cutPercent, hostAxis, viewerAxis, ifcCoordinateToRender, renderBoxToIfc, renderDirToIfc, renderPointToIfc, sectionThroughBox, unionBoxes,
+  cutPercent, hostAxis, viewerAxis, ifcCoordinateToRender, ifcPointToRender, renderBoxToIfc, renderDirToIfc, renderPointToIfc, sectionThroughBox, unionBoxes,
   type Box3, type Vec3,
 } from './viewFrame.js';
 
@@ -183,6 +186,12 @@ export function queryViewState(state: State, g: GuidHelpers) {
     const ifc = renderPointToIfc(point, offset);
     const coord = axis === 'x' ? ifc.x : axis === 'y' ? ifc.z : ifc.y;
     section = { axis, crosses: SECTION_AXIS_IN_IFC[axis], position_percent: mm(plane.position), ...(range ? { coordinate: mm(coord) } : {}), flipped: plane.flipped, show_gizmo: plane.showGizmo };
+    // Rezný box (AIM D-132): obálka v IFC svete namiesto roviny.
+    if (plane.box) {
+      const [a, b] = [plane.box.min, plane.box.max].map(([x, y, z]) => renderPointToIfc({ x, y, z }, offset));
+      const box = orderedBox(a, b);
+      section = { box: { min: roundVec(box.min), max: roundVec(box.max) }, show_gizmo: plane.showGizmo };
+    }
   }
   const camera = getGlobalRenderer()?.getCamera();
   const selected = state.selectedEntityIds.size > 0
@@ -207,6 +216,8 @@ export function queryViewState(state: State, g: GuidHelpers) {
     panels: describePanels(state),
     property_focus: useAimInspectorStore.getState().propertyFocus,
     document: useAimDocRegionStore.getState().visible,
+    // AIM D-132: záložky (aktívna a tá vedľa).
+    tabs: describeTabs(useAimViewTabs.getState()),
   };
 }
 
@@ -256,6 +267,26 @@ export function cutThroughTarget(msg: TargetSection, isCurrent: () => boolean, g
     return new Promise((r) => setTimeout(r, SECTION_RETRY_MS)).then(() => cutThroughTarget(msg, isCurrent, g, after, attempt + 1));
   }
   console.warn('[aim-bridge] SET_SECTION: prvok bez geometrie alebo bez osi', msg.guids ?? msg.coordinate);
+  return Promise.resolve(false);
+}
+
+/**
+ * `SET_SECTION_BOX` (AIM D-132): box okolo prvkov s okrajom, alebo presná obálka
+ * v IFC svete. Prvky bez geometrie (ešte prúdi) sa skúšajú znova ako rez cez prvok.
+ */
+export function applySectionBox(msg: SectionBoxMessage, g: GuidHelpers, attempt = 0): Promise<boolean> {
+  const state = useViewerStore.getState();
+  if (msg.box) {
+    const offset = worldOffset(state);
+    state.setSectionBox(toSectionBox(orderedBox(ifcPointToRender(msg.box.min, offset), ifcPointToRender(msg.box.max, offset))));
+    return Promise.resolve(true);
+  }
+  const union = renderBoundsOfGuids(state, msg.guids ?? [], g).union;
+  if (union) {
+    state.setSectionBox(toSectionBox(union, msg.marginM ?? 0.5));
+    return Promise.resolve(true);
+  }
+  if (attempt < SECTION_RETRIES) return new Promise((r) => setTimeout(r, SECTION_RETRY_MS)).then(() => applySectionBox(msg, g, attempt + 1));
   return Promise.resolve(false);
 }
 

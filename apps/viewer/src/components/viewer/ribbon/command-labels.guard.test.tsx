@@ -172,9 +172,9 @@ it('#5870/#5878 mounts every ribbon command with its registry name across the he
   // converted to typed IDs. Drop each count to zero with that tab's migration.
   assert.deepEqual(rawByTab, {
     file: 0, home: 0, view: 0, elements: 0, analyze: 0, author: 0,
-    // >>> AIM-FORK: the Documents tab's 3D | 2D | Split view-mode buttons are raw
-    // fork controls (no registry id yet); this row ratchets down, never up.
-    documents: 3,
+    // >>> AIM-FORK: the Documents tab had raw 3D | 2D | Split buttons; they moved to the
+    // view tab bar (AIM D-132), so the row is down to zero and stays there.
+    documents: 0,
     // <<< AIM-FORK
   });
   assert.deepEqual(renderedIds,

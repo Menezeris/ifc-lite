@@ -28,8 +28,8 @@ import { MobileBottomSheet, useVisualViewportBottomInset } from './MobileBottomS
 import { MobilePanelLauncher } from './MobilePanelLauncher';
 import { MobilePanelSheet } from './MobilePanelSheet';
 import { ShieldAlert } from 'lucide-react';
-// >>> AIM-FORK: D-075 document/2D view coordination
-import { useFloorplanView } from '@/hooks/useFloorplanView';
+// >>> AIM-FORK: D-072/D-075 center panes and D-132 view tabs (logic in aim/useAimCenterPanes.ts)
+import { useAimCenterPanes } from '@/aim/useAimCenterPanes';
 // <<< AIM-FORK
 import { ExtensionDockHost } from '@/components/extensions/ExtensionDockHost';
 import { ExtensionKeyboardBindings } from '@/components/extensions/ExtensionKeyboardBindings';
@@ -51,6 +51,7 @@ import { useOverlayCompositor } from './schedule/useOverlayCompositor';
 // Lazy: the 2D plan and document panes (pdf.js surfaces) are off the boot path.
 const DrawingPlanPane = lazy(() => import('@/components/viewer/DrawingPlanPane').then((m) => ({ default: m.DrawingPlanPane })));
 const DocumentPane = lazy(() => import('@/components/documents/DocumentPane').then((m) => ({ default: m.DocumentPane })));
+const AimViewTabsBar = lazy(() => import('@/aim/AimViewTabsBar').then((m) => ({ default: m.AimViewTabsBar })));
 // <<< AIM-FORK
 import { CommandPalette } from './CommandPalette';
 import { SearchModal } from './SearchModal';
@@ -76,16 +77,7 @@ import { registerKeyboardCommand } from '@/lib/commands/dispatcher';
 /** Technical query flag rendered as code by the localized safe-mode notice. */
 const SAFE_MODE_QUERY_FLAG = '?safe=0';
 
-// >>> AIM-FORK: D-075 document pane sizing
-/** First-open width of the document pane, as a % of the center group. */
-const DOC_PANE_OPEN_PCT = '42%';
-
-/** react-resizable-panels v4 parses CSS-like strings ('42%', '300px') at
- *  runtime, but the shipped `resize` type only admits `number` — and a bare
- *  number means PIXELS there, so percentages MUST go through as strings. */
-function resizePanelPct(panel: PanelImperativeHandle, size: string): void {
-  (panel.resize as unknown as (size: string) => void)(size);
-}
+// >>> AIM-FORK: D-075 document pane sizing moved to aim/useAimCenterPanes.ts (AIM D-132)
 // <<< AIM-FORK
 
 export function ViewerLayout() {
@@ -232,86 +224,11 @@ export function ViewerLayout() {
   const layoutResetEpoch = useViewerStore((s) => s.layoutResetEpoch); // "Reset layout" (#5854) restores the pane width
   useEffect(() => { if (layoutResetEpoch > 0) leftPanelRef.current?.resize(`${LEFT_PANEL_DEFAULT_SIZE}%`); }, [layoutResetEpoch]);
 
-  // >>> AIM-FORK: D-072 split plan / D-075 2D mode + document pane (center split)
-  // D-072 split view: the 2D plan Panel is always mounted (so ViewportContainer
-  // never remounts / loses its WebGPU renderer) and collapses/expands with the
-  // `underlaySplitView` flag, like the left hierarchy panel above.
-  const underlaySplitView = useViewerStore((s) => s.underlaySplitView);
-  const planePanelRef = useRef<PanelImperativeHandle>(null);
-  useEffect(() => {
-    const panel = planePanelRef.current;
-    if (!panel) return;
-    if (underlaySplitView && panel.isCollapsed()) panel.expand();
-    else if (!underlaySplitView && !panel.isCollapsed()) panel.collapse();
-  }, [underlaySplitView]);
-
-  // D-075 2D mode: the mirror move — the 3D panel collapses to zero while the
-  // plan pane fills the center. Same always-mounted guarantee, in reverse.
-  const underlayPlanFull = useViewerStore((s) => s.underlayPlanFull);
-  const viewport3dPanelRef = useRef<PanelImperativeHandle>(null);
-  useEffect(() => {
-    const panel = viewport3dPanelRef.current;
-    if (!panel) return;
-    if (underlayPlanFull && !panel.isCollapsed()) panel.collapse();
-    else if (!underlayPlanFull && panel.isCollapsed()) panel.expand();
-  }, [underlayPlanFull]);
-  // `collapsible` also lets a resize-handle DRAG snap the panel to zero — a
-  // state no view-mode flag describes (blank center, every handle hidden).
-  // Only the 2D mode may collapse the 3D viewport; undo drag-collapses.
-  const onViewport3dResize = useCallback(() => {
-    const panel = viewport3dPanelRef.current;
-    if (!panel) return;
-    if (panel.isCollapsed() && !useViewerStore.getState().underlayPlanFull) panel.expand();
-  }, []);
-
-  // D-075 document pane: expands while document tabs are open OUTSIDE the 2D
-  // full-plan mode (2D promises the plan the whole center), collapses when
-  // the last tab closes. Same always-mounted pattern as the 2D pane.
-  const docPaneOpen = useViewerStore((s) => s.docTabs.length > 0);
-  const docPaneVisible = docPaneOpen && !underlayPlanFull;
-  const docPanelRef = useRef<PanelImperativeHandle>(null);
-  useEffect(() => {
-    const panel = docPanelRef.current;
-    if (!panel) return;
-    if (docPaneVisible && panel.isCollapsed()) {
-      panel.expand();
-      // expand() restores the last size, but this panel STARTS at 0 and is
-      // the group's last child — the first open can come up as a sliver.
-      // Enforce a readable width; later drags persist via expand() as usual.
-      if (panel.getSize().asPercentage < 20) resizePanelPct(panel, DOC_PANE_OPEN_PCT);
-    } else if (!docPaneVisible && !panel.isCollapsed()) {
-      panel.collapse();
-    }
-  }, [docPaneVisible]);
-  // Mirror guard: a drag must not collapse the pane while tabs are open —
-  // openDocument on an existing tab is a no-op, so nothing would re-expand it
-  // and host-pushed tabs would be stuck invisible.
-  const onDocPaneResize = useCallback(() => {
-    const panel = docPanelRef.current;
-    if (!panel) return;
-    const s = useViewerStore.getState();
-    if (panel.isCollapsed() && s.docTabs.length > 0 && !s.underlayPlanFull) {
-      panel.expand();
-      if (panel.getSize().asPercentage < 20) resizePanelPct(panel, DOC_PANE_OPEN_PCT);
-    }
-  }, []);
-
-  // D-075: opening/focusing a document tab must never happen invisibly. The
-  // 2D full-plan mode hides the doc pane by design — drop it to Split so the
-  // tab shows beside the plan; on mobile the split plan overlay covers the
-  // doc overlay, so opening a document exits the split (reading the document
-  // is the more recent intent there — one surface at a time on a phone).
-  const { exitSplitView } = useFloorplanView();
-  const activeDocTabId = useViewerStore((s) => s.activeDocTabId);
-  const prevActiveDocRef = useRef(activeDocTabId);
-  useEffect(() => {
-    const prev = prevActiveDocRef.current;
-    prevActiveDocRef.current = activeDocTabId;
-    if (!activeDocTabId || activeDocTabId === prev) return;
-    const s = useViewerStore.getState();
-    if (s.underlayPlanFull) s.setUnderlayPlanFull(false);
-    if (isMobile && s.underlaySplitView) exitSplitView();
-  }, [activeDocTabId, isMobile, exitSplitView]);
+  // >>> AIM-FORK: D-072 split plan, D-075 2D mode + document pane, D-132 view tabs (aim/useAimCenterPanes.ts)
+  const {
+    underlaySplitView, underlayPlanFull, planePanelRef, viewport3dPanelRef, onViewport3dResize,
+    docPaneOpen, docPaneVisible, docPanelRef, onDocPaneResize,
+  } = useAimCenterPanes(isMobile);
   // <<< AIM-FORK
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -412,7 +329,9 @@ export function ViewerLayout() {
                       <ModelWorkspaceSplit>
                       {/* >>> AIM-FORK: D-072 2D plan | 3D | D-075 document pane. The plan and
                           document Panels are collapsible so ViewportContainer stays mounted. */}
-                      <PanelGroup orientation="horizontal" className="h-full w-full">
+                      <div className="flex h-full w-full min-w-0 flex-col">
+                      <Suspense fallback={null}><AimViewTabsBar /></Suspense>
+                      <PanelGroup orientation="horizontal" className="min-h-0 w-full flex-1">
                         <Panel id="drawing-plan-panel" defaultSize={0} minSize={20} collapsible collapsedSize={0} panelRef={planePanelRef}>
                           <Suspense fallback={null}><DrawingPlanPane /></Suspense>
                         </Panel>
@@ -452,9 +371,10 @@ export function ViewerLayout() {
                           className={`w-1.5 bg-border hover:bg-primary/50 active:bg-primary/70 transition-colors cursor-col-resize ${docPaneVisible ? '' : 'hidden'}`}
                         />
                         <Panel id="document-pane-panel" defaultSize={0} minSize={20} collapsible collapsedSize={0} panelRef={docPanelRef} onResize={onDocPaneResize}>
-                          <Suspense fallback={null}><DocumentPane /></Suspense>
+                          <Suspense fallback={null}><DocumentPane hideTabs /></Suspense>
                         </Panel>
                       </PanelGroup>
+                      </div>
                       {/* <<< AIM-FORK */}
                       </ModelWorkspaceSplit>
                     </div>
