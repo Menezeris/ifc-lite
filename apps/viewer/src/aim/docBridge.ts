@@ -12,7 +12,9 @@
 
 import { parsePlacement, serializePlacement } from '@ifc-lite/drawing-underlay';
 import { useViewerStore } from '../store/index.js';
-import { SOURCE, type InboundMessage, type OutboundMessage } from './bridge-protocol.js';
+import { toGlobalIdFromModels } from '../store/globalId.js';
+import { selectPickedGlobalId } from '../components/viewer/viewport-selection.js';
+import { SOURCE, resolveGuids, type InboundMessage, type OutboundMessage } from './bridge-protocol.js';
 import { noteIssue, track } from './command-gate.js';
 import { normalizeDocHighlights, normalizeDocRegion, regionApplied, useAimDocRegionStore } from './docRegion.js';
 import { listenDocLinks } from './docLinks.js';
@@ -74,11 +76,24 @@ export function handleDocumentMessage(msg: InboundMessage): boolean {
   }
 }
 
+/**
+ * Výber prvku z odkazu vo výkrese ako klik do modelu (AIM D-082, D-130): selekcia
+ * (ENTITY_SELECTED ide hostovi ako pri kliku) a panel vlastností, kamera ostáva.
+ */
+function selectAsClick(guid: string): boolean {
+  const state = useViewerStore.getState();
+  const [ref] = resolveGuids(state.models, [guid]);
+  if (!ref) return false;
+  selectPickedGlobalId(toGlobalIdFromModels(state.models, ref.modelId, ref.expressId));
+  useViewerStore.getState().openPanelInHome('properties', 'programmatic');
+  return true;
+}
+
 /** Udalosti viewera o dokumentoch späť hostovi; volá sa pri štarte relácie mosta. */
 export function wireDocumentEvents(post: (msg: OutboundMessage) => void): void {
   // Viditeľný rozsah karty z predošlej relácie nepatrí novej (AIM D-127).
   useAimDocRegionStore.setState({ visible: null });
-  listenDocLinks(); // DOCUMENT_LINKS: popisky výkresu -> prvky (AIM D-130, docLinks.ts)
+  listenDocLinks(selectAsClick); // DOCUMENT_LINKS: popisky výkresu -> prvky (AIM D-130, docLinks.ts)
 
   // Kalibrácia uložená vo viewri → host ju perzistuje do
   // documents.properties._georef (D-072). Session-only bez hosta.

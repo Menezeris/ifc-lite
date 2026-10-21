@@ -1,5 +1,5 @@
 diff --git b/apps/viewer/src/aim/docLinks.ts a/apps/viewer/src/aim/docLinks.ts
-index 2d6ce566d..d9d8aebcf 100644
+index 68f744484..3b7fb7e35 100644
 --- b/apps/viewer/src/aim/docLinks.ts
 +++ a/apps/viewer/src/aim/docLinks.ts
 @@ -142,7 +142,7 @@ export function normalizeDocLinks(documents: readonly unknown[]): Map<string, Do

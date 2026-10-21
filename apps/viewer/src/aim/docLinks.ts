@@ -13,10 +13,7 @@
 
 import { useEffect, type RefObject } from 'react';
 import { create } from 'zustand';
-import { useViewerStore } from '../store/index.js';
-import { toGlobalIdFromModels } from '../store/globalId.js';
-import { selectPickedGlobalId } from '../components/viewer/viewport-selection.js';
-import { SOURCE, resolveGuids } from './bridge-protocol.js';
+import { SOURCE } from './bridge-protocol.js';
 
 export interface DocLinkTarget {
   guid: string;
@@ -78,13 +75,16 @@ export function acceptsDocLinksEvent(
 }
 
 let listening = false;
+/** Výber prvku podľa GUID ako klik do modelu; dodá ho docBridge (store a výber ťahajú WASM). */
+let selectGuid: (guid: string) => boolean = () => false;
 
 /**
  * Vlastný poslucháč `DOCUMENT_LINKS` (nie v AimBridge: strop veľkosti a `isInboundMessage`
  * v bridge-protocol neznáme typy odmietne). Rovnaká kontrola rodiča a originu ako most;
- * zapne ho `wireDocumentEvents` v docBridge.ts, raz za život stránky.
+ * zapne ho `wireDocumentEvents` v docBridge.ts a podá výber prvku (AIM D-082).
  */
-export function listenDocLinks(): void {
+export function listenDocLinks(select: (guid: string) => boolean): void {
+  selectGuid = select;
   if (listening || typeof window === 'undefined' || window.parent === window) return;
   listening = true;
   window.addEventListener('message', (e) => {
@@ -175,19 +175,8 @@ export const useAimDocLinksStore = create<DocLinksState>((set, get) => ({
   setDocuments: (documents) => set({ pages: normalizeDocLinks(documents), nonce: get().nonce + 1 }),
 }));
 
-/**
- * Vyber prvok ako klik do modelu (D-082): selekcia (ENTITY_SELECTED ide hostovi ako pri
- * kliku) a panel vlastností. Kamera ostáva, používateľ je vo výkrese. false = prvok nie je
- * v načítaných modeloch.
- */
-export function selectDocLinkTarget(guid: string): boolean {
-  const state = useViewerStore.getState();
-  const [ref] = resolveGuids(state.models, [guid]);
-  if (!ref) return false;
-  selectPickedGlobalId(toGlobalIdFromModels(state.models, ref.modelId, ref.expressId));
-  useViewerStore.getState().openPanelInHome('properties', 'programmatic');
-  return true;
-}
+/** Vyber prvok odkazu; false = prvok nie je v načítaných modeloch (alebo výber ešte nie je napojený). */
+const selectDocLinkTarget = (guid: string): boolean => selectGuid(guid);
 
 const LAYER_ATTR = 'data-aim-links';
 const PICKER_ATTR = 'data-aim-link-picker';

@@ -1,8 +1,8 @@
 diff --git b/apps/viewer/src/aim/docLinks.ts a/apps/viewer/src/aim/docLinks.ts
-index 31da23819..d9d8aebcf 100644
+index 4dfd858c7..3b7fb7e35 100644
 --- b/apps/viewer/src/aim/docLinks.ts
 +++ a/apps/viewer/src/aim/docLinks.ts
-@@ -49,7 +49,7 @@ const MAX_TEXT = 80;
+@@ -46,7 +46,7 @@ const MAX_TEXT = 80;
  export function isDocLinksMessage(data: unknown): data is DocLinksMessage {
    if (!data || typeof data !== 'object') return false;
    const msg = data as { source?: unknown; type?: unknown; documents?: unknown };

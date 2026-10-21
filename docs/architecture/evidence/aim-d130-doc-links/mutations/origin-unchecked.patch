@@ -1,8 +1,8 @@
 diff --git b/apps/viewer/src/aim/docLinks.ts a/apps/viewer/src/aim/docLinks.ts
-index def3ac82a..d9d8aebcf 100644
+index 2085d86fb..3b7fb7e35 100644
 --- b/apps/viewer/src/aim/docLinks.ts
 +++ a/apps/viewer/src/aim/docLinks.ts
-@@ -71,7 +71,7 @@ export function acceptsDocLinksEvent(
+@@ -68,7 +68,7 @@ export function acceptsDocLinksEvent(
    if (e.source !== parent) return false;
    if (!referrer) return true;
    try {

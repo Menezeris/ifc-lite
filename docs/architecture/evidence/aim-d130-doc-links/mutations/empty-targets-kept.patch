@@ -1,5 +1,5 @@
 diff --git b/apps/viewer/src/aim/docLinks.ts a/apps/viewer/src/aim/docLinks.ts
-index d8e321357..d9d8aebcf 100644
+index 3d10e193b..3b7fb7e35 100644
 --- b/apps/viewer/src/aim/docLinks.ts
 +++ a/apps/viewer/src/aim/docLinks.ts
 @@ -116,6 +116,7 @@ function normalizeLink(raw: unknown): DocLink | null {
