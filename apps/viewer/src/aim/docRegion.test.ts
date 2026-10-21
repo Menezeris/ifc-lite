@@ -10,14 +10,13 @@ import {
   normalizeDocHighlights,
   normalizeDocRegion,
   regionApplied,
-  regionInside,
   regionScroll,
   regionZoom,
-  visiblePart,
   useAimDocRegionStore,
   REGION_ZOOM_MAX,
   REGION_ZOOM_MIN,
 } from './docRegion.js';
+import { describeVisible, regionInside, visiblePart } from './docVisible.js';
 
 describe('normalizeDocRegion (D-117)', () => {
   it('accepts a page region in fractions', () => {
@@ -168,6 +167,16 @@ describe('viditeľný rozsah karty (AIM D-127, #166)', () => {
     assert.equal(regionInside({ x: 0.598, y: 0.7, w: 0.3, h: 0.3 }, visible), true);
     assert.equal(regionInside({ x: 0.5, y: 0.7, w: 0.3, h: 0.3 }, visible), false);
     assert.equal(regionInside({ x: 0.7, y: 0.7, w: 0.3, h: 0.3 }, null), false);
+  });
+
+  it('stav pre view_state: percentá strany, zoom, karta a či je výrez v zábere', () => {
+    const state = describeVisible('d', 1, 3.333, { left: -500, top: -1000, width: 2000, height: 4000 }, { left: 0, top: 0, width: 400, height: 800 }, { x: 0.3, y: 0.3, w: 0.1, h: 0.1 });
+    assert.deepEqual(state, {
+      document_id: 'd', page: 1, zoom_percent: 333, card: { width: 400, height: 800 },
+      visible: { x: 25, y: 25, width: 20, height: 20 },
+      region: { x: 30, y: 30, width: 10, height: 10 }, region_fully_visible: true,
+    });
+    assert.equal(describeVisible('d', 1, 1, { left: 0, top: 0, width: 10, height: 10 }, { left: 0, top: 0, width: 5, height: 5 }, undefined).region, undefined);
   });
 
   it('úzka karta: zoom podľa jej skutočnej šírky dá celý výrez do záberu', () => {

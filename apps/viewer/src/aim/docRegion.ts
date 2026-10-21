@@ -22,6 +22,7 @@
 
 import { useEffect, useRef, type RefObject } from 'react';
 import { create } from 'zustand';
+import { describeVisible, type DocVisibleState } from './docVisible.js';
 
 /** Výrez strany v zlomkoch (0-1), počiatok vľavo hore. */
 export interface DocRegion {
@@ -84,46 +85,6 @@ export function regionScroll(
   const cx = page.left + (region.x + region.w / 2) * page.width;
   const cy = page.top + (region.y + region.h / 2) * page.height;
   return { left: Math.max(0, cx - viewport.width / 2), top: Math.max(0, cy - viewport.height / 2) };
-}
-
-/**
- * Viditeľná časť strany v zlomkoch (0-1): `page` a `viewport` sú obdĺžniky v
- * súradniciach okna (getBoundingClientRect). null = strana nie je v zábere.
- */
-export function visiblePart(
-  page: { left: number; top: number; width: number; height: number },
-  viewport: { left: number; top: number; width: number; height: number },
-): DocRegion | null {
-  if (page.width <= 0 || page.height <= 0) return null;
-  const x0 = clamp((viewport.left - page.left) / page.width, 0, 1);
-  const y0 = clamp((viewport.top - page.top) / page.height, 0, 1);
-  const x1 = clamp((viewport.left + viewport.width - page.left) / page.width, 0, 1);
-  const y1 = clamp((viewport.top + viewport.height - page.top) / page.height, 0, 1);
-  return x1 > x0 && y1 > y0 ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } : null;
-}
-
-/** Je výrez celý vnútri viditeľnej časti (tolerancia 0,5 % strany na zaokrúhlenie)? */
-export function regionInside(region: DocRegion, visible: DocRegion | null): boolean {
-  if (!visible) return false;
-  const eps = 0.005;
-  return region.x >= visible.x - eps && region.y >= visible.y - eps
-    && region.x + region.w <= visible.x + visible.w + eps && region.y + region.h <= visible.y + visible.h + eps;
-}
-
-/** Zlomky -> percentá strany (ako `region` v open_drawing), na dve desatinné miesta. */
-const toPct = (r: DocRegion) => ({ x: +(r.x * 100).toFixed(2), y: +(r.y * 100).toFixed(2), width: +(r.w * 100).toFixed(2), height: +(r.h * 100).toFixed(2) });
-
-/** Stav karty pre `view_state` (AIM D-127): čo z aktívnej strany je naozaj vidno. */
-export interface DocVisibleState {
-  document_id: string;
-  page: number;
-  zoom_percent: number;
-  /** Plocha karty v px. */
-  card: { width: number; height: number };
-  /** Viditeľná časť strany v % strany; null = strana mimo záberu. */
-  visible: { x: number; y: number; width: number; height: number } | null;
-  region?: { x: number; y: number; width: number; height: number };
-  region_fully_visible?: boolean;
 }
 
 /** Najviac rámikov naraz; viac by výkres zakrylo. */
@@ -358,30 +319,13 @@ export function useAimDocRegion(v: DocRegionViewInputs): void {
   }, [v.docId]);
 }
 
-/** Zapíše, čo zo strany `page` je v ploche karty vidno (AIM D-127). */
-function publishVisible(
-  docId: string,
-  root: HTMLElement,
-  pageEls: Map<number, HTMLDivElement> | null,
-  page: number,
-  zoom: number,
-  region: DocRegion | undefined,
-): void {
+/** Zapíše, čo zo strany `page` je v ploche karty vidno (AIM D-127, výpočet v `docVisible.ts`). */
+function publishVisible(docId: string, root: HTMLElement, pageEls: Map<number, HTMLDivElement> | null, page: number, zoom: number, region: DocRegion | undefined): void {
   const el = pageEls?.get(page);
   if (!el) return;
-  const rootRect = root.getBoundingClientRect();
-  const viewport = { left: rootRect.left, top: rootRect.top, width: root.clientWidth, height: root.clientHeight };
-  const part = visiblePart(el.getBoundingClientRect(), viewport);
-  useAimDocRegionStore.setState({
-    visible: {
-      document_id: docId,
-      page,
-      zoom_percent: Math.round(zoom * 100),
-      card: { width: Math.round(viewport.width), height: Math.round(viewport.height) },
-      visible: part && toPct(part),
-      ...(region ? { region: toPct(region), region_fully_visible: regionInside(region, part) } : {}),
-    },
-  });
+  const r = root.getBoundingClientRect();
+  const viewport = { left: r.left, top: r.top, width: root.clientWidth, height: root.clientHeight };
+  useAimDocRegionStore.setState({ visible: describeVisible(docId, page, zoom, el.getBoundingClientRect(), viewport, region) });
 }
 
 const LAYER_ATTR = 'data-aim-highlights';

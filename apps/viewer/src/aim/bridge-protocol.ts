@@ -23,9 +23,8 @@ export const FILTER_COLOR = '#60a5fa';
 export const FOCUS_COLOR = '#f97316';
 
 /**
- * AIM panel data of the selected element, host-driven. Since AIM D-129 no card
- * renders it: AIM layer rows (last change, GUID history), derived relations and
- * the Documents panel read their fields; `sections`/`actions` are not shown. All `href`s are host-relative paths
+ * AIM panel data of the selected element, host-driven; since AIM D-129 no card: AIM layer rows, derived
+ * relations and the Documents panel read its fields. All `href`s are host-relative paths
  * (e.g. /node/{id}) bounced back via AIM_NAVIGATE — never navigated here.
  */
 export interface AimPanelData {
@@ -49,8 +48,7 @@ export interface AimPanelData {
   captures?: { count: number; href: string };
   /** GUID history entries (bitemporal validity; `active` = current GUID). */
   history?: { guid: string; validFrom: string; validUntil?: string; active: boolean }[];
-  /** AIM D-129: last change by a recipe (model revision vNNN, BCF topic title, date). */
-  lastChange?: { model: string; revision: string; title: string; date: string };
+  lastChange?: { model: string; revision: string; title: string; date: string }; // AIM D-129: last recipe change (vNNN, BCF topic)
   /** D-089: derived relations of the element (Relationship records); see derivations-protocol.ts. */
   derivedRelations?: DerivedRelationWire[];
   derivedTotal?: number;

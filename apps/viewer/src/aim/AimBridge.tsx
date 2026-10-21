@@ -51,8 +51,7 @@ const loadVisibility = () => (visibility ??= import('./visibility-commands.js'))
 
 /** Najdlhšie čakanie `APPLIED` na asynchrónne kroky (rez cez prvok, kamera, Lens); host čaká 3 s. */
 const ACK_WAIT_MS = 2500;
-/** Výrez strany z chatu čaká na otvorenie PDF; dlhšie ako ACK by APPLIED len oneskorilo. */
-const REGION_WAIT_MS = 2200;
+const REGION_WAIT_MS = 2200; // výrez strany z chatu čaká na otvorenie PDF (AIM D-127)
 /** Ak geometria po ohlásení modelov neprestane prúdiť, príkazy sa pustia aj tak. */
 const STREAM_GRACE_MS = 30_000;
 
@@ -215,7 +214,7 @@ export function AimBridge() {
           if (region) {
             const nonce = useAimDocRegionStore.getState().requestRegion(e.data.documentId, region, e.data.page);
             // APPLIED (D-101) počká, kým karta výrez naozaj ukáže, a nesie viditeľný rozsah (AIM D-127).
-            track(regionApplied(nonce, REGION_WAIT_MS).then((ok) => { if (!ok) noteIssue('DOCUMENT_OPEN: výrez strany sa ešte nepoužil (dokument sa načítava)'); }));
+            track(regionApplied(nonce, REGION_WAIT_MS).then((ok) => ok || noteIssue('DOCUMENT_OPEN: výrez strany sa ešte nepoužil (dokument sa načítava)')));
           }
           // Rámiky okolo nájdeného textu (D-123); DOCUMENT_OPEN bez nich staré zruší.
           useAimDocRegionStore
