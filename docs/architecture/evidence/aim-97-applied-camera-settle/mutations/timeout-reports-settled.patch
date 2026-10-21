@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/cameraSettle.ts a/apps/viewer/src/aim/cameraSettle.ts
+index 1265a016..aadeb70e 100644
+--- b/apps/viewer/src/aim/cameraSettle.ts
++++ a/apps/viewer/src/aim/cameraSettle.ts
+@@ -44,5 +44,5 @@ export async function waitCameraSettled(read: () => PoseSample | null | undefine
+     if (near(prev.position, cur.position) && near(prev.target, cur.target)) return true;
+     prev = cur;
+   }
+-  return true;
++  return false;
+ }

@@ -24,6 +24,7 @@ import { VIEWER_AXIS, cameraStep, focusViewStep, pickStorey, storeyCutPercent } 
 import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
 import { sectionRenderBounds as sectionBoundsWith } from './sectionRange.js';
 import { noteIssue, track } from './command-gate.js';
+import { waitCameraSettled } from './cameraSettle.js';
 
 type FocusSummary = () => { count: number; guids: string[] };
 /** Zvýraznenie z FOCUS (#94) - poskytne ho AimBridge po lenivom načítaní príkazov viditeľnosti. */
@@ -70,9 +71,13 @@ function applyGizmo(show: boolean | undefined): void {
 /** Stav pre `APPLIED` (D-101): rez, režim, výber a viditeľnosť po vykonaní príkazov. */
 export async function appliedViewState(): Promise<Record<string, unknown>> {
   const q = await loadQueries();
+  // Kamera po obnove pohľadu ešte dobieha animáciu; stav má niesť jej cieľ (AIM #97, D-122).
+  const settled = await waitCameraSettled(() => useViewerStore.getState().cameraCallbacks.getViewpoint?.() ?? null);
   const s = q.queryViewState(useViewerStore.getState(), { ...GUIDS, focus: focusProvider });
   return {
     mode: s.mode, storey_guid: s.storey_guid, section: s.section, camera: s.camera,
+    // Limit vypršal počas pohybu (používateľ otáča kamerou): póza nie je cieľ, nech to host vie.
+    ...(settled ? {} : { camera_moving: true }),
     selection_count: s.selection.count, hidden_count: s.hidden_count, isolated_count: s.isolated_count, focus: s.focus,
   };
 }

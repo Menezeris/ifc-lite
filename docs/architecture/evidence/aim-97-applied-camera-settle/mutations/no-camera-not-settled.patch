@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/cameraSettle.ts a/apps/viewer/src/aim/cameraSettle.ts
+index cc33c503..aadeb70e 100644
+--- b/apps/viewer/src/aim/cameraSettle.ts
++++ a/apps/viewer/src/aim/cameraSettle.ts
+@@ -35,7 +35,7 @@ export async function waitCameraSettled(read: () => PoseSample | null | undefine
+   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+   const now = opts.now ?? (() => Date.now());
+   let prev = read();
+-  if (!prev) return false;
++  if (!prev) return true;
+   const start = now();
+   while (now() - start < max) {
+     await sleep(step);
