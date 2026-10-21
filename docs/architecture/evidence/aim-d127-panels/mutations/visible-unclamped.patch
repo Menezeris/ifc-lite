@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docVisible.ts a/apps/viewer/src/aim/docVisible.ts
+index d10126a4..b128d219 100644
+--- b/apps/viewer/src/aim/docVisible.ts
++++ a/apps/viewer/src/aim/docVisible.ts
+@@ -21,7 +21,7 @@ export function visiblePart(
+   viewport: { left: number; top: number; width: number; height: number },
+ ): DocRegion | null {
+   if (page.width <= 0 || page.height <= 0) return null;
+-  const x0 = (viewport.left - page.left) / page.width;
++  const x0 = clamp((viewport.left - page.left) / page.width, 0, 1);
+   const y0 = clamp((viewport.top - page.top) / page.height, 0, 1);
+   const x1 = clamp((viewport.left + viewport.width - page.left) / page.width, 0, 1);
+   const y1 = clamp((viewport.top + viewport.height - page.top) / page.height, 0, 1);

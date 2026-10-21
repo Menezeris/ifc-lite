@@ -3,24 +3,31 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * Stav prepínača AIM | IFC (D-077) a značka "focus z chatu" (AIM D-113), bez
- * UI: číta ho `AimInspectorTabs` aj lenivý `visibility-commands` (SELECT s
- * `panel`), takže lenivý modul nepotiahne komponent záložiek.
+ * Výsledok zvýraznenia vlastnosti z chatu (AIM D-113, D-127) a značka "focus z
+ * chatu", bez UI: zapisuje ho lenivý `aimPanelView`, číta `view_state` (APPLIED).
  */
 
 import { create } from 'zustand';
 import type { PropertyFocusTarget } from '../store/slices/uiSlice.js';
 
-export type InspectorTab = 'aim' | 'ifc';
+/** Zvýraznená vlastnosť z chatu (AIM D-127): kde sa našla, alebo že na prvku nie je. */
+export interface PropertyFocusState {
+  pset: string;
+  property: string;
+  found: boolean;
+  section?: 'properties' | 'quantities';
+  /** true = riadok je v psete zdedenom z typu. */
+  from_type?: boolean;
+}
 
 interface AimInspectorState {
-  tab: InspectorTab;
-  setTab: (tab: InspectorTab) => void;
+  propertyFocus: PropertyFocusState | null;
+  setPropertyFocus: (focus: PropertyFocusState | null) => void;
 }
 
 export const useAimInspectorStore = create<AimInspectorState>((set) => ({
-  tab: 'aim',
-  setTab: (tab) => set({ tab }),
+  propertyFocus: null,
+  setPropertyFocus: (propertyFocus) => set({ propertyFocus }),
 }));
 
 /**

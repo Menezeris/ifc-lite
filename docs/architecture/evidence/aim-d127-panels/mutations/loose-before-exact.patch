@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/aimPanelViewPlan.ts a/apps/viewer/src/aim/aimPanelViewPlan.ts
+index f9c7647a..49cdb639 100644
+--- b/apps/viewer/src/aim/aimPanelViewPlan.ts
++++ a/apps/viewer/src/aim/aimPanelViewPlan.ts
+@@ -87,5 +87,5 @@ export function propKeyEntity(key: string, pset: string, property: string): numb
+ /** Index mena v zozname: presná zhoda, inak bez ohľadu na veľkosť písmen; -1 = nie je. */
+ export function matchName(names: ReadonlyArray<string | null | undefined>, want: string): number {
+   const exact = names.findIndex((n) => same(n, want));
+-  const loose = names.findIndex((n) => sameLoose(n, want)); return loose >= 0 ? loose : exact;
++  return exact >= 0 ? exact : names.findIndex((n) => sameLoose(n, want));
+ }

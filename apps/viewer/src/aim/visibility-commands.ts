@@ -116,7 +116,7 @@ export function runVisibilityCommand(
       // Výber ako klik myšou (D-082): ENTITY_SELECTED musí ísť hostovi, preto nie je programový.
       const panel = selectPanel(msg.panel);
       if (panel === null) {
-        d.noteIssue('SELECT: neplatný panel (tab aim|ifc, section properties|quantities, focus pset + property)');
+        d.noteIssue('SELECT: neplatný panel (section properties|quantities, focus pset + property)');
         return true;
       }
       const state = useViewerStore.getState();

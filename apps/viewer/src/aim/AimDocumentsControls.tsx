@@ -10,8 +10,9 @@
  *     and the "len pre výber" switch (the panel's filter searches name and
  *     metadata through documentsQuery.ts);
  *   · AimSelectionDocuments: effective documents of the selected element from
- *     the AIM card (AIM_PANEL_DATA), with the path and page; a click opens the
- *     PDF in the viewer at that page.
+ *     AIM_PANEL_DATA, with the path and page; a click opens the PDF in the
+ *     viewer at that page. Documents inherited through zone, storey or group
+ *     carry an AIM badge (AIM D-129): they are an AIM layer, not IFC.
  *
  * Grouping and search are pure functions in documentsQuery.ts; the view state
  * lives in a small local store so the panel keeps it across re-mounts.
@@ -117,7 +118,14 @@ export function AimSelectionDocuments({ docs, filter }: { docs: ReadonlyMap<stri
                 {item.name}
                 {item.page && <span className="ml-1.5 text-2xs text-muted-foreground">s. {item.page}</span>}
               </span>
-              {item.via && <span className="block truncate text-2xs text-muted-foreground">{item.via}</span>}
+              {item.via && (
+                <span className="flex min-w-0 items-center gap-1 text-2xs text-muted-foreground">
+                  {item.aim && (
+                    <span className="shrink-0 border border-primary/50 bg-primary/10 px-1 font-mono font-bold leading-none text-primary" title="Zdedené cez vzťah: vrstva AIM, nie je v IFC">AIM</span>
+                  )}
+                  <span className="truncate">{item.via}</span>
+                </span>
+              )}
             </span>
           </button>
         ))

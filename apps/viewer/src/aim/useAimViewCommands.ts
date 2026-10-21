@@ -53,6 +53,8 @@ const sectionRenderBounds = (state: Parameters<typeof sectionBoundsWith>[0]) => 
 const GUIDS = { resolveGuids, guidForEntity, sectionRenderBounds };
 let camera: Promise<typeof import('./viewCamera.js')> | null = null;
 const loadCamera = () => (camera ??= import('./viewCamera.js'));
+let panels: Promise<typeof import('./aimPanels.js')> | null = null;
+const loadPanels = () => (panels ??= import('./aimPanels.js'));
 let measure: Promise<typeof import('./measureShow.js')> | null = null;
 /** Kóty od hosta (AIM D-124) - lenivo, mimo vstupného balíka. */
 const loadMeasure = () => (measure ??= import('./measureShow.js'));
@@ -85,6 +87,7 @@ export async function appliedViewState(): Promise<Record<string, unknown>> {
     // Limit vypršal počas pohybu (používateľ otáča kamerou): póza nie je cieľ, nech to host vie.
     ...(settled ? {} : { camera_moving: true }),
     selection_count: s.selection.count, hidden_count: s.hidden_count, isolated_count: s.isolated_count, focus: s.focus,
+    panels: s.panels, ...(s.property_focus ? { property_focus: s.property_focus } : {}), ...(s.document ? { document: s.document } : {}),
   };
 }
 
@@ -161,6 +164,10 @@ export function useAimViewCommands(bim: BimContext) {
       }
       case 'MEASURE_SHOW': {
         track(loadMeasure().then((m) => m.showMeasurements(msg)));
+        return;
+      }
+      case 'SET_PANELS': {
+        track(loadPanels().then((m) => m.applyPanels(msg.panels, noteIssue)));
         return;
       }
       case 'SET_VIEW_MODE': {

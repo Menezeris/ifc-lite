@@ -6,14 +6,16 @@
  * Panel vlastností z chatu (AIM D-113): validácia `panel` v správe `SELECT` a
  * čo z neho viewer nastaví. Bez store; aplikácia je v `aimPanelView.ts`, volá ju
  * lenivý `visibility-commands.ts` (vstupný balík validáciu nenesie).
+ *
+ * AIM D-127: panel má len IFC obsah (prepínač AIM | IFC zmizol), `tab` sa ešte
+ * prijme kvôli starším odkazom, ale nič nenastaví. Zvýraznená vlastnosť môže
+ * byť aj výmera (Qto) alebo vlastnosť zdedená z typu a drží sa do ďalšieho výberu.
  */
-
-import type { InspectorTab } from './aimInspectorStore.js';
 
 export type PanelSection = 'properties' | 'quantities';
 
 export interface AimPanelView {
-  tab?: InspectorTab;
+  tab?: 'aim' | 'ifc';
   section?: PanelSection;
   focus?: { pset: string; property: string };
 }
@@ -29,7 +31,7 @@ export function parsePanelView(raw: unknown): AimPanelView | null {
   const out: AimPanelView = {};
   if (p.tab !== undefined) {
     if (typeof p.tab !== 'string' || !TABS.has(p.tab)) return null;
-    out.tab = p.tab as InspectorTab;
+    out.tab = p.tab as 'aim' | 'ifc';
   }
   if (p.section !== undefined) {
     if (typeof p.section !== 'string' || !SECTIONS.has(p.section)) return null;
@@ -51,21 +53,39 @@ export function selectPanel(raw: unknown): AimPanelView | undefined | null {
   return raw === undefined || raw === null ? undefined : parsePanelView(raw);
 }
 
-/**
- * Focus pre panel, len ak je vybraný stále prvok zo `SELECT`: medzičasom iný výber
- * (rýchly ďalší SELECT, klik) by dostal vlastnosť určenú pre predchádzajúci prvok.
- */
-export function focusFor(
-  sel: { modelId: string; expressId: number } | null | undefined,
-  target: { modelId: string; expressId: number },
-  focus: { pset: string; property: string },
-): { modelId: string; entityId: number; psetName: string; propName: string } | null {
-  if (!sel || sel.modelId !== target.modelId || sel.expressId !== target.expressId) return null;
-  return { modelId: sel.modelId, entityId: sel.expressId, psetName: focus.pset, propName: focus.property };
+/** Výmery: sady `Qto_` aj `BaseQuantities` sú v sekcii Quantities. */
+export const isQuantitySetName = (pset: string): boolean => /^(Qto_|BaseQuantities$)/i.test(pset.trim());
+
+/** Čo sa má nastaviť: sekcia podľa focusu (výmera = Quantities), inak podľa `section`. */
+export function panelPlan(view: AimPanelView): { section?: PanelSection; focus?: { pset: string; property: string } } {
+  if (view.focus) return { section: isQuantitySetName(view.focus.pset) ? 'quantities' : 'properties', focus: view.focus };
+  return view.section ? { section: view.section } : {};
 }
 
-/** Čo sa má nastaviť: focus vlastnosti žije v sekcii Properties pod záložkou IFC. */
-export function panelPlan(view: AimPanelView): { tab?: InspectorTab; section?: PanelSection; focus?: { pset: string; property: string } } {
-  if (view.focus) return { tab: 'ifc', section: 'properties', focus: view.focus };
-  return { ...(view.tab ? { tab: view.tab } : {}), ...(view.section ? { tab: view.tab ?? 'ifc', section: view.section } : {}) };
+/** Poradie sekcií, v ktorých sa vlastnosť hľadá: najprv podľa mena sady, potom druhá. */
+export function focusSections(pset: string): PanelSection[] {
+  return isQuantitySetName(pset) ? ['quantities', 'properties'] : ['properties', 'quantities'];
+}
+
+const same = (a: string | null | undefined, b: string) => (a ?? '').trim() === b.trim();
+const sameLoose = (a: string | null | undefined, b: string) => (a ?? '').trim().toLowerCase() === b.trim().toLowerCase();
+
+/**
+ * Kľúč riadka upstream panela je `<entityId>:<pset>:<vlastnosť>` (`PropertySetCard`).
+ * Vráti id entity riadka (výskyt alebo typ), ak riadok patrí hľadanej vlastnosti.
+ */
+export function propKeyEntity(key: string, pset: string, property: string): number | null {
+  const i = key.indexOf(':');
+  if (i <= 0) return null;
+  const id = Number(key.slice(0, i));
+  if (!Number.isInteger(id)) return null;
+  const rest = key.slice(i + 1);
+  if (same(rest, `${pset}:${property}`) || sameLoose(rest, `${pset}:${property}`)) return id;
+  return null;
+}
+
+/** Index mena v zozname: presná zhoda, inak bez ohľadu na veľkosť písmen; -1 = nie je. */
+export function matchName(names: ReadonlyArray<string | null | undefined>, want: string): number {
+  const exact = names.findIndex((n) => same(n, want));
+  return exact >= 0 ? exact : names.findIndex((n) => sameLoose(n, want));
 }
