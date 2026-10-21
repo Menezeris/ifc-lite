@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docRegion.ts a/apps/viewer/src/aim/docRegion.ts
+index 11102941..3e3b12ad 100644
+--- b/apps/viewer/src/aim/docRegion.ts
++++ a/apps/viewer/src/aim/docRegion.ts
+@@ -234,7 +234,7 @@ export const useAimDocRegionStore = create<DocRegionState>((set, get) => ({
+   },
+   clear: (nonce) => {
+     if (get().request?.nonce === nonce) set({ request: null });
+-    void waiters;
++    waiters.get(nonce)?.();
+   },
+ }));
+ 
