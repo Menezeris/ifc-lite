@@ -41,10 +41,7 @@ import { isDerivationsMessage } from './derivations-protocol.js';
 import { isBcfLoadMessage, loadBcfTopics } from './bcf-protocol.js';
 import { dispatchLensMessage, isLensEnvelope, lensSettled, resetLensFromChat } from './lens-protocol.js';
 import { appliedViewState, prepareFocusView, setChangesProvider, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
-import { activeSectionPlane } from '@/store/section-active';
-import { deriveViewMode } from '@/hooks/viewModeCore';
-import { AUTO_COLOR_FROM_LIST_ID } from '@/lib/lens/persistence';
-import { describeViewChanges, sectionLabel, type ViewSnapshot } from './viewDelta.js';
+import { createViewChangeTracker } from './viewChanges.js';
 
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
@@ -52,23 +49,6 @@ const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER
 const VIS_DEPS = { resolveGuids, resolveSelector, selectPickedGlobalId, noteIssue, track, FOCUS_COLOR, FILTER_COLOR, prepareFocusView };
 let visibility: Promise<typeof import('./visibility-commands.js')> | null = null;
 const loadVisibility = () => (visibility ??= import('./visibility-commands.js'));
-
-/** Stav pohľadu na porovnanie zmien mimo príkazov (AIM D-125, #180); kamera nie. */
-function viewSnapshot(): ViewSnapshot {
-  const s = useViewerStore.getState();
-  const lens = s.activeLensId === null ? null : s.savedLenses.find((l) => l.id === s.activeLensId);
-  const rules = lens ? lens.rules.filter((r) => !r.id.endsWith('~vol')).length : 0;
-  return {
-    isolated: s.isolatedEntities ? s.isolatedEntities.size : null,
-    xray: s.ghostExceptEntities ? s.ghostExceptEntities.size : null,
-    hidden: s.hiddenEntities.size,
-    section: sectionLabel(activeSectionPlane(s)),
-    selection: s.selectedEntityIds.size > 0 ? s.selectedEntityIds.size : s.selectedEntityId !== null ? 1 : 0,
-    mode: deriveViewMode({ splitView: s.underlaySplitView, planFull: s.underlayPlanFull, viewLocked: s.underlayViewLocked }),
-    lens: s.activeLensId === null ? null
-      : s.activeLensId === AUTO_COLOR_FROM_LIST_ID && lens ? `${lens.name} (${rules} pravidiel)` : (lens?.name ?? s.activeLensId),
-  };
-}
 
 /** Najdlhšie čakanie `APPLIED` na asynchrónne kroky (rez cez prvok, kamera, Lens); host čaká 3 s. */
 const ACK_WAIT_MS = 2500;
@@ -109,14 +89,8 @@ export function AimBridge() {
 
     const origin = () => parentOriginRef.current ?? '*';
     const gate = gateRef.current;
-    // Stav po poslednom potvrdenom príkaze a pred prvým krokom ďalšieho (D-125): rozdiel = zmeny mimo príkazov.
-    let lastAcked: ViewSnapshot | null = null;
-    let beforeCommand: ViewSnapshot | null = null;
-    const command = (fn: () => void) => gate.run(() => {
-      beforeCommand ??= viewSnapshot();
-      fn();
-    });
-    setChangesProvider(() => (lastAcked ? describeViewChanges(lastAcked, viewSnapshot()) : []));
+    const changes = createViewChangeTracker(setChangesProvider); // zmeny pohľadu mimo príkazov (D-125)
+    const command = (fn: () => void) => gate.run(() => { changes.beforeCommand(); fn(); });
     // Modul príkazov viditeľnosti sa načíta hneď (mimo vstupného balíka); brána drží príkazy
     // až do načítania modelov, takže je vtedy pripravený a príkazy idú synchrónne v poradí.
     let vis: Awaited<ReturnType<typeof loadVisibility>> | null = null;
@@ -144,10 +118,7 @@ export function AimBridge() {
       // Problémy až po stave a Lens, aby ich chyby patrili do tohto potvrdenia.
       const issues = takeIssues();
       if (!done) issues.push('niektoré kroky vo vieweri ešte bežia');
-      const outside = lastAcked ? describeViewChanges(lastAcked, beforeCommand ?? viewSnapshot()) : [];
-      lastAcked = viewSnapshot();
-      beforeCommand = null;
-      const extra = { ...(lens ? { lens } : {}), ...(outside.length > 0 ? { changed_outside_commands: outside } : {}) };
+      const extra = { ...(lens ? { lens } : {}), ...changes.ackedState() };
       const applied: AppliedMessage = { source: SOURCE, type: 'APPLIED', cmdId, ok: issues.length === 0, issues, state: state && { ...state, ...extra } };
       window.parent.postMessage(applied, origin());
     }
@@ -177,8 +148,7 @@ export function AimBridge() {
       }
       if (isCommandMessage(e.data)) {
         const msg = e.data;
-        if (msg.type === 'ACK_REQUEST') gate.run(() => void answerAck(msg.cmdId));
-        else command(() => runVisibility(msg));
+        if (msg.type === 'ACK_REQUEST') gate.run(() => void answerAck(msg.cmdId)); else command(() => runVisibility(msg));
         return;
       }
       if (isDerivationsMessage(e.data)) {
