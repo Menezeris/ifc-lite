@@ -77,7 +77,7 @@ export function AimViewTabsBar() {
                 onClick={() => activate(tab.id, warn)}
                 onAuxClick={(e) => { if (e.button === 1 && tab.kind !== '3d') close(tab.id, warn); }}
                 className={cn(
-                  'flex min-w-0 items-center gap-1 py-1 pl-2 pr-1 text-2xs',
+                  'flex min-h-6 min-w-0 items-center gap-1 py-1 pl-2 pr-1 text-2xs',
                   isActive ? 'font-medium' : 'text-muted-foreground',
                 )}
               >
