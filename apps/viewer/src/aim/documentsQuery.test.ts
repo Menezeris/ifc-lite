@@ -80,6 +80,17 @@ describe('documentsQuery (D-104)', () => {
     assert.deepEqual(selectionDocuments(undefined, library), []);
   });
 
+  it('marks documents inherited through a relation as the AIM layer (AIM D-129)', () => {
+    const items = selectionDocuments(
+      [
+        { name: 'Typový list', href: '/drawing/t1', via: 'cez typ D1' },
+        { name: 'Požiarna správa', href: '/drawing/z1', via: 'cez zónu N1.01', aim: true },
+      ],
+      new Map(),
+    );
+    assert.deepEqual(items.map((i) => i.aim ?? false), [false, true]);
+  });
+
   it('asks the host for elements of the page being read, only for host documents', () => {
     assert.deepEqual(show3dTarget('d9', 3), { documentId: 'd9', page: 3 });
     assert.deepEqual(show3dTarget('d9', 0), { documentId: 'd9' });

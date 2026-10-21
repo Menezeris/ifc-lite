@@ -378,7 +378,7 @@ export function AimBridge() {
     }
     const guid = guidForEntity(useViewerStore.getState().models, selectedEntity);
     if (guid) {
-      // AimCard shows its skeleton immediately; the host answers with
+      // AIM layer rows wait for the host's answer:
       // AIM_PANEL_DATA / AIM_PANEL_EMPTY (or the store times out quietly).
       useAimPanelStore.getState().beginLoading(guid);
       window.parent.postMessage({ source: SOURCE, type: 'ENTITY_SELECTED', guid } satisfies OutboundMessage, targetOrigin);

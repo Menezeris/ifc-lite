@@ -9,8 +9,8 @@
  * under src/aim so upstream rebases touch zero shared files.
  *
  * The payload is a host-driven render schema: the host decides labels, rows,
- * sections and links; this side renders it generically (see AimCard.tsx).
- * New AIM fields therefore never require a viewer redeploy.
+ * sections and links. Since AIM D-129 there is no AIM card: the AIM layer rows
+ * (AimInspectorTabs.tsx), Relationship records and the Documents panel read it.
  */
 
 import { create } from 'zustand';

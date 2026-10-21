@@ -23,9 +23,9 @@ export const FILTER_COLOR = '#60a5fa';
 export const FOCUS_COLOR = '#f97316';
 
 /**
- * AIM card render schema — host-driven: the AIM app decides labels, rows,
- * sections and links; AimCard.tsx renders it generically, so new AIM fields
- * never require a viewer redeploy. All `href`s are host-relative paths
+ * AIM panel data of the selected element, host-driven. Since AIM D-129 no card
+ * renders it: AIM layer rows (last change, GUID history), derived relations and
+ * the Documents panel read their fields; `sections`/`actions` are not shown. All `href`s are host-relative paths
  * (e.g. /node/{id}) bounced back via AIM_NAVIGATE — never navigated here.
  */
 export interface AimPanelData {
@@ -49,6 +49,8 @@ export interface AimPanelData {
   captures?: { count: number; href: string };
   /** GUID history entries (bitemporal validity; `active` = current GUID). */
   history?: { guid: string; validFrom: string; validUntil?: string; active: boolean }[];
+  /** AIM D-129: last change by a recipe (model revision vNNN, BCF topic title, date). */
+  lastChange?: { model: string; revision: string; title: string; date: string };
   /** D-089: derived relations of the element (Relationship records); see derivations-protocol.ts. */
   derivedRelations?: DerivedRelationWire[];
   derivedTotal?: number;
@@ -146,8 +148,8 @@ export type InboundMessage =
   | { source: typeof SOURCE; type: 'ISOLATE'; guids?: string[]; selector?: OpsSelector }
   | { source: typeof SOURCE; type: 'SHOW_ALL' }
   | { source: typeof SOURCE; type: 'RESET_COLORS' }
-  // AIM panel data for the selected element (host DB → AimCard in the
-  // PropertiesPanel). Guid-stamped so stale answers are dropped store-side.
+  // AIM panel data for the selected element (host DB → AIM layer rows,
+  // Relationship records and Documents). Guid-stamped so stale answers are dropped store-side.
   | { source: typeof SOURCE; type: 'AIM_PANEL_DATA'; guid: string; data: AimPanelData }
   | { source: typeof SOURCE; type: 'AIM_PANEL_EMPTY'; guid: string; reason: string }
   // Georeferenced PDF underlays (D-072): the host pushes its drawing list
@@ -171,7 +173,7 @@ export type OutboundMessage =
   | { source: typeof SOURCE; type: 'MODELS_LOADED'; count: number }
   | { source: typeof SOURCE; type: 'ENTITY_SELECTED'; guid: string }
   | { source: typeof SOURCE; type: 'ENTITY_DESELECTED' }
-  // Click on a link inside the AimCard — the parent app performs the
+  // Click on an AIM link (a document outside the library) — the parent app performs the
   // navigation (href is a host-relative path, e.g. /node/{id}).
   | { source: typeof SOURCE; type: 'AIM_NAVIGATE'; href: string }
   // A drawing was (re)calibrated in the viewer — the host persists the

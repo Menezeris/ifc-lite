@@ -93,6 +93,8 @@ export interface AimCardDocumentWire {
   page?: number;
   /** How the element reaches the document, e.g. "cez zónu NJ - 3NP". */
   via?: string;
+  /** AIM D-129: inherited through zone, storey, group... (an AIM layer, not in IFC). */
+  aim?: boolean;
 }
 
 export interface SelectionDocument<D extends QueryDocument> {
@@ -102,6 +104,8 @@ export interface SelectionDocument<D extends QueryDocument> {
   doc: D | null;
   page?: number;
   via?: string;
+  /** AIM layer (D-129): shown with an AIM badge. */
+  aim?: boolean;
   href: string;
 }
 
@@ -130,6 +134,7 @@ export function selectionDocuments<D extends QueryDocument>(
       doc,
       ...(entry.page ? { page: entry.page } : {}),
       ...(entry.via ? { via: entry.via } : {}),
+      ...(entry.aim === true ? { aim: true } : {}),
       href: entry.href,
     });
   });

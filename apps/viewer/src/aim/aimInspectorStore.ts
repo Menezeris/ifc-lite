@@ -3,10 +3,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * Stav AIM karty v paneli vlastností (D-077; od AIM D-127 bez prepínača AIM | IFC,
- * karta je zbalený blok nad IFC obsahom) a výsledok zvýraznenia vlastnosti z chatu
- * (AIM D-113, D-127), bez UI: číta ho `AimInspectorTabs`, lenivý `aimPanelView`
- * aj `view_state` (APPLIED), takže lenivé moduly nepotiahnu komponent karty.
+ * Výsledok zvýraznenia vlastnosti z chatu (AIM D-113, D-127) a značka "focus z
+ * chatu", bez UI: zapisuje ho lenivý `aimPanelView`, číta `view_state` (APPLIED).
  */
 
 import { create } from 'zustand';
@@ -23,16 +21,11 @@ export interface PropertyFocusState {
 }
 
 interface AimInspectorState {
-  /** AIM karta nad IFC obsahom: predvolene zbalená (AIM D-127). */
-  cardOpen: boolean;
-  setCardOpen: (open: boolean) => void;
   propertyFocus: PropertyFocusState | null;
   setPropertyFocus: (focus: PropertyFocusState | null) => void;
 }
 
 export const useAimInspectorStore = create<AimInspectorState>((set) => ({
-  cardOpen: false,
-  setCardOpen: (cardOpen) => set({ cardOpen }),
   propertyFocus: null,
   setPropertyFocus: (propertyFocus) => set({ propertyFocus }),
 }));
