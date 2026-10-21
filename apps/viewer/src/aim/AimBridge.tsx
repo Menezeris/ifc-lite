@@ -268,7 +268,7 @@ export function AimBridge() {
       useCapturePinsStore.getState().setPins([]);
       useAimDecorationsStore.getState().clear();
       useAimDerivationsStore.getState().clear();
-      useAimDocRegionStore.setState({ request: null, highlights: null }); // D-117/D-123: výrez ani rámiky nepatria ďalšej relácii
+      useAimDocRegionStore.setState({ request: null, highlights: null, visible: null }); // D-117/D-123/D-127: výrez, rámiky ani rozsah nepatria ďalšej relácii
       resetLensFromChat(); // D-096: izolácia a AIM chat lens neprežijú odpojenie mostu
       setFocusProvider(undefined);
       resetCommandState(); // problémy a kroky z predošlej relácie nepatria do ďalšieho APPLIED

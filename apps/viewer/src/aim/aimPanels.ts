@@ -39,8 +39,9 @@ function closePanel(s: Store, key: PanelKey): void {
       s.setListPanelVisible(false);
       return;
     case 'properties':
-      // Vlastnosti sú záloha pravého stĺpca: zavrieť ich = zbaliť stĺpec, keď ho práve držia.
-      if (s.sidebarActivePanel === 'properties' && s.sidebarMode !== 'collapsed') s.setSidebarMode('collapsed');
+      // Vlastnosti sú záloha pravého stĺpca: v spodnej polovici splitu ju uvoľnia, v hornej zbalia stĺpec.
+      if (s.sidebarSecondaryPanel === 'properties') s.setSidebarSecondaryPanel(null);
+      else if (s.sidebarActivePanel === 'properties' && s.sidebarMode !== 'collapsed') s.setSidebarMode('collapsed');
       return;
   }
 }
