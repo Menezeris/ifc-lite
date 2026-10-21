@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/documentsQuery.ts a/apps/viewer/src/aim/documentsQuery.ts
+index 2d17a6f80..64121f1ef 100644
+--- b/apps/viewer/src/aim/documentsQuery.ts
++++ a/apps/viewer/src/aim/documentsQuery.ts
+@@ -173,7 +173,7 @@ export function selectionMedia(
+   const byKind = new Map<string, CaptureMediaWire[]>();
+   for (const item of media ?? []) {
+     const probe: QueryDocument = { id: item.id, name: [item.name, item.kindLabel, item.via ?? '', item.capturedAt ?? ''].join(' ') };
+-    void probe;
++    if (!matchesFilter(probe, filter)) continue;
+     const { thumbUrl, ...rest } = item;
+     const safe = thumbUrl && /^https?:\/\//i.test(thumbUrl) ? { ...rest, thumbUrl } : rest;
+     const label = item.kindLabel || item.kind;

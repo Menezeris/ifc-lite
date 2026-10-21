@@ -44,8 +44,8 @@ export interface AimPanelData {
   // --- v2 typed sections (D-077: AIM inspector) ---
   /** Responsible persons/organizations for the element (host DB roles). */
   responsibilities?: { name: string; role: string; org?: string; href?: string }[];
-  /** Reality-capture summary — count + host link opening the gallery. */
-  captures?: { count: number; href: string };
+  captures?: { count: number; href: string }; // reality-capture summary: count + host link opening the gallery
+  captureMedia?: import('./documentsQuery.js').CaptureMediaWire[]; // AIM D-131: media of the space, by kind in Documents
   /** GUID history entries (bitemporal validity; `active` = current GUID). */
   history?: { guid: string; validFrom: string; validUntil?: string; active: boolean }[];
   lastChange?: { model: string; revision: string; title: string; date: string }; // AIM D-129: last recipe change (vNNN, BCF topic)

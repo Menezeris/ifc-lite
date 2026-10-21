@@ -142,6 +142,50 @@ export function selectionDocuments<D extends QueryDocument>(
 }
 
 /**
+ * One Reality Capture medium of the selected space (`AimPanelData.captureMedia`,
+ * AIM D-131): an AIM layer from the host's DB, not an IFC document and not in
+ * DOCUMENTS_LOAD. A click navigates the host to `href` (the space's gallery).
+ */
+export interface CaptureMediaWire {
+  id: string;
+  name: string;
+  /** Media kind code (FOTO, PANO360, SKEN). */
+  kind: string;
+  /** Media kind name, the group heading. */
+  kindLabel: string;
+  href: string;
+  thumbUrl?: string;
+  /** `YYYY-MM-DD`. */
+  capturedAt?: string;
+  /** "v miestnosti X" or "cez miestnosť X". */
+  via?: string;
+}
+
+/**
+ * The selection's media grouped by kind (AIM D-131), filtered like the
+ * documents (name, kind, path, date). Groups by name; media keep the host's
+ * order (newest first). A thumbnail that is not http(s) is dropped.
+ */
+export function selectionMedia(
+  media: readonly CaptureMediaWire[] | undefined,
+  filter = '',
+): [string, CaptureMediaWire[]][] {
+  const byKind = new Map<string, CaptureMediaWire[]>();
+  for (const item of media ?? []) {
+    const probe: QueryDocument = { id: item.id, name: [item.name, item.kindLabel, item.via ?? '', item.capturedAt ?? ''].join(' ') };
+    if (!matchesFilter(probe, filter)) continue;
+    const { thumbUrl, ...rest } = item;
+    const safe = thumbUrl && /^https?:\/\//i.test(thumbUrl) ? { ...rest, thumbUrl } : rest;
+    const label = item.kindLabel || item.kind;
+    const list = byKind.get(label);
+    if (list) list.push(safe);
+    else byKind.set(label, [safe]);
+  }
+  const collator = new Intl.Collator('sk', { numeric: true });
+  return [...byKind.entries()].sort(([a], [b]) => collator.compare(a, b));
+}
+
+/**
  * Payload of DOCUMENT_SHOW_3D for an open document: only host documents (a file
  * opened locally has no elements in the host's graph), the page only when it is
  * a real 1-based page. The host falls back to the whole document when the page

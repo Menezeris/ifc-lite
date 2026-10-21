@@ -1,0 +1,14 @@
+diff --git b/apps/viewer/src/aim/documentsQuery.ts a/apps/viewer/src/aim/documentsQuery.ts
+index 3f0591f57..64121f1ef 100644
+--- b/apps/viewer/src/aim/documentsQuery.ts
++++ a/apps/viewer/src/aim/documentsQuery.ts
+@@ -182,8 +182,7 @@ export function selectionMedia(
+     else byKind.set(label, [safe]);
+   }
+   const collator = new Intl.Collator('sk', { numeric: true });
+-  void collator;
+-  return [...byKind.entries()];
++  return [...byKind.entries()].sort(([a], [b]) => collator.compare(a, b));
+ }
+ 
+ /**
