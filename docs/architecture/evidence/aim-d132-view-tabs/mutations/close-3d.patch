@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTabsPlan.ts a/apps/viewer/src/aim/viewTabsPlan.ts
+index 6bb2c221f..723d9f86c 100644
+--- b/apps/viewer/src/aim/viewTabsPlan.ts
++++ a/apps/viewer/src/aim/viewTabsPlan.ts
+@@ -95,7 +95,7 @@ export function setBeside(s: ViewTabsState, id: string | null): ViewTabsState {
+  */
+ export function closeTab(s: ViewTabsState, id: string): ViewTabsState {
+   const idx = s.tabs.findIndex((t) => t.id === id);
+-  if (idx < 0) return s;
++  if (idx < 0 || s.tabs[idx].kind === '3d') return s;
+   const tabs = s.tabs.filter((t) => t.id !== id);
+   if (id === s.besideId) return { ...s, tabs, besideId: null };
+   if (id !== s.activeId) return { ...s, tabs };

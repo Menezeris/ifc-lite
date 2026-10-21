@@ -16,6 +16,8 @@ import { toGlobalIdFromModels } from '../store/globalId.js';
 import { selectPickedGlobalId } from '../components/viewer/viewport-selection.js';
 import { SOURCE, resolveGuids, type InboundMessage, type OutboundMessage } from './bridge-protocol.js';
 import { noteIssue, track } from './command-gate.js';
+import { documentLayout } from './tabs-protocol.js';
+import { useAimViewTabs, withTabs } from './viewTabsStore.js';
 import { normalizeDocHighlights, normalizeDocRegion, regionApplied, useAimDocRegionStore } from './docRegion.js';
 import { listenDocLinks } from './docLinks.js';
 
@@ -59,7 +61,12 @@ export function handleDocumentMessage(msg: InboundMessage): boolean {
     case 'DOCUMENT_OPEN': {
       // Deep link (D-075): otvor dokument ako kartu. Neznáme id je no-op
       // (openDocument si to ustráži) — host mohol poslať staršiu linku.
+      // AIM D-132: záložka na celú plochu, alebo (`layout: 'split'`) vedľa 3D.
+      useAimViewTabs.setState({ bridgeDocId: msg.documentId });
       useViewerStore.getState().openDocument(msg.documentId, msg.page !== undefined ? { page: msg.page } : undefined);
+      const layout = documentLayout(msg);
+      const p = withTabs((m) => m.showDoc(msg.documentId, layout, noteIssue));
+      if (p) track(p);
       // Výrez strany z chatu (D-117): karta sa priblíži, keď je PDF otvorené.
       const region = normalizeDocRegion(msg.region);
       if (region) {

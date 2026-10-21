@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionBox.ts a/apps/viewer/src/aim/sectionBox.ts
+index 3969bf60d..0c754b8b2 100644
+--- b/apps/viewer/src/aim/sectionBox.ts
++++ a/apps/viewer/src/aim/sectionBox.ts
+@@ -50,7 +50,7 @@ export function isSectionBoxMessage(data: unknown): data is SectionBoxMessage {
+ /** Render-rámcový box -> `SectionBox` upstreamu (polia [x, y, z]), s okrajom. */
+ export function toSectionBox(box: { min: Vec3Wire; max: Vec3Wire }, margin = 0) {
+   return {
+-    min: [box.min.x, box.min.y, box.min.z] as [number, number, number],
++    min: [box.min.x - margin, box.min.y - margin, box.min.z - margin] as [number, number, number],
+     max: [box.max.x + margin, box.max.y + margin, box.max.z + margin] as [number, number, number],
+   };
+ }

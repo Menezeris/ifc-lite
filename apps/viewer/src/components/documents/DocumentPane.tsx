@@ -23,7 +23,9 @@ import { ImageDocumentView } from './ImageDocumentView';
 import { AimDocumentShow3d } from '@/aim/AimDocumentShow3d';
 // <<< AIM-FORK
 
-export function DocumentPane() {
+// >>> AIM-FORK: on desktop the view tab bar lists the documents, so the pane hides its own strip (AIM D-132)
+export function DocumentPane({ hideTabs = false }: { hideTabs?: boolean } = {}) {
+// <<< AIM-FORK
   const docs = useViewerStore((s) => s.viewerDocuments);
   const tabs = useViewerStore((s) => s.docTabs);
   const activeId = useViewerStore((s) => s.activeDocTabId);
@@ -39,9 +41,9 @@ export function DocumentPane() {
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden border-l bg-background">
-      {/* >>> AIM-FORK: the tab strip shares its row with "Ukázať v 3D" (D-104 step 4) */}
+      {/* >>> AIM-FORK: the tab strip shares its row with "Ukázať v 3D" (D-104 step 4); D-132 tab bar replaces the strip */}
       <div className="flex items-stretch border-b">
-      <div role="tablist" aria-label="Open documents" className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
+      <div role="tablist" aria-label="Open documents" className={cn('flex min-w-0 flex-1 items-stretch overflow-x-auto', hideTabs && 'hidden')}>
       {/* <<< AIM-FORK */}
         {tabs.map((tab) => {
           const doc = docs.get(tab.docId);

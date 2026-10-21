@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/tabs-protocol.ts a/apps/viewer/src/aim/tabs-protocol.ts
+index 27f56675c..e351217bf 100644
+--- b/apps/viewer/src/aim/tabs-protocol.ts
++++ a/apps/viewer/src/aim/tabs-protocol.ts
+@@ -75,5 +75,5 @@ export function isTabsMessage(data: unknown): data is TabsMessage {
+ 
+ /** Rozloženie karty dokumentu pri `DOCUMENT_OPEN` (AIM D-132): záložka na celú plochu, alebo vedľa 3D. */
+ export function documentLayout(msg: unknown): 'tab' | 'split' {
+-  return (msg as { layout?: unknown } | null)?.layout === 'tab' ? 'tab' : 'split';
++  return (msg as { layout?: unknown } | null)?.layout === 'split' ? 'split' : 'tab';
+ }

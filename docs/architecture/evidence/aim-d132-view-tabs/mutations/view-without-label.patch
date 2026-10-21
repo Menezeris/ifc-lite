@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/tabs-protocol.ts a/apps/viewer/src/aim/tabs-protocol.ts
+index 78bd82fbf..e351217bf 100644
+--- b/apps/viewer/src/aim/tabs-protocol.ts
++++ a/apps/viewer/src/aim/tabs-protocol.ts
+@@ -50,7 +50,7 @@ function isOpen(v: unknown): v is TabOpenWire {
+   const o = v as Record<string, unknown>;
+   if (!optional(o.locked, (x) => typeof x === 'boolean') || !optional(o.label, isText)) return false;
+   if (o.kind === 'plan') return isText(o.storeyGuid) && o.viewId === undefined;
+-  if (o.kind === 'view') return isText(o.viewId) && o.storeyGuid === undefined;
++  if (o.kind === 'view') return isText(o.viewId) && isText(o.label) && o.storeyGuid === undefined;
+   return false;
+ }
+ 

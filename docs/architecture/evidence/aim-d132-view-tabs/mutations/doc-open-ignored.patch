@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTabsPlan.ts a/apps/viewer/src/aim/viewTabsPlan.ts
+index f7ea2356d..723d9f86c 100644
+--- b/apps/viewer/src/aim/viewTabsPlan.ts
++++ a/apps/viewer/src/aim/viewTabsPlan.ts
+@@ -122,7 +122,7 @@ export function syncDocTabs(
+   const have = new Set(next.tabs.map((t) => t.id));
+   const added = docs.filter((d) => !have.has(docTabId(d.docId))).map((d): ViewTab => ({ id: docTabId(d.docId), kind: 'doc', label: d.label, docId: d.docId }));
+   next = { ...next, tabs: [...next.tabs.map((t) => (t.kind === 'doc' && want.has(t.id) ? { ...t, label: want.get(t.id)!.label } : t)), ...added] };
+-  if (opened && false) {
++  if (opened) {
+     const id = docTabId(opened.docId);
+     if (byId(next, id) && id !== next.activeId && id !== next.besideId) {
+       next = opened.beside && isSceneTab(byId(next, next.activeId)) ? setBeside(next, id) : activateTab(next, id);

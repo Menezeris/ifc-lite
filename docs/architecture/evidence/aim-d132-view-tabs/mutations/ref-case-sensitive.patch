@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTabsPlan.ts a/apps/viewer/src/aim/viewTabsPlan.ts
+index 82eaf6f6e..723d9f86c 100644
+--- b/apps/viewer/src/aim/viewTabsPlan.ts
++++ a/apps/viewer/src/aim/viewTabsPlan.ts
+@@ -133,7 +133,7 @@ export function syncDocTabs(
+ 
+ /** Odkaz z chatu: id, `3d`, menovka (bez ohľadu na veľkosť písmen) alebo GlobalId podlažia. */
+ export function resolveTabRef(s: ViewTabsState, ref: string): ViewTab | undefined {
+-  const want = ref.trim();
++  const want = ref.trim().toLowerCase();
+   if (!want) return undefined;
+   return s.tabs.find((t) => t.id.toLowerCase() === want)
+     ?? s.tabs.find((t) => t.label.toLowerCase() === want)
