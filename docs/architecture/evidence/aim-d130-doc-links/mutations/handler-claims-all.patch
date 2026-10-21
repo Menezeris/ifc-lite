@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docLinks.ts a/apps/viewer/src/aim/docLinks.ts
+index e2faa9115..d9d8aebcf 100644
+--- b/apps/viewer/src/aim/docLinks.ts
++++ a/apps/viewer/src/aim/docLinks.ts
+@@ -54,7 +54,7 @@ export function isDocLinksMessage(data: unknown): data is DocLinksMessage {
+ 
+ /** Vybaví `DOCUMENT_LINKS`; false = správa sem nepatrí. */
+ export function handleDocLinksMessage(data: unknown): boolean {
+-  if (!isDocLinksMessage(data)) return true;
++  if (!isDocLinksMessage(data)) return false;
+   useAimDocLinksStore.getState().setDocuments(data.documents);
+   return true;
+ }

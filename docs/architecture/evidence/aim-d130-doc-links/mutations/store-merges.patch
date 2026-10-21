@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docLinks.ts a/apps/viewer/src/aim/docLinks.ts
+index 5016febd9..d9d8aebcf 100644
+--- b/apps/viewer/src/aim/docLinks.ts
++++ a/apps/viewer/src/aim/docLinks.ts
+@@ -172,7 +172,7 @@ interface DocLinksState {
+ export const useAimDocLinksStore = create<DocLinksState>((set, get) => ({
+   pages: new Map(),
+   nonce: 0,
+-  setDocuments: (documents) => set({ pages: new Map([...get().pages, ...normalizeDocLinks(documents)]), nonce: get().nonce + 1 }),
++  setDocuments: (documents) => set({ pages: normalizeDocLinks(documents), nonce: get().nonce + 1 }),
+ }));
+ 
+ /**

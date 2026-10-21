@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/docLinks.ts a/apps/viewer/src/aim/docLinks.ts
+index 0753d7bfd..d9d8aebcf 100644
+--- b/apps/viewer/src/aim/docLinks.ts
++++ a/apps/viewer/src/aim/docLinks.ts
+@@ -68,6 +68,7 @@ export function acceptsDocLinksEvent(
+   parent: unknown,
+   referrer: string,
+ ): boolean {
++  if (e.source !== parent) return false;
+   if (!referrer) return true;
+   try {
+     return e.origin === new URL(referrer).origin;

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docLinks.ts a/apps/viewer/src/aim/docLinks.ts
+index 18195654f..d9d8aebcf 100644
+--- b/apps/viewer/src/aim/docLinks.ts
++++ a/apps/viewer/src/aim/docLinks.ts
+@@ -159,7 +159,7 @@ export function linkTitle(link: DocLink): string {
+     link.status === 'unique'
+       ? `${first.ref}${first.name ? ` ${first.name}` : ''}`
+       : `kandidáti (${link.targets.length}): ${link.targets.map((t) => t.ref).join(', ')}`;
+-  return `${link.label} -> ${to}`;
++  return `${link.label} -> ${to} (AIM: odvodené z popisku)`;
+ }
+ 
+ interface DocLinksState {

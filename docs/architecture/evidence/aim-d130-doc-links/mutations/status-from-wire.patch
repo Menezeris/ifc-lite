@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docLinks.ts a/apps/viewer/src/aim/docLinks.ts
+index b6547de87..d9d8aebcf 100644
+--- b/apps/viewer/src/aim/docLinks.ts
++++ a/apps/viewer/src/aim/docLinks.ts
+@@ -126,7 +126,7 @@ function normalizeLink(raw: unknown): DocLink | null {
+     w: x0 < 0 || x0 + w0 > 1 ? Math.min(x0 + w0, 1) - x : w0,
+     h: y0 < 0 || y0 + h0 > 1 ? Math.min(y0 + h0, 1) - y : h0,
+     label: text(l.label) ?? targets[0].ref,
+-    status: l.status === 'candidates' ? 'candidates' : 'unique',
++    status: targets.length > 1 ? 'candidates' : 'unique',
+     targets,
+   };
+ }

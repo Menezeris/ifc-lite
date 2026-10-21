@@ -1,0 +1,156 @@
+{
+  "empty-targets-kept": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docLinks.test.ts; that file has a green, attributable baseline.",
+    "base": "67d78612aad3cff89303ad331f84299050b912da",
+    "head": "9c7cc011174995c0701676f18c9d99c32bcf900c",
+    "production": [
+      "apps/viewer/src/aim/docLinks.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docLinks.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "frame-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docLinks.test.ts; that file has a green, attributable baseline.",
+    "base": "67d78612aad3cff89303ad331f84299050b912da",
+    "head": "9c7cc011174995c0701676f18c9d99c32bcf900c",
+    "production": [
+      "apps/viewer/src/aim/docLinks.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docLinks.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "handler-claims-all": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docLinks.test.ts; that file has a green, attributable baseline.",
+    "base": "67d78612aad3cff89303ad331f84299050b912da",
+    "head": "9c7cc011174995c0701676f18c9d99c32bcf900c",
+    "production": [
+      "apps/viewer/src/aim/docLinks.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docLinks.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "origin-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docLinks.test.ts; that file has a green, attributable baseline.",
+    "base": "67d78612aad3cff89303ad331f84299050b912da",
+    "head": "9c7cc011174995c0701676f18c9d99c32bcf900c",
+    "production": [
+      "apps/viewer/src/aim/docLinks.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docLinks.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "page-not-integer": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docLinks.test.ts; that file has a green, attributable baseline.",
+    "base": "67d78612aad3cff89303ad331f84299050b912da",
+    "head": "9c7cc011174995c0701676f18c9d99c32bcf900c",
+    "production": [
+      "apps/viewer/src/aim/docLinks.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docLinks.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "source-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docLinks.test.ts; that file has a green, attributable baseline.",
+    "base": "67d78612aad3cff89303ad331f84299050b912da",
+    "head": "9c7cc011174995c0701676f18c9d99c32bcf900c",
+    "production": [
+      "apps/viewer/src/aim/docLinks.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docLinks.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "status-from-wire": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docLinks.test.ts; that file has a green, attributable baseline.",
+    "base": "67d78612aad3cff89303ad331f84299050b912da",
+    "head": "9c7cc011174995c0701676f18c9d99c32bcf900c",
+    "production": [
+      "apps/viewer/src/aim/docLinks.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docLinks.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "store-merges": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docLinks.test.ts; that file has a green, attributable baseline.",
+    "base": "67d78612aad3cff89303ad331f84299050b912da",
+    "head": "9c7cc011174995c0701676f18c9d99c32bcf900c",
+    "production": [
+      "apps/viewer/src/aim/docLinks.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docLinks.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "targets-uncapped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docLinks.test.ts; that file has a green, attributable baseline.",
+    "base": "67d78612aad3cff89303ad331f84299050b912da",
+    "head": "9c7cc011174995c0701676f18c9d99c32bcf900c",
+    "production": [
+      "apps/viewer/src/aim/docLinks.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docLinks.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "title-without-aim": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docLinks.test.ts; that file has a green, attributable baseline.",
+    "base": "67d78612aad3cff89303ad331f84299050b912da",
+    "head": "9c7cc011174995c0701676f18c9d99c32bcf900c",
+    "production": [
+      "apps/viewer/src/aim/docLinks.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docLinks.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "unclipped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docLinks.test.ts; that file has a green, attributable baseline.",
+    "base": "67d78612aad3cff89303ad331f84299050b912da",
+    "head": "9c7cc011174995c0701676f18c9d99c32bcf900c",
+    "production": [
+      "apps/viewer/src/aim/docLinks.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docLinks.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}
