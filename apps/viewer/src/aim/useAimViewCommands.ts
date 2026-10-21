@@ -72,10 +72,12 @@ function applyGizmo(show: boolean | undefined): void {
 export async function appliedViewState(): Promise<Record<string, unknown>> {
   const q = await loadQueries();
   // Kamera po obnove pohľadu ešte dobieha animáciu; stav má niesť jej cieľ (AIM #97, D-122).
-  await waitCameraSettled(() => useViewerStore.getState().cameraCallbacks.getViewpoint?.() ?? null);
+  const settled = await waitCameraSettled(() => useViewerStore.getState().cameraCallbacks.getViewpoint?.() ?? null);
   const s = q.queryViewState(useViewerStore.getState(), { ...GUIDS, focus: focusProvider });
   return {
     mode: s.mode, storey_guid: s.storey_guid, section: s.section, camera: s.camera,
+    // Limit vypršal počas pohybu (používateľ otáča kamerou): póza nie je cieľ, nech to host vie.
+    ...(settled ? {} : { camera_moving: true }),
     selection_count: s.selection.count, hidden_count: s.hidden_count, isolated_count: s.isolated_count, focus: s.focus,
   };
 }
