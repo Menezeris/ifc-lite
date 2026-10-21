@@ -44,6 +44,8 @@ export interface GuidHelpers {
   sectionRenderBounds: (state: State) => AxisBounds | null;
   /** Zvýraznenie z FOCUS (D-101, #94); podáva ho AimBridge, lenivý modul ho neimportuje. */
   focus?: () => { count: number; guids: string[] };
+  /** Zmeny pohľadu od posledného potvrdeného príkazu (D-125, #180); podáva ich AimBridge. */
+  changes?: () => string[];
 }
 
 /** Výsledok zaokrúhlený na milimetre - Claude ho číta, nie renderer. */
@@ -200,6 +202,8 @@ export function queryViewState(state: State, g: GuidHelpers) {
     isolated_guids: state.isolatedEntities ? visibilityGuids(state.isolatedEntities, guidOf) : null,
     // Oranžové zvýraznenie z FOCUS (#94): bez neho sa nedalo povedať, čo je to za farbu.
     ...(g.focus ? { focus: g.focus() } : {}),
+    // Čo sa zmenilo mimo príkazov od posledného potvrdeného (napr. izoláciu vypol používateľ, D-125).
+    ...(g.changes ? { changed_since_last_command: g.changes() } : {}),
   };
 }
 

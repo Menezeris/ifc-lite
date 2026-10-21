@@ -32,6 +32,12 @@ export function setFocusProvider(f: FocusSummary | undefined): void {
   focusProvider = f;
 }
 
+/** Zmeny pohľadu od posledného potvrdeného príkazu (D-125) - poskytne ich AimBridge pre `view_state`. */
+let changesProvider: (() => string[]) | undefined;
+export function setChangesProvider(f: (() => string[]) | undefined): void {
+  changesProvider = f;
+}
+
 /** Pohľad pre FOCUS (#97, V1): nastaví ho hook s najnovším režimom a podlažiami, volá ho lenivý FOCUS. */
 let focusView: ((storeyKeys: readonly (string | null)[]) => void) | undefined;
 export function prepareFocusView(storeyKeys: readonly (string | null)[]): void {
@@ -162,7 +168,7 @@ export function useAimViewCommands(bim: BimContext) {
         return;
       }
       case 'QUERY': {
-        void loadQueries().then((q) => q.answerQuery(msg, origin, { ...GUIDS, focus: focusProvider }));
+        void loadQueries().then((q) => q.answerQuery(msg, origin, { ...GUIDS, focus: focusProvider, changes: changesProvider }));
         return;
       }
     }
