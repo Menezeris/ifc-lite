@@ -15,6 +15,7 @@ import { useViewerStore } from '../store/index.js';
 import { SOURCE, type InboundMessage, type OutboundMessage } from './bridge-protocol.js';
 import { noteIssue, track } from './command-gate.js';
 import { normalizeDocHighlights, normalizeDocRegion, regionApplied, useAimDocRegionStore } from './docRegion.js';
+import { listenDocLinks } from './docLinks.js';
 
 /** Výrez strany z chatu čaká na otvorenie PDF; dlhšie ako ACK by APPLIED len oneskorilo. */
 const REGION_WAIT_MS = 2200;
@@ -77,6 +78,7 @@ export function handleDocumentMessage(msg: InboundMessage): boolean {
 export function wireDocumentEvents(post: (msg: OutboundMessage) => void): void {
   // Viditeľný rozsah karty z predošlej relácie nepatrí novej (AIM D-127).
   useAimDocRegionStore.setState({ visible: null });
+  listenDocLinks(); // DOCUMENT_LINKS: popisky výkresu -> prvky (AIM D-130, docLinks.ts)
 
   // Kalibrácia uložená vo viewri → host ju perzistuje do
   // documents.properties._georef (D-072). Session-only bez hosta.
