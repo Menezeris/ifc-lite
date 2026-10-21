@@ -46,7 +46,7 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docRegion.test.ts; that file has a green, attributable baseline.",
     "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
-    "head": "4c9d2f22d8d85776551781df9a417fa24436a62f",
+    "head": "105120f7771b21235dffacb9bb49a5db39441bb8",
     "production": [
       "apps/viewer/src/aim/docRegion.ts"
     ],
@@ -74,9 +74,9 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docRegion.test.ts; that file has a green, attributable baseline.",
     "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
-    "head": "4c9d2f22d8d85776551781df9a417fa24436a62f",
+    "head": "105120f7771b21235dffacb9bb49a5db39441bb8",
     "production": [
-      "apps/viewer/src/aim/docRegion.ts"
+      "apps/viewer/src/aim/docVisible.ts"
     ],
     "tests": [
       "apps/viewer/src/aim/docRegion.test.ts"
@@ -144,9 +144,9 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docRegion.test.ts; that file has a green, attributable baseline.",
     "base": "75ddabcea7619821307c5f86581d59d2e16e9cde",
-    "head": "4c9d2f22d8d85776551781df9a417fa24436a62f",
+    "head": "105120f7771b21235dffacb9bb49a5db39441bb8",
     "production": [
-      "apps/viewer/src/aim/docRegion.ts"
+      "apps/viewer/src/aim/docVisible.ts"
     ],
     "tests": [
       "apps/viewer/src/aim/docRegion.test.ts"

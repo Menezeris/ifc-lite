@@ -10,7 +10,7 @@ AIM D-127 changes the AIM layer in `apps/viewer/src/aim/` (#169 follows AIM D-12
 - `SET_PANELS` opens, closes or toggles panels.
 - A chat page region re-fits when the card is resized, and `view_state` reports the visible part of the page.
 
-The pure logic lives in three modules: `aimPanelViewPlan.ts`, the new `aimPanelsPlan.ts`, and `docRegion.ts` (`visiblePart`, `regionInside`, `regionApplied`). The message check lives in `view-protocol.ts`. The changed tests import exports that do not exist on `main`, so reverting production makes them fail to load and the CI revert oracle reports INCONCLUSIVE. Each main decision was instead checked with a surgical mutation.
+The pure logic lives in four modules: `aimPanelViewPlan.ts`, the new `aimPanelsPlan.ts`, `docVisible.ts` (`visiblePart`, `regionInside`, `describeVisible`, split out of `docRegion.ts` for the module size gate) and `docRegion.ts` (`regionApplied`). The message check lives in `view-protocol.ts`. The changed tests import exports that do not exist on `main`, so reverting production makes them fail to load and the CI revert oracle reports INCONCLUSIVE. Each main decision was instead checked with a surgical mutation.
 
 Each patch is written mutant->fixed and reverse-applied by the oracle. Every run ended `OBSERVED` (exit 0) with restoration verified against `origin/main`. The records are in `summary.json`.
 
@@ -23,8 +23,8 @@ Each patch is written mutant->fixed and reverse-applied by the oracle. Every run
 | `open-before-close.patch` | `aimPanelsPlan.ts` | opening runs before closing, so a shared slot gets closed again | `aimPanelsPlan.test.ts` |
 | `floating-ignored.patch` | `aimPanelsPlan.ts` | a floating panel is reported as docked or closed | `aimPanelsPlan.test.ts` |
 | `all-open-accepted.patch` | `view-protocol.ts` | `all: open` passes the bridge check | `aimPanelsPlan.test.ts` |
-| `inside-no-tolerance.patch` | `docRegion.ts` | "region fully visible" has no rounding tolerance | `docRegion.test.ts` |
-| `visible-unclamped.patch` | `docRegion.ts` | the visible part is not clamped to the page | `docRegion.test.ts` |
+| `inside-no-tolerance.patch` | `docVisible.ts` | "region fully visible" has no rounding tolerance | `docRegion.test.ts` |
+| `visible-unclamped.patch` | `docVisible.ts` | the visible part is not clamped to the page | `docRegion.test.ts` |
 | `clear-no-waiter.patch` | `docRegion.ts` | clearing a region request never resolves `regionApplied` | `docRegion.test.ts` |
 | `aim-badge-dropped.patch` | `documentsQuery.ts` | a document inherited through a relation loses its AIM flag (D-129) | `documentsQuery.test.ts` |
 

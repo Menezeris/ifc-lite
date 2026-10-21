@@ -1,8 +1,8 @@
-diff --git b/apps/viewer/src/aim/docRegion.ts a/apps/viewer/src/aim/docRegion.ts
-index 3e0e38ef..3e3b12ad 100644
---- b/apps/viewer/src/aim/docRegion.ts
-+++ a/apps/viewer/src/aim/docRegion.ts
-@@ -95,7 +95,7 @@ export function visiblePart(
+diff --git b/apps/viewer/src/aim/docVisible.ts a/apps/viewer/src/aim/docVisible.ts
+index d10126a4..b128d219 100644
+--- b/apps/viewer/src/aim/docVisible.ts
++++ a/apps/viewer/src/aim/docVisible.ts
+@@ -21,7 +21,7 @@ export function visiblePart(
    viewport: { left: number; top: number; width: number; height: number },
  ): DocRegion | null {
    if (page.width <= 0 || page.height <= 0) return null;
