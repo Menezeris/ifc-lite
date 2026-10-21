@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docLinks.ts a/apps/viewer/src/aim/docLinks.ts
+index 68f744484..3b7fb7e35 100644
+--- b/apps/viewer/src/aim/docLinks.ts
++++ a/apps/viewer/src/aim/docLinks.ts
+@@ -142,7 +142,7 @@ export function normalizeDocLinks(documents: readonly unknown[]): Map<string, Do
+     const d = raw as Record<string, unknown>;
+     const docId = text(d.documentId);
+     const page = d.page;
+-    if (!docId || typeof page !== 'number' || page < 1) continue;
++    if (!docId || typeof page !== 'number' || !Number.isInteger(page) || page < 1) continue;
+     const links = (Array.isArray(d.links) ? d.links : [])
+       .slice(0, MAX_LINKS_PER_PAGE)
+       .map(normalizeLink)

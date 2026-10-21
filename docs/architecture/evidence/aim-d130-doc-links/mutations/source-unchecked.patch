@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docLinks.ts a/apps/viewer/src/aim/docLinks.ts
+index 4dfd858c7..3b7fb7e35 100644
+--- b/apps/viewer/src/aim/docLinks.ts
++++ a/apps/viewer/src/aim/docLinks.ts
+@@ -46,7 +46,7 @@ const MAX_TEXT = 80;
+ export function isDocLinksMessage(data: unknown): data is DocLinksMessage {
+   if (!data || typeof data !== 'object') return false;
+   const msg = data as { source?: unknown; type?: unknown; documents?: unknown };
+-  return msg.type === 'DOCUMENT_LINKS' && Array.isArray(msg.documents);
++  return msg.source === SOURCE && msg.type === 'DOCUMENT_LINKS' && Array.isArray(msg.documents);
+ }
+ 
+ /** Vybaví `DOCUMENT_LINKS`; false = správa sem nepatrí. */
