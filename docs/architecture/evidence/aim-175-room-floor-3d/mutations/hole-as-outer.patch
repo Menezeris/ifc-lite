@@ -1,0 +1,15 @@
+diff --git b/apps/viewer/src/aim/aimRoomFill3d.ts a/apps/viewer/src/aim/aimRoomFill3d.ts
+index 63c3410a..0d2c2547 100644
+--- b/apps/viewer/src/aim/aimRoomFill3d.ts
++++ a/apps/viewer/src/aim/aimRoomFill3d.ts
+@@ -164,8 +164,8 @@ export function footprintRings(triangles: Footprint['triangles']): { outer: P2[]
+   const polys: { outer: P2[]; holes: P2[][] }[] = [];
+   for (const loop of loops) {
+     const owner = polys.find((p) => inside(loop[0], p.outer) && !p.holes.some((h) => inside(loop[0], h)));
+-    void owner;
+-    polys.push({ outer: loop, holes: [] });
++    if (owner) owner.holes.push(loop);
++    else polys.push({ outer: loop, holes: [] });
+   }
+   return polys;
+ }

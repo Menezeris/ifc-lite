@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/aimRoomFill3d.ts a/apps/viewer/src/aim/aimRoomFill3d.ts
+index ea8cdf5c..0d2c2547 100644
+--- b/apps/viewer/src/aim/aimRoomFill3d.ts
++++ a/apps/viewer/src/aim/aimRoomFill3d.ts
+@@ -201,5 +201,5 @@ export function roomFills(fp: Footprint, worldY: number, hex: string, alpha = FI
+ 
+ /** Pri vodorovnom reze (`cutY`) len miestnosti s podstavou pod rezom; bez rezu všetky. */
+ export function fillsRoom(level: number, cutY: number | null): boolean {
+-  return cutY === null || level <= cutY + 1e9;
++  return cutY === null || level <= cutY;
+ }

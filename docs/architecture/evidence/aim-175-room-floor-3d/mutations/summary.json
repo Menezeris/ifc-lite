@@ -1,0 +1,128 @@
+{
+  "above-cut-filled": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimRoomFill3d.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "0a34a84619721e154d9a4d1f62261e2d43c8b409",
+    "production": [
+      "apps/viewer/src/aim/aimRoomFill3d.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimRoomFill3d.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "ceiling-counted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimRoomFill3d.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "0a34a84619721e154d9a4d1f62261e2d43c8b409",
+    "production": [
+      "apps/viewer/src/aim/aimRoomFill3d.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimRoomFill3d.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "color-channels": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimRoomFill3d.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "0a34a84619721e154d9a4d1f62261e2d43c8b409",
+    "production": [
+      "apps/viewer/src/aim/aimRoomFill3d.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimRoomFill3d.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "covering-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimRoomFill3d.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "0a34a84619721e154d9a4d1f62261e2d43c8b409",
+    "production": [
+      "apps/viewer/src/aim/aimRoomFill3d.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimRoomFill3d.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "foreign-lens-unpainted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimRoomFill3d.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "0a34a84619721e154d9a4d1f62261e2d43c8b409",
+    "production": [
+      "apps/viewer/src/aim/aimLensPaint.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimRoomFill3d.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "hole-as-outer": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimRoomFill3d.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "0a34a84619721e154d9a4d1f62261e2d43c8b409",
+    "production": [
+      "apps/viewer/src/aim/aimRoomFill3d.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimRoomFill3d.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "neighbour-counted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimRoomFill3d.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "0a34a84619721e154d9a4d1f62261e2d43c8b409",
+    "production": [
+      "apps/viewer/src/aim/aimRoomFill3d.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimRoomFill3d.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "rooms-painted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimRoomFill3d.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "0a34a84619721e154d9a4d1f62261e2d43c8b409",
+    "production": [
+      "apps/viewer/src/aim/aimLensPaint.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimRoomFill3d.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "tjunction-unsplit": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimRoomFill3d.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "0a34a84619721e154d9a4d1f62261e2d43c8b409",
+    "production": [
+      "apps/viewer/src/aim/aimRoomFill3d.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimRoomFill3d.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

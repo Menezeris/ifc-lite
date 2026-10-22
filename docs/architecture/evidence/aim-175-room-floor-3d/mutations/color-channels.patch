@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimRoomFill3d.ts a/apps/viewer/src/aim/aimRoomFill3d.ts
+index 9611867d..0d2c2547 100644
+--- b/apps/viewer/src/aim/aimRoomFill3d.ts
++++ a/apps/viewer/src/aim/aimRoomFill3d.ts
+@@ -70,7 +70,7 @@ export function hexRgba(hex: string, alpha: number): [number, number, number, nu
+   const m = /^#([0-9a-f]{6})$/i.exec(hex);
+   if (!m) return null;
+   const n = parseInt(m[1], 16);
+-  return [(n & 255) / 255, ((n >> 8) & 255) / 255, ((n >> 16) & 255) / 255, alpha];
++  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, alpha];
+ }
+ 
+ type P2 = { x: number; z: number };
