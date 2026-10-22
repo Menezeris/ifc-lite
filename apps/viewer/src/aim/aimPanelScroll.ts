@@ -91,7 +91,7 @@ export function revealRow(getRow: () => Element | null): void {
 const DEFAULT_PANEL = 'properties';
 
 /** Posledný posun a zoom od chatu: `view_state.panel_view` povie, kam sa panel dostal. */
-interface PanelViewState {
+export interface PanelViewState {
   panel: string;
   scroll_pct: number;
   at_top: boolean;
