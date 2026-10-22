@@ -19,7 +19,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { PanelImperativeHandle } from 'react-resizable-panels';
 import { useViewerStore } from '@/store';
 import { useFloorplanView } from '@/hooks/useFloorplanView';
-import { centerLayout } from './viewTabsLayout.js';
+import { centerLayout, tileFrameStyle } from './viewTabsLayout.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { useAimPlanRefit } from './useAimPlanRefit.js';
 
@@ -49,7 +49,11 @@ export function useAimCenterPanes(isMobile: boolean) {
   const tabs = useAimViewTabs((s) => s.tabs);
   const activeId = useAimViewTabs((s) => s.activeId);
   const besideId = useAimViewTabs((s) => s.besideId);
-  const layout = useMemo(() => centerLayout({ tabs, activeId, besideId }), [tabs, activeId, besideId]);
+  // D-157: pri dlaždiciach je 3D panel na celú plochu, canvas sa posunie do živej dlaždice.
+  const tiled = useAimViewTabs((s) => s.layout !== 'single') && !isMobile;
+  const frame = useAimViewTabs((s) => s.frame);
+  const tileFrame = useMemo(() => (tiled ? tileFrameStyle(frame) : undefined), [tiled, frame]);
+  const layout = useMemo(() => centerLayout({ tabs, activeId, besideId }, tiled), [tabs, activeId, besideId, tiled]);
   const collapse3d = underlayPlanFull || (!isMobile && layout.collapse3d);
   const collapse3dRef = useRef(collapse3d);
   collapse3dRef.current = collapse3d;
@@ -108,6 +112,6 @@ export function useAimCenterPanes(isMobile: boolean) {
 
   return {
     underlaySplitView, underlayPlanFull, planePanelRef, viewport3dPanelRef, onViewport3dResize,
-    docPaneOpen, docPaneVisible, docPanelRef, onDocPaneResize,
+    docPaneOpen, docPaneVisible, docPanelRef, onDocPaneResize, tiled, tileFrame,
   };
 }

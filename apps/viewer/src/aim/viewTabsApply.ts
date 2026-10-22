@@ -18,11 +18,17 @@ import type { CameraViewpoint, SectionPlane } from '@/store/types';
 import { orderedSectionPlanes, sectionPlaneCount } from '@/lib/section/section-plane-set';
 import { clearSectionCut } from '@/store/section-active';
 import {
-  activateTab, besideRefusal, closeAll, closeTab, docTabId, isSceneTab, openTab, planTabId, resolveTabRef, setBeside,
+  activateTab, besidePair, besideRefusal, closeAll, closeTab, docTabId, isSceneTab, openTab, planTabId, resolveTabRef, setBeside,
   syncDocTabs, viewTabId, type ViewTab, type ViewTabsState,
 } from './viewTabsPlan.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { isTabsMessage, type TabsMessage } from './tabs-protocol.js';
+import { isTilesMessage, type TilesMessage } from './tiles-protocol.js';
+import {
+  TILE_RECTS, isTiled, layoutTiles, liveTile, reconcileTiles, setTile, singleTiles, tileScene, type TileLayout, type TilesState,
+} from './viewTilesPlan.js';
+import { hasShot, pruneShots, shoot } from './tileShots.js';
+import { waitCameraSettled } from './cameraSettle.js';
 
 interface SceneSnapshot {
   viewpoint: CameraViewpoint | null;
@@ -130,12 +136,22 @@ function syncPlanBeside(next: ViewTabsState, note: Note): void {
  * doterajšej a vráti (alebo prvýkrát nastaví) novú; karta dokumentu D-075 sa
  * prepne na aktívny dokument.
  */
-export function commit(next: ViewTabsState, note: Note = () => {}): void {
+export function commit(next: ViewTabsState, note: Note = () => {}, tilesNext?: TilesState): void {
   const store = useAimViewTabs.getState();
   const prevScene = store.sceneId;
-  const scene = sceneTabOf(next, prevScene);
+  // D-157: pri dlaždiciach nie je "Vedľa"; aktívna záložka mimo dlaždíc sa do jednej dá.
+  let tiles = tilesNext ?? { layout: store.layout, tiles: store.tiles };
+  if (isTiled(tiles)) {
+    next = { ...next, besideId: null };
+    tiles = reconcileTiles(next, tiles, prevScene);
+  }
+  const scene = isTiled(tiles) ? tileScene(next, tiles, prevScene) : sceneTabOf(next, prevScene);
   if (scene !== prevScene) {
-    if (store.tabs.some((t) => t.id === prevScene)) snapshots.set(prevScene, capture());
+    if (store.tabs.some((t) => t.id === prevScene)) {
+      snapshots.set(prevScene, capture());
+      // Odchádzajúca 3D dlaždica si nechá posledný obraz (jeden 3D canvas).
+      if (isTiled(tiles)) shoot(prevScene);
+    }
     // Panel plánu vedľa 3D patrí 3D záložke; pred prepnutím canvasu sa zavrie.
     if (useViewerStore.getState().underlaySplitView) store.deps?.exitSplitView();
     const snap = snapshots.get(scene);
@@ -144,7 +160,12 @@ export function commit(next: ViewTabsState, note: Note = () => {}): void {
     else if (tab) enterFresh(tab, note);
   }
   for (const id of snapshots.keys()) if (!next.tabs.some((t) => t.id === id)) snapshots.delete(id);
-  useAimViewTabs.setState({ tabs: next.tabs, activeId: next.activeId, besideId: next.besideId, sceneId: scene });
+  pruneShots(new Set(next.tabs.map((t) => t.id)));
+  const live = liveTile(tiles, scene);
+  useAimViewTabs.setState({
+    tabs: next.tabs, activeId: next.activeId, besideId: next.besideId, sceneId: scene,
+    layout: tiles.layout, tiles: tiles.tiles, frame: live >= 0 ? TILE_RECTS[tiles.layout][live] : null,
+  });
   syncPlanBeside(next, note);
   const doc = [next.tabs.find((t) => t.id === next.activeId), next.tabs.find((t) => t.id === next.besideId)].find((t) => t?.kind === 'doc');
   const vs = useViewerStore.getState();
@@ -161,20 +182,90 @@ export function activate(id: string, note?: Note): void {
   commit(activateTab(current(), id), note);
 }
 
-export function beside(id: string | null, note: Note = () => {}): void {
+/**
+ * "Vedľa": dvojicu, ktorú nevie stredná plocha (dve 3D, dva dokumenty, pôdorys bez
+ * podkladu vedľa 3D), ako aj "Vedľa" pri dlaždiciach rieši rozloženie dvoch
+ * dlaždíc vedľa seba (D-157); `none` dlaždice zruší.
+ */
+export function beside(id: string | null, note: Note = () => {}): Promise<void> | void {
   const s = current();
-  if (id !== null) {
-    const refusal = besideRefusal(s, s.activeId, id);
-    if (refusal) return note(`VIEW_TABS: ${refusal}`);
+  const tiled = useAimViewTabs.getState().layout !== 'single';
+  if (id === null) {
+    if (tiled) return void commit(s, note, singleTiles());
+    return void commit(setBeside(s, id), note);
   }
+  if (tiled || needsTiles(s, s.activeId, id)) return setLayout('split_h', [s.activeId, id], note);
   commit(setBeside(s, id), note);
+}
+
+/** Dvojica vedľa seba ide len cez dlaždice (D-157). */
+function needsTiles(s: ViewTabsState, a: string, b: string): boolean {
+  if (besideRefusal(s, a, b)) return true;
+  const pair = besidePair(s, a, b);
+  const plan = pair && s.tabs.find((t) => t.id === pair.beside && t.kind === 'plan');
+  const deps = useAimViewTabs.getState().deps;
+  return !!plan && !!plan.storeyGuid && !!deps && !deps.storeyHasDrawing(plan.storeyGuid);
+}
+
+let prerenderRun = 0;
+const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
+const settle = async () => {
+  await waitCameraSettled(() => useViewerStore.getState().cameraCallbacks.getViewpoint?.() ?? null);
+  for (let i = 0; i < 3; i++) await nextFrame();
+};
+
+/**
+ * 3D dlaždice bez snímky (napr. pôdorys, ktorý ešte nebol v canvase) sa raz
+ * ukážu v canvase, aby mali obraz; potom sa vráti živá dlaždica a aktívna
+ * záložka. Používateľ alebo ďalší príkaz zmenou záložiek beh preruší.
+ */
+async function prerender(note: Note): Promise<void> {
+  const run = ++prerenderRun;
+  const start = useAimViewTabs.getState();
+  const live = start.sceneId;
+  const active = start.activeId;
+  const missing = start.tiles.filter((id): id is string => {
+    const tab = start.tabs.find((t) => t.id === id);
+    return !!id && id !== live && isSceneTab(tab) && !hasShot(id);
+  });
+  if (missing.length === 0) return;
+  let expected = live;
+  for (const id of missing) {
+    if (run !== prerenderRun || useAimViewTabs.getState().sceneId !== expected) return;
+    commit(activateTab(current(), id), note);
+    expected = id;
+    await settle();
+  }
+  if (run !== prerenderRun || useAimViewTabs.getState().sceneId !== expected) return;
+  commit(activateTab(current(), live), note);
+  if (active !== live) commit(activateTab(current(), active), note);
+}
+
+/**
+ * Rozloženie dlaždíc (lišta aj most): `refs[i]` = id záložky, null = prázdna,
+ * undefined = doplniť. Vráti beh snímok (most naň počká pred `APPLIED`).
+ */
+export function setLayout(layout: TileLayout, refs: readonly (string | null | undefined)[] = [], note: Note = () => {}): Promise<void> | void {
+  const s = current();
+  if (layout === 'single') return void commit(s, note, singleTiles());
+  const store = useAimViewTabs.getState();
+  commit(s, note, layoutTiles(s, { layout: store.layout, tiles: store.tiles }, layout, refs));
+  return prerender(note);
+}
+
+/** Záložka do dlaždice z jej hlavičky; 3D záložka sa tým stane živou. */
+export function putTile(index: number, id: string | null, note: Note = () => {}): void {
+  const store = useAimViewTabs.getState();
+  const s = current();
+  const tiles = setTile(s, { layout: store.layout, tiles: store.tiles }, index, id);
+  commit(id ? activateTab(s, id) : s, note, tiles);
 }
 
 export function close(id: string, note?: Note): void {
   const s = current();
   if (id === 'all') {
     for (const t of s.tabs) if (t.docId) useViewerStore.getState().closeDocTab(t.docId);
-    return commit(closeAll(current()), note);
+    return commit(closeAll(current()), note, singleTiles());
   }
   const tab = s.tabs.find((t) => t.id === id);
   if (tab?.docId) useViewerStore.getState().closeDocTab(tab.docId);
@@ -182,14 +273,17 @@ export function close(id: string, note?: Note): void {
 }
 
 /** Pôdorys podlažia do záložky (z lišty aj z chatu). */
-export function openPlan(storeyGuid: string, opts: { beside?: boolean } = {}, note: Note = () => {}): void {
+export function openPlan(storeyGuid: string, opts: { beside?: boolean } = {}, note: Note = () => {}): Promise<void> | void {
   const storey = useAimViewTabs.getState().deps?.storeys.find((x) => x.guid === storeyGuid);
   if (!storey) return note('VIEW_TABS: podlažie sa vo vieweri nenašlo');
   const tab: ViewTab = { id: planTabId(storeyGuid), kind: 'plan', label: storey.name, storeyGuid };
   const s = current();
   if (opts.beside) {
-    const refusal = besideRefusal(openTab(s, tab), s.activeId, tab.id);
-    if (refusal) return note(`VIEW_TABS: ${refusal}`);
+    const opened = openTab(s, tab);
+    if (useAimViewTabs.getState().layout !== 'single' || needsTiles(opened, s.activeId, tab.id)) {
+      commit({ ...opened, activeId: s.activeId }, note);
+      return setLayout('split_h', [s.activeId, tab.id], note);
+    }
   }
   commit(openTab(s, tab, opts), note);
 }
@@ -228,7 +322,8 @@ export function showDoc(docId: string, layout: 'tab' | 'split', note: Note = () 
 }
 
 /** `VIEW_TABS` z mosta (AIM D-132); overí sa tu, mimo vstupného balíka. */
-export function runTabsMessage(raw: unknown, note: Note): void {
+export function runTabsMessage(raw: unknown, note: Note): Promise<void> | void {
+  if (isTilesMessage(raw)) return runLayout(raw, note);
   if (!isTabsMessage(raw)) return note('VIEW_TABS: neplatná správa');
   const msg: TabsMessage = raw;
   const s = current();
@@ -238,9 +333,11 @@ export function runTabsMessage(raw: unknown, note: Note): void {
     const tab: ViewTab = { id: viewTabId(o.viewId!), kind: 'view', label: o.label!, locked: o.locked === true };
     // Znova otvorený pohľad začína od definície, nie od stavu z minulého otvorenia.
     snapshots.delete(tab.id);
-    if (msg.beside) {
-      const refusal = besideRefusal(openTab(s, tab), s.activeId, tab.id);
-      if (refusal) return note(`VIEW_TABS: ${refusal}`);
+    if (msg.beside && (useAimViewTabs.getState().layout !== 'single' || needsTiles(openTab(s, tab), s.activeId, tab.id))) {
+      const reopenedTile = useAimViewTabs.getState().sceneId === tab.id;
+      commit(openTab(s, tab), note);
+      if (reopenedTile) enterFresh(tab, note);
+      return setLayout('split_h', [s.activeId, tab.id], note);
     }
     const reopened = useAimViewTabs.getState().sceneId === tab.id;
     commit(openTab(s, tab, { beside: msg.beside }), note);
@@ -256,4 +353,25 @@ export function runTabsMessage(raw: unknown, note: Note): void {
   if (msg.action === 'beside') return beside(tab.id, note);
   if (tab.kind === '3d') return note('VIEW_TABS: záložka 3D sa nedá zavrieť');
   close(tab.id, note);
+}
+
+/** `VIEW_TABS layout` (AIM D-157): pôdorysy z `{plan}` sa otvoria, menovky sa nájdu ako pri `tab`. */
+function runLayout(msg: TilesMessage, note: Note): Promise<void> | void {
+  let s = current();
+  const deps = useAimViewTabs.getState().deps;
+  const refs = (msg.tiles ?? []).map((w): string | null | undefined => {
+    if (w === null) return null;
+    if ('plan' in w) {
+      const storey = deps?.storeys.find((x) => x.guid === w.plan);
+      if (!storey) return void note(`VIEW_TABS: podlažie ${w.plan} sa vo vieweri nenašlo`);
+      const tab: ViewTab = { id: planTabId(storey.guid), kind: 'plan', label: storey.name, storeyGuid: storey.guid };
+      if (!s.tabs.some((t) => t.id === tab.id)) s = { ...s, tabs: [...s.tabs, tab] };
+      return tab.id;
+    }
+    const tab = resolveTabRef(s, w.tab);
+    if (!tab) note(`VIEW_TABS: záložka '${w.tab}' nie je otvorená`);
+    return tab?.id;
+  });
+  if (s !== current()) commit(s, note);
+  return setLayout(msg.layout, refs, note);
 }

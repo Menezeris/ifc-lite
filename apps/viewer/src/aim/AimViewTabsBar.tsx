@@ -9,6 +9,8 @@
  * z `ViewerLayout.tsx`; na mobile sa neukazuje (dokument tam je prekrytie D-075).
  * Pod lištou sa pri pokuse o orbit v zamknutom pôdoryse ukáže ponuka prepnúť do 3D
  * (`AimPlanOrbitHint`, #188). Lišta tiež dodá záložkám funkcie viewera (`TabDeps`) z hookov pôdorysu.
+ * Prepínač "Rozloženie" rozdelí plochu na 2 až 4 dlaždice (D-157); "Vedľa" pre dvojicu,
+ * ktorú plocha bez dlaždíc nevie (dve 3D, dva dokumenty), prepne na dve dlaždice vedľa seba.
  */
 
 import { useEffect, useMemo, useRef } from 'react';
@@ -17,9 +19,10 @@ import { cn } from '@/lib/utils';
 import { useViewerStore } from '@/store';
 import { useViewMode } from '@/hooks/useViewMode';
 import { useFloorplanView } from '@/hooks/useFloorplanView';
-import { besidePair, type ViewTabKind } from './viewTabsPlan.js';
+import type { ViewTabKind } from './viewTabsPlan.js';
 import { useAimViewTabs } from './viewTabsStore.js';
-import { activate, beside, close, openPlan, syncDocs } from './viewTabsApply.js';
+import { activate, beside, close, openPlan, setLayout, syncDocs } from './viewTabsApply.js';
+import { TILE_LAYOUTS, TILE_LAYOUT_LABELS, isTileLayout } from './viewTilesPlan.js';
 import { AimPlanOrbitHint } from './AimPlanOrbitHint.js';
 
 const ICON: Record<ViewTabKind, typeof Box> = { '3d': Box, plan: LayoutTemplate, view: Scan, doc: FileText };
@@ -50,10 +53,9 @@ export function AimViewTabsBar() {
   const tabs = useAimViewTabs((s) => s.tabs);
   const activeId = useAimViewTabs((s) => s.activeId);
   const besideId = useAimViewTabs((s) => s.besideId);
-  const pairable = useMemo(
-    () => tabs.filter((t) => besidePair({ tabs, activeId, besideId }, activeId, t.id)),
-    [tabs, activeId, besideId],
-  );
+  const layout = useAimViewTabs((s) => s.layout);
+  // Vedľa ide každá dvojica: čo nevie plocha bez dlaždíc, rieši rozloženie dvoch dlaždíc (D-157).
+  const pairable = useMemo(() => tabs.filter((t) => t.id !== activeId), [tabs, activeId]);
   if (isMobile) return null;
 
   return (
@@ -108,20 +110,30 @@ export function AimViewTabsBar() {
           className={SELECT}
           value=""
           disabled={storeys.length === 0}
-          onChange={(e) => { if (e.target.value) openPlan(e.target.value, {}, warn); }}
+          onChange={(e) => { if (e.target.value) void openPlan(e.target.value, {}, warn); }}
         >
           <option value="">+ Pôdorys</option>
           {storeys.map((s) => <option key={s.key} value={s.guid}>{s.name}</option>)}
         </select>
+        {layout === 'single' && (
+          <select
+            aria-label="Vedľa aktívnej záložky"
+            className={SELECT}
+            value={besideId ?? ''}
+            disabled={pairable.length === 0 && besideId === null}
+            onChange={(e) => { void beside(e.target.value || null, warn); }}
+          >
+            <option value="">Vedľa: nič</option>
+            {pairable.map((t) => <option key={t.id} value={t.id}>{`Vedľa: ${t.label}`}</option>)}
+          </select>
+        )}
         <select
-          aria-label="Vedľa aktívnej záložky"
+          aria-label="Rozloženie dlaždíc"
           className={SELECT}
-          value={besideId ?? ''}
-          disabled={pairable.length === 0 && besideId === null}
-          onChange={(e) => beside(e.target.value || null, warn)}
+          value={layout}
+          onChange={(e) => { if (isTileLayout(e.target.value)) void setLayout(e.target.value, [], warn); }}
         >
-          <option value="">Vedľa: nič</option>
-          {pairable.map((t) => <option key={t.id} value={t.id}>{`Vedľa: ${t.label}`}</option>)}
+          {TILE_LAYOUTS.map((l) => <option key={l} value={l}>{`Rozloženie: ${TILE_LAYOUT_LABELS[l]}`}</option>)}
         </select>
       </div>
     </div>

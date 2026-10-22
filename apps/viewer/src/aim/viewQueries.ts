@@ -28,6 +28,7 @@ import { useAimInspectorStore } from './aimInspectorStore.js';
 import { useAimDocRegionStore } from './docRegion.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { describeTabs } from './viewTabsPlan.js';
+import { describeLayout } from './viewTilesPlan.js';
 import { orderedBox, toSectionBox, type SectionBoxMessage } from './sectionBox.js';
 import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import type { SectionPlaneAxis } from '@/store/types';
@@ -222,6 +223,8 @@ export function queryViewState(state: State, g: GuidHelpers) {
     document: useAimDocRegionStore.getState().visible,
     // AIM D-132: záložky (aktívna a tá vedľa).
     tabs: describeTabs(useAimViewTabs.getState()),
+    // AIM D-157: dlaždice (rozloženie, záložka v každej dlaždici, živá 3D).
+    layout: tilesLayout(),
   };
 }
 
@@ -304,4 +307,9 @@ export function answerQuery(msg: Extract<ViewInboundMessage, { type: 'QUERY' }>,
   } catch (err) {
     reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: false, error: err instanceof Error ? err.message : String(err) });
   }
+}
+
+function tilesLayout() {
+  const t = useAimViewTabs.getState();
+  return describeLayout(t, t, t.sceneId);
 }
