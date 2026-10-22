@@ -120,6 +120,8 @@ describe('dlaždice záložiek (AIM D-157)', () => {
     assert.strictEqual(tileScene({ ...s, activeId: 'plan:G2' }, t, '3d'), 'plan:G2');
     assert.strictEqual(tileScene({ ...s, activeId: 'doc:A' }, t, 'plan:G1'), 'plan:G1');
     assert.strictEqual(tileScene({ ...s, activeId: 'doc:A' }, t, '3d'), 'plan:G1');
+    // Doterajšia živá ostane živá, aj keď nie je prvá 3D dlaždica.
+    assert.strictEqual(tileScene({ ...s, activeId: 'doc:A' }, { layout: 'three_h', tiles: ['plan:G1', 'doc:A', 'plan:G2'] }, 'plan:G2'), 'plan:G2');
     assert.strictEqual(tileScene({ ...s, activeId: 'doc:A' }, { layout: 'split_h', tiles: ['doc:A', null] }, '3d'), '3d');
   });
 
