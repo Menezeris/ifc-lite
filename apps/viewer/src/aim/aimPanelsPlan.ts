@@ -10,7 +10,8 @@
  *
  * Mená na drôte -> panel upstreamu: `lens` -> `lens`, `properties` -> `properties`,
  * `underlays` -> `drawing-underlay`, `documents` -> `documents`, `lists` -> `lists`
- * (spodný pás), `model_tree` -> `hierarchy` (ľavý stĺpec). `all` = všetky.
+ * (spodný pás), `model_tree` -> `hierarchy` (ľavý stĺpec), `drawing` -> `drawing` (spodný pás:
+ * 2D výkres aktuálneho rezu generovaný z modelu, bez podkladu; AIM D-136). `all` = všetky.
  */
 
 import { sideDockedPanels } from './aimSideDock.js';
@@ -26,6 +27,7 @@ export const PANEL_ID = {
   documents: 'documents',
   lists: 'lists',
   model_tree: 'hierarchy',
+  drawing: 'drawing',
 } as const satisfies Record<PanelKey, string>;
 
 /**
@@ -56,6 +58,7 @@ export interface PanelsStateLike {
   floatingPanels: ReadonlyArray<{ id: string; snap: string; w: number; h: number }>;
   poppedOutIds: ReadonlyArray<string>;
   listPanelVisible: boolean;
+  drawing2DPanelVisible: boolean;
 }
 
 export interface PanelInfo {
@@ -74,6 +77,7 @@ export function panelInfo(s: PanelsStateLike, key: PanelKey): PanelInfo {
   if (floating) return { open: true, where: 'floating', snap: floating.snap, size: { w: Math.round(floating.w), h: Math.round(floating.h) } };
   if (s.poppedOutIds.includes(id)) return { open: true, where: 'window' };
   if (key === 'lists') return s.listPanelVisible ? { open: true, where: 'bottom' } : { open: false };
+  if (key === 'drawing') return s.drawing2DPanelVisible ? { open: true, where: 'bottom' } : { open: false };
   const { primary, secondary } = sideDockedPanels({
     sidebarMode: s.sidebarMode,
     sidebarActivePanel: s.sidebarActivePanel,
