@@ -35,6 +35,9 @@ import { ListErrorBox } from './ListErrorBox';
 import { ListLibrary } from './ListLibrary';
 import { useTranslation } from '@/i18n/useTranslation';
 import { formatLocaleCount } from './formatLocaleCount';
+// >>> AIM-FORK: open_list run=true spustí tabuľku po otvorení (D-148)
+import { useAimListAutoRun } from '@/aim/aimListRun';
+// <<< AIM-FORK
 
 type PanelView = 'library' | 'builder' | 'results';
 
@@ -123,6 +126,9 @@ export function ListPanel() {
       }
     })(); });
   }, [hasData, modelProviderPairs, setActiveListId, setListResult, setListExecuting, setListError, t]);
+  // >>> AIM-FORK: open_list run=true (D-148)
+  useAimListAutoRun(handleExecuteList, hasData);
+  // <<< AIM-FORK
 
   const handleCreateNew = useCallback(() => {
     setEditingList(null);
