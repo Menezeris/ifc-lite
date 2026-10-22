@@ -24,6 +24,7 @@ import { deriveViewMode } from '@/hooks/viewModeCore';
 import { RelationshipType } from '@ifc-lite/data';
 import { summarizeSelection, visibilityGuids, type SelectedEntityInfo } from './selectionSummary.js';
 import { describePanels } from './aimPanelsPlan.js';
+import { panelViewState } from './aimPanelScroll.js';
 import { useAimInspectorStore } from './aimInspectorStore.js';
 import { useAimDocRegionStore } from './docRegion.js';
 import { useAimViewTabs } from './viewTabsStore.js';
@@ -218,6 +219,8 @@ export function queryViewState(state: State, g: GuidHelpers) {
     ...(g.changes ? { changed_since_last_command: g.changes() } : {}),
     // AIM D-127: panely (#179), zvýraznená vlastnosť v paneli (#168) a viditeľný výrez karty dokumentu (#166).
     panels: describePanels(state),
+    // AIM D-150: kam chat posunul alebo priblížil obsah panela (lenivý modul, kým sa nepoužil, nie je čo hlásiť).
+    panel_view: panelViewState(),
     property_focus: useAimInspectorStore.getState().propertyFocus,
     document: useAimDocRegionStore.getState().visible,
     // AIM D-132: záložky (aktívna a tá vedľa).

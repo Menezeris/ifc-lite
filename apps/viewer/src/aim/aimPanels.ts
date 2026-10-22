@@ -3,21 +3,26 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * `SET_PANELS` z chatu (AIM D-127, #179): otvorí, zavrie alebo prepne panely tými
- * istými akciami store ako lišta, rail a krížik panela (nič nové). Plán a opis
+ * `SET_PANELS` z chatu (AIM D-127, D-150, #179): otvorí, zavrie alebo prepne ľubovoľný
+ * panel UI tými istými akciami store ako lišta, rail a krížik panela (nič nové). Plán a opis
  * stavu sú v `aimPanelsPlan.ts`; tento modul sa načíta lenivo prvou správou.
  */
 
 import { useViewerStore } from '../store/index.js';
 import { closePanelWindow } from '../services/panel-windows.js';
-import { PANEL_ID, panelInfo, planPanels, type PanelKey, type PanelsRequest } from './aimPanelsPlan.js';
+import { SIDEBAR_PANEL_FLAGS } from '../store/store-sync.js';
+import { BOTTOM_PANEL_SETTER, isBottomPanel } from '../lib/panels/bottom-panels.js';
+import { panelIdOf } from './aimPanelList.js';
+import { panelInfo, planPanels, validPanelNames, type PanelKey, type PanelsRequest } from './aimPanelsPlan.js';
+import { forgetPanelZoom } from './aimPanelScroll.js';
 
 type Store = ReturnType<typeof useViewerStore.getState>;
 
 /** Vypne panel bez toho, aby otvoril iný stĺpec: plávajúce a samostatné okno zavrie, ukotvený skryje. */
 function closePanel(s: Store, key: PanelKey): void {
-  const id = PANEL_ID[key];
-  if (key === 'model_tree') {
+  const id = panelIdOf(key);
+  forgetPanelZoom(key);
+  if (id === 'hierarchy') {
     s.setLeftPanelCollapsed(true);
     return;
   }
@@ -43,18 +48,41 @@ function closePanel(s: Store, key: PanelKey): void {
       if (s.sidebarSecondaryPanel === 'properties') s.setSidebarSecondaryPanel(null);
       else if (s.sidebarActivePanel === 'properties' && s.sidebarMode !== 'collapsed') s.setSidebarMode('collapsed');
       return;
+    default:
+      closeGenericPanel(s, id);
   }
 }
 
+/**
+ * Ostatné panely registra (D-150): spodný pás vypne svojím príznakom, dolná polovica splitu sa uvoľní,
+ * panel s príznakom v pravom stĺpci ho vypne (stĺpec sa sám vráti na ďalší alebo na vlastnosti) a panel
+ * bez príznaka (zones, cost...) vráti stĺpec na vlastnosti, ako ho zatvára krížik.
+ */
+function closeGenericPanel(s: Store, id: ReturnType<typeof panelIdOf>): void {
+  if (isBottomPanel(id)) {
+    s[BOTTOM_PANEL_SETTER[id]](false);
+    return;
+  }
+  if (s.sidebarSecondaryPanel === id) {
+    s.setSidebarSecondaryPanel(null);
+    return;
+  }
+  const flag = SIDEBAR_PANEL_FLAGS.find(([, panel]) => panel === id)?.[0];
+  if (flag) useViewerStore.setState({ [flag]: false });
+  else if (s.sidebarActivePanel === id) s.setSidebarActivePanel('properties');
+}
+
 function openPanel(s: Store, key: PanelKey): void {
-  if (key === 'model_tree') s.setLeftPanelCollapsed(false);
-  else s.showWorkspacePanel(PANEL_ID[key], 'programmatic');
+  const id = panelIdOf(key);
+  if (id === 'hierarchy') s.setLeftPanelCollapsed(false);
+  else s.showWorkspacePanel(id, 'programmatic');
 }
 
 /** Vykoná požiadavku; čo sa nepodarilo (napr. mobil s jedným panelom), zapíše ako problém pre `APPLIED`. */
 export function applyPanels(req: PanelsRequest, noteIssue: (text: string) => void): void {
   const store = useViewerStore;
-  const steps = planPanels(req, (key) => panelInfo(store.getState(), key).open);
+  const { steps, unknown } = planPanels(req, (key) => panelInfo(store.getState(), key).open);
+  if (unknown.length > 0) noteIssue(`SET_PANELS: neznámy panel ${unknown.join(', ')} (platné: ${validPanelNames()})`);
   for (const step of steps) {
     if (step.open) openPanel(store.getState(), step.key);
     else closePanel(store.getState(), step.key);
