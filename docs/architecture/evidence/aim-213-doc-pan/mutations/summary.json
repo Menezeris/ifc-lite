@@ -1,0 +1,38 @@
+{
+  "feature": "aim-213-doc-pan",
+  "production": "apps/viewer/src/aim/docPan.ts",
+  "test": "apps/viewer/src/aim/docPan.test.ts",
+  "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+  "results": [
+    {
+      "mutation": "click-threshold.patch",
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    {
+      "mutation": "left-button-only.patch",
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    {
+      "mutation": "links-clickable.patch",
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    {
+      "mutation": "mouse-and-pen-only.patch",
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    {
+      "mutation": "scroll-direction.patch",
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    {
+      "mutation": "text-selection-kept.patch",
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    }
+  ]
+}

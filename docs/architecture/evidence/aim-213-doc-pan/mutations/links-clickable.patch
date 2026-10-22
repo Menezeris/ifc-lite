@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docPan.ts a/apps/viewer/src/aim/docPan.ts
+index 27ffd7dd..d1f32291 100644
+--- b/apps/viewer/src/aim/docPan.ts
++++ a/apps/viewer/src/aim/docPan.ts
+@@ -34,7 +34,7 @@ export function canStartPan(e: PanStartEvent): boolean {
+   if (e.pointerType !== 'mouse' && e.pointerType !== 'pen') return false;
+   const t = e.target as Partial<PanTarget> | null;
+   if (!t || typeof t.closest !== 'function') return false;
+-  return !t.closest(TEXT_SELECTOR);
++  return !t.closest(TEXT_SELECTOR) && !t.closest(INTERACTIVE_SELECTOR);
+ }
+ 
+ export interface PanState {
