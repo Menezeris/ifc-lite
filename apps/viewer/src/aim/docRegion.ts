@@ -24,6 +24,7 @@ import { useEffect, useRef, type RefObject } from 'react';
 import { create } from 'zustand';
 import { describeVisible, type DocVisibleState } from './docVisible.js';
 import { useAimDocLinks } from './docLinks.js';
+import { attachDocPan } from './docPan.js';
 
 /** Výrez strany v zlomkoch (0-1), počiatok vľavo hore. */
 export interface DocRegion {
@@ -226,6 +227,7 @@ const CONTENT_PADDING_PX = 24;
  */
 export function useAimDocRegion(v: DocRegionViewInputs): void {
   useAimDocLinks(v.docId, v.pageElsRef); // odkazy z popiskov výkresu (AIM D-130)
+  useEffect(() => (v.scrollRef.current ? attachDocPan(v.scrollRef.current) : undefined), [v.scrollRef]); // posun ťahaním (AIM #213)
   const request = useAimDocRegionStore((s) => (s.request?.docId === v.docId ? s.request : null));
   const highlights = useAimDocRegionStore((s) => (s.highlights?.docId === v.docId ? s.highlights : null));
   const zoomedRef = useRef<number | null>(null);

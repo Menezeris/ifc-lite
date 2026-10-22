@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docPan.ts a/apps/viewer/src/aim/docPan.ts
+index 35c81aa7..d1f32291 100644
+--- b/apps/viewer/src/aim/docPan.ts
++++ a/apps/viewer/src/aim/docPan.ts
+@@ -57,7 +57,7 @@ export function movePan(s: PanState, x: number, y: number): { left: number; top:
+     if (Math.hypot(dx, dy) < PAN_THRESHOLD_PX) return null;
+     s.active = true;
+   }
+-  return { left: s.scrollLeft + dx, top: s.scrollTop + dy };
++  return { left: s.scrollLeft - dx, top: s.scrollTop - dy };
+ }
+ 
+ const STYLE_ATTR = 'data-aim-doc-pan-style';
