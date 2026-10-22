@@ -28,7 +28,9 @@ pull requests" and "Release train".
 - An **"Ako vyskúšať"** section in the body, in Slovak: the test link
   `https://ai-mviewer.vercel.app/ifc?viewer=pr-<this PR number>` (the AIM host with this
   PR's viewer preview) and 2-5 concrete steps: what to click, which MCP prompt to send,
-  what Samuel should see. Try them yourself first, live, where the session can.
+  what Samuel should see. Try them yourself first on the local viewer with the test model
+  (aim-feature skill, step 5). Never open that link or the AIM host's `/ifc` from a session:
+  it downloads the production models from a bucket with a small free egress quota (AIM D-135).
 
 ## What does not block it
 

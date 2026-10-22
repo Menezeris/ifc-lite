@@ -49,7 +49,7 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/index.html` | 4 | branded title, assetin favicons, Inter font, brand colours (D-070) |
 | `apps/viewer/src/bootstrap.tsx` | 1 | assetin design-kit import order — tokens first, after `index.css` (D-070; upstream moved the entry imports here from `main.tsx`) |
 | `apps/viewer/src/App.tsx` | 2 | `import { AimBridge }` + `<AimBridge />` mount inside `SourceHostProvider` |
-| `apps/viewer/src/hooks/useModelUrlAutoload.ts` | 3 | `?models=` federated autoload + origin allowlist (`lib/autoload.ts`), `AUTOLOAD_COMPLETE_EVENT` for AimBridge |
+| `apps/viewer/src/hooks/useModelUrlAutoload.ts` | 3 | `?models=` federated autoload + origin allowlist (`lib/autoload.ts`), `AUTOLOAD_COMPLETE_EVENT` for AimBridge, gzip revision archives with the plain model name (`aim/modelFile.ts`, AIM D-135) |
 | `apps/viewer/src/components/viewer/ViewerLayout.tsx` | 6 | D-072 2D plan pane + D-075 document pane in the center split (around upstream's `ModelWorkspaceSplit`) and the AIM D-132 view tab bar above it; the pane logic lives in `aim/useAimCenterPanes.ts` |
 | `apps/viewer/src/components/viewer/MobileBottomSheet.tsx` | 1 | `z-50` so sheets sit above the full-screen plan/document overlays |
 | `apps/viewer/src/components/viewer/MobileToolbar.tsx` | 2 | `<ViewModeSwitcher />` (D-075) |
