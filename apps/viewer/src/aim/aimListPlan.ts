@@ -13,6 +13,7 @@ import { isFilterGroup, type FilterGroup } from '@ifc-lite/rules';
 import type { ColumnDefinition, ListDefinition } from '@ifc-lite/lists';
 import type { LensInboundMessage } from './lens-protocol.js';
 import { MAX_AIM_GLOBAL_IDS, resolveModelRules, type ModelRef } from './aimLensPlan.js';
+import { parseListView } from './aimListViewPlan.js';
 
 export type OpenListMessage = Extract<LensInboundMessage, { type: 'OPEN_LIST' }>;
 
@@ -31,6 +32,7 @@ export function parseOpenList(data: LensInboundMessage): OpenListMessage | null 
   const m = data as unknown as Record<string, unknown>;
   if (m.type !== 'OPEN_LIST' || !shortStr(m.name, 120)) return null;
   if (m.run !== undefined && typeof m.run !== 'boolean') return null;
+  if (parseListView(m.view) === null) return null;
   if (!Array.isArray(m.groups) || m.groups.length === 0 || m.groups.length > MAX_GROUPS || !m.groups.every(isFilterGroup)) return null;
   let ids = 0;
   for (const g of m.groups as FilterGroup[]) for (const r of g.rules) if (r.kind === 'globalId') ids += r.values.length;
