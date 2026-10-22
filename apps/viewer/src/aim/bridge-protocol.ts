@@ -134,7 +134,7 @@ export type InboundMessage =
   | { source: typeof SOURCE; type: 'FOCUS'; guids: string[] }
   // Výber ako klik myšou (D-082 v AIM repe): selekcia, panel a kamera; ENTITY_SELECTED
   // sa echuje hostovi (AIM karta ako po kliku). `panel` (D-113): záložka, sekcia a
-  // zvýraznená vlastnosť; validuje ho lenivý SELECT (`aimPanelViewPlan.ts`).
+  // zvýraznená vlastnosť; validuje ho lenivý SELECT (`aimPanelViewPlan.ts`). `guids` = viac prvkov (#217).
   | { source: typeof SOURCE; type: 'SELECT'; guid: string; guids?: string[]; panel?: unknown }
   | { source: typeof SOURCE; type: 'HIGHLIGHT_FILTER'; guids: string[] }
   | { source: typeof SOURCE; type: 'CLEAR_FILTER' }
@@ -313,7 +313,6 @@ export function isInboundMessage(data: unknown): data is InboundMessage {
     case 'HIGHLIGHT_FILTER':
       return isStringArray(msg.guids);
     case 'SELECT':
-      // `guids` = viacnásobný výber (AIM #217); `guid` je prvý a nesie panel.
       return typeof msg.guid === 'string' && msg.guid.length > 0 && (msg.guids === undefined || isStringArray(msg.guids));
     case 'CLEAR_FILTER':
     case 'SHOW_ALL':
