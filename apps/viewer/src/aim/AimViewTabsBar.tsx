@@ -13,7 +13,8 @@
  * ktorú plocha bez dlaždíc nevie (dve 3D, dva dokumenty), prepne na dve dlaždice vedľa seba.
  */
 
-import { useEffect, useMemo, useRef } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Box, FileText, LayoutTemplate, Scan, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useViewerStore } from '@/store';
@@ -24,6 +25,8 @@ import { useAimViewTabs } from './viewTabsStore.js';
 import { activate, beside, close, openPlan, setLayout, syncDocs } from './viewTabsApply.js';
 import { TILE_LAYOUTS, TILE_LAYOUT_LABELS, isTileLayout } from './viewTilesPlan.js';
 import { AimPlanOrbitHint } from './AimPlanOrbitHint.js';
+
+const AimTileGrid = lazy(() => import('./AimTileGrid.js').then((m) => ({ default: m.AimTileGrid })));
 
 const ICON: Record<ViewTabKind, typeof Box> = { '3d': Box, plan: LayoutTemplate, view: Scan, doc: FileText };
 const SELECT = 'h-6 max-w-40 rounded border bg-background px-1 text-2xs text-muted-foreground';
@@ -54,6 +57,9 @@ export function AimViewTabsBar() {
   const activeId = useAimViewTabs((s) => s.activeId);
   const besideId = useAimViewTabs((s) => s.besideId);
   const layout = useAimViewTabs((s) => s.layout);
+  // Dlaždice (D-157) kreslí lenivá mriežka v obale 3D panela, nie vstupný `ViewerLayout`.
+  const [tilesHost, setTilesHost] = useState<HTMLElement | null>(null);
+  useEffect(() => setTilesHost(document.querySelector<HTMLElement>('[data-aim-tiles]')), []);
   // Vedľa ide každá dvojica: čo nevie plocha bez dlaždíc, rieši rozloženie dvoch dlaždíc (D-157).
   const pairable = useMemo(() => tabs.filter((t) => t.id !== activeId), [tabs, activeId]);
   if (isMobile) return null;
@@ -61,6 +67,7 @@ export function AimViewTabsBar() {
   return (
     <div className="relative flex h-7 shrink-0 items-stretch border-b bg-muted/30" data-testid="aim-view-tabs">
       <AimPlanOrbitHint />
+      {layout !== 'single' && tilesHost && createPortal(<Suspense fallback={null}><AimTileGrid /></Suspense>, tilesHost)}
       <div role="tablist" aria-label="Záložky pohľadov" className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = ICON[tab.kind];

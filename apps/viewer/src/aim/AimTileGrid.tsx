@@ -3,8 +3,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * Dlaždice záložiek (AIM D-157, #210): vrstva nad 3D panelom, lenivo z
- * `ViewerLayout.tsx`. Každá dlaždica má hlavičku s výberom záložky. Živá 3D
+ * Dlaždice záložiek (AIM D-157, #210): vrstva nad 3D panelom, lenivo z lišty
+ * záložiek cez portál do obalu 3D panela (`data-aim-tiles` v `ViewerLayout.tsx`). Každá dlaždica má hlavičku s výberom záložky. Živá 3D
  * dlaždica je priehľadná: pod ňou je jediný 3D canvas, ktorý `useAimCenterPanes`
  * posunie do jej obdĺžnika (canvas sa nikdy neremountuje). Ostatné 3D dlaždice
  * ukazujú snímku (`tileShots.ts`) a klik ich urobí živými; dokument je živý vždy.
@@ -15,9 +15,9 @@ import { cn } from '@/lib/utils';
 import { useViewerStore } from '@/store';
 import { PdfDocumentView } from '@/components/documents/PdfDocumentView';
 import { ImageDocumentView } from '@/components/documents/ImageDocumentView';
-import { TILE_HEADER_PX, isSceneTab, type ViewTab } from './viewTabsLayout.js';
+import { isSceneTab, type ViewTab } from './viewTabsLayout.js';
 import { useAimViewTabs } from './viewTabsStore.js';
-import { TILE_RECTS, liveTile, type TileRect } from './viewTilesPlan.js';
+import { TILE_HEADER_PX, TILE_RECTS, liveTile, type TileRect } from './viewTilesPlan.js';
 import { activate, putTile } from './viewTabsApply.js';
 import { shotOf } from './tileShots.js';
 

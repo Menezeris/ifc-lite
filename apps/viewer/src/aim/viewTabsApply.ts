@@ -25,7 +25,8 @@ import { useAimViewTabs } from './viewTabsStore.js';
 import { isTabsMessage, type TabsMessage } from './tabs-protocol.js';
 import { isTilesMessage, type TilesMessage } from './tiles-protocol.js';
 import {
-  TILE_RECTS, isTiled, layoutTiles, liveTile, reconcileTiles, setTile, singleTiles, tileScene, type TileLayout, type TilesState,
+  TILE_RECTS, isTiled, layoutTiles, liveTile, reconcileTiles, setTile, singleTiles, tileFrameStyle, tileScene, type TileLayout,
+  type TilesState,
 } from './viewTilesPlan.js';
 import { hasShot, pruneShots, shoot } from './tileShots.js';
 import { waitCameraSettled } from './cameraSettle.js';
@@ -164,7 +165,7 @@ export function commit(next: ViewTabsState, note: Note = () => {}, tilesNext?: T
   const live = liveTile(tiles, scene);
   useAimViewTabs.setState({
     tabs: next.tabs, activeId: next.activeId, besideId: next.besideId, sceneId: scene,
-    layout: tiles.layout, tiles: tiles.tiles, frame: live >= 0 ? TILE_RECTS[tiles.layout][live] : null,
+    layout: tiles.layout, tiles: tiles.tiles, frame: live >= 0 ? tileFrameStyle(TILE_RECTS[tiles.layout][live]) : null,
   });
   syncPlanBeside(next, note);
   const doc = [next.tabs.find((t) => t.id === next.activeId), next.tabs.find((t) => t.id === next.besideId)].find((t) => t?.kind === 'doc');

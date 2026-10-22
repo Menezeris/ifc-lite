@@ -13,7 +13,7 @@
 import { create } from 'zustand';
 import type { StoreyInfo } from '@/hooks/useFloorplanView';
 import { initialTabs, type ViewTabsState } from './viewTabsLayout.js';
-import type { TileRect, TilesState } from './viewTilesPlan.js';
+import type { TilesState } from './viewTilesPlan.js';
 
 /** Podlažie, ako ho pozná prepínač pôdorysu (`useViewMode().storeys`). */
 export interface TabStorey { guid: string; name: string; info: StoreyInfo }
@@ -33,8 +33,8 @@ interface ViewTabsStore extends ViewTabsState, TilesState {
   deps: TabDeps | null;
   /** Kartu otvoril most (`DOCUMENT_OPEN`): záložku nastaví `showDoc`, nie synchronizácia kariet. */
   bridgeDocId: string | null;
-  /** Dlaždice (AIM D-157): obdĺžnik živej 3D dlaždice pre 3D canvas, null = celá plocha. */
-  frame: TileRect | null;
+  /** Dlaždice (AIM D-157): štýl obalu 3D canvasu v živej dlaždici, null = celá plocha. */
+  frame: Record<string, string> | null;
   /** Verzia snímok 3D dlaždíc (`tileShots.ts`), aby sa dlaždice prekreslili. */
   shots: number;
 }

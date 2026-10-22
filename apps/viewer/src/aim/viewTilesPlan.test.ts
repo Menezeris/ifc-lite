@@ -10,6 +10,7 @@ import {
   TILE_LAYOUTS, TILE_RECTS, describeLayout, isTileLayout, layoutTiles, liveTile, placeTab, reconcileTiles, setTile,
   singleTiles, tileScene, type TilesState,
 } from './viewTilesPlan.js';
+import { isTilesMessage } from './tiles-protocol.js';
 
 const plan1: ViewTab = { id: 'plan:G1', kind: 'plan', label: '1NP', storeyGuid: 'G1' };
 const plan2: ViewTab = { id: 'plan:G2', kind: 'plan', label: '2NP', storeyGuid: 'G2' };
@@ -138,5 +139,18 @@ describe('dlaždice záložiek (AIM D-157)', () => {
     });
     assert.strictEqual(describeLayout(s, { layout: 'split_h', tiles: ['doc:A', null] }, '3d').live_tab, null);
     assert.deepStrictEqual(describeLayout(s, singleTiles(), '3d'), { kind: 'single' });
+  });
+
+  it('VIEW_TABS layout: rozloženie zo zoznamu, najviac toľko dlaždíc, dlaždica {tab} | {plan} | null', () => {
+    const m = (o: Record<string, unknown>) => ({ source: 'aim-bridge', type: 'VIEW_TABS', action: 'layout', ...o });
+    assert.ok(isTilesMessage(m({ layout: 'grid4' })));
+    assert.ok(isTilesMessage(m({ layout: 'split_h', tiles: [{ tab: '3D' }, { plan: 'G1' }] })));
+    assert.ok(isTilesMessage(m({ layout: 'three_v', tiles: [null] })));
+    assert.ok(!isTilesMessage(m({ layout: '2x2' })));
+    assert.ok(!isTilesMessage(m({ layout: 'split_v', tiles: [{ tab: 'a' }, { tab: 'b' }, { tab: 'c' }] })));
+    assert.ok(!isTilesMessage(m({ layout: 'split_h', tiles: [{ tab: '3D', plan: 'G1' }] })));
+    assert.ok(!isTilesMessage(m({ layout: 'split_h', tiles: [{ tab: '' }] })));
+    assert.ok(!isTilesMessage({ ...m({ layout: 'single' }), source: 'x' }));
+    assert.ok(!isTilesMessage({ ...m({ layout: 'single' }), action: 'open' }));
   });
 });

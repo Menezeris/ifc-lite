@@ -64,26 +64,3 @@ export function centerLayout(s: ViewTabsState, tiled = false): CenterLayout {
     planBeside: active?.kind === '3d' && beside?.kind === 'plan' ? (beside.storeyGuid ?? null) : null,
   };
 }
-
-/** Výška hlavičky dlaždice (menovka a výber záložky) v px; 3D canvas začína pod ňou (AIM D-157). */
-export const TILE_HEADER_PX = 24;
-
-/** Obdĺžnik dlaždice v zlomkoch strednej plochy (`viewTilesPlan.ts`). */
-export interface TileFrame { x: number; y: number; w: number; h: number }
-
-const pct = (v: number) => `${Math.round(v * 1e4) / 100}%`;
-
-/**
- * Poloha 3D canvasu v živej dlaždici: pod hlavičkou, 1 px od okraja (deliaca čiara
- * dlaždíc). null = celá plocha, bez polohovania.
- */
-export function tileFrameStyle(f: TileFrame | null): Record<string, string> | undefined {
-  if (!f) return undefined;
-  return {
-    position: 'absolute',
-    left: `calc(${pct(f.x)} + 1px)`,
-    top: `calc(${pct(f.y)} + ${TILE_HEADER_PX + 1}px)`,
-    width: `calc(${pct(f.w)} - 2px)`,
-    height: `calc(${pct(f.h)} - ${TILE_HEADER_PX + 2}px)`,
-  };
-}

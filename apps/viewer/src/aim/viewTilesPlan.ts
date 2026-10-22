@@ -57,6 +57,25 @@ export const TILE_LAYOUT_LABELS: Record<TileLayout, string> = {
   grid4: '4 (2x2)',
 };
 
+/** Výška hlavičky dlaždice (menovka a výber záložky) v px; 3D canvas začína pod ňou. */
+export const TILE_HEADER_PX = 24;
+
+const pct = (v: number) => `${Math.round(v * 1e4) / 100}%`;
+
+/**
+ * Poloha 3D canvasu v živej dlaždici (štýl obalu canvasu v `ViewerLayout`): pod
+ * hlavičkou, 1 px od okraja (deliaca čiara dlaždíc).
+ */
+export function tileFrameStyle(f: TileRect): Record<string, string> {
+  return {
+    position: 'absolute',
+    left: `calc(${pct(f.x)} + 1px)`,
+    top: `calc(${pct(f.y)} + ${TILE_HEADER_PX + 1}px)`,
+    width: `calc(${pct(f.w)} - 2px)`,
+    height: `calc(${pct(f.h)} - ${TILE_HEADER_PX + 2}px)`,
+  };
+}
+
 export const isTileLayout = (v: unknown): v is TileLayout => typeof v === 'string' && (TILE_LAYOUTS as readonly string[]).includes(v);
 
 export interface TilesState {
