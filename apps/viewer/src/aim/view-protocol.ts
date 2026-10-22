@@ -111,7 +111,7 @@ export type ViewInboundMessage =
   | { source: typeof SOURCE; type: 'SET_PANELS'; panels: PanelsRequest }
   /** Posun panela vlastností (AIM #183): o stranu hore / dole, na začiatok, na koniec. */
   | { source: typeof SOURCE; type: 'SCROLL_PANEL'; direction: PanelScroll }
-  /** Kóty v IFC svete (Z hore, m) do nástroja Measure (AIM D-124); `keep` = pridať k predošlým od hosta. */
+  /** Kóty v IFC svete (Z hore, m) do nástroja Measure (AIM D-124); `keep` = pridať k predošlým od hosta, prázdne `segments` = zmazať kóty od hosta (D-152). */
   | { source: typeof SOURCE; type: 'MEASURE_SHOW'; segments: { a: Vec3Wire; b: Vec3Wire }[]; keep?: boolean }
   /** Čiara trasy v IFC svete (Z hore, m) od hosta (AIM D-137); nahradí predošlú, prázdne body ju zmažú. */
   | { source: typeof SOURCE; type: 'ROUTE_SHOW'; points: Vec3Wire[]; color?: string };
@@ -198,8 +198,8 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
     case 'SET_VIEW_MODE':
       return (VIEW_MODES as readonly unknown[]).includes(m.mode) && optional(m.storeyGuid, isStr);
     case 'MEASURE_SHOW':
+      // Prázdny zoznam = zmazať kóty od hosta, merania používateľa ostanú (AIM D-152).
       return Array.isArray(m.segments)
-        && m.segments.length > 0
         && m.segments.length <= MAX_MEASURE_SEGMENTS
         && m.segments.every((s) => !!s && typeof s === 'object' && isVec((s as { a?: unknown }).a) && isVec((s as { b?: unknown }).b))
         && optional(m.keep, (k) => typeof k === 'boolean');
