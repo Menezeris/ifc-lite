@@ -22,9 +22,9 @@ export const aimForkEn = {
   'aimFork.assistant.boundaryDocuments': 'Project document library. Opening a PDF or image produces no analysis result; the documents themselves live in the AIM platform.',
   /** Empty first option of the 2D storey picker (it has no visible text). */
   'aimFork.viewMode.noStorey': 'No storey selected',
-  /** Offer after an orbit attempt in the locked plan tab (AIM #188, D-132); the AIM host UI is Slovak. */
-  'aimFork.planOrbit.message': 'Pôdorys je zamknutý pohľad zhora. Prepnúť do 3D? (Enter)',
-  'aimFork.planOrbit.action': 'Prepnúť do 3D',
+  /** Offer after an orbit attempt in the locked plan tab (AIM #188, D-132)). */
+  'aimFork.planOrbit.message': 'The plan is a locked top view. Switch to 3D? (Enter)',
+  'aimFork.planOrbit.action': 'Switch to 3D',
   /** Fork-only ribbon tab (D-072 / D-075, labelled AIM since D-089); keyed like upstream's `ribbon.tab.*` because the band reads `t(`ribbon.tab.${tab}`)`. */
   'ribbon.tab.documents': 'AIM',
 } as const;
