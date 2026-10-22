@@ -90,12 +90,12 @@ export function panelInfo(s: PanelsStore, key: PanelKey): PanelInfo {
  * Stav všetkých panelov UI pre `view_state` a `APPLIED` (+ šírka pravého stĺpca v % okna): každý panel
  * registra s `open`, `where`, domovom a klávesovou skratkou, aby chat vedel, aké panely existujú.
  */
-export function describePanels(s: PanelsStore): Record<PanelKey, PanelInfo | number | null> {
+export function describePanels(s: PanelsStore): Record<PanelKey, PanelInfo> & { right_width_pct: number | null } {
   const out = {} as Record<PanelKey, PanelInfo>;
   for (const row of panelCatalog()) {
     out[row.key] = { ...panelInfo(s, row.key), home: row.home, ...(row.shortcut ? { shortcut: row.shortcut } : {}) };
   }
-  return { ...out, right_width_pct: s.sidebarMode === 'collapsed' ? null : Math.round(s.sidebarWidthPct) };
+  return Object.assign(out, { right_width_pct: s.sidebarMode === 'collapsed' ? null : Math.round(s.sidebarWidthPct) });
 }
 
 /** Zoznam platných mien pre hlásenie neznámeho panela. */
