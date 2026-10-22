@@ -1,0 +1,21 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "env": [
+        "$TURBO_EXTENDS$",
+        // >>> AIM-FORK: per-commit / per-deployment variables, only for the
+        // viewer bundle. vite.config.ts stamps __BUILD_SHA__ from
+        // VERCEL_GIT_COMMIT_SHA / GITHUB_SHA and names the assets directory
+        // from VERCEL_DEPLOYMENT_ID, so this task legitimately misses on every
+        // commit, but its dependencies (wasm, packages) no longer do.
+        "VERCEL_GIT_COMMIT_SHA",
+        "VERCEL_DEPLOYMENT_ID",
+        "VERCEL_SKEW_PROTECTION_ENABLED",
+        "GITHUB_SHA"
+        // <<< AIM-FORK
+      ]
+    }
+  }
+}
