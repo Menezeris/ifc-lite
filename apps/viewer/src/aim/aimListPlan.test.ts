@@ -57,4 +57,10 @@ describe('zoznam z chatu (AIM D-111)', () => {
     assert.equal(parseOpenList(msg({ groups: [{ combinator: 'XOR', rules: [] }] })), null);
     assert.equal(parseOpenList(msg({ name: '' })), null);
   });
+
+  it('run (D-148): musí byť boolean, inak sa správa zahodí', () => {
+    assert.ok(parseOpenList(msg({ run: true })));
+    assert.ok(parseOpenList(msg()));
+    assert.equal(parseOpenList(msg({ run: 'ano' as unknown as boolean })), null);
+  });
 });

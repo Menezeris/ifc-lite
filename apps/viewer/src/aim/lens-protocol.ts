@@ -62,6 +62,8 @@ export type LensInboundMessage =
       /** Zoznam z chatu (AIM D-111): builder panela Lists s filtrami a stĺpcami. */
       type: 'OPEN_LIST';
       name: string;
+      /** Tabuľku po otvorení rovno spustiť (D-148). */
+      run?: boolean;
       /** `FilterGroup[]` ako pri Lens; pravidlo `model` nesie mená modelov. */
       groups: unknown[];
       columns: AimListColumnWire[];
@@ -101,7 +103,13 @@ export function lensSettled(timeoutMs: number): Promise<unknown> {
   return lensModule ? lensModule.then((m) => m.settledLensSummary(timeoutMs)) : Promise.resolve(null);
 }
 
+/** Pre `APPLIED` (D-148): počká na beh zoznamu z chatu a vráti jeho súhrn; bez zoznamu null. */
+export function listSettled(timeoutMs: number): Promise<unknown> {
+  return listModule ? listModule.then((m) => m.listSummary(timeoutMs)) : Promise.resolve(null);
+}
+
 /** Odpojenie mostu: upratať len vtedy, keď chat Lens vôbec použil. */
 export function resetLensFromChat(): void {
   void lensModule?.then((m) => m.resetAimLens());
+  void listModule?.then((m) => m.resetListFromChat());
 }

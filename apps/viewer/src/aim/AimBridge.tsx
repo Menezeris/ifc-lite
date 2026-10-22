@@ -40,7 +40,7 @@ import { withTabs } from './viewTabsStore.js';
 import { applySectionCap, isSectionCapMessage } from './sectionCap.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
 import { isBcfLoadMessage, loadBcfTopics } from './bcf-protocol.js';
-import { dispatchLensMessage, isLensEnvelope, lensSettled, resetLensFromChat } from './lens-protocol.js';
+import { dispatchLensMessage, isLensEnvelope, lensSettled, listSettled, resetLensFromChat } from './lens-protocol.js';
 import { appliedViewState, prepareFocusView, runSectionBox, setChangesProvider, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
 import { createViewChangeTracker } from './viewChanges.js';
 
@@ -111,10 +111,15 @@ export function AimBridge() {
 
     // `ACK_REQUEST` ide bránou za príkazmi, preto ich vidí vykonané; počká ešte na ich asynchrónne kroky.
     async function answerAck(cmdId: string) {
+      const listP = listSettled(ACK_WAIT_MS); // beh zoznamu z chatu (D-148) čaká súbežne s ostatnými krokmi
       const done = await settled(ACK_WAIT_MS);
       // null = lens z chatu sa nepoužila; chyba výpočtu súhrnu je problém, nie úspech.
       const lens = await lensSettled(ACK_WAIT_MS).catch((err: unknown) => {
         noteIssue(`Lens: ${err instanceof Error ? err.message : String(err)}`);
+        return null;
+      });
+      const list = await listP.catch((err: unknown) => {
+        noteIssue(`Zoznam: ${err instanceof Error ? err.message : String(err)}`);
         return null;
       });
       const state = await appliedViewState().catch((err: unknown) => {
@@ -124,7 +129,7 @@ export function AimBridge() {
       // Problémy až po stave a Lens, aby ich chyby patrili do tohto potvrdenia.
       const issues = takeIssues();
       if (!done) issues.push('niektoré kroky vo vieweri ešte bežia');
-      const extra = { ...(lens ? { lens } : {}), ...changes.ackedState() };
+      const extra = { ...(lens ? { lens } : {}), ...(list ? { list } : {}), ...changes.ackedState() };
       const applied: AppliedMessage = { source: SOURCE, type: 'APPLIED', cmdId, ok: issues.length === 0, issues, state: state && { ...state, ...extra } };
       window.parent.postMessage(applied, origin());
     }

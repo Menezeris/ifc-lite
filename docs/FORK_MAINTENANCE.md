@@ -59,6 +59,7 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/components/documents/PdfDocumentView.tsx` | 2 | page region from the AIM chat (D-117): one import and one `useAimDocRegion` call from `aim/docRegion.ts`, one-line blocks because the file sits at its module-size budget; the same call draws the text highlights (D-123), no further edit |
 | `apps/viewer/src/components/viewer/HierarchyPanel.tsx` | 2 | AIM tree decorations — row → IFC GlobalId → badge counts (D-077), one import from `aim/hierarchyPanel.ts` because the file sits at its module-size budget; AIM LAYERS moved to the `aim-layers` panel (D-104) |
 | `apps/viewer/src/components/viewer/hierarchy/ModelHeaderRow.tsx` | 2 | `<AimModelRevision />` model revision pill on MODELS rows (D-089) |
+| `apps/viewer/src/components/viewer/lists/ListPanel.tsx` | 2 | `useAimListAutoRun(handleExecuteList, hasData)` (import + one call): `open_list run=true` runs the table after opening, logic in `aim/aimListRun.ts` (D-148) |
 | `apps/viewer/src/components/viewer/properties/RelationshipsCard.tsx` | 3 | `<AimDerivedRelations />` AIM group in Relationship records + its rows in the card count (D-089) |
 | `apps/viewer/src/components/viewer/hierarchy/HierarchyNode.tsx` | 4 | AIM badge icons + per-GUID counts (D-077) |
 | `apps/viewer/src/components/viewer/Viewport.tsx` | 2 | `useDrawingUnderlay` (D-072) |
