@@ -111,13 +111,17 @@ export function SidebarDock() {
       {mode === 'expanded' && (
         <>
           {/* Resize handle */}
+          {/* >>> AIM-FORK: AIM #211 — the 6 px handle sat flush against the canvas, and a grab that missed
+              it by a few px landed on the plan and panned it. The ::before widens the hit zone 6 px into
+              the canvas; z-10 keeps it above the scene overlays. */}
           <div
             onMouseDown={onResizeStart}
-            className="w-1.5 shrink-0 cursor-col-resize bg-border hover:bg-primary/50 active:bg-primary/70 transition-colors"
+            className="relative z-10 w-1.5 shrink-0 cursor-col-resize bg-border before:absolute before:inset-y-0 before:-left-1.5 before:right-0 before:content-[''] hover:bg-primary/50 active:bg-primary/70 transition-colors"
             role="separator"
             aria-orientation="vertical"
             aria-label={t('shellChrome.sidebarDock.resizeAriaLabel')}
           />
+          {/* <<< AIM-FORK */}
           <div
             className="h-full min-w-0 overflow-hidden panel-container flex flex-col"
             style={{ width: contentPx ?? `${effectivePct}%` }}

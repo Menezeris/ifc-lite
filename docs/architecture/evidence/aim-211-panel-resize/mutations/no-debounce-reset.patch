@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/planRefit.ts a/apps/viewer/src/aim/planRefit.ts
+index 5d8c1889..2afb98d8 100644
+--- b/apps/viewer/src/aim/planRefit.ts
++++ a/apps/viewer/src/aim/planRefit.ts
+@@ -68,6 +68,7 @@ export function createPlanRefit(deps: PlanRefitDeps) {
+     resized(size: Size) {
+       latest = size;
+       if (!settled) settled = size;
++      if (timer !== null) clearTimer(timer);
+       timer = setTimer(settle, REFIT_SETTLE_MS);
+     },
+     dispose() {
