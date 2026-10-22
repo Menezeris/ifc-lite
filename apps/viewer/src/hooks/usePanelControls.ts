@@ -24,6 +24,9 @@ import {
 } from '@/lib/panels/registry';
 import { BOTTOM_PANEL_SETTER, isBottomPanel, isBottomPanelOpen } from '@/lib/panels/bottom-panels';
 import { useBottomPanelFlags } from './useBottomPanelFlags';
+// >>> AIM-FORK
+import { sideDockedPanels } from '@/aim/aimSideDock';
+// <<< AIM-FORK
 import { openPanelWindow, closePanelWindow } from '@/services/panel-windows';
 
 export type PanelLocation = 'docked' | 'floating' | 'popped' | 'closed';
@@ -82,23 +85,19 @@ export function usePanelControls(): PanelControls {
   );
   const poppedIds = useMemo(() => new Set<WorkspacePanelId>(poppedOutIds), [poppedOutIds]);
 
-  // The side panel actually shown in the right pane — mirrors SidebarPanelHost:
-  // the active panel, unless it's detached, in which case the pane falls back to
-  // Information. Used so the rail highlights what is really on screen.
-  const sideDocked = useMemo<WorkspacePanelId | null>(() => {
-    if (!floatingIds.has(activePanel) && !poppedIds.has(activePanel)) return activePanel;
-    if (!floatingIds.has('properties') && !poppedIds.has('properties')) return 'properties';
-    return null;
-  }, [activePanel, floatingIds, poppedIds]);
-
-  // The panel actually rendered in the lower split half, mirroring
-  // SidebarPanelHost's `secondaryActive`: set, inline (not floated / popped), and
-  // distinct from the primary. So the rail reflects it as docked, not closed.
-  const secondaryDocked = useMemo<WorkspacePanelId | null>(() => {
-    if (!secondaryPanel || secondaryPanel === sideDocked) return null;
-    if (floatingIds.has(secondaryPanel) || poppedIds.has(secondaryPanel)) return null;
-    return secondaryPanel;
-  }, [secondaryPanel, sideDocked, floatingIds, poppedIds]);
+  // >>> AIM-FORK: rail highlight shares the docked logic with the AIM panel state (#212)
+  // A collapsed right pane shows nothing, so no side panel reads as docked then.
+  const sidebarMode = useViewerStore((s) => s.sidebarMode);
+  const { sideDocked, secondaryDocked } = useMemo(() => {
+    const d = sideDockedPanels({
+      sidebarMode,
+      sidebarActivePanel: activePanel,
+      sidebarSecondaryPanel: secondaryPanel,
+      detached: new Set<string>([...floatingIds, ...poppedIds]),
+    });
+    return { sideDocked: d.primary as WorkspacePanelId | null, secondaryDocked: d.secondary as WorkspacePanelId | null };
+  }, [sidebarMode, activePanel, secondaryPanel, floatingIds, poppedIds]);
+  // <<< AIM-FORK
 
   const isDockedInHome = useCallback(
     (id: WorkspacePanelId): boolean => {

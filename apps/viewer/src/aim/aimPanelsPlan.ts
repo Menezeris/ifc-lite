@@ -13,6 +13,7 @@
  * (spodný pás), `model_tree` -> `hierarchy` (ľavý stĺpec). `all` = všetky.
  */
 
+import { sideDockedPanels } from './aimSideDock.js';
 import { PANEL_KEYS, type PanelKey, type PanelsRequest } from './view-protocol.js';
 
 export { PANEL_KEYS, type PanelKey, type PanelsRequest };
@@ -73,8 +74,13 @@ export function panelInfo(s: PanelsStateLike, key: PanelKey): PanelInfo {
   if (floating) return { open: true, where: 'floating', snap: floating.snap, size: { w: Math.round(floating.w), h: Math.round(floating.h) } };
   if (s.poppedOutIds.includes(id)) return { open: true, where: 'window' };
   if (key === 'lists') return s.listPanelVisible ? { open: true, where: 'bottom' } : { open: false };
-  const docked = s.sidebarMode !== 'collapsed' && (s.sidebarActivePanel === id || s.sidebarSecondaryPanel === id);
-  return docked ? { open: true, where: 'right' } : { open: false };
+  const { primary, secondary } = sideDockedPanels({
+    sidebarMode: s.sidebarMode,
+    sidebarActivePanel: s.sidebarActivePanel,
+    sidebarSecondaryPanel: s.sidebarSecondaryPanel,
+    detached: new Set([...s.floatingPanels.map((p) => p.id), ...s.poppedOutIds]),
+  });
+  return id === primary || id === secondary ? { open: true, where: 'right' } : { open: false };
 }
 
 /** Stav všetkých panelov pre `view_state` a `APPLIED` (+ šírka pravého stĺpca v % okna). */
