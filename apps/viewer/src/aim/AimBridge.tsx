@@ -22,7 +22,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useBim } from '../sdk/BimProvider.js';
 import { useViewerStore } from '../store/index.js';
 import { AUTOLOAD_COMPLETE_EVENT, parseAutoloadUrls } from '../lib/autoload.js';
-import { selectPickedGlobalId } from '../components/viewer/viewport-selection.js';
+import { selectPickedGlobalId, toggleGlobalIdInSelection } from '../components/viewer/viewport-selection.js';
 import {
   SOURCE, FILTER_COLOR, FOCUS_COLOR, isInboundMessage, guidForEntity, resolveGuids, resolveSelector,
   type InboundMessage, type OutboundMessage,
@@ -50,7 +50,7 @@ const aimTyped = (d: unknown, type: string) => !!d && typeof d === 'object' && (
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
 /** Helpery zo vstupného balíka pre lenivý modul príkazov viditeľnosti. */
-const VIS_DEPS = { resolveGuids, resolveSelector, selectPickedGlobalId, noteIssue, track, FOCUS_COLOR, FILTER_COLOR, prepareFocusView };
+const VIS_DEPS = { resolveGuids, resolveSelector, selectPickedGlobalId, addToSelection: toggleGlobalIdInSelection, noteIssue, track, FOCUS_COLOR, FILTER_COLOR, prepareFocusView };
 let visibility: Promise<typeof import('./visibility-commands.js')> | null = null;
 const loadVisibility = () => (visibility ??= import('./visibility-commands.js'));
 
