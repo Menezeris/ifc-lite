@@ -6,7 +6,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
 import { isViewMessage, isPanelsRequest } from './view-protocol.js';
-import { describePanels, panelInfo, planPanels, type PanelsStateLike } from './aimPanelsPlan.js';
+import { PANEL_KEYS, describePanels, panelInfo, planPanels, type PanelsStateLike } from './aimPanelsPlan.js';
 
 const S = 'aim-bridge' as const;
 
@@ -26,7 +26,8 @@ describe('panely z chatu (AIM D-127)', () => {
     assert.equal(isViewMessage({ source: S, type: 'SET_PANELS', panels: { lens: 'close' } }), true);
     assert.equal(isViewMessage({ source: S, type: 'SET_PANELS', panels: { all: 'close', properties: 'open' } }), true);
     assert.equal(isPanelsRequest({ all: 'open' }), false);
-    assert.equal(isPanelsRequest({ legend: 'close' }), false);
+    assert.equal(isPanelsRequest({ 'legend!': 'close' }), false, 'meno musí byť identifikátor');
+    assert.equal(isPanelsRequest({ legend: 'close' }), true, 'neznáme meno prejde, viewer ho nahlási v APPLIED');
     assert.equal(isPanelsRequest({ lens: 'hide' }), false);
     assert.equal(isPanelsRequest({}), false);
     assert.equal(isPanelsRequest([]), false);
@@ -35,14 +36,17 @@ describe('panely z chatu (AIM D-127)', () => {
 
   it('plán: all zavrie všetko okrem výslovne otvorených, zatváranie ide prvé, toggle podľa stavu', () => {
     const open = new Set(['lens', 'model_tree']);
-    const steps = planPanels({ all: 'close', properties: 'open' }, (k) => open.has(k));
+    const { steps } = planPanels({ all: 'close', properties: 'open' }, (k) => open.has(k));
     assert.deepEqual(steps.at(-1), { key: 'properties', open: true });
     assert.equal(steps.filter((s) => s.open).length, 1);
-    assert.equal(steps.length, 6);
-    assert.deepEqual(planPanels({ lens: 'toggle', lists: 'toggle' }, (k) => open.has(k)), [
+    assert.equal(steps.length, PANEL_KEYS.length);
+    assert.deepEqual(planPanels({ lens: 'toggle', lists: 'toggle' }, (k) => open.has(k)).steps, [
       { key: 'lens', open: false },
       { key: 'lists', open: true },
     ]);
+    const closeAll = planPanels({ all: 'close' }, () => true).steps;
+    assert.equal(closeAll.at(-1)?.key, 'properties', 'vlastnosti sa zatvárajú ako posledné, inak by ich zatvorený panel stĺpca vrátil');
+    assert.deepEqual(planPanels({ bcf: 'open', nezname: 'close' }, () => false), { steps: [{ key: 'bcf', open: true }], unknown: ['nezname'] });
   });
 
   it('stav: ukotvený vpravo, vľavo, dole, plávajúci so snapom a veľkosťou, samostatné okno', () => {
@@ -58,5 +62,13 @@ describe('panely z chatu (AIM D-127)', () => {
     const all = describePanels(base);
     assert.equal(all.right_width_pct, 22);
     assert.equal(describePanels({ ...base, sidebarMode: 'collapsed' }).right_width_pct, null);
+  });
+
+  it('stav: spodný pás a panely bez príznaka (BCF Alt+3, Script, Gantt, zones)', () => {
+    assert.deepEqual(panelInfo({ ...base, sidebarActivePanel: 'bcf' }, 'bcf'), { open: true, where: 'right' });
+    assert.deepEqual(panelInfo(base, 'bcf'), { open: false });
+    assert.deepEqual(panelInfo({ ...base, scriptPanelVisible: true }, 'script'), { open: true, where: 'bottom' });
+    assert.deepEqual(panelInfo({ ...base, ganttPanelVisible: false }, 'gantt'), { open: false });
+    assert.deepEqual(panelInfo({ ...base, sidebarActivePanel: 'zones' }, 'zones'), { open: true, where: 'right' });
   });
 });

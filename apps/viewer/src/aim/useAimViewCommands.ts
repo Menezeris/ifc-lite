@@ -106,7 +106,7 @@ export async function appliedViewState(): Promise<Record<string, unknown>> {
     // Limit vypršal počas pohybu (používateľ otáča kamerou): póza nie je cieľ, nech to host vie.
     ...(settled ? {} : { camera_moving: true }),
     selection_count: s.selection.count, hidden_count: s.hidden_count, isolated_count: s.isolated_count, focus: s.focus,
-    panels: s.panels, tabs: s.tabs, ...(s.property_focus ? { property_focus: s.property_focus } : {}), ...(s.document ? { document: s.document } : {}),
+    panels: s.panels, ...(s.panel_view ? { panel_view: s.panel_view } : {}), tabs: s.tabs, ...(s.property_focus ? { property_focus: s.property_focus } : {}), ...(s.document ? { document: s.document } : {}),
   };
 }
 
@@ -205,7 +205,11 @@ export function useAimViewCommands(bim: BimContext) {
         return;
       }
       case 'SCROLL_PANEL': {
-        track(loadPanelScroll().then((m) => m.scrollPanel(msg.direction, noteIssue)));
+        track(loadPanelScroll().then((m) => m.scrollPanel(msg, noteIssue)));
+        return;
+      }
+      case 'ZOOM_PANEL': {
+        track(loadPanelScroll().then((m) => m.zoomPanel(msg.zoom, msg.panel, noteIssue)));
         return;
       }
       case 'SET_VIEW_MODE': {
