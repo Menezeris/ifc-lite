@@ -21,6 +21,12 @@ describe('panel vlastností z chatu (AIM D-113)', () => {
     );
   });
 
+  it('SELECT s viac GUIDmi (AIM #217) prejde, guids musí byť pole reťazcov', () => {
+    assert.equal(isInboundMessage({ source: S, type: 'SELECT', guid: GUID, guids: [GUID, '1abcdefghijklmnopqrstu'] }), true);
+    assert.equal(isInboundMessage({ source: S, type: 'SELECT', guid: GUID, guids: 'x' }), false);
+    assert.equal(isInboundMessage({ source: S, type: 'SELECT', guid: GUID, guids: [1] }), false);
+  });
+
   it('neplatný panel zahodí celú správu (null), chýbajúci panel nie (undefined)', () => {
     assert.strictEqual(selectPanel(undefined), undefined);
     assert.strictEqual(selectPanel(null), undefined);
