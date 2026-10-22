@@ -17,6 +17,9 @@
 
 import { SOURCE, type OpsSelector } from './bridge-protocol.js';
 import { isPanelScroll, type PanelScroll } from './aimPanelScrollPlan.js';
+import {
+  AUTO_ROTATE_ACTIONS, AUTO_ROTATE_DIRECTIONS, AUTO_ROTATE_SPEED, type AutoRotateAction, type AutoRotateDirection,
+} from './autoRotatePlan.js';
 
 /** keep = smer sa nemení, section = kolmo na aktívny rez ako tlačidlo Set view (AIM D-098). */
 export const CAMERA_PRESETS = ['top', 'bottom', 'front', 'back', 'left', 'right', 'iso', 'fit_all', 'keep', 'section'] as const;
@@ -111,6 +114,8 @@ export type ViewInboundMessage =
   | { source: typeof SOURCE; type: 'SET_PANELS'; panels: PanelsRequest }
   /** Posun panela vlastností (AIM #183): o stranu hore / dole, na začiatok, na koniec. */
   | { source: typeof SOURCE; type: 'SCROLL_PANEL'; direction: PanelScroll }
+  /** Plynulé otáčanie kamery okolo cieľa (AIM #247); `start` nahradí bežiace, zastaví ho `stop`, zásah používateľa aj iný pohyb kamery. */
+  | { source: typeof SOURCE; type: 'AUTO_ROTATE'; action: AutoRotateAction; speedDegS?: number; direction?: AutoRotateDirection }
   /** Kóty v IFC svete (Z hore, m) do nástroja Measure (AIM D-124); `keep` = pridať k predošlým od hosta. */
   | { source: typeof SOURCE; type: 'MEASURE_SHOW'; segments: { a: Vec3Wire; b: Vec3Wire }[]; keep?: boolean }
   /** Čiara trasy v IFC svete (Z hore, m) od hosta (AIM D-137); nahradí predošlú, prázdne body ju zmažú. */
@@ -213,6 +218,10 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
       return isPanelsRequest(m.panels);
     case 'SCROLL_PANEL':
       return isPanelScroll(m.direction);
+    case 'AUTO_ROTATE':
+      return (AUTO_ROTATE_ACTIONS as readonly unknown[]).includes(m.action)
+        && optional(m.speedDegS, (v) => inRange(v, AUTO_ROTATE_SPEED.min, AUTO_ROTATE_SPEED.max))
+        && optional(m.direction, (d) => (AUTO_ROTATE_DIRECTIONS as readonly unknown[]).includes(d));
     case 'QUERY':
       return isId(m.id)
         && (VIEW_QUERIES as readonly unknown[]).includes(m.query)
