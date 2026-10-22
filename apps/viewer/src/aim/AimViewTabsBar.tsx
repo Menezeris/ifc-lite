@@ -11,8 +11,8 @@
  * (`AimPlanOrbitHint`, #188). Lišta tiež dodá záložkám funkcie viewera (`TabDeps`) z hookov pôdorysu.
  */
 
-import { useEffect, useMemo, useRef } from 'react';
-import { Box, FileText, LayoutTemplate, Scan, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Box, ChevronDown, FileText, LayoutTemplate, Scan, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useViewerStore } from '@/store';
 import { useViewMode } from '@/hooks/useViewMode';
@@ -21,9 +21,13 @@ import { besidePair, type ViewTabKind } from './viewTabsPlan.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { activate, beside, close, openPlan, syncDocs } from './viewTabsApply.js';
 import { AimPlanOrbitHint } from './AimPlanOrbitHint.js';
+import { fitTabs } from './viewTabsFit.js';
 
 const ICON: Record<ViewTabKind, typeof Box> = { '3d': Box, plan: LayoutTemplate, view: Scan, doc: FileText };
 const SELECT = 'h-6 max-w-40 rounded border bg-background px-1 text-2xs text-muted-foreground';
+/** Miesto jednej záložky a tlačidla zoznamu pri preteku (px), #240. */
+const SLOT_PX = 128;
+const MORE_PX = 40;
 const warn = (issue: string) => console.warn('[aim-tabs]', issue);
 
 export function AimViewTabsBar() {
@@ -54,13 +58,43 @@ export function AimViewTabsBar() {
     () => tabs.filter((t) => besidePair({ tabs, activeId, besideId }, activeId, t.id)),
     [tabs, activeId, besideId],
   );
+  // Pretek (#240): namiesto posuvníka zoznam ostatných záložiek na konci lišty.
+  const areaRef = useRef<HTMLDivElement>(null);
+  const [areaWidth, setAreaWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const el = areaRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(([entry]) => setAreaWidth(Math.round(entry.contentRect.width)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isMobile]);
+  const [moreOpen, setMoreOpen] = useState(false);
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onDown = (e: MouseEvent) => { if (!areaRef.current?.contains(e.target as Node)) setMoreOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMoreOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [moreOpen]);
+  const fit = useMemo(
+    () => fitTabs({
+      ids: tabs.map((t) => t.id), activeId, besideId, slotWidth: SLOT_PX, moreWidth: MORE_PX,
+      available: areaWidth ?? Number.POSITIVE_INFINITY,
+    }),
+    [tabs, activeId, besideId, areaWidth],
+  );
+  const visibleTabs = tabs.filter((t) => fit.visible.includes(t.id));
+  const hiddenTabs = tabs.filter((t) => fit.hidden.includes(t.id));
+  useEffect(() => { if (hiddenTabs.length === 0) setMoreOpen(false); }, [hiddenTabs.length]);
   if (isMobile) return null;
 
   return (
     <div className="relative flex h-7 shrink-0 items-stretch border-b bg-muted/30" data-testid="aim-view-tabs">
       <AimPlanOrbitHint />
-      <div role="tablist" aria-label="Záložky pohľadov" className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
-        {tabs.map((tab) => {
+      <div ref={areaRef} className="relative flex min-w-0 flex-1 items-stretch">
+      <div role="tablist" aria-label="Záložky pohľadov" className="flex min-w-0 items-stretch overflow-hidden">
+        {visibleTabs.map((tab) => {
           const Icon = ICON[tab.kind];
           const isActive = tab.id === activeId;
           const isBeside = tab.id === besideId;
@@ -68,7 +102,7 @@ export function AimViewTabsBar() {
             <div
               key={tab.id}
               className={cn(
-                'flex max-w-48 shrink-0 items-center border-r',
+                'flex w-32 shrink-0 items-center border-r',
                 isActive ? 'bg-background' : isBeside ? 'bg-background/70' : 'hover:bg-muted/70',
               )}
             >
@@ -101,6 +135,59 @@ export function AimViewTabsBar() {
             </div>
           );
         })}
+      </div>
+      {hiddenTabs.length > 0 && (
+        <>
+          <button
+            type="button"
+            aria-label={`Ďalšie záložky (${hiddenTabs.length})`}
+            aria-haspopup="menu"
+            aria-expanded={moreOpen}
+            title={`Ďalšie záložky (${hiddenTabs.length})`}
+            onClick={() => setMoreOpen((o) => !o)}
+            className="flex min-h-6 shrink-0 items-center gap-0.5 border-r px-1.5 text-2xs text-muted-foreground hover:bg-muted/70"
+            data-testid="aim-view-tabs-more"
+          >
+            <span>{`+${hiddenTabs.length}`}</span>
+            <ChevronDown className="size-3" aria-hidden />
+          </button>
+          {moreOpen && (
+            <div
+              role="menu"
+              aria-label="Ďalšie záložky"
+              className="absolute right-0 top-full z-50 max-h-64 w-64 overflow-y-auto rounded-b border bg-background py-0.5 shadow-md"
+            >
+              {hiddenTabs.map((tab) => {
+                const Icon = ICON[tab.kind];
+                return (
+                  <div key={tab.id} className="flex items-center hover:bg-muted/70">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      title={tab.label}
+                      onClick={() => { activate(tab.id, warn); setMoreOpen(false); }}
+                      className="flex min-h-6 min-w-0 flex-1 items-center gap-1 px-2 py-1 text-left text-2xs"
+                    >
+                      <Icon className="size-3 shrink-0" aria-hidden />
+                      <span className="truncate">{tab.label}</span>
+                    </button>
+                    {tab.kind !== '3d' && (
+                      <button
+                        type="button"
+                        aria-label={`Zavrieť ${tab.label}`}
+                        onClick={() => close(tab.id, warn)}
+                        className="mr-1 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        <X className="size-3" aria-hidden />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
       </div>
       <div className="flex shrink-0 items-center gap-1 px-1">
         <select
