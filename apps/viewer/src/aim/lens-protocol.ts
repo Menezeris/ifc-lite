@@ -67,6 +67,17 @@ export type LensInboundMessage =
       /** `FilterGroup[]` ako pri Lens; pravidlo `model` nesie mená modelov. */
       groups: unknown[];
       columns: AimListColumnWire[];
+      /** Zoskupenie, súčty, zoradenie, hľadanie, maximalizácia (D-149); tvar v `aimListViewPlan.ts`. */
+      view?: unknown;
+    }
+  | {
+      source: typeof SOURCE;
+      /** Úprava otvoreného zoznamu (D-149): `groups` pribudnú k filtrom (AND, podlažie a model nahradia staré),
+       *  `edit` mení stĺpce, triedy a odoberá filtre; tabuľka sa spustí znova. */
+      type: 'LIST_UPDATE';
+      groups?: unknown[];
+      view?: unknown;
+      edit?: unknown;
     };
 
 /** Stĺpec zoznamu z chatu, tvar `ColumnDefinition` z `@ifc-lite/lists` bez `id`. */
@@ -81,7 +92,7 @@ export interface AimListColumnWire {
 export function isLensEnvelope(data: unknown): data is LensInboundMessage {
   if (!data || typeof data !== 'object') return false;
   const m = data as Record<string, unknown>;
-  return m.source === SOURCE && (m.type === 'APPLY_LENS' || m.type === 'LENS_QUERY' || m.type === 'OPEN_LIST');
+  return m.source === SOURCE && (m.type === 'APPLY_LENS' || m.type === 'LENS_QUERY' || m.type === 'OPEN_LIST' || m.type === 'LIST_UPDATE');
 }
 
 /** Modul Lens z chatu sa načíta až pri prvej správe, aby vstupný balík nerástol. */
@@ -93,6 +104,10 @@ export function dispatchLensMessage(msg: LensInboundMessage, origin: string): Pr
   if (msg.type === 'OPEN_LIST') {
     listModule ??= import('./aimList.js');
     return listModule.then((m) => m.openListFromChat(msg));
+  }
+  if (msg.type === 'LIST_UPDATE') {
+    listModule ??= import('./aimList.js');
+    return listModule.then((m) => m.updateListFromChat(msg));
   }
   lensModule ??= import('./aimLens.js');
   return lensModule.then((m) => m.handleLensMessage(msg, origin));

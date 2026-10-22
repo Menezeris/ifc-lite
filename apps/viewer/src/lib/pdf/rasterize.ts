@@ -58,7 +58,10 @@ export interface RasterizedPage {
 /** Open a PDF document by URL. Caller must `destroy()` it when done. */
 export async function openPdfDocument(url: string): Promise<PDFDocumentProxy> {
   const pdfjs = await loadPdfjs();
-  return pdfjs.getDocument({ url, ...DOCUMENT_OPTIONS }).promise;
+  // >>> AIM-FORK: decoder data (WASM for CCITT/JBIG2/JPX masks, fonts, cmaps), else masked drawing text is blank (AIM #238)
+  const { pdfDecoderOptions } = await import('@/aim/pdfDecoderData');
+  return pdfjs.getDocument({ url, ...DOCUMENT_OPTIONS, ...pdfDecoderOptions }).promise;
+  // <<< AIM-FORK
 }
 
 /**

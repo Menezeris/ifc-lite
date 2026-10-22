@@ -68,11 +68,28 @@ describe('kóta od hosta, MEASURE_SHOW (AIM D-124)', () => {
     assert.deepEqual(state.pendingMeasurePoint, userPoint);
   });
 
-  it('správa: 1 až 12 úsekov s konečnými súradnicami, keep len boolean', () => {
+  it('prázdna správa zmaže kóty od hosta, meranie používateľa a rozpracovaný bod ostanú (AIM D-152)', () => {
+    const origin = { x: 0, y: 0, z: 0 };
+    state.addMeasurePoint({ x: 0, y: 0, z: 0, screenX: 0, screenY: 0 });
+    state.completeMeasurement({ x: 0, y: 1, z: 0, screenX: 0, screenY: 0 });
+    const userId = state.measurements[0].id;
+    const userPoint = { x: 9, y: 9, z: 9, screenX: 5, screenY: 5 };
+    state.addMeasurePoint(userPoint);
+    addHostMeasurements(get, setPending, { segments: [seg(0, 1), seg(0, 2)] }, origin);
+    assert.equal(state.measurements.length, 3);
+    assert.deepEqual(addHostMeasurements(get, setPending, { segments: [] }, origin), []);
+    assert.deepEqual(state.measurements.map((m) => m.id), [userId]);
+    assert.deepEqual(state.pendingMeasurePoint, userPoint);
+    // Druhé zmazanie už nemá čo mazať.
+    addHostMeasurements(get, setPending, { segments: [] }, origin);
+    assert.deepEqual(state.measurements.map((m) => m.id), [userId]);
+  });
+
+  it('správa: 0 až 12 úsekov s konečnými súradnicami, keep len boolean', () => {
     assert.equal(isViewMessage({ source: S, type: 'MEASURE_SHOW', segments: [seg(0, 1)] }), true);
     assert.equal(isViewMessage({ source: S, type: 'MEASURE_SHOW', segments: [seg(0, 1)], keep: true }), true);
+    assert.equal(isViewMessage({ source: S, type: 'MEASURE_SHOW', segments: [] }), true);
     for (const bad of [
-      { source: S, type: 'MEASURE_SHOW', segments: [] },
       { source: S, type: 'MEASURE_SHOW', segments: Array(13).fill(seg(0, 1)) },
       { source: S, type: 'MEASURE_SHOW', segments: [{ a: { x: 0, y: 0, z: 0 } }] },
       { source: S, type: 'MEASURE_SHOW', segments: [{ a: { x: 0, y: 0, z: Number.NaN }, b: { x: 1, y: 0, z: 0 } }] },

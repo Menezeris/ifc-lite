@@ -3,38 +3,30 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * Panely z chatu (AIM D-127, #179): `SET_PANELS` otvorí, zavrie alebo prepne
- * panely viewera a `view_state` / `APPLIED` vráti stav všetkých. Tu je rozpis akcií
- * a opis stavu, bez store (mená a validácia drôtu sú vo `view-protocol.ts`, vykonanie
- * v `aimPanels.ts`, lenivo cez `useAimViewCommands`).
- *
- * Mená na drôte -> panel upstreamu: `lens` -> `lens`, `properties` -> `properties`,
- * `underlays` -> `drawing-underlay`, `documents` -> `documents`, `lists` -> `lists`
- * (spodný pás), `model_tree` -> `hierarchy` (ľavý stĺpec). `all` = všetky.
+ * Panely z chatu (AIM D-127, D-150, #179): `SET_PANELS` otvorí, zavrie alebo prepne
+ * ľubovoľný panel UI a `view_state` / `APPLIED` vráti stav všetkých. Tu je rozpis akcií
+ * a opis stavu, bez store (zoznam panelov je odvodený z registra v `aimPanelList.ts`,
+ * validácia drôtu vo `view-protocol.ts`, vykonanie v `aimPanels.ts`, lenivo cez
+ * `useAimViewCommands`). `all` = všetky panely.
  */
 
+import { BOTTOM_PANEL_FLAG, isBottomPanel, type BottomPanelFlag } from '@/lib/panels/bottom-panels';
 import { sideDockedPanels } from './aimSideDock.js';
-import { PANEL_KEYS, type PanelKey, type PanelsRequest } from './view-protocol.js';
+import { PANEL_KEYS, isPanelKey, panelCatalog, panelIdOf, type PanelKey } from './aimPanelList.js';
+import type { PanelsRequest } from './view-protocol.js';
 
 export { PANEL_KEYS, type PanelKey, type PanelsRequest };
-
-/** Panel upstreamu (`WorkspacePanelId`) pre meno na drôte. */
-export const PANEL_ID = {
-  lens: 'lens',
-  properties: 'properties',
-  underlays: 'drawing-underlay',
-  documents: 'documents',
-  lists: 'lists',
-  model_tree: 'hierarchy',
-} as const satisfies Record<PanelKey, string>;
 
 /**
  * Konečné kroky: `all` zavrie všetky panely okrem tých, ktoré správa výslovne
  * otvára ("zavri všetko okrem 3D a vlastností"); `toggle` sa rozhodne podľa stavu.
- * Zatváranie ide pred otváraním, aby otvorený panel nezavrel spoločný slot.
+ * Zatváranie ide pred otváraním, aby otvorený panel nezavrel spoločný slot, a panel
+ * vlastností sa zatvára ako posledný (zatvorený panel stĺpca sa vráti na vlastnosti,
+ * tie sa zbalia až nakoniec). Neznáme mená sú v `unknown`, nie v krokoch.
  */
-export function planPanels(req: PanelsRequest, isOpen: (key: PanelKey) => boolean): { key: PanelKey; open: boolean }[] {
+export function planPanels(req: PanelsRequest, isOpen: (key: PanelKey) => boolean): { steps: { key: PanelKey; open: boolean }[]; unknown: string[] } {
   const want = new Map<PanelKey, boolean>();
+  const unknown = Object.keys(req).filter((k) => k !== 'all' && !isPanelKey(k));
   if (req.all === 'close') for (const k of PANEL_KEYS) want.set(k, false);
   for (const k of PANEL_KEYS) {
     const a = req[k];
@@ -43,7 +35,11 @@ export function planPanels(req: PanelsRequest, isOpen: (key: PanelKey) => boolea
     else if (a === 'toggle') want.set(k, !isOpen(k));
   }
   const steps = [...want].map(([key, open]) => ({ key, open }));
-  return [...steps.filter((s) => !s.open), ...steps.filter((s) => s.open)];
+  const closing = steps.filter((s) => !s.open);
+  return {
+    steps: [...closing.filter((s) => s.key !== 'properties'), ...closing.filter((s) => s.key === 'properties'), ...steps.filter((s) => s.open)],
+    unknown,
+  };
 }
 
 /** Stav store, z ktorého sa číta, kde panel je (podmnožina `ViewerState`). */
@@ -58,22 +54,29 @@ export interface PanelsStateLike {
   listPanelVisible: boolean;
 }
 
+/** Stav store s príznakmi spodného pásu (každý panel pásu má vlastný príznak, `bottom-panels.ts`). */
+export type PanelsStore = PanelsStateLike & Partial<Record<BottomPanelFlag, boolean>>;
+
 export interface PanelInfo {
   open: boolean;
   /** left | right | bottom = ukotvený, floating = plávajúce okno (snap, w, h px), window = samostatné okno. */
   where?: 'left' | 'right' | 'bottom' | 'floating' | 'window';
   snap?: string;
   size?: { w: number; h: number };
+  /** Domov panela: side = pravý stĺpec, bottom = spodný pás, left = ľavý stĺpec. */
+  home?: string;
+  /** Klávesová skratka (Alt+N podľa registra), ak ju panel má. */
+  shortcut?: string;
 }
 
 /** Kde je panel (`key`) podľa stavu store. */
-export function panelInfo(s: PanelsStateLike, key: PanelKey): PanelInfo {
-  const id = PANEL_ID[key];
-  if (key === 'model_tree') return s.leftPanelCollapsed ? { open: false } : { open: true, where: 'left' };
+export function panelInfo(s: PanelsStore, key: PanelKey): PanelInfo {
+  const id = panelIdOf(key);
+  if (id === 'hierarchy') return s.leftPanelCollapsed ? { open: false } : { open: true, where: 'left' };
   const floating = s.floatingPanels.find((p) => p.id === id);
   if (floating) return { open: true, where: 'floating', snap: floating.snap, size: { w: Math.round(floating.w), h: Math.round(floating.h) } };
   if (s.poppedOutIds.includes(id)) return { open: true, where: 'window' };
-  if (key === 'lists') return s.listPanelVisible ? { open: true, where: 'bottom' } : { open: false };
+  if (isBottomPanel(id)) return s[BOTTOM_PANEL_FLAG[id]] === true ? { open: true, where: 'bottom' } : { open: false };
   const { primary, secondary } = sideDockedPanels({
     sidebarMode: s.sidebarMode,
     sidebarActivePanel: s.sidebarActivePanel,
@@ -83,9 +86,17 @@ export function panelInfo(s: PanelsStateLike, key: PanelKey): PanelInfo {
   return id === primary || id === secondary ? { open: true, where: 'right' } : { open: false };
 }
 
-/** Stav všetkých panelov pre `view_state` a `APPLIED` (+ šírka pravého stĺpca v % okna). */
-export function describePanels(s: PanelsStateLike): Record<PanelKey, PanelInfo> & { right_width_pct: number | null } {
+/**
+ * Stav všetkých panelov UI pre `view_state` a `APPLIED` (+ šírka pravého stĺpca v % okna): každý panel
+ * registra s `open`, `where`, domovom a klávesovou skratkou, aby chat vedel, aké panely existujú.
+ */
+export function describePanels(s: PanelsStore): Record<PanelKey, PanelInfo> & { right_width_pct: number | null } {
   const out = {} as Record<PanelKey, PanelInfo>;
-  for (const k of PANEL_KEYS) out[k] = panelInfo(s, k);
-  return { ...out, right_width_pct: s.sidebarMode === 'collapsed' ? null : Math.round(s.sidebarWidthPct) };
+  for (const row of panelCatalog()) {
+    out[row.key] = { ...panelInfo(s, row.key), home: row.home, ...(row.shortcut ? { shortcut: row.shortcut } : {}) };
+  }
+  return Object.assign(out, { right_width_pct: s.sidebarMode === 'collapsed' ? null : Math.round(s.sidebarWidthPct) });
 }
+
+/** Zoznam platných mien pre hlásenie neznámeho panela. */
+export const validPanelNames = (): string => PANEL_KEYS.join(', ');

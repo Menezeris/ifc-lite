@@ -16,7 +16,8 @@
  */
 
 import { SOURCE, type OpsSelector } from './bridge-protocol.js';
-import { isPanelScroll, type PanelScroll } from './aimPanelScrollPlan.js';
+import { isPanelScrollRequest, isPanelZoom, type PanelScroll, type PanelZoom } from './aimPanelScrollPlan.js';
+import { PANEL_KEYS, type PanelKey } from './aimPanelList.js';
 
 /** keep = smer sa nemení, section = kolmo na aktívny rez ako tlačidlo Set view (AIM D-098). */
 export const CAMERA_PRESETS = ['top', 'bottom', 'front', 'back', 'left', 'right', 'iso', 'fit_all', 'keep', 'section'] as const;
@@ -46,18 +47,22 @@ export type SectionFit = (typeof SECTION_FITS)[number];
 export const VIEW_QUERIES = ['bounds', 'view_state'] as const;
 export type ViewQuery = (typeof VIEW_QUERIES)[number];
 
-/** Panely z chatu (AIM D-127): mená na drôte, mapovanie a vykonanie v `aimPanelsPlan.ts` / `aimPanels.ts`. */
-export const PANEL_KEYS = ['lens', 'properties', 'underlays', 'documents', 'lists', 'model_tree'] as const;
-export type PanelKey = (typeof PANEL_KEYS)[number];
+/**
+ * Panely z chatu (AIM D-127, D-150): mená na drôte sú odvodené z registra panelov (`aimPanelList.ts`),
+ * mapovanie a vykonanie je v `aimPanelsPlan.ts` / `aimPanels.ts`. Správa nesie ľubovoľné mená, neznáme
+ * viewer nahlási ako problém v `APPLIED` (so zoznamom platných), nezahodí celú správu.
+ */
+export { PANEL_KEYS, type PanelKey };
 const PANEL_ACTIONS: readonly unknown[] = ['open', 'close', 'toggle'];
-export type PanelsRequest = Partial<Record<PanelKey | 'all', 'open' | 'close' | 'toggle'>>;
+const PANEL_NAME = /^[A-Za-z][A-Za-z0-9_-]{0,31}$/;
+export type PanelsRequest = Record<string, 'open' | 'close' | 'toggle'>;
 
 /** `panels` zo správy hosta: aspoň jedna položka, `all` len `close` (čistý pohľad). */
 export function isPanelsRequest(raw: unknown): raw is PanelsRequest {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
   const entries = Object.entries(raw as Record<string, unknown>);
-  return entries.length > 0 && entries.every(([k, v]) =>
-    PANEL_ACTIONS.includes(v) && ((PANEL_KEYS as readonly string[]).includes(k) || (k === 'all' && v === 'close')));
+  return entries.length > 0 && entries.length <= 64 && entries.every(([k, v]) =>
+    PANEL_ACTIONS.includes(v) && PANEL_NAME.test(k) && (k !== 'all' || v === 'close'));
 }
 
 /** Výška rezu nad úrovňou podlažia v metroch - rovnaký rozsah ako host. */
@@ -109,9 +114,14 @@ export type ViewInboundMessage =
   | { source: typeof SOURCE; type: 'QUERY'; id: string; query: ViewQuery; guids?: string[] }
   /** Panely z chatu (AIM D-127): otvoriť, zavrieť, prepnúť; `all` len zavrieť. */
   | { source: typeof SOURCE; type: 'SET_PANELS'; panels: PanelsRequest }
-  /** Posun panela vlastností (AIM #183): o stranu hore / dole, na začiatok, na koniec. */
-  | { source: typeof SOURCE; type: 'SCROLL_PANEL'; direction: PanelScroll }
-  /** Kóty v IFC svete (Z hore, m) do nástroja Measure (AIM D-124); `keep` = pridať k predošlým od hosta. */
+  /**
+   * Posun obsahu panela (AIM #183, D-150): o stranu hore / dole, na začiatok, na koniec (`direction`), na
+   * položku podľa textu (`item`) alebo na polohu v % (`percent`); `panel` chýba = panel vlastností.
+   */
+  | { source: typeof SOURCE; type: 'SCROLL_PANEL'; direction?: PanelScroll; panel?: PanelKey; item?: string; percent?: number }
+  /** Zoom obsahu panela (AIM D-150): `in` / `out` / `reset` alebo násobok; `panel` chýba = panel vlastností. */
+  | { source: typeof SOURCE; type: 'ZOOM_PANEL'; zoom: PanelZoom; panel?: PanelKey }
+  /** Kóty v IFC svete (Z hore, m) do nástroja Measure (AIM D-124); `keep` = pridať k predošlým od hosta, prázdne `segments` = zmazať kóty od hosta (D-152). */
   | { source: typeof SOURCE; type: 'MEASURE_SHOW'; segments: { a: Vec3Wire; b: Vec3Wire }[]; keep?: boolean }
   /** Čiara trasy v IFC svete (Z hore, m) od hosta (AIM D-137); nahradí predošlú, prázdne body ju zmažú. */
   | { source: typeof SOURCE; type: 'ROUTE_SHOW'; points: Vec3Wire[]; color?: string };
@@ -198,8 +208,8 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
     case 'SET_VIEW_MODE':
       return (VIEW_MODES as readonly unknown[]).includes(m.mode) && optional(m.storeyGuid, isStr);
     case 'MEASURE_SHOW':
+      // Prázdny zoznam = zmazať kóty od hosta, merania používateľa ostanú (AIM D-152).
       return Array.isArray(m.segments)
-        && m.segments.length > 0
         && m.segments.length <= MAX_MEASURE_SEGMENTS
         && m.segments.every((s) => !!s && typeof s === 'object' && isVec((s as { a?: unknown }).a) && isVec((s as { b?: unknown }).b))
         && optional(m.keep, (k) => typeof k === 'boolean');
@@ -212,7 +222,9 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
     case 'SET_PANELS':
       return isPanelsRequest(m.panels);
     case 'SCROLL_PANEL':
-      return isPanelScroll(m.direction);
+      return isPanelScrollRequest(m);
+    case 'ZOOM_PANEL':
+      return isPanelZoom(m.zoom) && optional(m.panel, (p) => typeof p === 'string' && PANEL_NAME.test(p));
     case 'QUERY':
       return isId(m.id)
         && (VIEW_QUERIES as readonly unknown[]).includes(m.query)

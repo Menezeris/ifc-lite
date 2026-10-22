@@ -19,6 +19,8 @@ const POLL_MS = 50;
 
 let request: ListRunRequest | null = null;
 let pending: ListDefinition | null = null;
+/** Posledná definícia z chatu, aj nespustená (builder); `LIST_UPDATE` z nej vychádza (D-149). */
+let lastDefinition: ListDefinition | null = null;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
@@ -26,8 +28,19 @@ const emit = () => listeners.forEach((l) => l());
 export function noteListOpened(definition: ListDefinition, run: boolean): void {
   request = { id: definition.id, name: definition.name, run, started: false };
   pending = run ? definition : null;
+  lastDefinition = definition;
   emit();
 }
+
+/** `LIST_UPDATE` bez nového behu (D-149): zobrazený výsledok je výsledok tejto definície. */
+export function noteListUpdated(definition: ListDefinition): void {
+  request = { id: definition.id, name: definition.name, run: true, started: true };
+  pending = null;
+  lastDefinition = definition;
+  emit();
+}
+
+export const chatListDefinition = () => lastDefinition;
 
 function snapshot(): ListRunSnapshot {
   const s = useViewerStore.getState();
@@ -54,6 +67,7 @@ export async function settledListSummary(timeoutMs: number): Promise<ListRunSumm
 export function resetListRun(): void {
   request = null;
   pending = null;
+  lastDefinition = null;
 }
 
 const subscribe = (l: () => void) => {

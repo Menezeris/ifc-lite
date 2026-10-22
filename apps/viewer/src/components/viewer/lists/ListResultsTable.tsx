@@ -37,6 +37,9 @@ import { ColumnResizeHandle } from './ColumnResizeHandle';
 import { formatCellValue, compareCells, detectNumericColumns, autoColumnWidth,
   buildGroupedView, flatTotals, buildScheduleRows, rebuildGrouping,
   type DisplayItem, type Totals, type ScheduleRow } from './list-table-utils';
+// >>> AIM-FORK: zoradenie, hľadanie, súčty, farby a export z chatu (D-149)
+import { useAimListTable } from '@/aim/aimListTable';
+// <<< AIM-FORK
 interface ListResultsTableProps {
   result: ListResult;
   /** List name — used as the export title / filename. */
@@ -249,6 +252,11 @@ export function ListResultsTable({ result, listName, grouping, onGroupingChange,
       toast.error(t('lists.resultsTable.exportFailed', { message: error instanceof Error ? error.message : 'Unknown error' }));
     });
   }, [listName, columns, sortedRows, grouping, sortCol, sortDir, numericCols, columnWidths, modelUnits, unitDisplayOverrides, t]);
+  // >>> AIM-FORK: zoradenie, hľadanie, súčty, farby a ponuka exportu z chatu (D-149)
+  const aimExportCue = useAimListTable({ result, sortCol, sortDir, search: searchQuery, visibleRows: sortedRows.length, sums: totals.sums,
+    unitSymbol: unitResolver.unitSymbol, setSortCol, setSortDir, setSearch: setSearchQuery,
+    colorByColIdx, setColorByColIdx, onColorBy: handleColorByColumn, onExport: handleExport });
+  // <<< AIM-FORK
   // Every rendered line's member rows, in the virtualizer's index space: a
   // group header selects its whole subtree, a schedule row its tuple (#6368).
   const selectionLines = useMemo<ListRow[][]>(
@@ -259,7 +267,8 @@ export function ListResultsTable({ result, listName, grouping, onGroupingChange,
     <ListResultChrome result={result} visibleCount={sortedRows.length}
       filters={<ListResultsFilters searchQuery={searchQuery} onSearch={setSearchQuery} visibleOnly={filterByVisibility}
         onToggleVisible={() => setFilterByVisibility(value => !value)} count={sortedRows.length} total={result.rows.length} />}
-      actions={<ListResultsExports onExport={handleExport} />}>
+      // AIM-FORK (D-149): next 1 line
+      actions={<>{aimExportCue}<ListResultsExports onExport={handleExport} /></>}>
       {/* Grouping / totals control strip */}
       {(isGrouped || showSumRow) && onGroupingChange && (
         <ListGroupingBar
