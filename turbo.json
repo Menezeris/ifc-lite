@@ -76,12 +76,6 @@
         "VITE_POSTHOG_KEY",
         "VITE_POSTHOG_HOST",
         "VITE_SOURCEMAP"
-        // >>> AIM-FORK: VERCEL_GIT_COMMIT_SHA, VERCEL_DEPLOYMENT_ID,
-        // VERCEL_SKEW_PROTECTION_ENABLED and GITHUB_SHA moved to
-        // apps/viewer/turbo.json. Listed here they changed the hash of EVERY
-        // package on every commit (cache miss for @ifc-lite/wasm and all 56
-        // others, ~$40 of Vercel Build CPU). Only the viewer bundle reads them.
-        // <<< AIM-FORK
       ]
     },
     "typecheck": {
