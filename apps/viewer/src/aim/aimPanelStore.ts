@@ -15,7 +15,8 @@
 
 import { create } from 'zustand';
 
-import { SOURCE, type AimPanelData, type OutboundMessage } from './bridge-protocol.js';
+import type { AimPanelData, OutboundMessage } from './bridge-protocol.js';
+import { SOURCE } from './bridge-core.js';
 
 export type { AimPanelData };
 

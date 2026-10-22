@@ -20,14 +20,32 @@ import { lazy, Suspense, useMemo } from 'react';
 import { useViewerStore } from '@/store';
 import { toGlobalIdFromModels } from '@/store/globalId';
 import { selectPickedGlobalId } from '@/components/viewer/viewport-selection';
-import { resolveGuids } from './bridge-protocol';
+import type { resolveGuids as ResolveGuids } from './bridge-protocol';
 import { derivedRelationsOf, type DerivedRelationWire } from './derivations-protocol';
 import { useAimPanelStore } from './aimPanelStore';
 import { useAimDerivationsStore } from './aimDerivationsStore';
 import { visibleDerivedRelations } from './derivations';
 
+interface LazyBodyProps {
+  relations: DerivedRelationWire[];
+  more: number;
+}
+
+/** Telo skupiny aj s resolveGuids lenivo: bridge-protocol.ts tak nie je v eager balíku. */
 const AimDerivedRelationsBody = lazy(() =>
-  import('./AimDerivedRelationsBody').then((m) => ({ default: m.AimDerivedRelationsBody })),
+  Promise.all([import('./AimDerivedRelationsBody'), import('./bridge-protocol')]).then(([m, { resolveGuids }]) => ({
+    default: function AimDerivedRelationsLazyBody({ relations, more }: LazyBodyProps) {
+      const models = useViewerStore((s) => s.models);
+      const selectableGuids = useMemo(() => {
+        const guids = new Set<string>();
+        for (const r of relations) {
+          if (r.other.guid !== null && resolveGuids(models, [r.other.guid]).length > 0) guids.add(r.other.guid);
+        }
+        return guids;
+      }, [relations, models]);
+      return <m.AimDerivedRelationsBody relations={relations} more={more} selectableGuids={selectableGuids} onSelectGuid={(guid) => selectByGuid(guid, resolveGuids)} />;
+    },
+  })),
 );
 
 const EMPTY = { relations: [] as DerivedRelationWire[], total: 0 };
@@ -53,7 +71,7 @@ export function useAimDerivedRelationCount(): number {
 }
 
 /** Select the other end like a viewport click (the same path AimBridge SELECT takes). */
-function selectByGuid(guid: string): void {
+function selectByGuid(guid: string, resolveGuids: typeof ResolveGuids): void {
   const state = useViewerStore.getState();
   const [ref] = resolveGuids(state.models, [guid]);
   if (!ref) return;
@@ -65,18 +83,10 @@ function selectByGuid(guid: string): void {
 /** The AIM group inside Relationship records; null when there is nothing to show. */
 export function AimDerivedRelations() {
   const { relations, more } = useAimDerivedRelations();
-  const models = useViewerStore((s) => s.models);
-  const selectableGuids = useMemo(() => {
-    const guids = new Set<string>();
-    for (const r of relations) {
-      if (r.other.guid !== null && resolveGuids(models, [r.other.guid]).length > 0) guids.add(r.other.guid);
-    }
-    return guids;
-  }, [relations, models]);
   if (relations.length === 0 && more <= 0) return null;
   return (
     <Suspense fallback={null}>
-      <AimDerivedRelationsBody relations={relations} more={more} selectableGuids={selectableGuids} onSelectGuid={selectByGuid} />
+      <AimDerivedRelationsBody relations={relations} more={more} />
     </Suspense>
   );
 }

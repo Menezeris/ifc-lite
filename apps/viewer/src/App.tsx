@@ -17,7 +17,7 @@ import { ViewerLayout } from './components/viewer/ViewerLayout';
 import { BimProvider } from './sdk/BimProvider';
 import { ExtensionHostProvider } from './sdk/ExtensionHostProvider';
 // >>> AIM-FORK: mount the AIM iframe-bridge layer (see apps/viewer/src/aim/, docs/FORK_MAINTENANCE.md)
-import { AimBridge } from './aim/AimBridge';
+import { AimBridgeMount } from './aim/AimBridgeMount';
 // <<< AIM-FORK
 import { SourceHostProvider } from './services/sources/SourceHostProvider';
 import type { FileSourceProviderFactory } from './services/sources/source-host';
@@ -133,7 +133,7 @@ export function App({ sourceProviders }: AppProps = {}) {
               #5478 item 22), anchored to the viewport's bottom-right above
               the status bar, rather than the whole window's here. */}
           {/* >>> AIM-FORK: postMessage bridge for iframe embedding (no-op outside an AIM host) */}
-          <AimBridge />
+          <AimBridgeMount />
           {/* <<< AIM-FORK */}
           <ViewerLayout />
           <StaleDeploymentNotice />
