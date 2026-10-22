@@ -17,6 +17,7 @@
 
 import { useViewerStore } from '../store/index.js';
 import { useAimInspectorStore, type PropertyFocusState } from './aimInspectorStore.js';
+import { cancelReveal, revealRow } from './aimPanelScroll.js';
 import { focusSections, matchName, panelPlan, propKeyEntity, type AimPanelView, type PanelSection } from './aimPanelViewPlan.js';
 
 const SETTLE_TIMEOUT_MS = 5000;
@@ -35,6 +36,7 @@ export function clearPropertyFocus(): void {
   const stop = stopActive;
   stopActive = null;
   stop?.();
+  cancelReveal();
 }
 
 /** Obsah panela vlastností: rodič AIM bloku, inak celý dokument. */
@@ -115,11 +117,9 @@ export function applyPanelView(view: AimPanelView, target: Target, noteIssue: (t
         if (!hit) return false;
         document.querySelectorAll(`[${FOCUS_ATTR}]`).forEach((el) => el !== hit.el && el.removeAttribute(FOCUS_ATTR));
         if (!hit.el.hasAttribute(FOCUS_ATTR)) hit.el.setAttribute(FOCUS_ATTR, '');
-        if (first) {
-          const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-          hit.el.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
-        }
         found = hit;
+        // Riadok sa vycentruje a drží vo výreze, kým sa panel ustáli (AIM #183); `found` vždy nesie aktuálny prvok.
+        if (first) revealRow(() => (found as Hit | null)?.el ?? null);
         return true;
       };
       const tick = () => {

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelScrollPlan.ts a/apps/viewer/src/aim/aimPanelScrollPlan.ts
+index 6bd82ffb..4b1d660c 100644
+--- b/apps/viewer/src/aim/aimPanelScrollPlan.ts
++++ a/apps/viewer/src/aim/aimPanelScrollPlan.ts
+@@ -13,7 +13,7 @@ export type PanelScroll = (typeof PANEL_SCROLLS)[number];
+ export const isPanelScroll = (v: unknown): v is PanelScroll => (PANEL_SCROLLS as readonly unknown[]).includes(v);
+ 
+ /** Krok `up` / `down`: časť viditeľnej výšky, aby ostal kontext z predošlého zobrazenia. */
+-export const PAGE_FRACTION = 1;
++export const PAGE_FRACTION = 0.8;
+ 
+ const clamp = (top: number, clientH: number, scrollH: number) => Math.max(0, Math.min(top, Math.max(0, scrollH - clientH)));
+ 

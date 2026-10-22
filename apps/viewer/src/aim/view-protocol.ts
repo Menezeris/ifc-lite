@@ -16,6 +16,7 @@
  */
 
 import { SOURCE, type OpsSelector } from './bridge-protocol.js';
+import { isPanelScroll, type PanelScroll } from './aimPanelScrollPlan.js';
 
 /** keep = smer sa nemení, section = kolmo na aktívny rez ako tlačidlo Set view (AIM D-098). */
 export const CAMERA_PRESETS = ['top', 'bottom', 'front', 'back', 'left', 'right', 'iso', 'fit_all', 'keep', 'section'] as const;
@@ -108,6 +109,8 @@ export type ViewInboundMessage =
   | { source: typeof SOURCE; type: 'QUERY'; id: string; query: ViewQuery; guids?: string[] }
   /** Panely z chatu (AIM D-127): otvoriť, zavrieť, prepnúť; `all` len zavrieť. */
   | { source: typeof SOURCE; type: 'SET_PANELS'; panels: PanelsRequest }
+  /** Posun panela vlastností (AIM #183): o stranu hore / dole, na začiatok, na koniec. */
+  | { source: typeof SOURCE; type: 'SCROLL_PANEL'; direction: PanelScroll }
   /** Kóty v IFC svete (Z hore, m) do nástroja Measure (AIM D-124); `keep` = pridať k predošlým od hosta. */
   | { source: typeof SOURCE; type: 'MEASURE_SHOW'; segments: { a: Vec3Wire; b: Vec3Wire }[]; keep?: boolean }
   /** Čiara trasy v IFC svete (Z hore, m) od hosta (AIM D-137); nahradí predošlú, prázdne body ju zmažú. */
@@ -208,6 +211,8 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
         && optional(m.color, (c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c));
     case 'SET_PANELS':
       return isPanelsRequest(m.panels);
+    case 'SCROLL_PANEL':
+      return isPanelScroll(m.direction);
     case 'QUERY':
       return isId(m.id)
         && (VIEW_QUERIES as readonly unknown[]).includes(m.query)
