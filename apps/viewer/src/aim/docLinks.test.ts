@@ -30,6 +30,26 @@ describe('isDocLinksMessage (AIM D-130)', () => {
   });
 });
 
+describe('type links (AIM D-130, #167)', () => {
+  const type = { guid: '0TypeGuid00000000001', ref: 'SN05.01' };
+  const occ = [{ guid: 'g1', ref: 'SN05.01.0001' }, { guid: 'g2', ref: 'SN05.01.0002' }];
+
+  it('keeps the IFC type on a candidates link', () => {
+    const pages = normalizeDocLinks([{ documentId: 'doc', page: 1, links: [link({ status: 'candidates', targets: occ, type })] }]);
+    const [l] = pages.get(pageKey('doc', 1)) ?? [];
+    assert.deepEqual(l.type, type);
+    assert.equal(l.targets.length, 2);
+    assert.match(linkTitle(l), /typ SN05\.01/);
+  });
+
+  it('ignores a type on a single-target link or with a bad shape', () => {
+    const one = normalizeDocLinks([{ documentId: 'doc', page: 1, links: [link({ type })] }]);
+    assert.equal(one.get(pageKey('doc', 1))?.[0].type, undefined);
+    const bad = normalizeDocLinks([{ documentId: 'doc', page: 1, links: [link({ targets: occ, type: { guid: 'x' } })] }]);
+    assert.equal(bad.get(pageKey('doc', 1))?.[0].type, undefined);
+  });
+});
+
 describe('normalizeDocLinks (AIM D-130)', () => {
   it('keys links by document and page', () => {
     const pages = normalizeDocLinks([{ documentId: 'doc', page: 1, links: [link()] }]);
