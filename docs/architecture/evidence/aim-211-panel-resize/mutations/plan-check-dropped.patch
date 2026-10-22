@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/planRefit.ts a/apps/viewer/src/aim/planRefit.ts
+index a5fda767..2afb98d8 100644
+--- b/apps/viewer/src/aim/planRefit.ts
++++ a/apps/viewer/src/aim/planRefit.ts
+@@ -31,7 +31,7 @@ export const REFIT_SETTLE_MS = 180;
+ 
+ /** Má sa pôdorys prispôsobiť zmene veľkosti `prev` -> `next`? */
+ export function shouldRefit(prev: Size | null, next: Size, ctx: RefitContext): boolean {
+-  if (!ctx.lockedTopDown) return false;
++  if (!ctx.planInCanvas || !ctx.lockedTopDown) return false;
+   if (next.width < REFIT_MIN_SIZE_PX || next.height < REFIT_MIN_SIZE_PX) return false;
+   if (!prev) return false;
+   return Math.abs(next.width - prev.width) >= REFIT_MIN_DELTA_PX || Math.abs(next.height - prev.height) >= REFIT_MIN_DELTA_PX;

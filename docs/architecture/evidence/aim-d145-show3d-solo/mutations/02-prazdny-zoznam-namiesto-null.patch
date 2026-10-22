@@ -1,0 +1,9 @@
+--- a/apps/viewer/src/aim/show3dSoloPlan.ts
++++ b/apps/viewer/src/aim/show3dSoloPlan.ts
+@@ -33,5 +33,5 @@
+   const refs = storeys
+     .filter((s) => s.guid === storeyGuid)
+     .map(({ modelId, expressId }) => ({ modelId, expressId }));
+-  return refs;
++  return refs.length > 0 ? refs : null;
+ }

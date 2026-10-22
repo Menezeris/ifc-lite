@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/planRefit.ts a/apps/viewer/src/aim/planRefit.ts
+index c2faa56f..2afb98d8 100644
+--- b/apps/viewer/src/aim/planRefit.ts
++++ a/apps/viewer/src/aim/planRefit.ts
+@@ -34,7 +34,7 @@ export function shouldRefit(prev: Size | null, next: Size, ctx: RefitContext): b
+   if (!ctx.planInCanvas || !ctx.lockedTopDown) return false;
+   if (next.width < REFIT_MIN_SIZE_PX || next.height < REFIT_MIN_SIZE_PX) return false;
+   if (!prev) return false;
+-  return Math.abs(next.width - prev.width) >= REFIT_MIN_DELTA_PX ;
++  return Math.abs(next.width - prev.width) >= REFIT_MIN_DELTA_PX || Math.abs(next.height - prev.height) >= REFIT_MIN_DELTA_PX;
+ }
+ 
+ export interface PlanRefitDeps {
