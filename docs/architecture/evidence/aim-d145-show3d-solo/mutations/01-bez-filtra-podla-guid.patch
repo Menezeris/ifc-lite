@@ -1,0 +1,11 @@
+--- a/apps/viewer/src/aim/show3dSoloPlan.ts
++++ b/apps/viewer/src/aim/show3dSoloPlan.ts
+@@ -31,7 +31,7 @@
+ export function soloRefs(storeyGuid: string | null | undefined, storeys: readonly SoloStorey[]): SoloRef[] | null {
+   if (!storeyGuid) return null;
+   const refs = storeys
+-    .filter(() => true)
++    .filter((s) => s.guid === storeyGuid)
+     .map(({ modelId, expressId }) => ({ modelId, expressId }));
+   return refs.length > 0 ? refs : null;
+ }
