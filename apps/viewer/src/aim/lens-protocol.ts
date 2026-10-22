@@ -44,6 +44,11 @@ export type LensInboundMessage =
       isolate?: boolean;
       /** X-ray context: zjednotenie pravidiel ostane plné, zvyšok priesvitný (kanál ghost viewera, AIM D-105). */
       xray?: boolean;
+      /**
+       * Kontext X-ray len pre tieto podlažia (štítky 1NP, 2NP; AIM D-140, #187): prvky ostatných podlaží sa skryjú,
+       * kým X-ray z chatu trvá. Platí len s `xray`; prvky mimo podlaží (terén) ostanú v ghost kontexte.
+       */
+      xrayStoreys?: string[];
       autoColor?: AimAutoColorWire;
       /**
        * Rozsah farieb podľa hodnoty (AIM D-119): `FilterGroup[]` ako pri pravidlách; legenda a

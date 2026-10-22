@@ -36,6 +36,8 @@ import {
 import { noteIssue } from './command-gate.js';
 import { applyLegendSize, autoColorScope, revealAfterLens, revealGatesFor } from './aimLensScope.js';
 import { useAimLegendStore } from './aimLegendStore.js';
+import { hideOutsideStoreys, restoreHidden } from './aimXrayStoreys.js';
+import { mergeLabels } from './aimXrayStoreysPlan.js';
 
 const SLOT = AUTO_COLOR_FROM_LIST_ID;
 const POLL_MS = 100;
@@ -46,7 +48,7 @@ let appliedRev: string | undefined;
 /** Verzia, ktorej izolácia ešte beží (vyhodnotenie je asynchrónne). */
 let pendingIsolationRev: string | null = null;
 /** Izolácia alebo X-ray z chatu: počty a presné id v kanáli (uvoľní sa len, ak ich kanál stále drží). */
-let isolation: (AimIsolation & { ids: number[]; raw: number[] }) | null = null;
+let isolation: (AimIsolation & { ids: number[]; raw: number[]; hiddenIds?: number[] }) | null = null;
 /** Poradie izolácií: staršia, ktorá dobehne po novšej alebo po zrušení, sa zahodí. */
 let isolationGen = 0;
 /** Verzia, ktorej izolácia zlyhala (`LENS_QUERY` ju nahlási ako chybu, nie úspech). */
@@ -82,6 +84,8 @@ function releaseIsolation(): void {
   pendingIsolationRev = null;
   isolationFailedRev = null;
   clearOwnedChannel();
+  // X-ray s kontextom podlaží (D-140): vrátiť skryté ostatné podlažia, ručné skrytie ostane.
+  restoreHidden(isolation?.hiddenIds);
   isolation = null;
 }
 
@@ -100,6 +104,8 @@ async function isolate(msg: ApplyLensMessage, rules: Lens['rules'], tag: string,
   const owns = isolation && ownsChannel(useViewerStore.getState(), isolation);
   const prev = msg.mode === 'add' && owns && !!isolation?.xray === xray ? isolation : null;
   if (prev) for (const id of prev.raw) raw.add(id);
+  // Skryté podlažia predošlého X-ray sa vždy vrátia; kontext sa nižšie vyráta nanovo (pri `add` ako zjednotenie).
+  restoreHidden(isolation?.hiddenIds);
   // Druhý kanál z chatu (izolácia po X-ray a naopak) uvoľniť, inak by ostal visieť.
   if (owns && !!isolation?.xray !== xray) clearOwnedChannel();
   // Zostava bez geometrie (schodisko ako kontajner) sa izoluje cez svoje časti, ako v paneli Lens.
@@ -114,11 +120,16 @@ async function isolate(msg: ApplyLensMessage, rules: Lens['rules'], tag: string,
     if (ruleIsolationOwnsChannel(now.isolatedEntities, ids)) now.clearIsolation();
     if (ids.length > 0) now.isolateEntities(ids);
   }
+  // Kontext len pre zvolené podlažia (D-140, #187): ostatné podlažia skryť, plné prvky X-ray nie.
+  const labels = xray && (msg.xrayStoreys || prev?.storeys) ? mergeLabels(prev?.storeys, msg.xrayStoreys ?? []) : undefined;
+  const hiddenIds = labels && ids.length > 0 ? hideOutsideStoreys(labels, new Set(ids)) : undefined;
   isolation = {
     ...(msg.rev ? { rev: msg.rev } : {}),
     rules: [...(prev?.rules ?? []), ...rules.map((r) => ({ name: r.name, count: matched.get(r.id)?.size ?? 0 }))],
     isolated: raw.size,
     ...(xray ? { xray: true as const } : {}),
+    ...(labels ? { storeys: labels, hidden: hiddenIds?.length ?? 0 } : {}),
+    ...(hiddenIds ? { hiddenIds } : {}),
     ids,
     raw: [...raw],
   };
@@ -204,11 +215,11 @@ function endScoping(): void {
 /** Izolácia (X-ray) z chatu pre hosta, bez interných id. */
 function isolationSummary(): AimIsolation | null {
   if (!isolation) return null;
-  const { rev, rules, isolated, xray } = isolation;
+  const { rev, rules, isolated, xray, storeys, hidden } = isolation;
   // Kanál drží niečo iné alebo nič (kláves A, Zobraziť všetko, iná izolácia): izolácia z chatu už neplatí (D-125).
   const gone = pendingIsolationRev === null && !ownsChannel(useViewerStore.getState(), isolation);
   return {
-    rev, rules, isolated, ...(xray ? { xray } : {}),
+    rev, rules, isolated, ...(xray ? { xray } : {}), ...(storeys ? { storeys, hidden } : {}),
     ...(gone ? { active: false as const, note: `${xray ? 'X-ray' : 'izolácia'} z chatu už vo vieweri nie je (zrušil ju používateľ alebo iný príkaz)` } : {}),
   };
 }
