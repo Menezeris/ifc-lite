@@ -57,6 +57,8 @@ let camera: Promise<typeof import('./viewCamera.js')> | null = null;
 const loadCamera = () => (camera ??= import('./viewCamera.js'));
 let panels: Promise<typeof import('./aimPanels.js')> | null = null;
 const loadPanels = () => (panels ??= import('./aimPanels.js'));
+let panelScroll: Promise<typeof import('./aimPanelScroll.js')> | null = null;
+const loadPanelScroll = () => (panelScroll ??= import('./aimPanelScroll.js'));
 /** Rezný box (AIM D-132): modul stiahnutý pri pripojení, aby box bežal v poradí s ostatnými príkazmi. */
 let boxModules: [typeof import('./viewQueries.js'), typeof import('./sectionBox.js')] | null = null;
 const loadBox = () => Promise.all([loadQueries(), import('./sectionBox.js')]).then((m) => (boxModules = m));
@@ -200,6 +202,10 @@ export function useAimViewCommands(bim: BimContext) {
       }
       case 'SET_PANELS': {
         track(loadPanels().then((m) => m.applyPanels(msg.panels, noteIssue)));
+        return;
+      }
+      case 'SCROLL_PANEL': {
+        track(loadPanelScroll().then((m) => m.scrollPanel(msg.direction, noteIssue)));
         return;
       }
       case 'SET_VIEW_MODE': {
