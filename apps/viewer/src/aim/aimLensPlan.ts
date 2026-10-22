@@ -26,6 +26,10 @@ export const MAX_AIM_RULES = 24;
 /** Spolu GlobalId v pravidlách `globalId` jednej správy (zóna z AIM, konkrétne prvky). */
 export const MAX_AIM_GLOBAL_IDS = 5000;
 const MAX_GROUPS = 8;
+/** Najviac podlaží v kontexte X-ray (D-140): 1 až 8 neprázdnych krátkych štítkov. */
+const MAX_XRAY_STOREYS = 8;
+export const isXrayStoreys = (v: unknown): v is string[] =>
+  Array.isArray(v) && v.length > 0 && v.length <= MAX_XRAY_STOREYS && v.every((s) => shortStr(s, 60));
 /** Hodnota modelu, ktorú žiadny model nemá: neznámy model nesmie matchnúť všetko. */
 const NO_MODEL = '__aim_no_model__';
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -60,6 +64,8 @@ export function parseLensMessage(data: LensInboundMessage): ApplyLensMessage | L
   if (m.xray !== undefined && typeof m.xray !== 'boolean') return null;
   // Izolácia aj X-ray naraz si odporujú (viewer ich drží ako vzájomne výlučné kanály).
   if (m.isolate === true && m.xray === true) return null;
+  // Kontext podlaží (D-140, #187) má zmysel len pri X-ray.
+  if (m.xrayStoreys !== undefined && (m.xray !== true || !isXrayStoreys(m.xrayStoreys))) return null;
   if (m.autoColor !== undefined) {
     const a = m.autoColor as Record<string, unknown> | null;
     if (!a || typeof a !== 'object' || !AUTO_SOURCES.has(a.source as string)) return null;
@@ -209,6 +215,9 @@ export interface AimIsolation {
   isolated: number;
   /** Zjednotenie je v X-ray kanáli (zvyšok priesvitný), nie v izolácii (D-105). */
   xray?: true;
+  /** X-ray len s podlažiami (D-140, #187): štítky v kontexte a počet skrytých prvkov ostatných podlaží. */
+  storeys?: string[];
+  hidden?: number;
   /** false = kanál už izoláciu z chatu nedrží (zrušil ju používateľ alebo iný príkaz, D-125). */
   active?: false;
   note?: string;
