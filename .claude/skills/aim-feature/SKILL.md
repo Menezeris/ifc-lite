@@ -107,7 +107,11 @@ The AIM bridge is active only inside an iframe. Serve a host page that embeds
 models from another origin. Drive it with Playwright
 (`executablePath: '/opt/pw-browsers/chromium'`, `--enable-unsafe-webgpu
 --use-angle=swiftshader`). Test model with stairs and storeys:
-`tests/models/ara3d/AC20-FZK-Haus.ifc`. A message sent with the deep link arrives with
+`tests/models/ara3d/AC20-FZK-Haus.ifc`. Never load the production AIM models (the
+`.../storage/v1/object/public/ifc/...` bucket, also its `archive/`) in a live check: the
+bucket has a small free egress quota (AIM D-135); headers only via `curl -I`. To try the
+archive path, gzip the test model locally as `archive/Test/v001.ifc.gz` next to it. A
+message sent with the deep link arrives with
 `MODELS_LOADED`, before geometry has streamed: anything that needs element bounds must
 wait or retry.
 
