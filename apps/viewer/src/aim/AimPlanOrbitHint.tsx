@@ -90,8 +90,7 @@ export function AimPlanOrbitHint() {
 
   if (!open) return null;
   return (
-    <div
-      role="status"
+    <output
       data-testid="aim-plan-orbit-hint"
       className="absolute left-1/2 top-full z-30 mt-2 flex -translate-x-1/2 items-center gap-2 rounded-md border bg-background/95 px-2 py-1 text-2xs shadow-md"
     >
@@ -103,6 +102,6 @@ export function AimPlanOrbitHint() {
       >
         {t('aimFork.planOrbit.action')}
       </button>
-    </div>
+    </output>
   );
 }
