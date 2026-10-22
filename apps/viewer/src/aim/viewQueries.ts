@@ -33,6 +33,7 @@ import { orderedBox, toSectionBox, type SectionBoxMessage } from './sectionBox.j
 import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import type { SectionPlaneAxis } from '@/store/types';
 import type { SectionAxis, SectionFit, ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
+import { describeList } from './aimListState.js';
 import {
   cutPercent, hostAxis, viewerAxis, ifcCoordinateToRender, ifcPointToRender, renderBoxToIfc, renderDirToIfc, renderPointToIfc, sectionThroughBox, unionBoxes,
   type Box3, type Vec3,
@@ -225,6 +226,8 @@ export function queryViewState(state: State, g: GuidHelpers) {
     document: useAimDocRegionStore.getState().visible,
     // AIM D-132: záložky (aktívna a tá vedľa).
     tabs: describeTabs(useAimViewTabs.getState()),
+    // AIM D-149: zoznam v paneli Lists (stĺpce, filtre, zoradenie, zoskupenie, súčty, maximalizácia).
+    list: describeList(),
   };
 }
 

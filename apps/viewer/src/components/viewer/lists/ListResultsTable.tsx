@@ -37,6 +37,9 @@ import { ColumnResizeHandle } from './ColumnResizeHandle';
 import { formatCellValue, compareCells, detectNumericColumns, autoColumnWidth,
   buildGroupedView, flatTotals, buildScheduleRows, rebuildGrouping,
   type DisplayItem, type Totals, type ScheduleRow } from './list-table-utils';
+// >>> AIM-FORK: zoradenie, hľadanie a súčty z chatu (D-149)
+import { useAimListTable } from '@/aim/aimListTable';
+// <<< AIM-FORK
 interface ListResultsTableProps {
   result: ListResult;
   /** List name — used as the export title / filename. */
@@ -168,6 +171,10 @@ export function ListResultsTable({ result, listName, grouping, onGroupingChange,
       groupKeys: [],
     };
   }, [isGrouped, displayRows, columns, groupColumnIds, sumColumnIds, expandedGroups, sortCol, sortDir]);
+  // >>> AIM-FORK: zoradenie, hľadanie a súčty z chatu (D-149)
+  useAimListTable({ result, sortCol, sortDir, search: searchQuery, visibleRows: sortedRows.length, sums: totals.sums,
+    unitSymbol: unitResolver.unitSymbol, setSortCol, setSortDir, setSearch: setSearchQuery });
+  // <<< AIM-FORK
 
   const columnWidths = useMemo(
     () => columns.map((c, i) => widthOverrides[c.id] ?? autoColumnWidth(c.label ?? c.propertyName, result.rows, i)),

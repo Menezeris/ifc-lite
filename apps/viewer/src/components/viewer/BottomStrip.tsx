@@ -27,6 +27,9 @@ import {
   persistBottomStripTabs,
   type BottomStripOrientation,
 } from '@/lib/panels/bottom-strip-persistence';
+// >>> AIM-FORK: maximalizácia panela Lists z chatu (D-149)
+import { useAimStripMaximize } from '@/aim/aimStripMaximize';
+// <<< AIM-FORK
 
 export interface BottomStripProps {
   /** The bottom panel docked in the strip, or `null` when none is. */
@@ -151,6 +154,9 @@ export function BottomStrip({ dockedPanel, analysisExtension, containerRef, clos
   }, [tabs, dockedPanel, closePanel, openInHome]);
 
   const handleToggleMaximize = useCallback(() => setIsMaximized((m) => !m), []);
+  // >>> AIM-FORK: maximalizácia panela Lists z chatu (D-149)
+  useAimStripMaximize(analysisExtension ? null : dockedPanel, isMaximized, setIsMaximized);
+  // <<< AIM-FORK
 
   if (!dockedPanel && !analysisExtension) return null;
 
