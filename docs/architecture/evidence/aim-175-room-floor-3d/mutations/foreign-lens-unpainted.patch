@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimLensPaint.ts a/apps/viewer/src/aim/aimLensPaint.ts
+index ee3768d6..ff6d08bd 100644
+--- b/apps/viewer/src/aim/aimLensPaint.ts
++++ a/apps/viewer/src/aim/aimLensPaint.ts
+@@ -23,7 +23,7 @@ export function paintedColors<T>(
+   lens: { name: string; rules: readonly { id: string }[] } | null | undefined,
+   ruleIds: ReadonlyMap<string, readonly number[]>,
+ ): Map<number, T> {
+-  if (!lens) return colors;
++  if (!lens || lens.name !== AIM_LENS) return colors;
+   const skip = lens.rules.filter((r) => r.id.endsWith(VOLUME_SUFFIX)).flatMap((r) => ruleIds.get(r.id) ?? []);
+   if (skip.length === 0) return colors;
+   const out = new Map(colors);

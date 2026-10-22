@@ -42,6 +42,9 @@ import { evaluateLensGroups } from '@/lib/lens/evaluate-lens-groups';
 import { definedModelTagIdsOf, evaluatorModelsFromState } from '@/lib/model-tags/evaluator-models';
 import { toast } from '@/components/ui/toast';
 import { planLensHiddenSync, ruleIsolationOwnsChannel } from '@/components/viewer/lens-visibility-ownership';
+// >>> AIM-FORK: farby AIM chat lens do renderera (AIM D-125, #175)
+import { paintedColors } from '@/aim/aimLensPaint';
+// <<< AIM-FORK
 
 const EMPTY_LENS_HIDDEN: ReadonlySet<number> = new Set<number>();
 
@@ -163,8 +166,11 @@ export function useLens(): void {
     // Apply colors via overlay system — original batches are never modified.
     // Remember the exact overlay so the compare overlay can restore it on
     // teardown instead of blanking the channel the lens still owns.
-      useViewerStore.getState().setLensAppliedColors(colorMap.size > 0 ? colorMap : null);
-      useViewerStore.getState().setPendingColorUpdates(colorMap);
+      // >>> AIM-FORK: miestnosti AIM chat lens bez farby v rendereri, farbu nesie podstava (AIM D-125, #175)
+      const painted = paintedColors(colorMap, activeLens, ruleEntityIds);
+      useViewerStore.getState().setLensAppliedColors(painted.size > 0 ? painted : null);
+      useViewerStore.getState().setPendingColorUpdates(painted);
+      // <<< AIM-FORK
 
       posthog.capture('lens_applied', {
         mode: isAutoColor ? 'auto_color' : 'rules',

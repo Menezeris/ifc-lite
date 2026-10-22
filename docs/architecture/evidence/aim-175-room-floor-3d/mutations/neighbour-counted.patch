@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimRoomFill3d.ts a/apps/viewer/src/aim/aimRoomFill3d.ts
+index 9bad7935..0d2c2547 100644
+--- b/apps/viewer/src/aim/aimRoomFill3d.ts
++++ a/apps/viewer/src/aim/aimRoomFill3d.ts
+@@ -59,7 +59,7 @@ export function floorLevel(fp: Footprint, coverings: readonly Box3[]): number {
+     if (c.maxY < floor - BELOW || c.maxY > floor + MAX_RISE || c.minY > floor + MAX_RISE) continue;
+     const ox = Math.min(maxX, c.maxX) - Math.max(minX, c.minX);
+     const oz = Math.min(maxZ, c.maxZ) - Math.max(minZ, c.minZ);
+-    if (ox < 0 || oz < 0) continue;
++    if (ox <= 0 || oz <= 0 || ox * oz < MIN_OVERLAP) continue;
+     top = Math.max(top, c.maxY);
+   }
+   return top + LIFT;

@@ -20,6 +20,7 @@
 import { isFilterGroup, type FilterGroup, type FilterRule } from '@ifc-lite/rules';
 import type { AutoColorLegendEntry, AutoColorSpec, Lens, LensRule } from '@ifc-lite/lens';
 import { AIM_LENS_MODES, type LensInboundMessage } from './lens-protocol.js';
+import { VOLUME_SUFFIX } from './aimLensPaint.js';
 
 export const AIM_LENS_NAME = 'AIM chat';
 export const MAX_AIM_RULES = 24;
@@ -37,8 +38,8 @@ const AUTO_SOURCES = new Set(['ifcType', 'attribute', 'property', 'quantity', 'c
 const ACTIONS = new Set(['colorize', 'transparent', 'hide', 'isolate']);
 /** Triedy, ktoré viewer kreslí ako priehľadný objem: plná farba by zakryla prvky v nich (D-125). */
 export const VOLUME_CLASSES = ['IfcSpace', 'IfcSpatialZone'];
-/** Prípona id priesvitnej varianty pravidla pre miestnosti a zóny. */
-export const VOLUME_SUFFIX = '~vol';
+/** Prípona id priesvitnej varianty pravidla pre miestnosti a zóny (aj v `aimLensPaint.ts`). */
+export { VOLUME_SUFFIX };
 const isVariant = (r: LensRule) => r.id.endsWith(VOLUME_SUFFIX);
 
 export type ApplyLensMessage = Extract<LensInboundMessage, { type: 'APPLY_LENS' }>;
