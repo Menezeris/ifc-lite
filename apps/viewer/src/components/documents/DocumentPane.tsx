@@ -19,8 +19,9 @@ import { useViewerStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { PdfDocumentView } from './PdfDocumentView';
 import { ImageDocumentView } from './ImageDocumentView';
-// >>> AIM-FORK: "Ukázať v 3D" for the page being read, answered by the AIM host (D-104 step 4)
+// >>> AIM-FORK: "Ukázať v 3D" for the page being read, answered by the AIM host (D-104 step 4); "Pripomienka" on a page region (D-158)
 import { AimDocumentShow3d } from '@/aim/AimDocumentShow3d';
+import { AimDocumentIssue } from '@/aim/AimDocumentIssue';
 // <<< AIM-FORK
 
 // >>> AIM-FORK: on desktop the view tab bar lists the documents, so the pane hides its own strip (AIM D-132)
@@ -86,6 +87,7 @@ export function DocumentPane({ hideTabs = false }: { hideTabs?: boolean } = {}) 
       </div>
       {/* >>> AIM-FORK: elements of the page in 3D, rendered only inside the AIM host (D-104 step 4) */}
       {activeId && <AimDocumentShow3d docId={activeId} />}
+      {activeId && <AimDocumentIssue key={activeId} docId={activeId} />}
       </div>
       {/* <<< AIM-FORK */}
       <div className="min-h-0 flex-1">

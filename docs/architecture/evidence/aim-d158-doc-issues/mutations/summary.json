@@ -1,0 +1,77 @@
+{
+  "base": "origin/main (c988e100)",
+  "runs": [
+    {
+      "patch": "click-is-region.patch",
+      "module": "apps/viewer/src/aim/docIssueModel.ts",
+      "test": "apps/viewer/src/aim/docIssueModel.test.ts",
+      "mutation": "a click (drag under 0.5 % of the page) still makes a region",
+      "exit": 0,
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    {
+      "patch": "url-any-id.patch",
+      "module": "apps/viewer/src/aim/docIssueModel.ts",
+      "test": "apps/viewer/src/aim/docIssueModel.test.ts",
+      "mutation": "any /drawing/<x> path is taken as an AIM document",
+      "exit": 0,
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    {
+      "patch": "frames-any-page.patch",
+      "module": "apps/viewer/src/aim/docIssueModel.ts",
+      "test": "apps/viewer/src/aim/docIssueModel.test.ts",
+      "mutation": "frames of every page are drawn on each page",
+      "exit": 0,
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    {
+      "patch": "saved-as-local.patch",
+      "module": "apps/viewer/src/aim/docIssueModel.ts",
+      "test": "apps/viewer/src/aim/docIssueModel.test.ts",
+      "mutation": "host topics (with #N) are listed as unsaved in view_state",
+      "exit": 0,
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    {
+      "patch": "merge-drops-local.patch",
+      "module": "apps/viewer/src/aim/docIssueModel.ts",
+      "test": "apps/viewer/src/aim/docIssueModel.test.ts",
+      "mutation": "a reload from the host drops topics added in the panel",
+      "exit": 0,
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    {
+      "patch": "merge-any-project.patch",
+      "module": "apps/viewer/src/aim/docIssueModel.ts",
+      "test": "apps/viewer/src/aim/docIssueModel.test.ts",
+      "mutation": "the user's own project (file, other server) is merged with AIM topics",
+      "exit": 0,
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    {
+      "patch": "new-topic-ignores-before.patch",
+      "module": "apps/viewer/src/aim/docIssueModel.ts",
+      "test": "apps/viewer/src/aim/docIssueModel.test.ts",
+      "mutation": "the reference goes to the first topic, not the one the form created",
+      "exit": 0,
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    {
+      "patch": "doc-refs-not-read.patch",
+      "module": "apps/viewer/src/aim/aimBcf.ts",
+      "test": "apps/viewer/src/aim/bcf-protocol.test.ts",
+      "mutation": "host topics never get their document references",
+      "exit": 0,
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    }
+  ]
+}

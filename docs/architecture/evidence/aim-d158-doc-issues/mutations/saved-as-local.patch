@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docIssueModel.ts a/apps/viewer/src/aim/docIssueModel.ts
+index 06259993..a8c077d4 100644
+--- b/apps/viewer/src/aim/docIssueModel.ts
++++ a/apps/viewer/src/aim/docIssueModel.ts
+@@ -137,7 +137,7 @@ export function newTopicGuid(before: ReadonlySet<string>, project: BCFProject |
+ 
+ /** Témy, ktoré host ešte nemá: v projekte AIM bez čísla (`index`) z BCF API hosta. */
+ export function isLocalTopic(topic: BCFTopic): boolean {
+-  return true;
++  return typeof topic.index !== 'number';
+ }
+ 
+ /** Najviac GlobalId výberu jednej témy vo `view_state` (strop mosta). */

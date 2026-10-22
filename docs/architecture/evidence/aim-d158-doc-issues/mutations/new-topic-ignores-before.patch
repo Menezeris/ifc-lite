@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docIssueModel.ts a/apps/viewer/src/aim/docIssueModel.ts
+index d14e9132..a8c077d4 100644
+--- b/apps/viewer/src/aim/docIssueModel.ts
++++ a/apps/viewer/src/aim/docIssueModel.ts
+@@ -131,7 +131,7 @@ export function issuesOnPage(project: BCFProject | null, docId: string, page: nu
+ 
+ /** Prvá téma projektu, ktorá nebola v `before` (téma, ktorú práve založil upstream formulár). */
+ export function newTopicGuid(before: ReadonlySet<string>, project: BCFProject | null): string | null {
+-  for (const guid of project?.topics.keys() ?? []) return guid;
++  for (const guid of project?.topics.keys() ?? []) if (!before.has(guid)) return guid;
+   return null;
+ }
+ 
