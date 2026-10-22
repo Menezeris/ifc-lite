@@ -30,6 +30,7 @@ import {
 } from '@/lib/pdf/rasterize';
 import { PageIdentifierLinks } from './PageIdentifierLinks';
 import { useAimDocRegion } from '@/aim/docRegion'; // >>> AIM-FORK (D-117) <<< AIM-FORK
+import { useAimDocBodyWidth } from '@/aim/useDocBodyWidth'; // >>> AIM-FORK (AIM #239) <<< AIM-FORK
 
 /**
  * Raster ceiling (longest edge, device px). Deep zoom into drawings needs
@@ -119,17 +120,7 @@ export function PdfDocumentView({ docId, url }: PdfDocumentViewProps) {
 
   // ── Layout: fit-width base, explicit page heights for virtualization ─────
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [bodyWidth, setBodyWidth] = useState(0);
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver((entries) => {
-      const r = entries[0]?.contentRect;
-      if (r) setBodyWidth(r.width);
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+  const bodyWidth = useAimDocBodyWidth(scrollRef); // >>> AIM-FORK (AIM #239): width settled against the scrollbar toggling it (page shook at 100 % zoom) <<< AIM-FORK
   /** Layout width (immediate — placeholders and CSS scale follow this). */
   const pageWidth = Math.max(0, (bodyWidth - 24) * zoom);
   /** Raster width (debounced — pdf.js renders only once a gesture settles). */
@@ -452,7 +443,7 @@ export function PdfDocumentView({ docId, url }: PdfDocumentViewProps) {
       <div
         ref={scrollRef}
         className="min-h-0 flex-1 overflow-auto bg-muted/30"
-        style={{ touchAction: 'pan-x pan-y' }}
+        style={{ touchAction: 'pan-x pan-y', scrollbarGutter: 'stable' /* >>> AIM-FORK (AIM #239) <<< AIM-FORK */ }}
         onPointerDown={onTouchPointerDown}
         onPointerMove={onTouchPointerMove}
         onPointerUp={onTouchPointerEnd}
