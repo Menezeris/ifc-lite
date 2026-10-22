@@ -21,6 +21,7 @@ import { useViewerStore } from '@/store';
 import { useFloorplanView } from '@/hooks/useFloorplanView';
 import { centerLayout } from './viewTabsLayout.js';
 import { useAimViewTabs } from './viewTabsStore.js';
+import { useAimPlanRefit } from './useAimPlanRefit.js';
 
 /** Šírka panela dokumentu pri prvom otvorení vedľa 3D, % strednej skupiny. */
 const DOC_PANE_OPEN_PCT = '42%';
@@ -31,6 +32,8 @@ function resizePanelPct(panel: PanelImperativeHandle, size: string): void {
 }
 
 export function useAimCenterPanes(isMobile: boolean) {
+  // AIM #211: pôdorys v záložke sa po zmene veľkosti plochy (stĺpec vlastností) znova vyplní.
+  useAimPlanRefit(isMobile);
   // D-072 split: panel plánu sa rozbalí a zbalí s `underlaySplitView`.
   const underlaySplitView = useViewerStore((s) => s.underlaySplitView);
   const planePanelRef = useRef<PanelImperativeHandle>(null);
