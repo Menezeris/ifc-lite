@@ -49,15 +49,20 @@ else
   echo "🦀 CARGO_TARGET_DIR unset (no writable Vercel cache dir; using ./target)"
 fi
 
-# Surface Turbo Remote Cache status in the deploy log. Cache hits show
-# up as "FULL TURBO" in turbo's banner; if you don't see them, set
-# TURBO_TEAM + TURBO_TOKEN in the Vercel project env.
+# >>> AIM-FORK: Vercel Remote Cache needs no TURBO_TOKEN / TURBO_TEAM.
+# On a Vercel build turbo authenticates through the build's own OIDC token and
+# prints "Remote caching enabled" by itself. The old message claimed the cache
+# was NOT configured and every deploy rebuilt WASM; the real reason for the
+# misses was per-commit variables in turbo.json `env` (see apps/viewer/turbo.json).
+# Cache hits show up as "cache hit, replaying logs" per task and "FULL TURBO".
 if [ -n "${TURBO_TOKEN:-}" ] && [ -n "${TURBO_TEAM:-}" ]; then
-  echo "🚀 Turbo Remote Cache enabled (team=$TURBO_TEAM)"
+  echo "🚀 Turbo Remote Cache: explicit credentials (team=$TURBO_TEAM)"
+elif [ -n "${VERCEL:-}" ]; then
+  echo "🚀 Turbo Remote Cache: Vercel Remote Cache (automatic on Vercel builds, no token needed)"
 else
-  echo "⚠️  Turbo Remote Cache NOT configured — every deploy will rebuild WASM from source."
-  echo "   Set TURBO_TEAM + TURBO_TOKEN in the Vercel project env to enable."
+  echo "ℹ️  Turbo Remote Cache: local cache only (set TURBO_TEAM + TURBO_TOKEN to share one)"
 fi
+# <<< AIM-FORK
 
 # WASM build memory: the release profile uses FAT LTO (whole-program link held
 # in memory) when wasm-pack compiles ifc-lite-wasm from source. On a rust-touching
