@@ -10,6 +10,8 @@
  * ostávajú nedotknuté. Dotyk sa nemení, ten posúva natívne.
  */
 
+import { capturePointer, releasePointer } from '@/lib/pointer-capture';
+
 /** Posun v px, od ktorého sa gesto berie ako ťahanie (menší je klik). */
 export const PAN_THRESHOLD_PX = 4;
 
@@ -83,7 +85,7 @@ export function attachDocPan(root: HTMLElement): () => void {
   let pointerId = -1;
 
   const end = () => {
-    if (pan?.active && root.hasPointerCapture?.(pointerId)) root.releasePointerCapture(pointerId);
+    if (pan?.active) releasePointer(root, pointerId);
     root.removeAttribute(PANNING_ATTR);
     pan = null;
   };
@@ -99,7 +101,7 @@ export function attachDocPan(root: HTMLElement): () => void {
     const to = movePan(pan, e.clientX, e.clientY);
     if (!to) return;
     if (!was) {
-      root.setPointerCapture(pointerId);
+      capturePointer(root, pointerId);
       root.setAttribute(PANNING_ATTR, '');
       root.ownerDocument.defaultView?.getSelection()?.removeAllRanges();
     }
