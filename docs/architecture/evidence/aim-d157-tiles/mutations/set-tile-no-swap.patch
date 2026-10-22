@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index c78e5138..ccc27219 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -151,6 +151,7 @@ export function setTile(s: ViewTabsState, t: TilesState, index: number, id: stri
+   if (id !== null && !tabOf(s, id)) return t;
+   const from = id === null ? -1 : t.tiles.indexOf(id);
+   const tiles = [...t.tiles];
++  if (from >= 0) tiles[from] = tiles[index];
+   tiles[index] = id;
+   return { ...t, tiles };
+ }

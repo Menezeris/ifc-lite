@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index 986087c5..ccc27219 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -168,7 +168,7 @@ export function reconcileTiles(s: ViewTabsState, t: TilesState, liveId: string |
+   const spare = s.tabs.map((x) => x.id).filter((id) => !used.has(id) && id !== s.activeId);
+   const tiles = kept.map((id, i) => {
+     if (id !== null || t.tiles[i] === null) return id;
+-    return null;
++    return spare.shift() ?? null;
+   });
+   return placeTab(s, { ...t, tiles }, s.activeId, liveId);
+ }

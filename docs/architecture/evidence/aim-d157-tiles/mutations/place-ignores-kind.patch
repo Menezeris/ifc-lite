@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index 902d1da1..ccc27219 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -134,6 +134,7 @@ export function placeTab(s: ViewTabsState, t: TilesState, id: string, liveId: st
+   if (!isTiled(t) || t.tiles.includes(id) || !tabOf(s, id)) return t;
+   const scene = isSceneTab(tabOf(s, id));
+   let idx = t.tiles.indexOf(null);
++  if (idx < 0) idx = lastIndex(t.tiles, (x) => x !== liveId && isSceneTab(tabOf(s, x)) === scene);
+   if (idx < 0) idx = lastIndex(t.tiles, (x) => x !== liveId);
+   if (idx < 0) idx = t.tiles.length - 1;
+   return { ...t, tiles: t.tiles.map((x, i) => (i === idx ? id : x)) };
