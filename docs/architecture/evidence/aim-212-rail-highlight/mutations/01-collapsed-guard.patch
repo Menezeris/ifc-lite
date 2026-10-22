@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimSideDock.ts a/apps/viewer/src/aim/aimSideDock.ts
+index 384afc57..f52b093b 100644
+--- b/apps/viewer/src/aim/aimSideDock.ts
++++ a/apps/viewer/src/aim/aimSideDock.ts
+@@ -28,6 +28,7 @@ export interface SideDocked {
+  * primárny a nie je odpojená.
+  */
+ export function sideDockedPanels(s: SideDockInput): SideDocked {
++  if (s.sidebarMode === 'collapsed') return { primary: null, secondary: null };
+   let primary: string | null = null;
+   if (!s.detached.has(s.sidebarActivePanel)) primary = s.sidebarActivePanel;
+   else if (!s.detached.has('properties')) primary = 'properties';
