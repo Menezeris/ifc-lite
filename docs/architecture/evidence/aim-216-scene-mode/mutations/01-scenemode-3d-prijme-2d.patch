@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sceneMode.ts a/apps/viewer/src/aim/sceneMode.ts
+index 70979c48..a1df18a5 100644
+--- b/apps/viewer/src/aim/sceneMode.ts
++++ a/apps/viewer/src/aim/sceneMode.ts
+@@ -19,7 +19,7 @@ type Mode = '3d' | '2d' | 'split';
+  * záložku do 2D (ortografická kamera zhora, #216).
+  */
+ export function sceneMode(sceneKind: ViewTabKind | undefined, mode: Mode): Mode {
+-  if (sceneKind === '3d') return mode;
++  if (sceneKind === '3d') return mode === 'split' ? 'split' : '3d';
+   return mode;
+ }
+ 
