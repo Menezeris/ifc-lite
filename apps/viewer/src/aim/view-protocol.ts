@@ -109,6 +109,8 @@ export type ViewInboundMessage =
   | { source: typeof SOURCE; type: 'QUERY'; id: string; query: ViewQuery; guids?: string[] }
   /** Panely z chatu (AIM D-127): otvoriť, zavrieť, prepnúť; `all` len zavrieť. */
   | { source: typeof SOURCE; type: 'SET_PANELS'; panels: PanelsRequest }
+  /** PDF podklady v 3D zapnúť / vypnúť (AIM D-133 doplnok, #170); stav viewera, nič sa neukladá. */
+  | { source: typeof SOURCE; type: 'SET_UNDERLAYS_3D'; show: boolean }
   /** Posun panela vlastností (AIM #183): o stranu hore / dole, na začiatok, na koniec. */
   | { source: typeof SOURCE; type: 'SCROLL_PANEL'; direction: PanelScroll }
   /** Kóty v IFC svete (Z hore, m) do nástroja Measure (AIM D-124); `keep` = pridať k predošlým od hosta. */
@@ -213,6 +215,8 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
       return isPanelsRequest(m.panels);
     case 'SCROLL_PANEL':
       return isPanelScroll(m.direction);
+    case 'SET_UNDERLAYS_3D':
+      return typeof m.show === 'boolean';
     case 'QUERY':
       return isId(m.id)
         && (VIEW_QUERIES as readonly unknown[]).includes(m.query)

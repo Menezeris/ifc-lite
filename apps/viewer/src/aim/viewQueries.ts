@@ -26,6 +26,7 @@ import { summarizeSelection, visibilityGuids, type SelectedEntityInfo } from './
 import { describePanels } from './aimPanelsPlan.js';
 import { useAimInspectorStore } from './aimInspectorStore.js';
 import { useAimDocRegionStore } from './docRegion.js';
+import { useAimUnderlays3d } from './aimUnderlays3d.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { describeTabs } from './viewTabsPlan.js';
 import { orderedBox, toSectionBox, type SectionBoxMessage } from './sectionBox.js';
@@ -218,6 +219,8 @@ export function queryViewState(state: State, g: GuidHelpers) {
     ...(g.changes ? { changed_since_last_command: g.changes() } : {}),
     // AIM D-127: panely (#179), zvýraznená vlastnosť v paneli (#168) a viditeľný výrez karty dokumentu (#166).
     panels: describePanels(state),
+    // AIM D-133 doplnok (#170): podklady PDF v 3D zobrazené (true) alebo skryté (false); stav viewera.
+    underlays_3d: !useAimUnderlays3d.getState().hidden,
     property_focus: useAimInspectorStore.getState().propertyFocus,
     document: useAimDocRegionStore.getState().visible,
     // AIM D-132: záložky (aktívna a tá vedľa).
