@@ -11,6 +11,8 @@ export const aimForkEn = {
   'aimFork.panel.drawingUnderlay': 'Drawing underlays',
   'aimFork.panel.documents': 'Documents',
   'aimFork.panel.aimLayers': 'AIM layers',
+  /** Header of the small AIM chat legend card (#218): a plain title, not the technical lens name. */
+  'aimFork.legend.title': 'Legend',
   /** Rail / ribbon / palette group of the AIM panels (D-104), first of all groups. */
   'aimFork.panelGroups.aim': 'AIM',
   'aimFork.panelGroups.aimDescription': 'AIM platform: project documents, derived layers and drawing underlays from the AIM host',
