@@ -18,11 +18,8 @@
  * original ViewerApi shape.
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { useBim } from '../sdk/BimProvider.js';
+import { useEffect, useRef } from 'react';
 import { useViewerStore } from '../store/index.js';
-import { AUTOLOAD_COMPLETE_EVENT, parseAutoloadUrls } from '../lib/autoload.js';
-import { selectPickedGlobalId, toggleGlobalIdInSelection } from '../components/viewer/viewport-selection.js';
 import {
   SOURCE, FILTER_COLOR, FOCUS_COLOR, isInboundMessage, guidForEntity, resolveGuids, resolveSelector,
   type InboundMessage, type OutboundMessage,
@@ -43,14 +40,14 @@ import { isBcfLoadMessage, loadBcfTopics } from './bcf-protocol.js';
 import { dispatchLensMessage, isLensEnvelope, lensSettled, listSettled, resetLensFromChat } from './lens-protocol.js';
 import { appliedViewState, prepareFocusView, runSectionBox, setChangesProvider, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
 import { createViewChangeTracker } from './viewChanges.js';
+import type { AutoloadLatch } from './autoloadLatch.js';
+import type { BridgeEntryDeps } from './AimBridgeMount.js';
 
 /** Správy AIM D-132 sa overia až v lenivom module; tu len typ (vstupný balík). */
 const aimTyped = (d: unknown, type: string) => !!d && typeof d === 'object' && (d as { source?: unknown }).source === SOURCE && (d as { type?: unknown }).type === type;
 
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
-/** Helpery zo vstupného balíka pre lenivý modul príkazov viditeľnosti. */
-const VIS_DEPS = { resolveGuids, resolveSelector, selectPickedGlobalId, addToSelection: toggleGlobalIdInSelection, noteIssue, track, FOCUS_COLOR, FILTER_COLOR, prepareFocusView };
 let visibility: Promise<typeof import('./visibility-commands.js')> | null = null;
 const loadVisibility = () => (visibility ??= import('./visibility-commands.js'));
 
@@ -59,8 +56,11 @@ const ACK_WAIT_MS = 2500;
 /** Ak geometria po ohlásení modelov neprestane prúdiť, príkazy sa pustia aj tak. */
 const STREAM_GRACE_MS = 30_000;
 
-export function AimBridge() {
-  const bim = useBim();
+/** Lenivo z AimBridgeMount, len v embede; príznak embedu a závoj autoloadu drží on. */
+export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry: BridgeEntryDeps }) {
+  const { bim, selectPickedGlobalId } = entry;
+  /** Helpery pre lenivý modul príkazov viditeľnosti. */
+  const visDeps = { resolveGuids, resolveSelector, selectPickedGlobalId, addToSelection: entry.addToSelection, noteIssue, track, FOCUS_COLOR, FILTER_COLOR, prepareFocusView };
   const parentOriginRef = useRef<string | null>(null);
   const embeddedRef = useRef(false);
   // Brána príkazov (AIM D-101): do načítania modelov a dotečenia geometrie sa
@@ -85,7 +85,6 @@ export function AimBridge() {
     // This app is only ever embedded by the AIM host, so the referrer at
     // mount time IS the trusted origin — no build-time config needed.
     parentOriginRef.current = document.referrer ? new URL(document.referrer).origin : null;
-    useAimPanelStore.getState().setEmbedded(true, parentOriginRef.current);
 
     function post(msg: OutboundMessage) {
       window.parent.postMessage(msg, parentOriginRef.current ?? '*');
@@ -105,8 +104,8 @@ export function AimBridge() {
       removeFocusDismiss = m.installFocusDismiss(bim); // klik a Esc zrušia oranžovú z FOCUS (#94)
     });
     const runVisibility = (msg: InboundMessage | CommandInboundMessage) => {
-      if (vis) vis.runVisibilityCommand(msg, bim, VIS_DEPS);
-      else track(loadVisibility().then((m) => m.runVisibilityCommand(msg, bim, VIS_DEPS)));
+      if (vis) vis.runVisibilityCommand(msg, bim, visDeps);
+      else track(loadVisibility().then((m) => m.runVisibilityCommand(msg, bim, visDeps)));
     };
 
     // `ACK_REQUEST` ide bránou za príkazmi, preto ich vidí vykonané; počká ešte na ich asynchrónne kroky.
@@ -210,7 +209,7 @@ export function AimBridge() {
       }
     }
 
-    wireDocumentEvents(post); // kalibrácia podkladu a taby dokumentov -> host (docBridge.ts)
+    wireDocumentEvents(post, selectPickedGlobalId); // kalibrácia podkladu a taby dokumentov -> host (docBridge.ts)
 
     // 3D -> host: a capture pin click opens its gallery/panorama host-side (D-073).
     useCapturePinsStore.getState().setEmitClick((captureId) => {
@@ -261,32 +260,16 @@ export function AimBridge() {
     );
   };
   const autoloadingRef = useRef(false);
-  // Veil počas ?models= autoloadu v embede: sekvenčný download beží s
-  // `loading === false` (fetch fáza), takže by v iframe hosta preblikla
-  // IFClite welcome obrazovka, kým sa nenačíta prvý model. Kým autoload
-  // beží a scéna je prázdna, prekryjeme viewer neutrálnym loadingom;
-  // po prvom modeli sa odkryje progresívne (zvyšok federácie sa doťahuje
-  // už nad viditeľnou scénou). AUTOLOAD_COMPLETE_EVENT fire-uje vždy, aj
-  // keď všetky URL zlyhajú — veil teda nemôže visieť navždy.
-  const [autoloadVeil, setAutoloadVeil] = useState(
-    () =>
-      window.parent !== window &&
-      parseAutoloadUrls(window.location.search, window.location.href).length > 0,
-  );
   useEffect(() => {
     if (!embeddedRef.current) return;
-    autoloadingRef.current =
-      parseAutoloadUrls(window.location.search, window.location.href).length > 0;
+    autoloadingRef.current = autoload.active;
     if (!autoloadingRef.current) return;
-    const onAutoloadComplete = () => {
-      // Autoload skončil — od tejto chvíle prípadné ďalšie (manuálne) loady
-      // ohlasuje štandardný 0 → N latch nižšie.
+    // Autoload skončil (aj pred pripojením mosta) — od tejto chvíle prípadné ďalšie
+    // (manuálne) loady ohlasuje štandardný 0 → N latch nižšie.
+    return autoload.onComplete(() => {
       autoloadingRef.current = false;
-      setAutoloadVeil(false);
       announceModels();
-    };
-    window.addEventListener(AUTOLOAD_COMPLETE_EVENT, onAutoloadComplete);
-    return () => window.removeEventListener(AUTOLOAD_COMPLETE_EVENT, onAutoloadComplete);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
@@ -347,15 +330,5 @@ export function AimBridge() {
     }
   }, [selectedEntity]);
 
-  // Veil (viď vyššie): render nad celým viewerom, kým autoload nedodá prvý
-  // model. `modelCount === 0` ho zhodí hneď, ako je čo ukázať.
-  if (autoloadVeil && modelCount === 0) {
-    return (
-      <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-4 bg-white dark:bg-black">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        <p className="font-mono text-sm text-zinc-500 dark:text-[#565f89]">Loading model…</p>
-      </div>
-    );
-  }
   return null;
 }

@@ -11,7 +11,7 @@
  * budget. Mirror of the host types in the AIM repo (`lib/derivations.ts`).
  */
 
-import { SOURCE } from './bridge-protocol.js';
+import { SOURCE } from './bridge-core.js';
 
 /**
  * One derivation rule of the AIM layer (D-089, host `derivation_rules`) with

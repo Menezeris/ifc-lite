@@ -13,7 +13,6 @@
 import { parsePlacement, serializePlacement } from '@ifc-lite/drawing-underlay';
 import { useViewerStore } from '../store/index.js';
 import { toGlobalIdFromModels } from '../store/globalId.js';
-import { selectPickedGlobalId } from '../components/viewer/viewport-selection.js';
 import { SOURCE, resolveGuids, type InboundMessage, type OutboundMessage } from './bridge-protocol.js';
 import { noteIssue, track } from './command-gate.js';
 import { documentLayout } from './tabs-protocol.js';
@@ -87,7 +86,7 @@ export function handleDocumentMessage(msg: InboundMessage): boolean {
  * Výber prvku z odkazu vo výkrese ako klik do modelu (AIM D-082, D-130): selekcia
  * (ENTITY_SELECTED ide hostovi ako pri kliku) a panel vlastností, kamera ostáva.
  */
-function selectAsClick(guid: string): boolean {
+function selectAsClick(guid: string, selectPickedGlobalId: (globalId: number) => void): boolean {
   const state = useViewerStore.getState();
   const [ref] = resolveGuids(state.models, [guid]);
   if (!ref) return false;
@@ -96,11 +95,14 @@ function selectAsClick(guid: string): boolean {
   return true;
 }
 
-/** Udalosti viewera o dokumentoch späť hostovi; volá sa pri štarte relácie mosta. */
-export function wireDocumentEvents(post: (msg: OutboundMessage) => void): void {
+/**
+ * Udalosti viewera o dokumentoch späť hostovi; volá sa pri štarte relácie mosta. Výber ako klik
+ * dodá most zo vstupného balíka (lenivý modul neimportuje viewport-selection.ts).
+ */
+export function wireDocumentEvents(post: (msg: OutboundMessage) => void, selectPickedGlobalId: (globalId: number) => void): void {
   // Viditeľný rozsah karty z predošlej relácie nepatrí novej (AIM D-127).
   useAimDocRegionStore.setState({ visible: null });
-  listenDocLinks(selectAsClick); // DOCUMENT_LINKS: popisky výkresu -> prvky (AIM D-130, docLinks.ts)
+  listenDocLinks((guid) => selectAsClick(guid, selectPickedGlobalId)); // DOCUMENT_LINKS: popisky výkresu -> prvky (AIM D-130, docLinks.ts)
 
   // Kalibrácia uložená vo viewri → host ju perzistuje do
   // documents.properties._georef (D-072). Session-only bez hosta.
