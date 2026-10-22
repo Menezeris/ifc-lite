@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimRoute.ts a/apps/viewer/src/aim/aimRoute.ts
+index e32eea2f..ab87f650 100644
+--- b/apps/viewer/src/aim/aimRoute.ts
++++ a/apps/viewer/src/aim/aimRoute.ts
+@@ -13,7 +13,7 @@ import { ifcPointToRender, type Vec3 } from './viewFrame.js';
+ 
+ /** Body IFC svet -> render rámec viewera. */
+ export function routeToRender(points: readonly Vec3[], offset: Vec3): Vec3[] {
+-  return points.map((p) => ifcPointToRender(p, { x: 0, y: 0, z: offset.z }));
++  return points.map((p) => ifcPointToRender(p, offset));
+ }
+ 
+ /**

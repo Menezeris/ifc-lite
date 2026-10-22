@@ -24,6 +24,8 @@ export interface VisibilityDeps {
   resolveGuids: typeof resolveGuids;
   resolveSelector: typeof resolveSelector;
   selectPickedGlobalId: (globalId: number | null) => void;
+  /** Pridá prvok k výberu ako Ctrl+klik (viacnásobný SELECT, AIM #217). */
+  addToSelection: (globalId: number) => void;
   noteIssue: (text: string) => void;
   track: (p: Promise<unknown>) => void;
   /** Pohľad pred zarámovaním (2D/split na podlaží cieľa alebo 3D, #97 V1); kľúč podlažia `modelId:expressId`. */
@@ -120,15 +122,20 @@ export function runVisibilityCommand(
         return true;
       }
       const state = useViewerStore.getState();
-      const [ref] = d.resolveGuids(state.models, [msg.guid]);
+      // Prvý GUID nesie panel; ďalšie (AIM #217) sa pridajú ako Ctrl+klik. Neznáme sa preskočia.
+      const wanted = [...new Set([msg.guid, ...(msg.guids ?? [])])];
+      const refs = wanted.flatMap((g) => d.resolveGuids(state.models, [g]).slice(0, 1));
+      const [ref] = refs;
       if (!ref) {
         d.noteIssue('SELECT: prvok sa vo vieweri nenašiel');
         return true;
       }
+      if (refs.length < wanted.length) d.noteIssue(`SELECT: vo vieweri sa nenašlo ${wanted.length - refs.length} z ${wanted.length} prvkov`);
       clearFocus(bim); // oranžová by prekryla selekčné zvýraznenie
       d.selectPickedGlobalId(toGlobalIdFromModels(state.models, ref.modelId, ref.expressId));
+      for (const extra of refs.slice(1)) d.addToSelection(toGlobalIdFromModels(state.models, extra.modelId, extra.expressId));
       useViewerStore.getState().openPanelInHome('properties', 'programmatic');
-      d.track(frameRefs(bim, [ref], 'SELECT', d.noteIssue));
+      d.track(frameRefs(bim, refs, 'SELECT', d.noteIssue));
       if (panel) d.track(applyPanelView(panel, ref, d.noteIssue));
       return true;
     }

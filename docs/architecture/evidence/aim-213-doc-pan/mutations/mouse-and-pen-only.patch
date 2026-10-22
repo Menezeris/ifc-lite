@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docPan.ts a/apps/viewer/src/aim/docPan.ts
+index 2e3c2a77..d1f32291 100644
+--- b/apps/viewer/src/aim/docPan.ts
++++ a/apps/viewer/src/aim/docPan.ts
+@@ -31,7 +31,7 @@ export interface PanStartEvent {
+ /** Môže tento stlačený bod začať ťahanie? Len myš/pero, ľavé tlačidlo, mimo textu a ovládačov. */
+ export function canStartPan(e: PanStartEvent): boolean {
+   if (e.button !== 0) return false;
+-  
++  if (e.pointerType !== 'mouse' && e.pointerType !== 'pen') return false;
+   const t = e.target as Partial<PanTarget> | null;
+   if (!t || typeof t.closest !== 'function') return false;
+   return !t.closest(TEXT_SELECTOR) && !t.closest(INTERACTIVE_SELECTOR);

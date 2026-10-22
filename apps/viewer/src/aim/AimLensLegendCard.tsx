@@ -10,6 +10,7 @@
  */
 
 import { X } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 import { useViewerStore } from '../store/index.js';
 import { AUTO_COLOR_FROM_LIST_ID } from '@/lib/lens/persistence';
 import { isAimLens, summarizeLens } from './aimLensPlan.js';
@@ -18,6 +19,7 @@ import { useAimLegendStore } from './aimLegendStore.js';
 const MAX_ROWS = 30;
 
 export function AimLensLegendCard() {
+  const { t } = useTranslation();
   const visible = useAimLegendStore((s) => s.visible);
   const setVisible = useAimLegendStore((s) => s.setVisible);
   const lens = useViewerStore((s) => {
@@ -37,7 +39,7 @@ export function AimLensLegendCard() {
       data-aim-legend-card={rows.length}
     >
       <div className="mb-1 flex items-center gap-2">
-        <span className="flex-1 font-semibold uppercase tracking-wide text-zinc-700 dark:text-zinc-200">{summary.name}</span>
+        <span className="flex-1 font-semibold uppercase tracking-wide text-zinc-700 dark:text-zinc-200">{t('aimFork.legend.title')}</span>
         <span className="text-zinc-500">{summary.matched}</span>
         <button type="button" className="rounded p-0.5 hover:bg-zinc-100 dark:hover:bg-zinc-800" aria-label="Zavrieť legendu" onClick={() => setVisible(false)}>
           <X className="h-3.5 w-3.5" />

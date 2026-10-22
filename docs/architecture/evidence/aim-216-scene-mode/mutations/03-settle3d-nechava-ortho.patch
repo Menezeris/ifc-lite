@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/sceneMode.ts a/apps/viewer/src/aim/sceneMode.ts
+index c0f56947..a1df18a5 100644
+--- b/apps/viewer/src/aim/sceneMode.ts
++++ a/apps/viewer/src/aim/sceneMode.ts
+@@ -42,5 +42,5 @@ export interface Settle3d {
+  * ostali (stav hlásil 2d aj po mode=3d, #216).
+  */
+ export function settle3d(f: SceneFlags): Settle3d {
+-  return { leaveLocked: f.viewLocked || f.splitView, perspective: false };
++  return { leaveLocked: f.viewLocked || f.splitView, perspective: f.projection !== 'perspective' };
+ }
