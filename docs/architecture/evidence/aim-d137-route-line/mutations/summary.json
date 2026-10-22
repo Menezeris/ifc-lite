@@ -1,0 +1,72 @@
+{
+  "color-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/route-show.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "42d12d455b5e5b2f1453bd0021426b30037abddd",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/route-show.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "lone-point-drawn": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/route-show.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "42d12d455b5e5b2f1453bd0021426b30037abddd",
+    "production": [
+      "apps/viewer/src/aim/aimRoute.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/route-show.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "path-not-broken": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/route-show.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "42d12d455b5e5b2f1453bd0021426b30037abddd",
+    "production": [
+      "apps/viewer/src/aim/aimRoute.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/route-show.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "single-point-accepted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/route-show.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "42d12d455b5e5b2f1453bd0021426b30037abddd",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/route-show.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "world-offset-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/route-show.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "42d12d455b5e5b2f1453bd0021426b30037abddd",
+    "production": [
+      "apps/viewer/src/aim/aimRoute.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/route-show.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/aimRoute.ts a/apps/viewer/src/aim/aimRoute.ts
+index b071f250..ab87f650 100644
+--- b/apps/viewer/src/aim/aimRoute.ts
++++ a/apps/viewer/src/aim/aimRoute.ts
+@@ -33,5 +33,5 @@ export function routePath(points: readonly Vec3[], project: (p: Vec3) => { x: nu
+     open = true;
+   }
+   // Samotné "M" bez úsečky nič nenakreslí.
+-  return parts.join(' ');
++  return parts.some((c) => c.startsWith('L')) ? parts.join(' ') : '';
+ }

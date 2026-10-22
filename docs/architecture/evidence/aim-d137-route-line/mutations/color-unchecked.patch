@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/view-protocol.ts a/apps/viewer/src/aim/view-protocol.ts
+index c015efc6..e32294fa 100644
+--- b/apps/viewer/src/aim/view-protocol.ts
++++ a/apps/viewer/src/aim/view-protocol.ts
+@@ -205,7 +205,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
+         && m.points.length !== 1
+         && m.points.length <= MAX_ROUTE_POINTS
+         && m.points.every(isVec)
+-        && optional(m.color, (c) => typeof c === 'string');
++        && optional(m.color, (c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c));
+     case 'SET_PANELS':
+       return isPanelsRequest(m.panels);
+     case 'QUERY':

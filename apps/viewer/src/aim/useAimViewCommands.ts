@@ -62,6 +62,8 @@ const loadBox = () => Promise.all([loadQueries(), import('./sectionBox.js')]).th
 let measure: Promise<typeof import('./measureShow.js')> | null = null;
 /** Kóty od hosta (AIM D-124) - lenivo, mimo vstupného balíka. */
 const loadMeasure = () => (measure ??= import('./measureShow.js'));
+let route: Promise<typeof import('./routeShow.js')> | null = null;
+const loadRoute = () => (route ??= import('./routeShow.js'));
 const TARGETS = { resolveGuids, resolveSelector };
 
 /**
@@ -181,6 +183,11 @@ export function useAimViewCommands(bim: BimContext) {
       }
       case 'MEASURE_SHOW': {
         track(loadMeasure().then((m) => m.showMeasurements(msg)));
+        return;
+      }
+      case 'ROUTE_SHOW': {
+        // Čiara trasy od hosta (AIM D-137) - lenivo, kreslí ju AimRouteLayer.
+        track(loadRoute().then((m) => m.showRoute(msg)));
         return;
       }
       case 'SET_PANELS': {

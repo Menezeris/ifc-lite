@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/view-protocol.ts a/apps/viewer/src/aim/view-protocol.ts
+index ea9660da..e32294fa 100644
+--- b/apps/viewer/src/aim/view-protocol.ts
++++ a/apps/viewer/src/aim/view-protocol.ts
+@@ -202,6 +202,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
+         && optional(m.keep, (k) => typeof k === 'boolean');
+     case 'ROUTE_SHOW':
+       return Array.isArray(m.points)
++        && m.points.length !== 1
+         && m.points.length <= MAX_ROUTE_POINTS
+         && m.points.every(isVec)
+         && optional(m.color, (c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c));

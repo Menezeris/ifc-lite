@@ -66,6 +66,8 @@ const MAX_GUIDS = 600;
 export const MAX_QUERY_GUIDS = 100;
 /** Najviac kót v jednom `MEASURE_SHOW` - rovnaký limit ako host (AIM D-124). */
 export const MAX_MEASURE_SEGMENTS = 12;
+/** Najviac bodov čiary trasy v jednom `ROUTE_SHOW` - rovnaký limit ako host (AIM D-137). */
+export const MAX_ROUTE_POINTS = 400;
 type Vec3Wire = { x: number; y: number; z: number };
 
 export type ViewInboundMessage =
@@ -107,7 +109,9 @@ export type ViewInboundMessage =
   /** Panely z chatu (AIM D-127): otvoriť, zavrieť, prepnúť; `all` len zavrieť. */
   | { source: typeof SOURCE; type: 'SET_PANELS'; panels: PanelsRequest }
   /** Kóty v IFC svete (Z hore, m) do nástroja Measure (AIM D-124); `keep` = pridať k predošlým od hosta. */
-  | { source: typeof SOURCE; type: 'MEASURE_SHOW'; segments: { a: Vec3Wire; b: Vec3Wire }[]; keep?: boolean };
+  | { source: typeof SOURCE; type: 'MEASURE_SHOW'; segments: { a: Vec3Wire; b: Vec3Wire }[]; keep?: boolean }
+  /** Čiara trasy v IFC svete (Z hore, m) od hosta (AIM D-137); nahradí predošlú, prázdne body ju zmažú. */
+  | { source: typeof SOURCE; type: 'ROUTE_SHOW'; points: Vec3Wire[]; color?: string };
 
 /** Odpoveď viewera na `QUERY` (viewer -> host). */
 export type ViewQueryResult =
@@ -196,6 +200,12 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
         && m.segments.length <= MAX_MEASURE_SEGMENTS
         && m.segments.every((s) => !!s && typeof s === 'object' && isVec((s as { a?: unknown }).a) && isVec((s as { b?: unknown }).b))
         && optional(m.keep, (k) => typeof k === 'boolean');
+    case 'ROUTE_SHOW':
+      return Array.isArray(m.points)
+        && m.points.length !== 1
+        && m.points.length <= MAX_ROUTE_POINTS
+        && m.points.every(isVec)
+        && optional(m.color, (c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c));
     case 'SET_PANELS':
       return isPanelsRequest(m.panels);
     case 'QUERY':

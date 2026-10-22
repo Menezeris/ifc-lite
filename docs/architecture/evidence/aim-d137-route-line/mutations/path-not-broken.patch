@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimRoute.ts a/apps/viewer/src/aim/aimRoute.ts
+index 50bd9571..ab87f650 100644
+--- b/apps/viewer/src/aim/aimRoute.ts
++++ a/apps/viewer/src/aim/aimRoute.ts
+@@ -26,6 +26,7 @@ export function routePath(points: readonly Vec3[], project: (p: Vec3) => { x: nu
+   for (const p of points) {
+     const s = project(p);
+     if (!s) {
++      open = false;
+       continue;
+     }
+     parts.push(`${open ? 'L' : 'M'}${s.x.toFixed(1)} ${s.y.toFixed(1)}`);

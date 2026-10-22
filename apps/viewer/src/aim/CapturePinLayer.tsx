@@ -19,6 +19,7 @@ import { Camera, Orbit } from 'lucide-react';
 import { useViewerStore } from '../store/index.js';
 import { useCapturePinsStore } from './capturePinsStore.js';
 import { AimRoomFillLayer } from './AimRoomFillLayer.js';
+import { AimRouteLayer } from './AimRouteLayer.js';
 import { useAimLegendStore } from './aimLegendStore.js';
 
 /** Malá legenda AIM chat lens (D-125) - modul až keď ju chat zapne. */
@@ -121,14 +122,15 @@ export function CapturePinLayer() {
     // (new/removed pins need an immediate re-projection).
   }, [cameraCallbacks, pins.length]);
 
-  // Výplň miestností (D-119, D-125) a malá legenda idú v tom istom lenivom module: ViewportContainer je na strope veľkosti.
+  // Výplň miestností (D-119, D-125), čiara trasy (D-137) a malá legenda idú v tom istom lenivom module: ViewportContainer je na strope veľkosti.
   if (!bounds) {
-    return <><AimRoomFillLayer /><AimLegendSlot /><div ref={containerRef} className="absolute inset-0 pointer-events-none" /></>;
+    return <><AimRoomFillLayer /><AimRouteLayer /><AimLegendSlot /><div ref={containerRef} className="absolute inset-0 pointer-events-none" /></>;
   }
 
   return (
     <>
     <AimRoomFillLayer />
+    <AimRouteLayer />
     <AimLegendSlot />
     <div
       ref={containerRef}
