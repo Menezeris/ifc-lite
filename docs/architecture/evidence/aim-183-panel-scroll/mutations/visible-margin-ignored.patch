@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimPanelScrollPlan.ts a/apps/viewer/src/aim/aimPanelScrollPlan.ts
+index 21f4e8be..4b1d660c 100644
+--- b/apps/viewer/src/aim/aimPanelScrollPlan.ts
++++ a/apps/viewer/src/aim/aimPanelScrollPlan.ts
+@@ -43,6 +43,6 @@ export function centeredTop(row: Box, view: Box, top: number, scrollH: number):
+ 
+ /** Riadok je celý v okne s okrajom (zlomok výšky okna) hore aj dole. */
+ export function rowVisible(row: Box, view: Box, margin = 0.1): boolean {
+-  const pad = 0;
++  const pad = view.height * margin;
+   return row.top >= view.top + pad && row.top + row.height <= view.top + view.height - pad;
+ }

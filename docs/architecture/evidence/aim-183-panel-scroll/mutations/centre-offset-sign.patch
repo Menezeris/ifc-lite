@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelScrollPlan.ts a/apps/viewer/src/aim/aimPanelScrollPlan.ts
+index da5d607f..4b1d660c 100644
+--- b/apps/viewer/src/aim/aimPanelScrollPlan.ts
++++ a/apps/viewer/src/aim/aimPanelScrollPlan.ts
+@@ -38,7 +38,7 @@ export interface Box {
+ 
+ /** Poloha `scrollTop`, pri ktorej je riadok `row` v strede okna `view` (obe v súradniciach obrazovky). */
+ export function centeredTop(row: Box, view: Box, top: number, scrollH: number): number {
+-  return clamp(top + (row.top - view.top) - -(view.height - row.height) / 2, view.height, scrollH);
++  return clamp(top + (row.top - view.top) - (view.height - row.height) / 2, view.height, scrollH);
+ }
+ 
+ /** Riadok je celý v okne s okrajom (zlomok výšky okna) hore aj dole. */

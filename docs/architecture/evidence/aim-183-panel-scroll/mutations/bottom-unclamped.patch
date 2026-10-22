@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelScrollPlan.ts a/apps/viewer/src/aim/aimPanelScrollPlan.ts
+index 1be55fcd..4b1d660c 100644
+--- b/apps/viewer/src/aim/aimPanelScrollPlan.ts
++++ a/apps/viewer/src/aim/aimPanelScrollPlan.ts
+@@ -23,7 +23,7 @@ export function scrollTarget(dir: PanelScroll, top: number, clientH: number, scr
+     case 'top':
+       return 0;
+     case 'bottom':
+-      return scrollH;
++      return clamp(scrollH, clientH, scrollH);
+     case 'up':
+       return clamp(top - clientH * PAGE_FRACTION, clientH, scrollH);
+     case 'down':
