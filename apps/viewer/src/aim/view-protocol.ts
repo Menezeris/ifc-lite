@@ -45,8 +45,8 @@ export type SectionFit = (typeof SECTION_FITS)[number];
 export const VIEW_QUERIES = ['bounds', 'view_state'] as const;
 export type ViewQuery = (typeof VIEW_QUERIES)[number];
 
-/** Panely z chatu (AIM D-127): mená na drôte, mapovanie a vykonanie v `aimPanelsPlan.ts` / `aimPanels.ts`. */
-export const PANEL_KEYS = ['lens', 'properties', 'underlays', 'documents', 'lists', 'model_tree'] as const;
+/** Panely z chatu (AIM D-127, `drawing` D-136): mená na drôte, mapovanie a vykonanie v `aimPanelsPlan.ts` / `aimPanels.ts`. */
+export const PANEL_KEYS = ['lens', 'properties', 'underlays', 'documents', 'lists', 'model_tree', 'drawing'] as const;
 export type PanelKey = (typeof PANEL_KEYS)[number];
 const PANEL_ACTIONS: readonly unknown[] = ['open', 'close', 'toggle'];
 export type PanelsRequest = Partial<Record<PanelKey | 'all', 'open' | 'close' | 'toggle'>>;
