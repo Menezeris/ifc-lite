@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/view-protocol.ts a/apps/viewer/src/aim/view-protocol.ts
+index 012f2d9b..8aa8ce9d 100644
+--- b/apps/viewer/src/aim/view-protocol.ts
++++ a/apps/viewer/src/aim/view-protocol.ts
+@@ -212,7 +212,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
+     case 'SET_PANELS':
+       return isPanelsRequest(m.panels);
+     case 'SCROLL_PANEL':
+-      return true;
++      return isPanelScroll(m.direction);
+     case 'QUERY':
+       return isId(m.id)
+         && (VIEW_QUERIES as readonly unknown[]).includes(m.query)

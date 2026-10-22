@@ -19,6 +19,9 @@ import { toast } from '@/components/ui/toast';
 import { useOptionalExtensionHost } from '@/sdk/ExtensionHostProvider';
 import { useTranslation } from '@/i18n';
 import { openSettings } from '@/lib/settings/open-settings';
+// >>> AIM-FORK (handover #203): no privacy toast inside the AIM host, analytics are off in the fork
+import { skipPrivacyToast } from '@/aim/privacyToast';
+// <<< AIM-FORK
 
 const STORAGE_KEY = 'ifclite.extensions.privacy-disclosure.v2';
 
@@ -28,6 +31,9 @@ export function usePrivacyDisclosure(): void {
   useEffect(() => {
     if (!host) return;
     if (typeof window === 'undefined') return;
+    // >>> AIM-FORK (handover #203)
+    if (skipPrivacyToast(window)) return;
+    // <<< AIM-FORK
     try {
       if (window.localStorage.getItem(STORAGE_KEY)) return;
     } catch (error) {

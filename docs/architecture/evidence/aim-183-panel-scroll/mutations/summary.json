@@ -1,0 +1,42 @@
+{
+  "bottom-unclamped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelScrollPlan.test.ts; that file has a green, attributable baseline.",
+    "restoration": "verified",
+    "base": "6a47a50de6321f3174621c00f42f23d43f0ec4eb",
+    "head": "5e59052ef5e518db583a038b47747d043ca7400a"
+  },
+  "centre-offset-sign": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelScrollPlan.test.ts; that file has a green, attributable baseline.",
+    "restoration": "verified",
+    "base": "6a47a50de6321f3174621c00f42f23d43f0ec4eb",
+    "head": "5e59052ef5e518db583a038b47747d043ca7400a"
+  },
+  "direction-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelScrollPlan.test.ts; that file has a green, attributable baseline.",
+    "restoration": "verified",
+    "base": "6a47a50de6321f3174621c00f42f23d43f0ec4eb",
+    "head": "5e59052ef5e518db583a038b47747d043ca7400a"
+  },
+  "page-fraction-full": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelScrollPlan.test.ts; that file has a green, attributable baseline.",
+    "restoration": "verified",
+    "base": "6a47a50de6321f3174621c00f42f23d43f0ec4eb",
+    "head": "5e59052ef5e518db583a038b47747d043ca7400a"
+  },
+  "visible-margin-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelScrollPlan.test.ts; that file has a green, attributable baseline.",
+    "restoration": "verified",
+    "base": "6a47a50de6321f3174621c00f42f23d43f0ec4eb",
+    "head": "5e59052ef5e518db583a038b47747d043ca7400a"
+  }
+}

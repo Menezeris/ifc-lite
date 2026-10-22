@@ -7,7 +7,8 @@
  * uložené pohľady z chatu a otvorené dokumenty. Aktívna záložka má celú plochu;
  * "Vedľa" dá k nej druhú (dokument, alebo pôdorys ako 2D plán vedľa 3D). Lenivo
  * z `ViewerLayout.tsx`; na mobile sa neukazuje (dokument tam je prekrytie D-075).
- * Lišta tiež dodá záložkám funkcie viewera (`TabDeps`) z hookov pôdorysu.
+ * Pod lištou sa pri pokuse o orbit v zamknutom pôdoryse ukáže ponuka prepnúť do 3D
+ * (`AimPlanOrbitHint`, #188). Lišta tiež dodá záložkám funkcie viewera (`TabDeps`) z hookov pôdorysu.
  */
 
 import { useEffect, useMemo, useRef } from 'react';
@@ -19,6 +20,7 @@ import { useFloorplanView } from '@/hooks/useFloorplanView';
 import { besidePair, type ViewTabKind } from './viewTabsPlan.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { activate, beside, close, openPlan, syncDocs } from './viewTabsApply.js';
+import { AimPlanOrbitHint } from './AimPlanOrbitHint.js';
 
 const ICON: Record<ViewTabKind, typeof Box> = { '3d': Box, plan: LayoutTemplate, view: Scan, doc: FileText };
 const SELECT = 'h-6 max-w-40 rounded border bg-background px-1 text-2xs text-muted-foreground';
@@ -55,7 +57,8 @@ export function AimViewTabsBar() {
   if (isMobile) return null;
 
   return (
-    <div className="flex h-7 shrink-0 items-stretch border-b bg-muted/30" data-testid="aim-view-tabs">
+    <div className="relative flex h-7 shrink-0 items-stretch border-b bg-muted/30" data-testid="aim-view-tabs">
+      <AimPlanOrbitHint />
       <div role="tablist" aria-label="Záložky pohľadov" className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = ICON[tab.kind];
