@@ -18,6 +18,9 @@
 import { SOURCE, type OpsSelector } from './bridge-protocol.js';
 import { isPanelScrollRequest, isPanelZoom, type PanelScroll, type PanelZoom } from './aimPanelScrollPlan.js';
 import { PANEL_KEYS, type PanelKey } from './aimPanelList.js';
+import {
+  AUTO_ROTATE_ACTIONS, AUTO_ROTATE_DIRECTIONS, AUTO_ROTATE_SPEED, type AutoRotateAction, type AutoRotateDirection,
+} from './autoRotatePlan.js';
 
 /** keep = smer sa nemení, section = kolmo na aktívny rez ako tlačidlo Set view (AIM D-098). */
 export const CAMERA_PRESETS = ['top', 'bottom', 'front', 'back', 'left', 'right', 'iso', 'fit_all', 'keep', 'section'] as const;
@@ -121,6 +124,8 @@ export type ViewInboundMessage =
   | { source: typeof SOURCE; type: 'SCROLL_PANEL'; direction?: PanelScroll; panel?: PanelKey; item?: string; percent?: number }
   /** Zoom obsahu panela (AIM D-150): `in` / `out` / `reset` alebo násobok; `panel` chýba = panel vlastností. */
   | { source: typeof SOURCE; type: 'ZOOM_PANEL'; zoom: PanelZoom; panel?: PanelKey }
+  /** Plynulé otáčanie kamery okolo cieľa (AIM #247); `start` nahradí bežiace, zastaví ho `stop`, zásah používateľa aj iný pohyb kamery. */
+  | { source: typeof SOURCE; type: 'AUTO_ROTATE'; action: AutoRotateAction; speedDegS?: number; direction?: AutoRotateDirection }
   /** Kóty v IFC svete (Z hore, m) do nástroja Measure (AIM D-124); `keep` = pridať k predošlým od hosta, prázdne `segments` = zmazať kóty od hosta (D-152). */
   | { source: typeof SOURCE; type: 'MEASURE_SHOW'; segments: { a: Vec3Wire; b: Vec3Wire }[]; keep?: boolean }
   /** Čiara trasy v IFC svete (Z hore, m) od hosta (AIM D-137); nahradí predošlú, prázdne body ju zmažú. */
@@ -225,6 +230,10 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
       return isPanelScrollRequest(m);
     case 'ZOOM_PANEL':
       return isPanelZoom(m.zoom) && optional(m.panel, (p) => typeof p === 'string' && PANEL_NAME.test(p));
+    case 'AUTO_ROTATE':
+      return (AUTO_ROTATE_ACTIONS as readonly unknown[]).includes(m.action)
+        && optional(m.speedDegS, (v) => inRange(v, AUTO_ROTATE_SPEED.min, AUTO_ROTATE_SPEED.max))
+        && optional(m.direction, (d) => (AUTO_ROTATE_DIRECTIONS as readonly unknown[]).includes(d));
     case 'QUERY':
       return isId(m.id)
         && (VIEW_QUERIES as readonly unknown[]).includes(m.query)
