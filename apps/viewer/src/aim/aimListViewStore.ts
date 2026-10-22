@@ -16,6 +16,10 @@ export interface ListTableRequest {
   /** Id stĺpca a smer; null = zrušiť zoradenie. */
   sort?: { columnId: string; dir: 'asc' | 'desc' } | null;
   search?: string;
+  /** Id stĺpca na farby prvkov v 3D; null = zrušiť (krok 2). */
+  colorBy?: string | null;
+  /** Formát, ktorý tabuľka ponúkne zvýrazneným tlačidlom na stiahnutie. */
+  export?: 'csv' | 'xlsx' | 'pdf';
 }
 
 /** Čo tabuľka výsledkov práve ukazuje (zapisuje hák v `ListResultsTable`). */
@@ -27,6 +31,10 @@ export interface ListTableReport {
   visibleRows: number;
   /** Súčty viditeľných riadkov v jednotke tabuľky. */
   sums: { columnId: string; value: number; unit?: string }[];
+  /** Stĺpec s farbami prvkov v 3D (id), ak je "Color by" z tabuľky aktívne. */
+  colorBy: string | null;
+  /** Formát ponúknutý na stiahnutie (čaká na klik používateľa). */
+  exportReady: 'csv' | 'xlsx' | 'pdf' | null;
 }
 
 export interface StripReport {

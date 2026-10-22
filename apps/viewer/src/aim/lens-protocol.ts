@@ -72,10 +72,12 @@ export type LensInboundMessage =
     }
   | {
       source: typeof SOURCE;
-      /** Úprava otvoreného zoznamu (D-149): `groups` pribudnú k filtrom (AND) a tabuľka sa spustí znova. */
+      /** Úprava otvoreného zoznamu (D-149): `groups` pribudnú k filtrom (AND, podlažie a model nahradia staré),
+       *  `edit` mení stĺpce, triedy a odoberá filtre; tabuľka sa spustí znova. */
       type: 'LIST_UPDATE';
       groups?: unknown[];
       view?: unknown;
+      edit?: unknown;
     };
 
 /** Stĺpec zoznamu z chatu, tvar `ColumnDefinition` z `@ifc-lite/lists` bez `id`. */

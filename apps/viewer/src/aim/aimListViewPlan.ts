@@ -31,13 +31,20 @@ export interface AimListView {
   groupBy?: AimListColumnRef[];
   /** Rýchle hľadanie v riadkoch tabuľky (prázdne = zrušiť). */
   search?: string;
+  /** Farby prvkov v 3D podľa hodnoty stĺpca (upstream "Color by"); `null` = zrušiť. */
+  colorBy?: AimListColumnRef | null;
+  /** Formát, ktorý sa ponúkne na stiahnutie zvýrazneným tlačidlom (klik je na používateľovi). */
+  export?: AimListExportFormat;
 }
+
+export type AimListExportFormat = 'csv' | 'xlsx' | 'pdf';
+const EXPORT_FORMATS = new Set<string>(['csv', 'xlsx', 'pdf']);
 
 const MAX_VIEW_COLUMNS = 8;
 const SOURCES = new Set<string>(['attribute', 'property', 'quantity', 'material', 'classification', 'spatial', 'model', 'zone', 'geometry']);
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 
-function parseColumnRef(raw: unknown): AimListColumnRef | null {
+export function parseColumnRef(raw: unknown): AimListColumnRef | null {
   if (!isObj(raw) || typeof raw.source !== 'string' || !SOURCES.has(raw.source)) return null;
   if (typeof raw.propertyName !== 'string' || raw.propertyName.length > 200) return null;
   if (raw.psetName !== undefined && (typeof raw.psetName !== 'string' || !raw.psetName || raw.psetName.length > 200)) return null;
@@ -82,6 +89,15 @@ export function parseListView(raw: unknown): AimListView | null {
     if (typeof raw.search !== 'string' || raw.search.length > 200) return null;
     out.search = raw.search;
   }
+  if (raw.colorBy !== undefined) {
+    const column = raw.colorBy === null ? null : parseColumnRef(raw.colorBy);
+    if (raw.colorBy !== null && !column) return null;
+    out.colorBy = column;
+  }
+  if (raw.export !== undefined) {
+    if (typeof raw.export !== 'string' || !EXPORT_FORMATS.has(raw.export)) return null;
+    out.export = raw.export as AimListExportFormat;
+  }
   return out;
 }
 
@@ -118,21 +134,27 @@ export function findColumn(columns: readonly ColumnDefinition[], ref: AimListCol
 /** Meno stĺpca od hosta pre hlásenie, že ho zoznam nemá. */
 export const refLabel = (ref: AimListColumnRef) => (ref.psetName ? `${ref.psetName}.${ref.propertyName}` : ref.propertyName || ref.source);
 
+/** Podlažie a model sa pri úprave prepínajú: nové pravidlo nahradí staré toho druhu (krok 2). */
+const SWITCH_KINDS = new Set(['storey', 'model']);
+
 /**
  * Pridá filtre (AND) k filtrom zoznamu. Skupiny zoznamu sa medzi sebou spájajú ako OR,
  * preto sa nové pravidlá pridajú do každej skupiny; skupina OR s viac pravidlami sa
- * bez vnorenia zúžiť nedá (`null`). Zoznam bez filtrov dostane nové skupiny.
+ * bez vnorenia zúžiť nedá (`null`). Zoznam bez filtrov dostane nové skupiny. Nové
+ * podlažie alebo model nahradí doterajšie pravidlo toho druhu (AND dvoch podlaží je prázdny).
  */
 export function andGroups(existing: readonly FilterGroup[], added: readonly FilterGroup[]): FilterGroup[] | null {
   const rules = added.flatMap((g) => (g.combinator === 'AND' || g.rules.length === 1 ? g.rules : []));
   if (rules.length !== added.reduce((n, g) => n + g.rules.length, 0)) return null;
   if (rules.length === 0) return [...existing];
+  const switched = new Set(rules.filter((r) => SWITCH_KINDS.has(r.kind)).map((r) => r.kind));
   const live = existing.filter((g) => g.rules.length > 0);
   if (live.length === 0) return [{ combinator: 'AND', rules }];
   const out: FilterGroup[] = [];
   for (const g of live) {
-    if (g.combinator === 'OR' && g.rules.length > 1) return null;
-    out.push({ combinator: 'AND', rules: [...g.rules, ...rules] });
+    const kept = g.rules.filter((r) => !switched.has(r.kind));
+    if (g.combinator === 'OR' && kept.length > 1) return null;
+    out.push({ combinator: 'AND', rules: [...kept, ...rules] });
   }
   return out;
 }
@@ -175,6 +197,9 @@ export interface ListStateInput {
   table: { sort: { columnId: string; dir: 'asc' | 'desc' } | null; search: string; visibleRows: number;
     sums: { columnId: string; value: number; unit?: string }[] } | null;
   maximized: boolean;
+  /** Stĺpec, podľa ktorého sú prvky v 3D ofarbené (id), a formát ponúknutý na stiahnutie. */
+  colorBy?: string | null;
+  exportReady?: AimListExportFormat | null;
 }
 
 const round = (v: number) => Math.round(v * 1e6) / 1e6;
@@ -203,5 +228,8 @@ export function describeListState(def: { name: string; columns: ColumnDefinition
     // Súčty sú za riadky, ktoré tabuľka ukazuje (po hľadaní a "len viditeľné"), v jej jednotke.
     sums: (s.table?.sums ?? []).map((x) => ({ column: label(x.columnId), value: round(x.value), ...(x.unit ? { unit: x.unit } : {}) })),
     maximized: s.maximized,
+    ...(s.colorBy ? { color_by: label(s.colorBy) } : {}),
+    // Stiahnutie bez kliku prehliadač v iframe nepustí (D-111): tlačidlo čaká na používateľa.
+    ...(s.exportReady ? { export_ready: s.exportReady } : {}),
   };
 }
