@@ -1,0 +1,72 @@
+{
+  "archive-name-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/modelFile.test.ts; that file has a green, attributable baseline.",
+    "base": "625cabd74d067e89e8d8afbb003c4d35f95fe519",
+    "head": "dccd4b120c16f6d2d3cf38dd478022b9543f1dd3",
+    "production": [
+      "apps/viewer/src/aim/modelFile.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/modelFile.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "archive-not-unpacked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/modelFile.test.ts; that file has a green, attributable baseline.",
+    "base": "625cabd74d067e89e8d8afbb003c4d35f95fe519",
+    "head": "dccd4b120c16f6d2d3cf38dd478022b9543f1dd3",
+    "production": [
+      "apps/viewer/src/aim/modelFile.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/modelFile.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "gz-suffix-kept": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/modelFile.test.ts; that file has a green, attributable baseline.",
+    "base": "625cabd74d067e89e8d8afbb003c4d35f95fe519",
+    "head": "dccd4b120c16f6d2d3cf38dd478022b9543f1dd3",
+    "production": [
+      "apps/viewer/src/aim/modelFile.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/modelFile.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "gzip-magic-loose": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/modelFile.test.ts; that file has a green, attributable baseline.",
+    "base": "625cabd74d067e89e8d8afbb003c4d35f95fe519",
+    "head": "dccd4b120c16f6d2d3cf38dd478022b9543f1dd3",
+    "production": [
+      "apps/viewer/src/aim/modelFile.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/modelFile.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "plain-type-overridden": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/modelFile.test.ts; that file has a green, attributable baseline.",
+    "base": "625cabd74d067e89e8d8afbb003c4d35f95fe519",
+    "head": "dccd4b120c16f6d2d3cf38dd478022b9543f1dd3",
+    "production": [
+      "apps/viewer/src/aim/modelFile.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/modelFile.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

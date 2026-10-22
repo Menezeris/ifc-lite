@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/modelFile.ts a/apps/viewer/src/aim/modelFile.ts
+index 26f7140a..b5465955 100644
+--- b/apps/viewer/src/aim/modelFile.ts
++++ a/apps/viewer/src/aim/modelFile.ts
+@@ -29,7 +29,7 @@ export function aimModelFileName(url: URL): string {
+   const archive = ARCHIVE_RE.exec(url.pathname);
+   if (archive) return `${decodeURIComponent(archive[1])}.ifc`;
+   const last = url.pathname.split('/').pop() || 'model.ifc';
+-  return last || 'model.ifc';
++  return last.replace(/\.gz$/i, '') || 'model.ifc';
+ }
+ 
+ /** The fetched model as a `File` for `addModel`: gzip unpacked, plain name kept. */

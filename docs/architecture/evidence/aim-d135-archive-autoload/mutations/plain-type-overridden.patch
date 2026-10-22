@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/modelFile.ts a/apps/viewer/src/aim/modelFile.ts
+index 3d15b606..b5465955 100644
+--- b/apps/viewer/src/aim/modelFile.ts
++++ a/apps/viewer/src/aim/modelFile.ts
+@@ -36,7 +36,7 @@ export function aimModelFileName(url: URL): string {
+ export async function aimModelFile(url: URL, blob: Blob): Promise<File> {
+   const name = aimModelFileName(url);
+   if (!isGzip(new Uint8Array(await blob.slice(0, 2).arrayBuffer()))) {
+-    return new File([blob], name, { type: 'application/x-step' });
++    return new File([blob], name, { type: blob.type || 'application/x-step' });
+   }
+   const unpacked = await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).blob();
+   return new File([unpacked], name, { type: 'application/x-step' });
