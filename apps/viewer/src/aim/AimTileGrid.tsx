@@ -18,7 +18,8 @@ import { ImageDocumentView } from '@/components/documents/ImageDocumentView';
 import { isSceneTab, type ViewTab } from './viewTabsLayout.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { TILE_HEADER_PX, TILE_RECTS, liveTile, type TileRect } from './viewTilesPlan.js';
-import { activate, putTile } from './viewTabsApply.js';
+import { activate, openPlan, putTile } from './viewTabsApply.js';
+import { planTabId } from './viewTabsPlan.js';
 import { shotOf } from './tileShots.js';
 
 const warn = (issue: string) => console.warn('[aim-tiles]', issue);
@@ -65,17 +66,28 @@ export function AimTileGrid() {
   );
 }
 
+/** Výber v hlavičke: otvorená záložka, alebo pôdorys podlažia, ktorý ešte nie je otvorený. */
+function pick(index: number, value: string): void {
+  if (!value.startsWith('storey:')) return putTile(index, value || null, warn);
+  const guid = value.slice('storey:'.length);
+  void openPlan(guid, {}, warn);
+  putTile(index, planTabId(guid), warn);
+}
+
 function TileHeader({ index, tab, tabs, live }: { index: number; tab: ViewTab | undefined; tabs: readonly ViewTab[]; live: boolean }) {
+  const storeys = useAimViewTabs((s) => s.deps?.storeys);
+  const closed = (storeys ?? []).filter((st) => !tabs.some((t) => t.id === planTabId(st.guid)));
   return (
     <div className="pointer-events-auto flex shrink-0 items-center gap-1 border-b bg-muted/60 px-1" style={{ height: TILE_HEADER_PX - 1 }}>
       <select
         aria-label={`Záložka v dlaždici ${index + 1}`}
         className="h-5 min-w-0 max-w-48 rounded border bg-background px-1 text-2xs"
         value={tab?.id ?? ''}
-        onChange={(e) => putTile(index, e.target.value || null, warn)}
+        onChange={(e) => pick(index, e.target.value)}
       >
         <option value="">(prázdna)</option>
         {tabs.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+        {closed.map((st) => <option key={st.guid} value={`storey:${st.guid}`}>{`+ Pôdorys ${st.name}`}</option>)}
       </select>
       {tab && isSceneTab(tab) && (
         <span className="truncate text-2xs text-muted-foreground">{live ? 'živé 3D' : 'snímka'}</span>
