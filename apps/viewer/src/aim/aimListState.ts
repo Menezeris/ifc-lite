@@ -20,13 +20,16 @@ export function describeList(): Record<string, unknown> | null {
   const shown = s.listResult ? listRunDefinition(s.listResult) : null;
   const def = shown ?? chatListDefinition();
   if (!def) return { panel_open: s.listPanelVisible, has_result: false };
-  const table = tableState();
+  const report = tableState();
+  const table = report && report.listId === def.id ? report : null;
   const strip = stripState();
   return describeListState(def, {
     panelOpen: s.listPanelVisible,
     executing: s.listExecuting,
     rows: shown && s.listResult ? s.listResult.totalCount : null,
-    table: table && table.listId === def.id ? table : null,
+    table,
     maximized: strip?.active === 'lists' && strip.maximized,
+    colorBy: table?.colorBy ?? null,
+    exportReady: table?.exportReady ?? null,
   });
 }

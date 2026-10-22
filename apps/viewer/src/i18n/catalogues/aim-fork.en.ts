@@ -25,6 +25,10 @@ export const aimForkEn = {
   /** Offer after an orbit attempt in the locked plan tab (AIM #188, D-132)). */
   'aimFork.planOrbit.message': 'The plan is a locked top view. Switch to 3D? (Enter)',
   'aimFork.planOrbit.action': 'Switch to 3D',
+  /** Highlighted download button after an export request from the AIM chat (AIM D-149): the browser needs the user's click. */
+  'aimFork.listExport.action': 'Download {format}',
+  'aimFork.listExport.hint': 'Requested from the AIM chat: click to download',
+  'aimFork.listExport.dismiss': 'Dismiss download offer',
   /** Fork-only ribbon tab (D-072 / D-075, labelled AIM since D-089); keyed like upstream's `ribbon.tab.*` because the band reads `t(`ribbon.tab.${tab}`)`. */
   'ribbon.tab.documents': 'AIM',
 } as const;

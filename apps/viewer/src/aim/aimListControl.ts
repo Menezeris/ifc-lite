@@ -9,6 +9,8 @@
  * tabuľky, `handleGroupingFromTable`), nový filter spustí tabuľku znova cestou
  * D-148, zoradenie, hľadanie a maximalizáciu vykonajú háky v `ListResultsTable` a
  * `BottomStrip`. Stav zoznamu pre `view_state` a `APPLIED` opisuje `aimListState.ts`.
+ * Krok 2: `edit` (stĺpce, triedy, odobratie filtrov, `aimListEditPlan.ts`) spustí zoznam
+ * znova, farby podľa stĺpca a ponuku exportu vykoná hák tabuľky upstream cestami.
  */
 
 import type { FilterGroup } from '@ifc-lite/rules';
@@ -22,6 +24,7 @@ import { resolveModelRules } from './aimLensPlan.js';
 import { chatListDefinition, noteListOpened, noteListUpdated } from './aimListRun.js';
 import { andGroups, findColumn, nextGrouping, parseAddedGroups, parseListView, refLabel,
   type AimListColumnRef, type AimListView } from './aimListViewPlan.js';
+import { editColumns, editTypes, hasEdit, parseListEdit, removeFilterKinds } from './aimListEditPlan.js';
 import { pendingMaximize, pendingTableRequest, requestListTable, requestStripMaximize, tableState, takeViewRequested } from './aimListViewStore.js';
 
 type ListUpdateMessage = Extract<LensInboundMessage, { type: 'LIST_UPDATE' }>;
@@ -44,23 +47,36 @@ function columnIds(def: ListDefinition, refs: AimListColumnRef[] | undefined): s
   return ids;
 }
 
-/** Zoskupenie a súčty z `view` do definície; ostatné (zoradenie, hľadanie, maximalizácia) ako požiadavky hákom. */
+/** Stĺpce, ktoré Lens farbiť nevie (upstream by ich ticho preložil na triedu IFC). */
+const NO_COLOR = new Set(['spatial', 'zone', 'geometry']);
+
+/** Id stĺpca na farby; stĺpec, ktorý Lens nevie, je problém v `APPLIED`. */
+function colorColumnId(def: ListDefinition, ref: AimListColumnRef): string | undefined {
+  const col = findColumn(def.columns, ref);
+  if (col && NO_COLOR.has(col.source)) {
+    noteIssue(`Zoznam: podľa stĺpca ${refLabel(ref)} (podlažie, priestor, zóna) Lens farbiť nevie; vyber stĺpec vlastnosti, atribútu, materiálu alebo modelu`);
+    return undefined;
+  }
+  return columnIds(def, [ref])?.[0];
+}
+
+/** Zoskupenie a súčty z `view` do definície; ostatné (zoradenie, hľadanie, farby, export, maximalizácia) ako požiadavky hákom. */
 export function applyListView(def: ListDefinition, view: AimListView): ListDefinition {
   let next = def;
   if (view.groupBy || view.sum) {
     const grouping = nextGrouping(def.grouping, columnIds(def, view.groupBy), columnIds(def, view.sum));
     next = { ...def, grouping };
   }
-  if (view.sort !== undefined || view.search !== undefined) {
-    let sort: { columnId: string; dir: 'asc' | 'desc' } | null | undefined;
-    if (view.sort === null) sort = null;
-    else if (view.sort) {
-      const id = columnIds(def, [view.sort.column])?.[0];
-      if (id) sort = { columnId: id, dir: view.sort.dir };
-    }
-    if (sort !== undefined || view.search !== undefined) {
-      requestListTable({ target: next.id, ...(sort !== undefined ? { sort } : {}), ...(view.search !== undefined ? { search: view.search } : {}) });
-    }
+  let sort: { columnId: string; dir: 'asc' | 'desc' } | null | undefined;
+  if (view.sort === null) sort = null;
+  else if (view.sort) {
+    const id = columnIds(def, [view.sort.column])?.[0];
+    if (id) sort = { columnId: id, dir: view.sort.dir };
+  }
+  const colorBy = view.colorBy === null ? null : view.colorBy ? colorColumnId(def, view.colorBy) : undefined;
+  if (sort !== undefined || view.search !== undefined || colorBy !== undefined || view.export) {
+    requestListTable({ target: next.id, ...(sort !== undefined ? { sort } : {}), ...(view.search !== undefined ? { search: view.search } : {}),
+      ...(colorBy !== undefined ? { colorBy } : {}), ...(view.export ? { export: view.export } : {}) });
   }
   if (view.maximize !== undefined) requestStripMaximize(view.maximize);
   return next;
@@ -73,7 +89,8 @@ function sameGrouping(a: ListGrouping | undefined, b: ListGrouping | undefined):
 export function updateListFromChat(msg: ListUpdateMessage): void {
   const view = parseListView((msg as { view?: unknown }).view);
   const added = parseAddedGroups((msg as { groups?: unknown }).groups);
-  if (!view || !added) {
+  const edit = parseListEdit(msg.edit);
+  if (!view || !added || !edit) {
     noteIssue('Zoznam: viewer úpravu odmietol (neplatné filtre alebo stĺpce)');
     return;
   }
@@ -85,24 +102,37 @@ export function updateListFromChat(msg: ListUpdateMessage): void {
     return;
   }
   let def = base;
-  if (added.length > 0) {
-    const models = [...s.models.values()].map((m) => ({ name: m.name, fingerprint: m.sourceFingerprint }));
-    const groups = andGroups(base.groups, resolveModelRules(added, models));
-    if (!groups) {
-      noteIssue('Zoznam: filter sa nedá pridať k skupine OR so zoznamom; otvor zoznam znova cez open_list');
+  let removed: string[] = [];
+  const rerun = added.length > 0 || hasEdit(edit);
+  if (rerun) {
+    // Poradie: odobrať filtre, upraviť triedy, pridať filtre (podlažie a model nahradia staré).
+    let groups: FilterGroup[] | string = removeFilterKinds(base.groups, edit.removeFilters ?? []);
+    if (typeof groups !== 'string') groups = editTypes(groups, edit);
+    let cols: ReturnType<typeof editColumns> = { columns: base.columns, grouping: base.grouping, removed: [] };
+    if (typeof groups !== 'string' && added.length > 0) {
+      const models = [...s.models.values()].map((m) => ({ name: m.name, fingerprint: m.sourceFingerprint }));
+      groups = andGroups(groups, resolveModelRules(added, models))
+        ?? 'filter sa nedá pridať k skupine OR so zoznamom; otvor zoznam znova cez open_list';
+    }
+    if (typeof groups !== 'string') cols = editColumns(base.columns, base.grouping, edit);
+    if (typeof groups === 'string' || 'error' in cols) {
+      noteIssue(`Zoznam: úpravu viewer nevykonal (${typeof groups === 'string' ? groups : 'error' in cols ? cols.error : ''})`);
       return;
     }
-    // Nový beh má vlastné id: podľa neho `APPLIED` pozná, že výsledok je už ten zúžený.
-    def = { ...base, id: crypto.randomUUID(), groups: groups as FilterGroup[], updatedAt: Date.now() };
+    // Nový beh má vlastné id: podľa neho `APPLIED` pozná, že výsledok je už ten upravený.
+    def = { ...base, id: crypto.randomUUID(), groups, columns: cols.columns, grouping: cols.grouping, updatedAt: Date.now() };
+    removed = cols.removed;
   }
   const prevTable = tableState();
   def = applyListView(def, view);
   s.setListPanelVisible(true);
-  if (added.length > 0 || !shown) {
-    // Nový beh prekreslí tabuľku: zoradenie a hľadanie, ktoré ukazovala, sa prenesú na nový výsledok.
+  if (rerun || !shown) {
+    // Nový beh prekreslí tabuľku: zoradenie a hľadanie, ktoré ukazovala, sa prenesú na nový výsledok
+    // (zoradenie podľa odobratého stĺpca nie); farby a export z tejto správy ostanú v požiadavke.
     if (prevTable && shown && prevTable.listId === shown.id) {
       const req = pendingTableRequest();
-      requestListTable({ target: def.id, sort: req && req.sort !== undefined ? req.sort : prevTable.sort, search: req?.search ?? prevTable.search });
+      const kept = prevTable.sort && !removed.includes(prevTable.sort.columnId) ? prevTable.sort : null;
+      requestListTable({ ...req, target: def.id, sort: req && req.sort !== undefined ? req.sort : kept, search: req?.search ?? prevTable.search });
     }
     // Nový filter alebo zoznam, ktorý ešte nebežal: spustí ho hák D-148.
     noteListOpened(def, true);
