@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/modelFile.ts a/apps/viewer/src/aim/modelFile.ts
+index 56c77ed2..b5465955 100644
+--- b/apps/viewer/src/aim/modelFile.ts
++++ a/apps/viewer/src/aim/modelFile.ts
+@@ -18,7 +18,7 @@ const ARCHIVE_RE = /\/archive\/([^/]+)\/v\d+\.ifc\.gz$/i;
+ 
+ /** True when the bytes start with the gzip magic number `1f 8b`. */
+ export function isGzip(head: Uint8Array): boolean {
+-  return head.length >= 1 && head[0] === 0x1f;
++  return head.length >= 2 && head[0] === 0x1f && head[1] === 0x8b;
+ }
+ 
+ /**

@@ -90,9 +90,11 @@ export function useModelUrlAutoload(): void {
         const url = new URL(modelUrl);
         const res = await fetch(url.href);
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-        const blob = await res.blob();
-        const filename = url.pathname.split('/').pop() || 'model.ifc';
-        const file = new File([blob], filename, { type: blob.type || 'application/x-step' });
+        // AIM D-135: the host sends immutable revision archives (gzip); unpack
+        // them and keep the plain model name (`ASR.ifc`) the bridge matches on.
+        // Lazy: nothing of it is needed at boot (entry chunk stays as it was).
+        const { aimModelFile } = await import('@/aim/modelFile');
+        const file = await aimModelFile(url, await res.blob());
         await addModel(file);
       } catch (err) {
         const reason = err instanceof Error ? err.message : String(err);
