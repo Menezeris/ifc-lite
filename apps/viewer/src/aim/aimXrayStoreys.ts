@@ -9,6 +9,7 @@
  * Načítava sa lenivo z `aimLens.ts`.
  */
 
+import { resolvePresentationIds } from '@/lib/presentation/resolvePresentationIds';
 import { useViewerStore } from '@/store';
 import { toGlobalIdFromModels } from '@/store/globalId';
 import { idsOutsideStoreys, type StoreyModel } from './aimXrayStoreysPlan.js';
@@ -40,7 +41,9 @@ function storeyModels(state: State): StoreyModel[] {
 /** Skryje prvky podlaží mimo kontextu; vráti id, ktoré skryl NOVO (tie sa pri zrušení vrátia). */
 export function hideOutsideStoreys(wanted: readonly string[], keep: ReadonlySet<number>): number[] {
   const state = useViewerStore.getState();
-  const owned = idsOutsideStoreys(storeyModels(state), wanted, keep).filter((id) => !state.hiddenEntities.has(id));
+  // Zostavy (IfcElementAssembly) nemajú vlastnú geometriu: skryť treba ich časti, rovnako ako Lens (#3338).
+  const outside = resolvePresentationIds(state.cameraCallbacks.resolveHighlightIds, idsOutsideStoreys(storeyModels(state), wanted, keep));
+  const owned = outside.filter((id) => !state.hiddenEntities.has(id));
   if (owned.length > 0) state.hideEntities(owned);
   return owned;
 }
