@@ -20,7 +20,8 @@ import { useViewMode } from '@/hooks/useViewMode';
 import type { BimContext } from '@ifc-lite/sdk';
 import { guidForEntity, resolveGuids, resolveSelector } from './bridge-protocol.js';
 import type { ViewInboundMessage } from './view-protocol.js';
-import { preloadTabs, withTabs } from './viewTabsStore.js';
+import { preloadTabs, useAimViewTabs, withTabs } from './viewTabsStore.js';
+import { sceneMode, settle3d } from './sceneMode.js';
 import { VIEWER_AXIS, cameraStep, focusViewStep, pickStorey, storeyCutPercent } from './viewCommands.js';
 import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
 import { sectionRenderBounds as sectionBoundsWith } from './sectionRange.js';
@@ -120,6 +121,13 @@ export function useAimViewCommands(bim: BimContext) {
     void loadBox();
     return () => { lastGizmo = undefined; };
   }, [bim]);
+  /** Záložka 3D bez zvyšného zámku kamery, rezu podlažia a ortografickej projekcie (#216). */
+  const free3d = () => {
+    const s = useViewerStore.getState();
+    const step = settle3d({ viewLocked: s.underlayViewLocked, splitView: s.underlaySplitView, projection: s.projectionMode === 'orthographic' ? 'orthographic' : 'perspective' });
+    if (step.leaveLocked) setMode('3d');
+    if (step.perspective) s.setProjectionMode('perspective');
+  };
   const run = (msg: ViewInboundMessage, origin = '*') => {
     const state = useViewerStore.getState();
     switch (msg.type) {
@@ -208,7 +216,9 @@ export function useAimViewCommands(bim: BimContext) {
           if (msg.mode === 'split') m.activate('3d', noteIssue);
           m.openPlan(target.guid, { beside: msg.mode === 'split' }, noteIssue);
         });
-        if (p) track(p);
+        // 3D vždy perspektívna a voľná, aj keď 3D záložka už bola aktívna (#216).
+        const done = msg.mode === '3d' ? (p ? p.then(free3d) : free3d()) : p;
+        if (done) track(done);
         return;
       }
       case 'QUERY': {
@@ -222,11 +232,20 @@ export function useAimViewCommands(bim: BimContext) {
   useEffect(() => {
     ref.current = run;
     focusView = (keys) => {
-      const step = focusViewStep(mode, keys, activeStorey?.key ?? null, new Set(storeys.map((s) => s.key)));
-      if (step.kind === '3d') setMode('3d');
-      else if (step.kind === 'storey') {
+      // Záložka 3D sa pri FOCUS nikdy neprepne do 2D; pôdorys prejde cez záložky (#216).
+      const tabs = useAimViewTabs.getState();
+      const kind = tabs.tabs.find((t) => t.id === tabs.sceneId)?.kind;
+      const step = focusViewStep(sceneMode(kind, mode), keys, activeStorey?.key ?? null, new Set(storeys.map((s) => s.key)));
+      if (step.kind === '3d') {
+        const p = withTabs((m) => { m.activate('3d', noteIssue); m.beside(null, noteIssue); });
+        track(Promise.resolve(p).then(free3d));
+      } else if (step.kind === 'storey') {
         const storey = storeys.find((s) => s.key === step.key);
-        if (storey) setStorey(storey);
+        if (!storey) return;
+        if (kind === 'plan') {
+          const p = withTabs((m) => m.openPlan(storey.guid, {}, noteIssue));
+          if (p) track(p);
+        } else setStorey(storey);
       }
     };
   });
