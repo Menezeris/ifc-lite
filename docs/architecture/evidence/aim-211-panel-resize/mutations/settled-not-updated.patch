@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/planRefit.ts a/apps/viewer/src/aim/planRefit.ts
+index 46ee4faa..2afb98d8 100644
+--- b/apps/viewer/src/aim/planRefit.ts
++++ a/apps/viewer/src/aim/planRefit.ts
+@@ -60,6 +60,7 @@ export function createPlanRefit(deps: PlanRefitDeps) {
+     const next = latest;
+     if (!next) return;
+     const prev = settled;
++    settled = next;
+     if (shouldRefit(prev, next, deps.context())) deps.fit();
+   };
+ 

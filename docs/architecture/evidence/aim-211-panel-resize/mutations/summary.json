@@ -1,0 +1,128 @@
+{
+  "collapsed-size-allowed": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planRefit.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "b2c7500842634321fb436137367f29b07a862690",
+    "production": [
+      "apps/viewer/src/aim/planRefit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/planRefit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "delta-threshold-exclusive": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planRefit.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "b2c7500842634321fb436137367f29b07a862690",
+    "production": [
+      "apps/viewer/src/aim/planRefit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/planRefit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "dispose-keeps-timer": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planRefit.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "b2c7500842634321fb436137367f29b07a862690",
+    "production": [
+      "apps/viewer/src/aim/planRefit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/planRefit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "first-sample-triggers": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planRefit.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "b2c7500842634321fb436137367f29b07a862690",
+    "production": [
+      "apps/viewer/src/aim/planRefit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/planRefit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "height-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planRefit.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "b2c7500842634321fb436137367f29b07a862690",
+    "production": [
+      "apps/viewer/src/aim/planRefit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/planRefit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "lock-check-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planRefit.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "b2c7500842634321fb436137367f29b07a862690",
+    "production": [
+      "apps/viewer/src/aim/planRefit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/planRefit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "no-debounce-reset": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planRefit.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "b2c7500842634321fb436137367f29b07a862690",
+    "production": [
+      "apps/viewer/src/aim/planRefit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/planRefit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "plan-check-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planRefit.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "b2c7500842634321fb436137367f29b07a862690",
+    "production": [
+      "apps/viewer/src/aim/planRefit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/planRefit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "settled-not-updated": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planRefit.test.ts; that file has a green, attributable baseline.",
+    "base": "660ebd8635496c3f0150f29a8f009adcaa761e7c",
+    "head": "b2c7500842634321fb436137367f29b07a862690",
+    "production": [
+      "apps/viewer/src/aim/planRefit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/planRefit.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}
