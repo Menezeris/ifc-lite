@@ -18,6 +18,7 @@ import { nextIsolation, type CommandInboundMessage } from './command-protocol.js
 import { frameRefs, revealGatesForRefs } from './frame-refs.js';
 import { applyPanelView } from './aimPanelView.js';
 import { selectPanel } from './aimPanelViewPlan.js';
+import { isClickGesture, isDismissKey, isSceneTarget } from './focus-dismiss.js';
 
 /** Funkcie z modulov vstupného balíka - lenivý modul ich neimportuje (pravidlo balíka forku). */
 export interface VisibilityDeps {
@@ -34,6 +35,21 @@ export interface VisibilityDeps {
 
 /** Prvky ofarbené posledným FOCUS-om - ďalší FOCUS alebo CLEAR_FOCUS ich vráti do pôvodných farieb. */
 let focused: EntityRef[] = [];
+
+/** Alfa zvýraznenia objemu, rovnaká ako priesvitná varianta Lens (D-125). */
+const VOLUME_FOCUS_ALPHA = 0.3;
+
+function isVolume(r: EntityRef): boolean {
+  const state = useViewerStore.getState();
+  const store = state.models.get(r.modelId)?.ifcDataStore ?? state.ifcDataStore;
+  const type = store?.entities?.getTypeName?.(r.expressId);
+  return type === 'IfcSpace' || type === 'IfcSpatialZone';
+}
+
+function hexToRgba(hex: string, alpha: number): [number, number, number, number] {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, alpha];
+}
 
 /** Počet a GUIDy zvýraznených prvkov (pre `view_state` a `APPLIED`, #94). */
 export function focusSummary(): { count: number; guids: string[] } {
@@ -54,6 +70,36 @@ export function forgetFocus(): void {
 export function clearFocus(bim: BimContext): void {
   if (focused.length > 0) bim.viewer.resetColors(focused);
   focused = [];
+}
+
+/**
+ * Klik do scény bez ťahania a Esc zrušia zvýraznenie z FOCUS, ostatné farby nechajú (#94).
+ * Zvýraznenie nie je výber, takže klik do prázdna pri prázdnom výbere nič nezmení v store.
+ * Vracia odpojenie poslucháčov.
+ */
+export function installFocusDismiss(bim: BimContext, target: Document = document): () => void {
+  let down: { x: number; y: number } | null = null;
+  const onDown = (e: PointerEvent) => {
+    down = isSceneTarget((e.target as Element | null)?.tagName) ? { x: e.clientX, y: e.clientY } : null;
+  };
+  const onUp = (e: PointerEvent) => {
+    const start = down;
+    down = null;
+    if (start && focused.length > 0 && isClickGesture(start, { x: e.clientX, y: e.clientY })) clearFocus(bim);
+  };
+  const onKey = (e: KeyboardEvent) => {
+    const el = e.target as HTMLElement | null;
+    const typing = !!el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
+    if (focused.length > 0 && isDismissKey(e.key, typing)) clearFocus(bim);
+  };
+  target.addEventListener('pointerdown', onDown, true);
+  target.addEventListener('pointerup', onUp, true);
+  target.addEventListener('keydown', onKey, true);
+  return () => {
+    target.removeEventListener('pointerdown', onDown, true);
+    target.removeEventListener('pointerup', onUp, true);
+    target.removeEventListener('keydown', onKey, true);
+  };
 }
 
 // Ops berú buď explicitné GUIDy, alebo množinový selektor (typy/model)
@@ -101,7 +147,11 @@ export function runVisibilityCommand(
       }
       // Explicitné ofarbenie (oranžová ako v pôvodnom AIM three.js vieweri). Výber
       // nemení: zvýraznenie a výber sú pre hosta dva príkazy (FOCUS / SELECT, #97 V1).
-      bim.viewer.colorize(refs, d.FOCUS_COLOR);
+      // Objemy (IfcSpace, IfcSpatialZone) priesvitne, aby neprekryli prvky vnútri (ako Lens, D-125).
+      const volumes = refs.filter((r) => isVolume(r));
+      const solids = refs.filter((r) => !isVolume(r));
+      if (solids.length > 0) bim.viewer.colorize(solids, d.FOCUS_COLOR);
+      if (volumes.length > 0) bim.viewer.colorizeRgba(volumes, hexToRgba(d.FOCUS_COLOR, VOLUME_FOCUS_ALPHA));
       focused = refs;
       const models = useViewerStore.getState().models;
       d.prepareFocusView(refs.map((r) => {

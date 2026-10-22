@@ -98,9 +98,11 @@ export function AimBridge() {
     // Modul príkazov viditeľnosti sa načíta hneď (mimo vstupného balíka); brána drží príkazy
     // až do načítania modelov, takže je vtedy pripravený a príkazy idú synchrónne v poradí.
     let vis: Awaited<ReturnType<typeof loadVisibility>> | null = null;
+    let removeFocusDismiss: (() => void) | null = null;
     void loadVisibility().then((m) => {
       vis = m;
       setFocusProvider(m.focusSummary);
+      removeFocusDismiss = m.installFocusDismiss(bim); // klik a Esc zrušia oranžovú z FOCUS (#94)
     });
     const runVisibility = (msg: InboundMessage | CommandInboundMessage) => {
       if (vis) vis.runVisibilityCommand(msg, bim, VIS_DEPS);
@@ -222,6 +224,7 @@ export function AimBridge() {
       useAimDerivationsStore.getState().clear();
       useAimDocRegionStore.setState({ request: null, highlights: null }); // D-117/D-123: výrez ani rámiky nepatria ďalšej relácii
       resetLensFromChat(); // D-096: izolácia a AIM chat lens neprežijú odpojenie mostu
+      removeFocusDismiss?.();
       setFocusProvider(undefined);
       setChangesProvider(undefined);
       resetCommandState(); // problémy a kroky z predošlej relácie nepatria do ďalšieho APPLIED
