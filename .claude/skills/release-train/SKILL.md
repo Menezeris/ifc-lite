@@ -61,7 +61,8 @@ exceed it together. Over the limit: say so in the batch PR and ask.
   modules (the oracle judges the whole batch; aim-feature skill, step 4).
 - **Test link** for Samuel: the AIM host with the batch's viewer preview,
   `https://ai-mviewer.vercel.app/ifc?viewer=pr-<batch PR number>`, and per feature what
-  to try (the "Ako vyskúšať" lines of the merged PRs).
+  to try (the "Ako vyskúšať" lines of the merged PRs). The link is for Samuel only: a
+  session never opens it (production models, AIM D-135).
 
 ## 5. Full CI, then Samuel
 
