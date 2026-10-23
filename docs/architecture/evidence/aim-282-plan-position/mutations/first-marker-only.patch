@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/planPosition.ts a/apps/viewer/src/aim/planPosition.ts
+index 6258d925..d4d1fb96 100644
+--- b/apps/viewer/src/aim/planPosition.ts
++++ a/apps/viewer/src/aim/planPosition.ts
+@@ -91,7 +91,7 @@ export function describePlanMarkers(
+   shown: readonly { docId: string; page: number; marker: PlanMarker }[],
+ ): { enabled: boolean; shown: boolean; markers: PlanMarkerState[] } {
+   const r1 = (n: number) => Math.round(n * 10) / 10;
+-  const markers = [...shown].slice(0, 1)
++  const markers = [...shown]
+     .sort((a, b) => (a.docId < b.docId ? -1 : a.docId > b.docId ? 1 : a.page - b.page))
+     .map(({ docId, page, marker }) => ({
+       document_id: docId,
