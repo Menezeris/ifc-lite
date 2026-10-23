@@ -633,9 +633,9 @@ export function useMouseControls(params: UseMouseControlsParams): void {
           // Walk mode looks around the eye; the walker owns where it stands.
           const look = flyLook({ position: camera.getPosition(), target: camera.getTarget() }, dx, dy);
           if (look) camera.setTarget(look.target.x, look.target.y, look.target.z);
-        // >>> AIM-FORK: Drawing view (D-072): camera is locked top-down — a drag
-        // pans instead of orbiting so the 2D orientation can't be lost.
-        } else if (useViewerStore.getState().underlayViewLocked) {
+        // >>> AIM-FORK: calibration view (D-072): camera locked top-down, a drag pans instead
+        // of orbiting; only while a calibration runs (D-161), a stale lock never blocks orbit
+        } else if (useViewerStore.getState().underlayViewLocked && useViewerStore.getState().underlayCalibration !== null) {
           camera.pan(dx, dy, false);
         // <<< AIM-FORK
         } else {

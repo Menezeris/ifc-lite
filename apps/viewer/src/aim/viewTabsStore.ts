@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * Store záložiek viewera (AIM D-132). Vlastný malý zustand store ako uložené
+ * Store záložiek viewera (AIM D-132, od D-161 3D a dokumenty). Vlastný malý zustand store ako uložené
  * rezy upstreamu (`savedSectionCutsStore.ts`), nie slice `ViewerState`
  * (`store/index.ts` je na rozpočte veľkosti). Záložky žijú len počas relácie;
  * trvalý je uložený pohľad hosta (D-122). Logika je v `viewTabsPlan.ts`,
@@ -11,26 +11,12 @@
  */
 
 import { create } from 'zustand';
-import type { StoreyInfo } from '@/hooks/useFloorplanView';
 import { initialTabs, type ViewTabsState } from './viewTabsLayout.js';
 import type { TilesState } from './viewTilesPlan.js';
 
-/** Podlažie, ako ho pozná prepínač pôdorysu (`useViewMode().storeys`). */
-export interface TabStorey { guid: string; name: string; info: StoreyInfo }
-
-/** Funkcie viewera pre záložky; dodá ich lišta (hooky `useViewMode` / `useFloorplanView`). */
-export interface TabDeps {
-  storeys: readonly TabStorey[];
-  storeyHasDrawing: (guid: string) => boolean;
-  enterDrawingView: (storey: StoreyInfo) => void;
-  enterSplitView: (storey: StoreyInfo) => void;
-  exitSplitView: () => void;
-}
-
 interface ViewTabsStore extends ViewTabsState, TilesState {
-  /** Záložka, ktorej stav je práve v 3D canvase (kamera, rez, zámok). */
+  /** Záložka, ktorá je práve v 3D canvase (od D-161 vždy `3d`). */
   sceneId: string;
-  deps: TabDeps | null;
   /** Kartu otvoril most (`DOCUMENT_OPEN`): záložku nastaví `showDoc`, nie synchronizácia kariet. */
   bridgeDocId: string | null;
   /** Dlaždice (AIM D-157): štýl obalu 3D canvasu v živej dlaždici, null = celá plocha. */
@@ -57,6 +43,15 @@ export function withTabs(fn: (m: TabsModule) => Promise<void> | void): Promise<v
   return preloadTabs().then(fn);
 }
 
+/**
+ * Pohľad zhora na podlažie (`mode=2d`, AIM D-161): kameru a rez vykoná `useAimViewCommands`, tu je len
+ * odkaz naň pre lenivé záložky (staršie správy `VIEW_TABS open` pre pôdorys). Najnovší podľa podlaží viewera.
+ */
+type TopView = (storeyGuid: string | undefined, note: (issue: string) => void) => Promise<void> | void;
+let topViewImpl: TopView | null = null;
+export const setTopView = (f: TopView | null) => { topViewImpl = f; };
+export const runTopView: TopView = (guid, note) => topViewImpl?.(guid, note);
+
 export const useAimViewTabs = create<ViewTabsStore>(() => ({
-  ...initialTabs(), sceneId: '3d', deps: null, bridgeDocId: null, layout: 'single', tiles: [], frame: null, shots: 0,
+  ...initialTabs(), sceneId: '3d', bridgeDocId: null, layout: 'single', tiles: [], frame: null, shots: 0,
 }));

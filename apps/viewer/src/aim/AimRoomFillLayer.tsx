@@ -3,16 +3,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * Výplň a popis ofarbených miestností v 2D pôdoryse (AIM D-119, #137). Spodná
+ * Výplň a popis ofarbených miestností v pôdoryse (AIM D-119, #137). Spodná
  * plocha IfcSpace sa v hĺbke bije s podlahovou doskou, takže farba Lens bola v
- * 2D len v pásoch. Vrstva nad scénou (ako `ZoneOverlay` a piny) preto v režime
- * 2D bez výkresu nakreslí pôdorys každej miestnosti s farbou aktívnej Lens:
- * polopriehľadná výplň, obrys a názov (LongName, inak Name). Len miestnosti
- * podlažia 2D pohľadu; kliky prechádzajú do scény.
- *
- * D-125 (#175): to isté aj v 3D, keď je aktívny vodorovný rez a kamera hľadí
- * zhora (pôdorys cez `set_section` + `set_camera top`), pre miestnosti preťaté
- * rezom. Vyplní aj vybranú miestnosť farbou výberu, nielen ofarbenú Lens.
+ * pôdoryse len v pásoch. Vrstva nad scénou (ako `ZoneOverlay` a piny) preto, keď je
+ * aktívny vodorovný rez a kamera hľadí zhora (`mode=2d`, alebo `set_section` +
+ * `set_camera top`, D-125 #175), nakreslí pôdorys každej miestnosti preťatej rezom
+ * s farbou aktívnej Lens: polopriehľadná výplň, obrys a názov (LongName, inak Name).
+ * Vyplní aj vybranú miestnosť farbou výberu, nielen ofarbenú Lens. Kliky prechádzajú
+ * do scény. Od D-161 neexistuje zamknutý pôdorys, riadi sa len rezom a smerom kamery.
  *
  * Doplnok D-125 (#175): v 3D mimo pôdorysu kreslí podstavu `AimRoomFill3d` cez
  * výplne renderera, kúsok nad podlahovou krytinou a zakrytú stenami pred ňou.
@@ -108,10 +106,8 @@ function horizontalCut(state: State): number | null {
 }
 
 function roomsToFill(
-  state: State, meshes: Map<number, MeshData[]>, footprints: Map<number, Footprint | null>, cutY: number | null,
+  state: State, meshes: Map<number, MeshData[]>, footprints: Map<number, Footprint | null>, cutY: number,
 ): Room[] {
-  // V 2D podlažie pôdorysu; v 3D s rezom rozhoduje výška rezu.
-  const storeyGuid = cutY === null ? state.underlayActiveStoreyGuid : null;
   const labels = new Map<string, Map<number, string>>();
   const rooms: Room[] = [];
   for (const [id, color] of roomColors(state, meshes)) {
@@ -119,19 +115,12 @@ function roomsToFill(
     if (!parts) continue;
     const ref = fromGlobalIdFromModels(state.models, id);
     const store = ref ? (state.models.get(ref.modelId)?.ifcDataStore ?? state.ifcDataStore) : state.ifcDataStore;
-    if (ref && store && storeyGuid) {
-      // Miestnosť z iného podlažia nie je v reze tohto pôdorysu.
-      const storey = store.entities.getExpressIdByGlobalId(storeyGuid);
-      // @raw-entity-enumeration-ok point lookup of one room's storey for the plan cut; AIM never edits the spatial structure
-      const own = store.spatialHierarchy?.elementToStorey.get(ref.expressId);
-      if (storey !== -1 && own !== undefined && own !== storey) continue;
-    }
     let fp = footprints.get(id);
     if (fp === undefined) {
       fp = spaceFootprint(parts);
       footprints.set(id, fp);
     }
-    if (!fp || (cutY !== null && !cutsRoom(fp, cutY))) continue;
+    if (!fp || !cutsRoom(fp, cutY)) continue;
     let byModel = ref ? labels.get(ref.modelId) : undefined;
     if (ref && !byModel) {
       byModel = spaceLabels(store?.spatialHierarchy?.project);
@@ -191,22 +180,20 @@ function AimRoomFill3d({ off }: { off: boolean }) {
 }
 
 export function AimRoomFillLayer() {
-  const planView = useViewerStore((s) => s.underlayViewLocked && !s.underlaySplitView);
-  // Vodorovný rez v 3D (D-125): vrstva sleduje kameru, či hľadí zhora.
-  const downCut = useViewerStore((s) => !planView && activeSectionPlane(s)?.axis === 'down');
+  // Vodorovný rez (D-125): vrstva sleduje kameru, či hľadí zhora.
+  const downCut = useViewerStore((s) => activeSectionPlane(s)?.axis === 'down');
   const lensColorMap = useViewerStore((s) => s.lensColorMap);
   const selectedIds = useViewerStore((s) => s.selectedEntityIds);
   const selectedId = useViewerStore((s) => s.selectedEntityId);
   const sectionPlane = useViewerStore((s) => s.sectionPlane);
-  const storeyGuid = useViewerStore((s) => s.underlayActiveStoreyGuid);
   const models = useViewerStore((s) => s.models);
   const geometryResult = useViewerStore((s) => s.geometryResult);
   const project = useViewerStore((s) => s.cameraCallbacks.projectToScreen);
   const colored = useColored();
-  const tick = useProjectorTick((planView || downCut) && colored && !!project);
+  const tick = useProjectorTick(downCut && colored && !!project);
   const camera = downCut ? getGlobalRenderer()?.getCamera() : null;
   const plan3d = downCut && !!camera && looksDown(camera.getPosition(), camera.getTarget());
-  const active = (planView || plan3d) && colored && !!project;
+  const active = plan3d && colored && !!project;
 
   // Pôdorys sa počíta raz na geometriu; farby, výber, rez a podlažie len vyberajú.
   const meshes = useMemo(() => (active ? meshesOf(useViewerStore.getState()) : new Map()), [active, models, geometryResult]);
@@ -214,11 +201,11 @@ export function AimRoomFillLayer() {
   const rooms = useMemo(() => {
     if (!active || meshes.size === 0) return [];
     const state = useViewerStore.getState();
-    const cutY = plan3d ? horizontalCut(state) : null;
-    return plan3d && cutY === null ? [] : roomsToFill(state, meshes, footprints, cutY);
-  }, [active, plan3d, meshes, footprints, lensColorMap, selectedIds, selectedId, sectionPlane, storeyGuid]);
+    const cutY = horizontalCut(state);
+    return cutY === null ? [] : roomsToFill(state, meshes, footprints, cutY);
+  }, [active, meshes, footprints, lensColorMap, selectedIds, selectedId, sectionPlane]);
 
-  const fill3d = <AimRoomFill3d off={planView || plan3d} />;
+  const fill3d = <AimRoomFill3d off={plan3d} />;
   if (!active || rooms.length === 0 || !project) return fill3d;
   void tick; // nový tick = tie isté body na nových súradniciach obrazovky
   const toScreen = (p: Vec3) => project(p);

@@ -20,14 +20,9 @@ export const aimForkEn = {
   'aimFork.assistant.boundaryDrawingUnderlay': 'Georeferenced PDF plan underlays. Placing or calibrating a drawing produces no analysis result to discuss.',
   'aimFork.assistant.boundaryAimLayers': 'Derivation rules of the AIM platform. Showing or hiding a rule produces no analysis result; the rules run in the AIM host.',
   'aimFork.assistant.boundaryDocuments': 'Project document library. Opening a PDF or image produces no analysis result; the documents themselves live in the AIM platform.',
-  /** Empty first option of the 2D storey picker (it has no visible text). */
-  'aimFork.viewMode.noStorey': 'No storey selected',
-  /** Offer after an orbit attempt in the locked plan tab (AIM #188, D-132)). */
   /** Underlays panel switch (AIM D-133 addendum, #170): hides the PDF underlays in the 3D view only. */
   'aimFork.underlays3d.label': 'Show in 3D',
   'aimFork.underlays3d.hint': 'Hides the PDF drawings in the 3D view only. Calibration stays saved; the 2D plan is unchanged.',
-  'aimFork.planOrbit.message': 'The plan is a locked top view. Switch to 3D? (Enter)',
-  'aimFork.planOrbit.action': 'Switch to 3D',
   /** Highlighted download button after an export request from the AIM chat (AIM D-149): the browser needs the user's click. */
   'aimFork.listExport.action': 'Download {format}',
   'aimFork.listExport.hint': 'Requested from the AIM chat: click to download',

@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * Napojenie `planRefit.ts` na viewer (AIM #211): sleduje veľkosť strednej plochy
+ * Napojenie `planRefit.ts` na viewer (AIM #211, od D-161 pre kalibračný pohľad zhora): sleduje veľkosť strednej plochy
  * (región `data-floating-snap-bounds`, ktorý sa mení s úchytkou stĺpca vlastností aj
  * hierarchie) a po ustálení zavolá `fitAll` upstreamu: priblíženie bez zmeny smeru
  * pohľadu. Nič nové nepočíta (D-098). Volá ho `useAimCenterPanes`.
@@ -12,7 +12,6 @@
 import { useEffect } from 'react';
 import { useViewerStore } from '@/store';
 import { createPlanRefit } from './planRefit.js';
-import { useAimViewTabs } from './viewTabsStore.js';
 
 const BOUNDS_SELECTOR = '[data-floating-snap-bounds]';
 
@@ -22,14 +21,11 @@ export function useAimPlanRefit(isMobile: boolean): void {
     const el = document.querySelector(BOUNDS_SELECTOR);
     if (!el) return;
     const refit = createPlanRefit({
+      // Od D-161 je kolmý zamknutý pohľad len kalibrácia podkladu (D-072); pôdorys v záložke už nie je.
       context: () => {
-        const tabs = useAimViewTabs.getState();
-        const scene = tabs.tabs.find((t) => t.id === tabs.sceneId);
         const s = useViewerStore.getState();
-        return {
-          planInCanvas: scene?.kind === 'plan',
-          lockedTopDown: s.underlayViewLocked && s.projectionMode === 'orthographic',
-        };
+        const lockedTopDown = s.underlayViewLocked && s.projectionMode === 'orthographic';
+        return { planInCanvas: lockedTopDown, lockedTopDown };
       },
       fit: () => useViewerStore.getState().cameraCallbacks.fitAll?.(),
     });
