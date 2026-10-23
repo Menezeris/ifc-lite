@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/ids-protocol.ts a/apps/viewer/src/aim/ids-protocol.ts
+index bca44b20..20ef6e17 100644
+--- b/apps/viewer/src/aim/ids-protocol.ts
++++ a/apps/viewer/src/aim/ids-protocol.ts
+@@ -74,7 +74,7 @@ export function isIdsInbound(data: unknown): data is IdsInboundMessage {
+   if (data.type === 'IDS_LOAD') {
+     return isText(data.code) && isVersion(data.version) && isTarget(data.target)
+       && typeof data.xml === 'string' && data.xml.length > 0 && data.xml.length <= MAX_IDS_XML
+-      && optional(data.title, isText) && optional(data.spec, isText) && true;
++      && optional(data.title, isText) && optional(data.spec, isText) && optional(data.run, (v) => typeof v === 'boolean');
+   }
+   if (data.type === 'IDS_SAVED') {
+     return isTarget(data.target) && typeof data.ok === 'boolean' && optional(data.code, isText) && optional(data.version, isVersion)
