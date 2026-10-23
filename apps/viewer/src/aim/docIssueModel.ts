@@ -68,7 +68,8 @@ export function parseDocIssueUrl(url: string | undefined): DocIssueTarget | null
   }
   const m = /^\/drawing\/([^/]+)\/?$/.exec(u.pathname);
   if (!m || !UUID.test(m[1])) return null;
-  const page = Number(u.searchParams.get('page') ?? u.hash.replace(/^#page=/, ''));
+  // `#page=N&viewrect=...` (RFC 8118) od hosta, AIM D-158 krok 3.
+  const page = Number(u.searchParams.get('page') ?? new URLSearchParams(u.hash.replace(/^#/, '')).get('page'));
   if (!Number.isInteger(page) || page < 1) return null;
   const parts = (u.searchParams.get('region') ?? '').split('_').map(Number);
   const ok = parts.length === 4 && parts.every((v) => Number.isFinite(v)) && parts[2] > 0 && parts[3] > 0;
@@ -76,6 +77,35 @@ export function parseDocIssueUrl(url: string | undefined): DocIssueTarget | null
     ? { x: clamp01(parts[0] / 100), y: clamp01(parts[1] / 100), w: clamp01(parts[2] / 100), h: clamp01(parts[3] / 100) }
     : null;
   return { docId: m[1].toLowerCase(), page, region };
+}
+
+/**
+ * Snímka výrezu strany s rámikom od hosta (AIM D-158 krok 3): render pdf.js na serveri, ten
+ * istý obrázok, aký BCF API hosta dá uloženej téme. Bez originu hosta null.
+ */
+export function docSnapshotUrl(origin: string | null, t: DocIssueTarget): string | null {
+  if (!origin) return null;
+  const q = new URLSearchParams({ page: String(t.page) });
+  if (t.region) q.set('region', [t.region.x, t.region.y, t.region.w, t.region.h].map(pct).join('_'));
+  return `${origin.replace(/\/+$/, '')}/api/drawing/${t.docId}/snapshot?${q.toString()}`;
+}
+
+/**
+ * Pohľad so snímkou výrezu pre lokálnu pripomienku: export .bcfzip ju nesie ako snímku pohľadu.
+ * BCF 3.0 chce v každom pohľade kameru, preto preberie kameru (a rez) prvého pohľadu témy;
+ * téma bez kamery snímku nedostane (export by inak zlyhal celý). Pridáva sa za existujúce
+ * pohľady, takže `bcf_local` (prvý pohľad) ostáva 3D pohľad témy.
+ */
+export function docSnapshotViewpoint(topic: BCFTopic | undefined, snapshot: string, guid: string): BCFViewpoint | null {
+  const base = topic?.viewpoints.find((v) => v.perspectiveCamera || v.orthogonalCamera);
+  if (!base || !snapshot.startsWith('data:image/')) return null;
+  return {
+    guid,
+    ...(base.perspectiveCamera ? { perspectiveCamera: base.perspectiveCamera } : {}),
+    ...(base.orthogonalCamera ? { orthogonalCamera: base.orthogonalCamera } : {}),
+    ...(base.clippingPlanes?.length ? { clippingPlanes: base.clippingPlanes } : {}),
+    snapshot,
+  };
 }
 
 /** Čitateľný opis odkazu (BCF Description; v exporte ho uvidia aj iné nástroje). */

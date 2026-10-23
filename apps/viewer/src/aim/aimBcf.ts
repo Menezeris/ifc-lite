@@ -75,8 +75,10 @@ export async function loadAimBcfTopics(
   const mine = ++generation;
   const api = await deps.loadApi();
   const client = new api.BcfApiClient({ baseUrl: msg.baseUrl });
-  // Snapshots are not served by the AIM host yet; skip the per-viewpoint probes.
-  const result = await api.fetchProjectAsBCF(client, msg.projectId, { includeSnapshots: false });
+  // The host serves a snapshot only for document references (the page region with its frame,
+  // AIM D-158 step 3); viewpoints without one are not probed, so the panel and the .bcfzip
+  // export get the PDF picture of each saved issue.
+  const result = await api.fetchProjectAsBCF(client, msg.projectId, { includeSnapshots: true });
   if (mine !== generation) return 'stale';
   if (result.warnings.length > 0) console.warn('[aim-bridge] AIM_BCF_LOAD:', result.warnings);
   const fetchFn = deps.fetchFn ?? (typeof fetch === 'function' ? fetch.bind(globalThis) : null);
