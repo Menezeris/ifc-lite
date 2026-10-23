@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/tiles-protocol.ts a/apps/viewer/src/aim/tiles-protocol.ts
+index 6e704b0e..55b2b98a 100644
+--- b/apps/viewer/src/aim/tiles-protocol.ts
++++ a/apps/viewer/src/aim/tiles-protocol.ts
+@@ -42,5 +42,5 @@ export function isTilesMessage(data: unknown): data is TilesMessage {
+   const m = data as Record<string, unknown>;
+   if (m.source !== SOURCE || m.type !== 'VIEW_TABS' || m.action !== 'layout' || !isTileLayout(m.layout)) return false;
+   if (m.tiles === undefined) return true;
+-  return Array.isArray(m.tiles) && m.tiles.every(isTile);
++  return Array.isArray(m.tiles) && m.tiles.length <= TILE_RECTS[m.layout].length && m.tiles.every(isTile);
+ }

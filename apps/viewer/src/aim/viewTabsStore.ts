@@ -13,6 +13,7 @@
 import { create } from 'zustand';
 import type { StoreyInfo } from '@/hooks/useFloorplanView';
 import { initialTabs, type ViewTabsState } from './viewTabsLayout.js';
+import type { TilesState } from './viewTilesPlan.js';
 
 /** Podlažie, ako ho pozná prepínač pôdorysu (`useViewMode().storeys`). */
 export interface TabStorey { guid: string; name: string; info: StoreyInfo }
@@ -26,12 +27,16 @@ export interface TabDeps {
   exitSplitView: () => void;
 }
 
-interface ViewTabsStore extends ViewTabsState {
+interface ViewTabsStore extends ViewTabsState, TilesState {
   /** Záložka, ktorej stav je práve v 3D canvase (kamera, rez, zámok). */
   sceneId: string;
   deps: TabDeps | null;
   /** Kartu otvoril most (`DOCUMENT_OPEN`): záložku nastaví `showDoc`, nie synchronizácia kariet. */
   bridgeDocId: string | null;
+  /** Dlaždice (AIM D-157): štýl obalu 3D canvasu v živej dlaždici, null = celá plocha. */
+  frame: Record<string, string> | null;
+  /** Verzia snímok 3D dlaždíc (`tileShots.ts`), aby sa dlaždice prekreslili. */
+  shots: number;
 }
 
 type TabsModule = typeof import('./viewTabsApply.js');
@@ -44,12 +49,14 @@ export const preloadTabs = () => (tabsLoad ??= import('./viewTabsApply.js').then
  * Vykoná krok záložiek hneď, keď je modul načítaný: nasledujúce príkazy hosta (rez,
  * kamera po `VIEW_TABS open`) tak patria už novej záložke. Inak po načítaní (Promise pre `track`).
  */
-export function withTabs(fn: (m: TabsModule) => void): Promise<void> | undefined {
+export function withTabs(fn: (m: TabsModule) => Promise<void> | void): Promise<void> | undefined {
   if (tabsModule) {
-    fn(tabsModule);
-    return undefined;
+    // Dlaždice (D-157) vrátia beh snímok, na ktorý most počká pred `APPLIED`.
+    return fn(tabsModule) ?? undefined;
   }
   return preloadTabs().then(fn);
 }
 
-export const useAimViewTabs = create<ViewTabsStore>(() => ({ ...initialTabs(), sceneId: '3d', deps: null, bridgeDocId: null }));
+export const useAimViewTabs = create<ViewTabsStore>(() => ({
+  ...initialTabs(), sceneId: '3d', deps: null, bridgeDocId: null, layout: 'single', tiles: [], frame: null, shots: 0,
+}));

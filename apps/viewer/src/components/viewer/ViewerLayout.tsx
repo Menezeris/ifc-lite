@@ -227,7 +227,7 @@ export function ViewerLayout() {
   // >>> AIM-FORK: D-072 split plan, D-075 2D mode + document pane, D-132 view tabs (aim/useAimCenterPanes.ts)
   const {
     underlaySplitView, underlayPlanFull, planePanelRef, viewport3dPanelRef, onViewport3dResize,
-    docPaneOpen, docPaneVisible, docPanelRef, onDocPaneResize,
+    docPaneOpen, docPaneVisible, docPanelRef, onDocPaneResize, tileFrame,
   } = useAimCenterPanes(isMobile);
   // <<< AIM-FORK
   const containerRef = useRef<HTMLDivElement>(null);
@@ -339,6 +339,9 @@ export function ViewerLayout() {
                           className={`w-1.5 bg-border hover:bg-primary/50 active:bg-primary/70 transition-colors cursor-col-resize ${underlaySplitView && !underlayPlanFull ? '' : 'hidden'}`}
                         />
                         <Panel id="aim-viewport-3d-panel" defaultSize={100} minSize={30} collapsible collapsedSize={0} panelRef={viewport3dPanelRef} onResize={onViewport3dResize}>
+                      {/* D-157 tiles: the 3D canvas moves into the live tile; the lazy tabs bar portals the grid here. */}
+                      <div className="relative h-full w-full" data-aim-tiles>
+                      <div className="h-full w-full" style={tileFrame}>
                       {/* <<< AIM-FORK */}
                       {sideBySideDrawing ? (
                         // Side-by-side 2D/3D preset (#5515): the drawing docks
@@ -366,6 +369,8 @@ export function ViewerLayout() {
                         <ViewportContainer />
                       )}
                       {/* >>> AIM-FORK */}
+                      </div>
+                      </div>
                         </Panel>
                         <PanelResizeHandle
                           className={`w-1.5 bg-border hover:bg-primary/50 active:bg-primary/70 transition-colors cursor-col-resize ${docPaneVisible ? '' : 'hidden'}`}

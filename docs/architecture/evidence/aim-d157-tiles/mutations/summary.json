@@ -1,0 +1,100 @@
+{
+  "layout-allows-duplicates": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTilesPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "787b65ef19408b141df8f0676f2e4d6e3c9902cc",
+    "production": [
+      "apps/viewer/src/aim/viewTilesPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "place-ignores-kind": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTilesPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "787b65ef19408b141df8f0676f2e4d6e3c9902cc",
+    "production": [
+      "apps/viewer/src/aim/viewTilesPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "protocol-unbounded-tiles": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTilesPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "787b65ef19408b141df8f0676f2e4d6e3c9902cc",
+    "production": [
+      "apps/viewer/src/aim/tiles-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "reconcile-no-refill": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTilesPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "787b65ef19408b141df8f0676f2e4d6e3c9902cc",
+    "production": [
+      "apps/viewer/src/aim/viewTilesPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "scene-ignores-current-tile": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTilesPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "525281a48fd3e64272150d6733ee914557052454",
+    "production": [
+      "apps/viewer/src/aim/viewTilesPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "set-tile-no-swap": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTilesPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "787b65ef19408b141df8f0676f2e4d6e3c9902cc",
+    "production": [
+      "apps/viewer/src/aim/viewTilesPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "three-bottom-big-on-top": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTilesPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "c988e100fbc1249ffcec4c8c5828f6063c1f0f4d",
+    "head": "787b65ef19408b141df8f0676f2e4d6e3c9902cc",
+    "production": [
+      "apps/viewer/src/aim/viewTilesPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}
