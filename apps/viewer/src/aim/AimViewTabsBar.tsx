@@ -18,13 +18,13 @@ import { cn } from '@/lib/utils';
 import { useViewerStore } from '@/store';
 import type { ViewTabKind } from './viewTabsPlan.js';
 import { useAimViewTabs } from './viewTabsStore.js';
-import { activate, beside, close, setLayout, syncDocs } from './viewTabsApply.js';
+import { activate, beside, close, setLayout, syncDocs, syncViews } from './viewTabsApply.js';
 import { TILE_LAYOUTS, TILE_LAYOUT_LABELS, isTileLayout } from './viewTilesPlan.js';
 import { fitTabs } from './viewTabsFit.js';
 
 const AimTileGrid = lazy(() => import('./AimTileGrid.js').then((m) => ({ default: m.AimTileGrid })));
 
-const ICON: Record<ViewTabKind, typeof Box> = { '3d': Box, doc: FileText };
+const ICON: Record<ViewTabKind, typeof Box> = { '3d': Box, doc: FileText, view: Box };
 const SELECT = 'h-6 max-w-40 rounded border bg-background px-1 text-2xs text-muted-foreground';
 /** Miesto jednej záložky a tlačidla zoznamu pri preteku (px), #240. */
 const SLOT_PX = 128;
@@ -46,7 +46,15 @@ export function AimViewTabsBar() {
     syncDocs(docTabs.map((t) => ({ docId: t.docId, label: docs.get(t.docId)?.name ?? t.docId })), opened);
   }, [docTabs, docs, activeDocTabId, isMobile]);
 
-  const tabs = useAimViewTabs((s) => s.tabs);
+  // Pohľady z Presentation (D-161) -> záložky v dlaždiciach: premenovanie a zmazanie.
+  const basketViews = useViewerStore((s) => s.basketViews);
+  useEffect(() => {
+    if (!isMobile) syncViews(basketViews.map((v) => ({ id: v.id, name: v.name })));
+  }, [basketViews, isMobile]);
+
+  const allTabs = useAimViewTabs((s) => s.tabs);
+  // Záložky pohľadov žijú len v dlaždiciach (hlavička dlaždice), v lište ich nie je.
+  const tabs = useMemo(() => allTabs.filter((t) => t.kind !== 'view'), [allTabs]);
   const activeId = useAimViewTabs((s) => s.activeId);
   const besideId = useAimViewTabs((s) => s.besideId);
   const layout = useAimViewTabs((s) => s.layout);

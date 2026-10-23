@@ -9,13 +9,13 @@
  *
  * Dlaždica na drôte: `{tab}` = otvorená záložka (id, `3d`, menovka alebo GlobalId
  * podlažia), `{plan}` = pôdorys podlažia podľa GlobalId (otvorí sa, ak nie je),
- * null = prázdna dlaždica. Chýbajúce dlaždice doplní viewer otvorenými záložkami.
+ * `{view}` = pohľad z Presentation (id alebo meno, D-161), null = prázdna dlaždica. Chýbajúce dlaždice doplní viewer otvorenými záložkami.
  */
 
 import { SOURCE } from './bridge-protocol.js';
 import { TILE_RECTS, isTileLayout, type TileLayout } from './viewTilesPlan.js';
 
-export type TileWire = { tab: string } | { plan: string } | null;
+export type TileWire = { tab: string } | { plan: string } | { view: string } | null;
 
 export interface TilesMessage {
   source: typeof SOURCE;
@@ -34,7 +34,7 @@ function isTile(v: unknown): v is TileWire {
   const keys = Object.keys(v);
   const o = v as Record<string, unknown>;
   if (keys.length !== 1) return false;
-  return keys[0] === 'tab' ? isText(o.tab) : keys[0] === 'plan' ? isText(o.plan) : false;
+  return keys[0] === 'tab' ? isText(o.tab) : keys[0] === 'plan' ? isText(o.plan) : keys[0] === 'view' ? isText(o.view) : false;
 }
 
 export function isTilesMessage(data: unknown): data is TilesMessage {
