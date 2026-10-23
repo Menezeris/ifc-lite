@@ -20,6 +20,7 @@ import { useAimViewTabs } from './viewTabsStore.js';
 import { TILE_HEADER_PX, TILE_RECTS, liveTile, type TileRect } from './viewTilesPlan.js';
 import { activate, putTile } from './viewTabsApply.js';
 import { shotOf } from './tileShots.js';
+import { AimPlanPositionToggle } from './AimPlanPositionToggle.js';
 
 const pct = (v: number) => `${Math.round(v * 1e4) / 100}%`;
 const place = (r: TileRect) => ({ left: pct(r.x), top: pct(r.y), width: pct(r.w), height: pct(r.h) });
@@ -79,6 +80,7 @@ function TileHeader({ index, tab, tabs, live }: { index: number; tab: ViewTab | 
       {tab && isSceneTab(tab) && (
         <span className="truncate text-2xs text-muted-foreground">{live ? 'živé 3D' : 'snímka'}</span>
       )}
+      {tab?.docId && <AimPlanPositionToggle docId={tab.docId} />}
     </div>
   );
 }
