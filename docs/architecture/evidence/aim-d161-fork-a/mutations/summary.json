@@ -11,7 +11,7 @@
     "tests": [
       "apps/viewer/src/aim/views-protocol.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 3 passed / 3 collected",
     "reverted": "assertion-failure — 2 passed, 1 failed / 3 collected",
     "restoration": "verified"
   },
@@ -27,7 +27,7 @@
     "tests": [
       "apps/viewer/src/aim/viewsCodec.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 10 passed / 10 collected",
     "reverted": "assertion-failure — 9 passed, 1 failed / 10 collected",
     "restoration": "verified"
   },
@@ -43,7 +43,7 @@
     "tests": [
       "apps/viewer/src/aim/viewsCodec.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 10 passed / 10 collected",
     "reverted": "assertion-failure — 9 passed, 1 failed / 10 collected",
     "restoration": "verified"
   },
@@ -59,7 +59,7 @@
     "tests": [
       "apps/viewer/src/aim/underlayAtCut.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 7 passed / 7 collected",
     "reverted": "assertion-failure — 6 passed, 1 failed / 7 collected",
     "restoration": "verified"
   },
@@ -75,7 +75,7 @@
     "tests": [
       "apps/viewer/src/aim/viewsCodec.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 10 passed / 10 collected",
     "reverted": "assertion-failure — 9 passed, 1 failed / 10 collected",
     "restoration": "verified"
   },
@@ -91,7 +91,7 @@
     "tests": [
       "apps/viewer/src/aim/integration/viewsBridge.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 8 passed / 8 collected",
     "reverted": "assertion-failure — 3 passed, 5 failed / 8 collected",
     "restoration": "verified"
   },
@@ -107,7 +107,7 @@
     "tests": [
       "apps/viewer/src/aim/integration/viewsBridge.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 8 passed / 8 collected",
     "reverted": "assertion-failure — 7 passed, 1 failed / 8 collected",
     "restoration": "verified"
   },
@@ -123,7 +123,7 @@
     "tests": [
       "apps/viewer/src/aim/storeyViews.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 6 passed / 6 collected",
     "reverted": "assertion-failure — 2 passed, 4 failed / 6 collected",
     "restoration": "verified"
   },
@@ -139,7 +139,7 @@
     "tests": [
       "apps/viewer/src/aim/viewsCodec.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 10 passed / 10 collected",
     "reverted": "assertion-failure — 9 passed, 1 failed / 10 collected",
     "restoration": "verified"
   },
@@ -155,7 +155,7 @@
     "tests": [
       "apps/viewer/src/aim/integration/viewsBridge.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 8 passed / 8 collected",
     "reverted": "assertion-failure — 7 passed, 1 failed / 8 collected",
     "restoration": "verified"
   },
@@ -171,7 +171,7 @@
     "tests": [
       "apps/viewer/src/aim/integration/viewsBridge.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 8 passed / 8 collected",
     "reverted": "assertion-failure — 6 passed, 2 failed / 8 collected",
     "restoration": "verified"
   },
@@ -187,7 +187,7 @@
     "tests": [
       "apps/viewer/src/aim/storeyViews.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 6 passed / 6 collected",
     "reverted": "assertion-failure — 5 passed, 1 failed / 6 collected",
     "restoration": "verified"
   },
@@ -203,7 +203,7 @@
     "tests": [
       "apps/viewer/src/aim/storeyViews.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 6 passed / 6 collected",
     "reverted": "assertion-failure — 5 passed, 1 failed / 6 collected",
     "restoration": "verified"
   },
@@ -219,7 +219,7 @@
     "tests": [
       "apps/viewer/src/aim/underlayAtCut.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 7 passed / 7 collected",
     "reverted": "assertion-failure — 6 passed, 1 failed / 7 collected",
     "restoration": "verified"
   },
@@ -235,7 +235,7 @@
     "tests": [
       "apps/viewer/src/aim/underlayAtCut.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 7 passed / 7 collected",
     "reverted": "assertion-failure — 5 passed, 2 failed / 7 collected",
     "restoration": "verified"
   },
@@ -251,7 +251,7 @@
     "tests": [
       "apps/viewer/src/aim/views-protocol.test.ts"
     ],
-    "baseline": "running the branch's own tests, unmodified",
+    "baseline": "pass — 3 passed / 3 collected",
     "reverted": "assertion-failure — 1 passed, 2 failed / 3 collected",
     "restoration": "verified"
   }
