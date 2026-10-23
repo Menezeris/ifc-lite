@@ -12,6 +12,15 @@ export const aimForkEn = {
   'aimFork.panel.documents': 'Documents',
   'aimFork.panel.aimLayers': 'AIM layers',
   /** Header of the small AIM chat legend card (#218): a plain title, not the technical lens name. */
+  'aimFork.ids.save': 'Save to AIM',
+  'aimFork.ids.saving': 'Saving to AIM...',
+  'aimFork.ids.saved': 'Saved to AIM as {code}, version {version}.',
+  'aimFork.ids.conflict': 'Not saved: AIM already has a newer version ({latest}). Reload this IDS from AIM, or ask the chat to compare the versions.',
+  'aimFork.ids.error': 'Not saved: {reason}',
+  'aimFork.ids.linked': 'From AIM: {code}, version {version}.',
+  'aimFork.ids.linkedEdited': 'From AIM: {code}, version {version} (edited, not saved).',
+  'aimFork.ids.unlinked': 'Not in AIM yet. Saving creates a new IDS there.',
+  'aimFork.ids.specNotFound': 'Specification "{spec}" was not found in this IDS.',
   'aimFork.legend.title': 'Legend',
   /** Rail / ribbon / palette group of the AIM panels (D-104), first of all groups. */
   'aimFork.panelGroups.aim': 'AIM',
