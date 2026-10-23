@@ -32,6 +32,9 @@ import {
 import { useViewerStore } from '@/store';
 import { totalYupOffset } from '@/lib/geo/coordinate-frame';
 import { openPdfDocument, rasterizePdfPage } from '@/lib/pdf/rasterize';
+// >>> AIM-FORK: PDF underlays on/off in 3D from the AIM host and the panel switch (D-133 addendum)
+import { useAimUnderlays3d, underlaysHiddenIn3d, withUnderlay3dVisibility } from '@/aim/aimUnderlays3d';
+// <<< AIM-FORK
 
 export const UNDERLAY_OVERLAY_ID = 'drawing-underlay';
 
@@ -72,6 +75,11 @@ export function useDrawingUnderlay({ rendererRef, isInitialized }: UseDrawingUnd
   const models = useViewerStore((s) => s.models);
   const calibration = useViewerStore((s) => s.underlayCalibration);
   const underlayCut = useViewerStore((s) => s.underlayCut);
+  // >>> AIM-FORK: hide saved underlays in the 3D canvas only (viewer state, not `_georef.visible`)
+  const aimHidden = useAimUnderlays3d((s) => s.hidden);
+  const aimViewLocked = useViewerStore((s) => s.underlayViewLocked);
+  const aimHide3d = underlaysHiddenIn3d({ hidden: aimHidden, viewLocked: aimViewLocked });
+  // <<< AIM-FORK
 
   const pipelineRef = useRef<PdfPlanePipeline | null>(null);
   /** drawingId → texture signature of the raster currently on the GPU. */
@@ -90,7 +98,9 @@ export function useDrawingUnderlay({ rendererRef, isInitialized }: UseDrawingUnd
 
     const entries: RenderEntry[] = [...drawings.values()]
       .filter((d) => d.placement !== null)
-      .map((d) => ({ id: d.id, pdfUrl: d.pdfUrl, name: d.name, placement: d.placement! }));
+      // >>> AIM-FORK: placement copy with `visible: false` while the underlays are off in 3D
+      .map((d) => ({ id: d.id, pdfUrl: d.pdfUrl, name: d.name, placement: withUnderlay3dVisibility(d.placement!, aimHide3d) }));
+      // <<< AIM-FORK
 
     // Live ghost preview (Dalux-style "combined view"): once the mode's
     // point pairs are picked, the drawing shows up immediately as a
@@ -233,7 +243,9 @@ export function useDrawingUnderlay({ rendererRef, isInitialized }: UseDrawingUnd
         }
       })();
     }
-  }, [drawings, models, calibration, isInitialized, rendererRef]);
+  // >>> AIM-FORK: re-sync when the 3D switch changes
+  }, [drawings, models, calibration, isInitialized, rendererRef, aimHide3d]);
+  // <<< AIM-FORK
 
   // Depth-always (no z-fight) while a storey cut is active — a top-down floor
   // plan has nothing above the cut to occlude it; depth-tested + bigger lift

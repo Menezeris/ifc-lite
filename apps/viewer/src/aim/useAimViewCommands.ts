@@ -27,6 +27,8 @@ import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info
 import { sectionRenderBounds as sectionBoundsWith } from './sectionRange.js';
 import { noteIssue, track } from './command-gate.js';
 import { waitCameraSettled } from './cameraSettle.js';
+import { AUTO_ROTATE_SPEED } from './autoRotatePlan.js';
+import { useAimUnderlays3d } from './aimUnderlays3d.js';
 
 type FocusSummary = () => { count: number; guids: string[] };
 /** Zvýraznenie z FOCUS (#94) - poskytne ho AimBridge po lenivom načítaní príkazov viditeľnosti. */
@@ -59,6 +61,11 @@ let panels: Promise<typeof import('./aimPanels.js')> | null = null;
 const loadPanels = () => (panels ??= import('./aimPanels.js'));
 let panelScroll: Promise<typeof import('./aimPanelScroll.js')> | null = null;
 const loadPanelScroll = () => (panelScroll ??= import('./aimPanelScroll.js'));
+/** Otáčanie kamery dokola (AIM #247) - lenivo, bežiaca slučka sa pri odpojení mosta zastaví. */
+let autoRotate: Promise<typeof import('./autoRotate.js')> | null = null;
+const loadAutoRotate = () => (autoRotate ??= import('./autoRotate.js'));
+/** Otáčanie práve beží: `APPLIED` nečaká na ustálenie kamery, ktorá sa nikdy neustáli. */
+let autoRotating = false;
 /** Rezný box (AIM D-132): modul stiahnutý pri pripojení, aby box bežal v poradí s ostatnými príkazmi. */
 let boxModules: [typeof import('./viewQueries.js'), typeof import('./sectionBox.js')] | null = null;
 const loadBox = () => Promise.all([loadQueries(), import('./sectionBox.js')]).then((m) => (boxModules = m));
@@ -99,14 +106,15 @@ export function runSectionBox(raw: unknown): void {
 export async function appliedViewState(): Promise<Record<string, unknown>> {
   const q = await loadQueries();
   // Kamera po obnove pohľadu ešte dobieha animáciu; stav má niesť jej cieľ (AIM #97, D-122).
-  const settled = await waitCameraSettled(() => useViewerStore.getState().cameraCallbacks.getViewpoint?.() ?? null);
+  const settled = await waitCameraSettled(() => (autoRotating ? null : useViewerStore.getState().cameraCallbacks.getViewpoint?.() ?? null));
   const s = q.queryViewState(useViewerStore.getState(), { ...GUIDS, focus: focusProvider });
   return {
+    ...(autoRotating ? { auto_rotate: true } : {}),
     mode: s.mode, storey_guid: s.storey_guid, section: s.section, camera: s.camera,
     // Limit vypršal počas pohybu (používateľ otáča kamerou): póza nie je cieľ, nech to host vie.
     ...(settled ? {} : { camera_moving: true }),
     selection_count: s.selection.count, hidden_count: s.hidden_count, isolated_count: s.isolated_count, focus: s.focus,
-    panels: s.panels, ...(s.panel_view ? { panel_view: s.panel_view } : {}), tabs: s.tabs, ...(s.property_focus ? { property_focus: s.property_focus } : {}), ...(s.document ? { document: s.document } : {}),
+    panels: s.panels, underlays_3d: s.underlays_3d, ...(s.panel_view ? { panel_view: s.panel_view } : {}), tabs: s.tabs, ...(s.property_focus ? { property_focus: s.property_focus } : {}), ...(s.document ? { document: s.document } : {}),
   };
 }
 
@@ -121,7 +129,11 @@ export function useAimViewCommands(bim: BimContext) {
     // Záložky a rezný box (D-132) tiež: ich príkazy idú synchrónne v poradí s ďalšími.
     void preloadTabs();
     void loadBox();
-    return () => { lastGizmo = undefined; };
+    return () => {
+      lastGizmo = undefined;
+      autoRotating = false;
+      void autoRotate?.then((m) => m.stopAutoRotate());
+    };
   }, [bim]);
   /** Záložka 3D bez zvyšného zámku kamery, rezu podlažia a ortografickej projekcie (#216). */
   const free3d = () => {
@@ -202,6 +214,20 @@ export function useAimViewCommands(bim: BimContext) {
       }
       case 'SET_PANELS': {
         track(loadPanels().then((m) => m.applyPanels(msg.panels, noteIssue)));
+        return;
+      }
+      case 'AUTO_ROTATE': {
+        track(loadAutoRotate().then((m) => {
+          if (msg.action === 'stop') { m.stopAutoRotate(); autoRotating = false; return; }
+          autoRotating = m.startAutoRotate(msg.speedDegS ?? AUTO_ROTATE_SPEED.default, msg.direction ?? 'left', {
+            noteIssue,
+            onEnded: () => { autoRotating = false; },
+          });
+        }));
+        return;
+      }
+      case 'SET_UNDERLAYS_3D': {
+        useAimUnderlays3d.getState().setShown(msg.show);
         return;
       }
       case 'SCROLL_PANEL': {

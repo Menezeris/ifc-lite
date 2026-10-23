@@ -1,0 +1,44 @@
+{
+  "complete-repeats": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/autoloadLatch.test.ts; that file has a green, attributable baseline.",
+    "base": "9711d5349abff3b90577058d7bb27f18294cf91a",
+    "head": "2f476c65755c68ae7c94ca06e1647a0f2bf0984c",
+    "production": [
+      "apps/viewer/src/aim/autoloadLatch.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/autoloadLatch.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "late-subscriber-waits": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/autoloadLatch.test.ts; that file has a green, attributable baseline.",
+    "base": "9711d5349abff3b90577058d7bb27f18294cf91a",
+    "head": "2f476c65755c68ae7c94ca06e1647a0f2bf0984c",
+    "production": [
+      "apps/viewer/src/aim/autoloadLatch.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/autoloadLatch.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "unsubscribe-noop": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/autoloadLatch.test.ts; that file has a green, attributable baseline.",
+    "base": "9711d5349abff3b90577058d7bb27f18294cf91a",
+    "head": "2f476c65755c68ae7c94ca06e1647a0f2bf0984c",
+    "production": [
+      "apps/viewer/src/aim/autoloadLatch.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/autoloadLatch.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

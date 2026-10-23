@@ -26,6 +26,7 @@ import { BOTTOM_PANEL_SETTER, isBottomPanel, isBottomPanelOpen } from '@/lib/pan
 import { useBottomPanelFlags } from './useBottomPanelFlags';
 // >>> AIM-FORK
 import { sideDockedPanels } from '@/aim/aimSideDock';
+import { propertiesClickCollapses } from '@/aim/aimRailToggle';
 // <<< AIM-FORK
 import { openPanelWindow, closePanelWindow } from '@/services/panel-windows';
 
@@ -146,6 +147,16 @@ export function usePanelControls(): PanelControls {
       useViewerStore.getState().setSidebarSecondaryPanel(null);
       return;
     }
+    // >>> AIM-FORK: properties icon toggles off by collapsing the column (#243)
+    {
+      const st = useViewerStore.getState();
+      const detached = new Set<string>([...st.floatingPanels.map((p) => p.id), ...st.poppedOutIds]);
+      if (propertiesClickCollapses(id, { ...st, detached })) {
+        st.setSidebarMode('collapsed');
+        return;
+      }
+    }
+    // <<< AIM-FORK
     if (isBottomPanel(id)) useViewerStore.getState().toggleBottomPanel(id, source);
     else useViewerStore.getState().toggleWorkspacePanel(id, source);
   }, []);

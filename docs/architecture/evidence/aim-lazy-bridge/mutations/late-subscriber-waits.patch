@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/autoloadLatch.ts a/apps/viewer/src/aim/autoloadLatch.ts
+index ca3f563e..d937cd36 100644
+--- b/apps/viewer/src/aim/autoloadLatch.ts
++++ a/apps/viewer/src/aim/autoloadLatch.ts
+@@ -21,6 +21,7 @@ export function createAutoloadLatch(active: boolean): AutoloadLatch & { complete
+   return {
+     active,
+     onComplete: (fn) => {
++      if (done) { fn(); return () => {}; }
+       waiting.add(fn);
+       return () => { waiting.delete(fn); };
+     },

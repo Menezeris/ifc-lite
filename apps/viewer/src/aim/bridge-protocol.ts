@@ -13,8 +13,9 @@
 
 import type { EntityRef } from '../store/index.js';
 import type { DerivedRelationWire } from './derivations-protocol.js';
+import { SOURCE } from './bridge-core.js';
 
-export const SOURCE = 'aim-bridge' as const;
+export { SOURCE, guidForEntity } from './bridge-core.js';
 
 /** Blue-400 — matches the old FILTER_COLOR in the AIM three.js viewer. */
 export const FILTER_COLOR = '#60a5fa';
@@ -387,15 +388,6 @@ export function resolveGuids(
     }
   }
   return refs;
-}
-
-/** GlobalId for a given EntityRef, or undefined if the model/entity is gone. */
-export function guidForEntity(
-  models: ReadonlyMap<string, GuidResolvableModel>,
-  ref: EntityRef,
-): string | undefined {
-  const model = models.get(ref.modelId);
-  return model?.ifcDataStore?.entities.getGlobalId(ref.expressId) || undefined;
 }
 
 /** Minimal structural view of an entity table for selector resolution. */

@@ -44,6 +44,9 @@ import { useViewerStore } from '@/store';
 // An earlier bundler build broke react-dom's CJS interop on a lazy chunk here;
 // the e2e boot smoke covers that the current one does not.
 const DrawingUnderlayPanel = lazy(() => import('@/components/viewer/DrawingUnderlayPanel').then((m) => ({ default: m.DrawingUnderlayPanel })));
+// >>> AIM-FORK: "Show in 3D" switch under the Underlays panel (D-133 addendum)
+const AimUnderlaysPanel = lazy(() => import('@/aim/AimUnderlaysPanel').then((m) => ({ default: m.AimUnderlaysPanel })));
+// <<< AIM-FORK
 const DocumentsPanel = lazy(() => import('@/components/documents/DocumentsPanel').then((m) => ({ default: m.DocumentsPanel })));
 const AimLayersPanel = lazy(() => import('@/aim/AimLayersPanel').then((m) => ({ default: m.AimLayersPanel })));
 // <<< AIM-FORK
@@ -220,7 +223,9 @@ function panelBody(id: WorkspacePanelId, onClose: () => void): ReactNode {
     case 'idsStudio': return <IdsStudioPanelBody />;
     case 'changeSets': return <ChangeSetPanel onClose={onClose} />;
     // >>> AIM-FORK: fork-only panels
-    case 'drawing-underlay': return <ChunkErrorBoundary label="Drawing underlays panel"><Suspense fallback={null}><DrawingUnderlayPanel onClose={onClose} /></Suspense></ChunkErrorBoundary>;
+    // >>> AIM-FORK: Underlays panel with the "Show in 3D" switch as a footer (D-133 addendum)
+    case 'drawing-underlay': return <ChunkErrorBoundary label="Drawing underlays panel"><Suspense fallback={null}><AimUnderlaysPanel onClose={onClose} Panel={DrawingUnderlayPanel} /></Suspense></ChunkErrorBoundary>;
+    // <<< AIM-FORK
     case 'documents': return <ChunkErrorBoundary label="Documents panel"><Suspense fallback={null}><DocumentsPanel onClose={onClose} /></Suspense></ChunkErrorBoundary>;
     case 'aim-layers': return <ChunkErrorBoundary label="AIM layers panel"><Suspense fallback={null}><AimLayersPanel onClose={onClose} /></Suspense></ChunkErrorBoundary>;
     // <<< AIM-FORK

@@ -30,6 +30,8 @@ export interface DocLink {
   label: string;
   status: 'unique' | 'candidates';
   targets: DocLinkTarget[];
+  /** Značka typu s viac výskytmi: klik otvorí tento IFC typ, `targets` sú vedľajšia voľba. */
+  type?: DocLinkTarget;
 }
 
 export interface DocLinksMessage {
@@ -117,6 +119,7 @@ function normalizeLink(raw: unknown): DocLink | null {
     .filter((t): t is DocLinkTarget => t !== null)
     .slice(0, MAX_TARGETS);
   if (targets.length === 0) return null;
+  const type = targets.length > 1 ? normalizeTarget(l.type) : null;
   const x = Math.max(0, x0);
   const y = Math.max(0, y0);
   return {
@@ -128,6 +131,7 @@ function normalizeLink(raw: unknown): DocLink | null {
     label: text(l.label) ?? targets[0].ref,
     status: targets.length > 1 ? 'candidates' : 'unique',
     targets,
+    ...(type ? { type } : {}),
   };
 }
 
@@ -155,8 +159,9 @@ export function normalizeDocLinks(documents: readonly unknown[]): Map<string, Do
 /** Popis oblasti (title): kam vedie a že je to odvodenie AIM, nie údaj z IFC. */
 export function linkTitle(link: DocLink): string {
   const [first] = link.targets;
-  const to =
-    link.status === 'unique'
+  const to = link.type
+    ? `typ ${link.type.ref}${link.type.name ? ` ${link.type.name}` : ''}, výskyty na podlaží: ${link.targets.length}`
+    : link.status === 'unique'
       ? `${first.ref}${first.name ? ` ${first.name}` : ''}`
       : `kandidáti (${link.targets.length}): ${link.targets.map((t) => t.ref).join(', ')}`;
   return `${link.label} -> ${to} (AIM: odvodené z popisku)`;
@@ -242,6 +247,8 @@ function linkBox(layer: HTMLElement, link: DocLink): HTMLElement {
   });
   stopPointer(el);
   const activate = () => {
+    // Značka typu: otvor IFC typ; výber výskytov je záloha, keď typ vo vieweri nie je.
+    if (link.type && selectDocLinkTarget(link.type.guid)) return;
     if (link.status === 'candidates') openPicker(layer, link);
     else if (!selectDocLinkTarget(link.targets[0].guid)) flagMissing(el);
   };

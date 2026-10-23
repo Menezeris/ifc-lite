@@ -117,7 +117,7 @@ function syncPlanBeside(next: ViewTabsState, note: Note): void {
   }
   const storey = deps?.storeys.find((x) => x.guid === guid);
   if (!deps || !storey) return note('VIEW_TABS: podlažie pôdorysu sa vo vieweri nenašlo');
-  if (!deps.storeyHasDrawing(guid)) return note('pôdorys vedľa 3D zatiaľ len s kalibrovaným podkladom (D-072); bez neho otvor pôdorys v záložke');
+  if (!deps.storeyHasDrawing(guid)) return note('pôdorys vedľa 3D zatiaľ len s kalibrovaným podkladom (D-072); bez neho otvor pôdorys v záložke, alebo rez podlažia a panel drawing (2D výkres rezu z modelu, D-136)');
   if (s.underlaySplitView && s.underlayActiveStoreyGuid === guid) return;
   // Split si nastaví vlastnú kameru (home); 3D záložka si ju po návrate vráti zo stavu.
   const keep = capture();

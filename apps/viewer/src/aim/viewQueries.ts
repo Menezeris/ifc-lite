@@ -27,6 +27,7 @@ import { describePanels } from './aimPanelsPlan.js';
 import { panelViewState } from './aimPanelScroll.js';
 import { useAimInspectorStore } from './aimInspectorStore.js';
 import { useAimDocRegionStore } from './docRegion.js';
+import { useAimUnderlays3d } from './aimUnderlays3d.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { describeTabs } from './viewTabsPlan.js';
 import { orderedBox, toSectionBox, type SectionBoxMessage } from './sectionBox.js';
@@ -222,6 +223,8 @@ export function queryViewState(state: State, g: GuidHelpers) {
     panels: describePanels(state),
     // AIM D-150: kam chat posunul alebo priblížil obsah panela (lenivý modul, kým sa nepoužil, nie je čo hlásiť).
     panel_view: panelViewState(),
+    // AIM D-133 doplnok (#170): podklady PDF v 3D zobrazené (true) alebo skryté (false); stav viewera.
+    underlays_3d: !useAimUnderlays3d.getState().hidden,
     property_focus: useAimInspectorStore.getState().propertyFocus,
     document: useAimDocRegionStore.getState().visible,
     // AIM D-132: záložky (aktívna a tá vedľa).

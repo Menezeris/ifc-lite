@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimRoomFill3d.ts a/apps/viewer/src/aim/aimRoomFill3d.ts
+index 0126e7f6..0d2c2547 100644
+--- b/apps/viewer/src/aim/aimRoomFill3d.ts
++++ a/apps/viewer/src/aim/aimRoomFill3d.ts
+@@ -106,7 +106,7 @@ function splitAt(a: P2, b: P2, verts: readonly P2[]): P2[] {
+     const cross = (p.x - a.x) * dz - (p.z - a.z) * dx;
+     if (Math.abs(cross) / Math.sqrt(len2) < 5e-4) on.push({ t, p });
+   }
+-  return [a, b];
++  return [a, ...on.sort((u, v) => u.t - v.t).map((o) => o.p), b];
+ }
+ 
+ /**

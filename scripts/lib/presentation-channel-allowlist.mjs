@@ -95,6 +95,15 @@ export const REQUIRES_ROUTING_MARKER = new Set([
  * `ROUTING_MARKERS` call, each with a reason a reviewer can check.
  */
 export const NO_MARKER_REQUIRED = new Map([
+  // >>> AIM-FORK: X-ray context limited to chosen storeys (AIM D-140, #187)
+  [
+    'apps/viewer/src/aim/aimXrayStoreys.ts',
+    'AIM X-ray storey context (D-140, #187): the hide side IS routed (resolvePresentationIds, so an ' +
+    'assembly outside the chosen storeys hides through its parts) and records the expanded ids it newly ' +
+    'hid. The paired showEntities releases exactly those recorded ids (an ownership ledger like the ' +
+    'lens hide/show pair), so expanding the release side again could unhide something the user hid.',
+  ],
+  // <<< AIM-FORK
   [
     'apps/viewer/src/lib/actions/scene-restore.ts',
     'Assistant scene-action restore (#6907): showEntities releases exactly the ids applySceneActions ' +

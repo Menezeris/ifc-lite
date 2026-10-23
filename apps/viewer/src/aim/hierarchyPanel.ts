@@ -10,4 +10,5 @@
  */
 
 export { useAimDecorationsStore } from './aimDecorationsStore';
-export { guidForEntity, type AimTreeDecoration } from './bridge-protocol';
+export { guidForEntity } from './bridge-core';
+export type { AimTreeDecoration } from './bridge-protocol';

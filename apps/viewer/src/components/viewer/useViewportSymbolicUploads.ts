@@ -6,6 +6,9 @@ import { useEffect, type MutableRefObject } from 'react';
 import type { Renderer, SymbolicFillInput, SymbolicTextInput } from '@ifc-lite/renderer';
 import { rendererLineVertexData, type RendererLineVertices } from '@/lib/renderer/line-overlay-rte';
 import { uploadGuarded } from './gpu-owned-upload.js';
+// >>> AIM-FORK: podstava ofarbených miestností v 3D (AIM D-125, #175) ide kanálom výplní IfcAnnotation
+import { useAimRoomFill3dStore } from '@/aim/aimRoomFill3dStore';
+// <<< AIM-FORK
 
 type UploadTarget = Pick<Renderer, 'setLineOverlay' | 'uploadAnnotationFills3D' | 'uploadAnnotationTexts3D'>;
 type RendererRef = MutableRefObject<UploadTarget | null>;
@@ -44,12 +47,18 @@ export function useViewportSymbolicUploads(params: {
   useLineUpload(rendererRef, isInitialized, gpuRecoveryEpoch, 'annotation', annotation, true, annotationCountRef);
   useLineUpload(rendererRef, isInitialized, gpuRecoveryEpoch, 'alignment', alignment);
   useLineUpload(rendererRef, isInitialized, gpuRecoveryEpoch, 'grid', grid, gridVisible);
+  // >>> AIM-FORK: výplne IfcAnnotation + podstava miestností z AIM (D-125, #175)
+  const aimFills = useAimRoomFill3dStore((s) => s.fills);
   useEffect(() => {
     const renderer = rendererRef.current;
     if (!renderer || !isInitialized) return;
-    uploadGuarded('uploadAnnotationFills3D', () => renderer.uploadAnnotationFills3D(fills),
+    const all = aimFills.length === 0 ? fills : [...fills, ...aimFills];
+    uploadGuarded('uploadAnnotationFills3D', () => renderer.uploadAnnotationFills3D(all),
       () => renderer.uploadAnnotationFills3D([]));
-  }, [rendererRef, isInitialized, gpuRecoveryEpoch, fills]);
+    // Renderer kreslí na požiadanie: farba miestnosti sa mení bez pohybu kamery.
+    (renderer as Partial<Pick<Renderer, 'requestRender'>>).requestRender?.();
+  }, [rendererRef, isInitialized, gpuRecoveryEpoch, fills, aimFills]);
+  // <<< AIM-FORK
   useEffect(() => {
     const renderer = rendererRef.current;
     if (!renderer || !isInitialized) return;

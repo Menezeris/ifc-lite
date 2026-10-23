@@ -43,6 +43,9 @@ function closePanel(s: Store, key: PanelKey): void {
     case 'lists':
       s.setListPanelVisible(false);
       return;
+    case 'drawing':
+      s.setDrawing2DPanelVisible(false);
+      return;
     case 'properties':
       // Vlastnosti sú záloha pravého stĺpca: v spodnej polovici splitu ju uvoľnia, v hornej zbalia stĺpec.
       if (s.sidebarSecondaryPanel === 'properties') s.setSidebarSecondaryPanel(null);
