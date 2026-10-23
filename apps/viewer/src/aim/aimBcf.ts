@@ -11,8 +11,9 @@
  * entry does.
  */
 
-import type { BCFProject } from '@ifc-lite/bcf';
+import type { BCFDocumentReference, BCFProject } from '@ifc-lite/bcf';
 import type { BcfLoadMessage } from './bcf-protocol.js';
+import { mergeAimProject } from './docIssueModel.js';
 
 type BcfApi = Pick<typeof import('@ifc-lite/bcf-api'), 'BcfApiClient' | 'fetchProjectAsBCF'>;
 
@@ -22,19 +23,45 @@ export interface AimBcfDeps {
   /** The caller's `import('@ifc-lite/bcf-api')`: a dynamic import here would make
    * vite-plugin-top-level-await rewrite this chunk (scripts/check-tla-chunk-await.mjs). */
   loadApi: () => Promise<BcfApi>;
+  /** Document references of a topic (AIM D-158); the upstream client has no call for them. */
+  fetchFn?: typeof fetch;
 }
 
+/** Marker the host puts in a topic description when the topic has document references (AIM D-158). */
+export const DOCUMENTS_HEADING = 'Dokumenty (AIM):';
+
 /**
- * Replace the viewer's BCF project with the host's topics only when that
- * cannot lose the user's own work: no project yet, an empty one, or the one
- * the previous AIM_BCF_LOAD put there. A project the user opened from a file
- * or a server connection stays.
+ * Document references (AIM D-158) of the host topics that have some: the BCF
+ * panel and the PDF frames read them from the topic, and an export carries them.
+ * Only topics whose description lists documents are asked; a failure leaves the
+ * topic without them (the description still names the document and page).
  */
-export function shouldReplaceBcfProject<P extends { topics: { size: number } }>(
-  current: P | null,
-  lastLoaded: P | null,
-): boolean {
-  return current === null || current === lastLoaded || current.topics.size === 0;
+async function attachDocumentReferences(project: BCFProject, msg: BcfLoadMessage, fetchFn: typeof fetch): Promise<void> {
+  const base = msg.baseUrl.replace(/\/+$/, '');
+  const wanted = [...project.topics.values()].filter((t) => t.description?.includes(DOCUMENTS_HEADING));
+  await Promise.all(wanted.map(async (topic) => {
+    try {
+      const url = `${base}/2.1/projects/${encodeURIComponent(msg.projectId)}/topics/${encodeURIComponent(topic.guid)}/document_references`;
+      const res = await fetchFn(url, { headers: { Accept: 'application/json' } });
+      if (!res.ok) return;
+      const rows = (await res.json()) as unknown;
+      if (!Array.isArray(rows)) return;
+      const refs: BCFDocumentReference[] = [];
+      for (const r of rows as Record<string, unknown>[]) {
+        if (typeof r?.url !== 'string') continue;
+        refs.push({
+          ...(typeof r.guid === 'string' ? { guid: r.guid } : {}),
+          url: r.url,
+          referencedDocument: r.url,
+          isExternal: true,
+          ...(typeof r.description === 'string' ? { description: r.description } : {}),
+        });
+      }
+      if (refs.length) topic.documentReferences = refs;
+    } catch (err) {
+      console.warn('[aim-bridge] AIM_BCF_LOAD: document references', topic.guid, err);
+    }
+  }));
 }
 
 let lastLoaded: BCFProject | null = null;
@@ -52,11 +79,16 @@ export async function loadAimBcfTopics(
   const result = await api.fetchProjectAsBCF(client, msg.projectId, { includeSnapshots: false });
   if (mine !== generation) return 'stale';
   if (result.warnings.length > 0) console.warn('[aim-bridge] AIM_BCF_LOAD:', result.warnings);
-  if (!shouldReplaceBcfProject(deps.getProject(), lastLoaded)) {
+  const fetchFn = deps.fetchFn ?? (typeof fetch === 'function' ? fetch.bind(globalThis) : null);
+  if (fetchFn) await attachDocumentReferences(result.project, msg, fetchFn);
+  if (mine !== generation) return 'stale';
+  // AIM D-158: topics added in the panel (not saved yet) stay; saved ones come back from the host.
+  const next = mergeAimProject(deps.getProject(), result.project, lastLoaded);
+  if (!next) {
     console.warn('[aim-bridge] AIM_BCF_LOAD: the open BCF project is the user\'s own, AIM topics not loaded');
     return 'kept';
   }
-  deps.setProject(result.project);
-  lastLoaded = result.project;
+  deps.setProject(next);
+  lastLoaded = next;
   return 'loaded';
 }

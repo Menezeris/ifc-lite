@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/docIssueModel.ts a/apps/viewer/src/aim/docIssueModel.ts
+index 39261858..a8c077d4 100644
+--- b/apps/viewer/src/aim/docIssueModel.ts
++++ a/apps/viewer/src/aim/docIssueModel.ts
+@@ -46,6 +46,7 @@ export function regionFromDrag(
+   const x1 = Math.max(fx(a.x), fx(b.x));
+   const y0 = Math.min(fy(a.y), fy(b.y));
+   const y1 = Math.max(fy(a.y), fy(b.y));
++  if (x1 - x0 < MIN_DRAG || y1 - y0 < MIN_DRAG) return null;
+   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+ }
+ 

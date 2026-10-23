@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/docIssueModel.ts a/apps/viewer/src/aim/docIssueModel.ts
+index 6738961d..a8c077d4 100644
+--- b/apps/viewer/src/aim/docIssueModel.ts
++++ a/apps/viewer/src/aim/docIssueModel.ts
+@@ -210,6 +210,7 @@ export function mergeAimProject(current: BCFProject | null, fresh: BCFProject, p
+   if (!previous || !fresh.projectId || current.projectId !== fresh.projectId) return null;
+   const topics = new Map(fresh.topics);
+   for (const [guid, topic] of current.topics) {
++    if (isLocalTopic(topic) && !topics.has(guid)) topics.set(guid, topic);
+   }
+   return { ...fresh, topics };
+ }

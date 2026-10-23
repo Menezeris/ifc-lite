@@ -28,6 +28,7 @@ import { panelViewState } from './aimPanelScroll.js';
 import { useAimInspectorStore } from './aimInspectorStore.js';
 import { useAimDocRegionStore } from './docRegion.js';
 import { useAimUnderlays3d } from './aimUnderlays3d.js';
+import { aimBcfContext } from './bcf-protocol.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { describeTabs } from './viewTabsPlan.js';
 import { describeLayout } from './viewTilesPlan.js';
@@ -311,8 +312,16 @@ export function answerQuery(msg: Extract<ViewInboundMessage, { type: 'QUERY' }>,
   const reply = (r: ViewQueryResult) => window.parent.postMessage(r, origin);
   try {
     const state = useViewerStore.getState();
-    const result = msg.query === 'bounds' ? queryBounds(state, msg.guids ?? [], g) : queryViewState(state, g);
-    reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: true, result });
+    if (msg.query === 'bounds') {
+      reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: true, result: queryBounds(state, msg.guids ?? [], g) });
+      return;
+    }
+    const result = queryViewState(state, g);
+    // BCF témy pridané v paneli, ktoré host ešte nemá (AIM D-158); modul je lenivý.
+    void import('./docIssueModel.js')
+      .then((m) => ({ ...result, bcf_local: m.describeLocalTopics(useViewerStore.getState().bcfProject, aimBcfContext()?.projectId ?? null) }))
+      .catch(() => result)
+      .then((r) => reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: true, result: r }));
   } catch (err) {
     reply({ source: msg.source, type: 'QUERY_RESULT', id: msg.id, ok: false, error: err instanceof Error ? err.message : String(err) });
   }

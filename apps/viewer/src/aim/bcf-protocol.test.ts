@@ -8,7 +8,7 @@ import assert from 'node:assert';
 import type { BCFProject } from '@ifc-lite/bcf';
 import { SOURCE } from './bridge-protocol.js';
 import { isBcfLoadMessage, type BcfLoadMessage } from './bcf-protocol.js';
-import { loadAimBcfTopics, shouldReplaceBcfProject } from './aimBcf.js';
+import { loadAimBcfTopics } from './aimBcf.js';
 
 const HOST = 'https://aim.example';
 const msg = (over: Record<string, unknown> = {}) => ({
@@ -35,14 +35,6 @@ describe('AIM_BCF_LOAD (AIM D-099)', () => {
     assert.equal(isBcfLoadMessage(msg({ baseUrl: 'nie url' }), HOST), false);
     assert.equal(isBcfLoadMessage(msg({ projectId: '' }), HOST), false);
     assert.equal(isBcfLoadMessage({ ...msg(), source: 'other' }, HOST), false);
-  });
-
-  it('replaces only an empty, missing or previously loaded AIM project', () => {
-    const aim = project(2);
-    assert.equal(shouldReplaceBcfProject(null, null), true);
-    assert.equal(shouldReplaceBcfProject(project(0), null), true);
-    assert.equal(shouldReplaceBcfProject(aim, aim), true);
-    assert.equal(shouldReplaceBcfProject(project(3), aim), false);
   });
 
   it('pulls the project without a token and keeps the user\'s own project', async () => {
@@ -73,6 +65,47 @@ describe('AIM_BCF_LOAD (AIM D-099)', () => {
     current = own;
     assert.equal(await loadAimBcfTopics(msg() as BcfLoadMessage, deps), 'kept');
     assert.equal(current, own);
+  });
+
+  it('AIM D-158: keeps topics added in the panel, takes the saved copy back, reads document references', async () => {
+    const DOC = '11111111-1111-4111-8111-111111111111';
+    const ref = `${HOST}/drawing/${DOC}?page=2&region=50_0_25_50#page=2`;
+    const host = (topics: Record<string, unknown>[]): BCFProject => ({
+      version: '2.1',
+      projectId: 'aim',
+      topics: new Map(topics.map((t) => [t.guid as string, { comments: [], viewpoints: [], ...t } as never])),
+    });
+    let pulls = [
+      host([{ guid: 'h1', title: 'z chatu', index: 1 }]),
+      host([{ guid: 'h1', title: 'z chatu', index: 1 }, { guid: 'n1', title: 'z PDF', index: 2, description: 'Chýba\n\nDokumenty (AIM):\n- D.1.1.09, strana 2' }]),
+    ];
+    const loadApi = async () => ({
+      BcfApiClient: class {} as never,
+      fetchProjectAsBCF: (async () => ({ project: pulls.shift()!, warnings: [] })) as never,
+    });
+    const asked: string[] = [];
+    const fetchFn = (async (url: string) => {
+      asked.push(url);
+      return new Response(JSON.stringify([{ guid: 'r1', url: ref, description: 'D.1.1.09, strana 2' }]), { status: 200 });
+    }) as unknown as typeof fetch;
+    let current: BCFProject | null = null;
+    const deps = { getProject: () => current, setProject: (p: BCFProject) => (current = p), loadApi, fetchFn };
+
+    assert.equal(await loadAimBcfTopics(msg() as BcfLoadMessage, deps), 'loaded');
+    assert.deepEqual(asked, []);
+    // Panel "New topic": two local topics (no host index); the chat then saves n1.
+    const withLocal: BCFProject = { ...current!, topics: new Map(current!.topics) };
+    for (const guid of ['n1', 'n2']) withLocal.topics.set(guid, { guid, title: guid, comments: [], viewpoints: [] } as never);
+    current = withLocal;
+    assert.equal(await loadAimBcfTopics(msg() as BcfLoadMessage, deps), 'loaded');
+    const topics = current!.topics;
+    assert.deepEqual([...topics.keys()], ['h1', 'n1', 'n2']);
+    assert.equal(topics.get('n1')!.index, 2);
+    assert.equal(topics.get('n2')!.index, undefined);
+    assert.deepEqual(asked, [`${HOST}/api/bcf/2.1/projects/aim/topics/n1/document_references`]);
+    assert.deepEqual(topics.get('n1')!.documentReferences, [
+      { guid: 'r1', url: ref, referencedDocument: ref, isExternal: true, description: 'D.1.1.09, strana 2' },
+    ]);
   });
 
   it('drops a load overtaken by a newer one', async () => {

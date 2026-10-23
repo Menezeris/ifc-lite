@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docIssueModel.ts a/apps/viewer/src/aim/docIssueModel.ts
+index dd959b35..a8c077d4 100644
+--- b/apps/viewer/src/aim/docIssueModel.ts
++++ a/apps/viewer/src/aim/docIssueModel.ts
+@@ -122,7 +122,7 @@ export function issuesOnPage(project: BCFProject | null, docId: string, page: nu
+     const saved = typeof topic.index === 'number';
+     if (!saved) local += 1;
+     for (const t of topicDocTargets(topic)) {
+-      if (t.docId !== docId.toLowerCase()) continue;
++      if (t.docId !== docId.toLowerCase() || t.page !== page) continue;
+       out.push({ guid: topic.guid, label: saved ? `#${topic.index}` : `N${local}`, title: topic.title, region: t.region, saved });
+     }
+   }

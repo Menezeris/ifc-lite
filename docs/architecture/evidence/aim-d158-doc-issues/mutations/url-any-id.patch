@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docIssueModel.ts a/apps/viewer/src/aim/docIssueModel.ts
+index 36ee86b5..a8c077d4 100644
+--- b/apps/viewer/src/aim/docIssueModel.ts
++++ a/apps/viewer/src/aim/docIssueModel.ts
+@@ -67,7 +67,7 @@ export function parseDocIssueUrl(url: string | undefined): DocIssueTarget | null
+     return null;
+   }
+   const m = /^\/drawing\/([^/]+)\/?$/.exec(u.pathname);
+-  if (!m) return null;
++  if (!m || !UUID.test(m[1])) return null;
+   const page = Number(u.searchParams.get('page') ?? u.hash.replace(/^#page=/, ''));
+   if (!Number.isInteger(page) || page < 1) return null;
+   const parts = (u.searchParams.get('region') ?? '').split('_').map(Number);
