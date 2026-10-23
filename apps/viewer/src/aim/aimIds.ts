@@ -95,9 +95,12 @@ async function loadValidation(msg: IdsLoadMessage, deps: IdsDeps): Promise<void>
 function handleSaved(msg: IdsSavedMessage): void {
   const sent = pending.get(msg.target);
   pending.delete(msg.target);
-  if (msg.ok && msg.code && msg.version && sent) {
-    const slot = { code: msg.code, version: msg.version, baseline: sent.xml };
-    useAimIds.setState(msg.target === 'studio' ? { studio: { ...slot, docId: sent.key } } : { validation: { ...slot, entryId: sent.key } });
+  if (msg.ok && msg.code && msg.version) {
+    // Bez zapamätaného odoslania (potvrdenie po odpojení mosta) sa dokument s AIM neprepojí, len sa ukáže výsledok.
+    if (sent) {
+      const slot = { code: msg.code, version: msg.version, baseline: sent.xml };
+      useAimIds.setState(msg.target === 'studio' ? { studio: { ...slot, docId: sent.key } } : { validation: { ...slot, entryId: sent.key } });
+    }
     setStatus({ target: msg.target, kind: 'saved', code: msg.code, version: msg.version });
     return;
   }
