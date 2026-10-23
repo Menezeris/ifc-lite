@@ -102,9 +102,16 @@ describe('most Presentation <-> uložené pohľady (AIM D-161)', () => {
     assert.deepEqual(types(), ['VIEW_DELETE']);
   });
 
-  it('pohľad zmazaný naraz tromi alebo viac sa hostovi nehlási (reset relácie, nie ruka)', async () => {
-    load(wire('a', 0), wire('b', 1), wire('c', 2));
-    useViewerStore.setState({ basketViews: [] });
+  it('tri pohľady zmazané rukou naraz (modely nezmenené) sa hostovi hlásia', async () => {
+    load(wire('a', 0), wire('b', 1), wire('c', 2), wire('d', 3));
+    useViewerStore.setState((s) => ({ basketViews: s.basketViews.filter((v) => v.id === 'd') }));
+    await wait();
+    assert.deepEqual(types(), ['VIEW_DELETE', 'VIEW_DELETE', 'VIEW_DELETE']);
+  });
+
+  it('tri a viac pohľadov zmizne spolu s výmenou modelov, ale nie všetky: hostovi sa nič nemaže', async () => {
+    load(wire('a', 0), wire('b', 1), wire('c', 2), wire('d', 3));
+    useViewerStore.setState((s) => ({ basketViews: s.basketViews.filter((v) => v.id === 'd'), models: new Map([['m', { id: 'm', visible: true } as never]]) }));
     await wait();
     assert.deepEqual(types(), []);
   });

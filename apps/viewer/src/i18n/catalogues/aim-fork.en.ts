@@ -23,6 +23,8 @@ export const aimForkEn = {
   /** Underlays panel switch (AIM D-133 addendum, #170): hides the PDF underlays in the 3D view only. */
   'aimFork.underlays3d.label': 'Show in 3D',
   'aimFork.underlays3d.hint': 'Hides the PDF drawings in the 3D view only. Calibration stays saved; the 2D plan is unchanged.',
+  /** Save in the Presentation panel with nothing visible to put into the basket (AIM D-161). */
+  'aimFork.presentation.nothingToSave': 'Nothing to save: the model has no visible elements.',
   /** Highlighted download button after an export request from the AIM chat (AIM D-149): the browser needs the user's click. */
   'aimFork.listExport.action': 'Download {format}',
   'aimFork.listExport.hint': 'Requested from the AIM chat: click to download',
