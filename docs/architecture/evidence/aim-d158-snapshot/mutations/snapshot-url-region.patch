@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/docIssueModel.ts a/apps/viewer/src/aim/docIssueModel.ts
+index 4620a45f..5fc4a2ac 100644
+--- b/apps/viewer/src/aim/docIssueModel.ts
++++ a/apps/viewer/src/aim/docIssueModel.ts
+@@ -86,6 +86,7 @@ export function parseDocIssueUrl(url: string | undefined): DocIssueTarget | null
+ export function docSnapshotUrl(origin: string | null, t: DocIssueTarget): string | null {
+   if (!origin) return null;
+   const q = new URLSearchParams({ page: String(t.page) });
++  if (t.region) q.set('region', [t.region.x, t.region.y, t.region.w, t.region.h].map(pct).join('_'));
+   return `${origin.replace(/\/+$/, '')}/api/drawing/${t.docId}/snapshot?${q.toString()}`;
+ }
+ 
