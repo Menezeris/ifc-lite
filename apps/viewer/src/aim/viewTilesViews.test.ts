@@ -5,8 +5,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
-import { dropViewTabs, initialTabs, resolveTabRef, syncViewTabs, viewTabId, describeTabs, type ViewTab, type ViewTabsState } from './viewTabsPlan.js';
-import { addTile, describeLayout, isTiled, type TilesState } from './viewTilesPlan.js';
+import { besidePair, besideRefusal, dropViewTabs, initialTabs, resolveTabRef, syncViewTabs, viewTabId, describeTabs, type ViewTab, type ViewTabsState } from './viewTabsPlan.js';
+import { addTile, describeLayout, isTiled, layoutTiles, reconcileTiles, singleTiles, tileScene, type TilesState } from './viewTilesPlan.js';
 import { isTilesMessage } from './tiles-protocol.js';
 import { SOURCE } from './bridge-protocol.js';
 
@@ -76,5 +76,29 @@ describe('pohľady z Presentation v dlaždiciach (AIM D-161, Fork B)', () => {
     assert.ok(isTilesMessage(msg([{ tab: '3d' }, { view: 'Rez A' }])));
     assert.ok(!isTilesMessage(msg([{ view: '  ' }])));
     assert.ok(!isTilesMessage(msg([{ view: 'a', tab: 'b' }])));
+  });
+
+  it('pohľad je 3D scéna: s dokumentom ide vedľa seba, s druhou 3D scénou nie (jeden canvas)', () => {
+    const doc: ViewTab = { id: 'doc:A', kind: 'doc', label: 'A.pdf', docId: 'A' };
+    const s = withViews(view('a', 'A'), doc);
+    assert.deepStrictEqual(besidePair(s, 'view:a', 'doc:A'), { active: 'view:a', beside: 'doc:A' });
+    assert.strictEqual(besideRefusal(s, 'view:a', 'doc:A'), null);
+    assert.match(besideRefusal(s, '3d', 'view:a') ?? '', /jeden 3D canvas/);
+  });
+
+  it('layoutTiles a reconcileTiles držia pohľad v dlaždici, zavretý pohľad uvoľní dlaždicu', () => {
+    const s = withViews(view('a', 'A'), view('b', 'B'));
+    assert.deepStrictEqual(layoutTiles(s, singleTiles(), 'split_h', ['3d', 'view:b']).tiles, ['3d', 'view:b']);
+    // Pohľad B zmizol zo záložiek (zmazaný v Presentation): jeho dlaždicu dostane neukázaná otvorená záložka.
+    const gone = syncViewTabs(s, [{ id: 'a', name: 'A' }]);
+    assert.deepStrictEqual(reconcileTiles(gone, { layout: 'split_h', tiles: ['3d', 'view:b'] }, '3d').tiles, ['3d', 'view:a']);
+  });
+
+  it('tileScene: aktívny pohľad je živá scéna, aktívny dokument nechá doterajšiu živú pohľadovú dlaždicu', () => {
+    const doc: ViewTab = { id: 'doc:A', kind: 'doc', label: 'A.pdf', docId: 'A' };
+    const s = withViews(view('a', 'A'), doc);
+    const t: TilesState = { layout: 'split_h', tiles: ['3d', 'view:a'] };
+    assert.strictEqual(tileScene({ ...s, activeId: 'view:a' }, t, '3d'), 'view:a');
+    assert.strictEqual(tileScene({ ...s, activeId: 'doc:A' }, t, 'view:a'), 'view:a');
   });
 });
