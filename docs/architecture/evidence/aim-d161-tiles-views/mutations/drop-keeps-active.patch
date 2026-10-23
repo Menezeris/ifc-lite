@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTabsPlan.ts a/apps/viewer/src/aim/viewTabsPlan.ts
+index 959f900f..9c901247 100644
+--- b/apps/viewer/src/aim/viewTabsPlan.ts
++++ a/apps/viewer/src/aim/viewTabsPlan.ts
+@@ -141,7 +141,7 @@ export function dropViewTabs(s: ViewTabsState): ViewTabsState {
+   if (!s.tabs.some((t) => t.kind === 'view')) return s;
+   const tabs = s.tabs.filter((t) => t.kind !== 'view');
+   const gone = (id: string | null) => id !== null && !tabs.some((t) => t.id === id);
+-  return { tabs, activeId: s.activeId, besideId: gone(s.besideId) ? null : s.besideId };
++  return { tabs, activeId: gone(s.activeId) ? TAB_3D.id : s.activeId, besideId: gone(s.besideId) ? null : s.besideId };
+ }
+ 
+ /** Odkaz z chatu: id, `3d`, menovka (bez ohľadu na veľkosť písmen), id dokumentu alebo id pohľadu. */

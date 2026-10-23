@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTabsPlan.ts a/apps/viewer/src/aim/viewTabsPlan.ts
+index df517307..9c901247 100644
+--- b/apps/viewer/src/aim/viewTabsPlan.ts
++++ a/apps/viewer/src/aim/viewTabsPlan.ts
+@@ -161,7 +161,7 @@ export function describeTabs(s: ViewTabsState) {
+     kind: t.kind,
+     label: t.label,
+     ...(t.docId ? { document_id: t.docId } : {}),
+-    
++    ...(t.viewId ? { view_id: t.viewId } : {}),
+     active: t.id === s.activeId,
+     beside: t.id === s.besideId,
+   }));

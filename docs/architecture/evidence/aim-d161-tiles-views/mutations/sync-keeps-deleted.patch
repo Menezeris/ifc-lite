@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTabsPlan.ts a/apps/viewer/src/aim/viewTabsPlan.ts
+index f950e7b4..9c901247 100644
+--- b/apps/viewer/src/aim/viewTabsPlan.ts
++++ a/apps/viewer/src/aim/viewTabsPlan.ts
+@@ -131,7 +131,7 @@ export function syncDocTabs(
+ export function syncViewTabs(s: ViewTabsState, views: readonly { id: string; name: string }[]): ViewTabsState {
+   const want = new Map(views.map((v) => [viewTabId(v.id), v.name]));
+   let next = s;
+-  for (const t of s.tabs) if (t.kind === 'view' && want.has('x:' + t.id)) next = closeTab(next, t.id);
++  for (const t of s.tabs) if (t.kind === 'view' && !want.has(t.id)) next = closeTab(next, t.id);
+   const tabs = next.tabs.map((t) => (t.kind === 'view' && want.get(t.id) !== undefined && want.get(t.id) !== t.label ? { ...t, label: want.get(t.id)! } : t));
+   return tabs.some((t, i) => t !== next.tabs[i]) ? { ...next, tabs } : next;
+ }

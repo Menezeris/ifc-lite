@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index b30e65be..b2bf29db 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -160,7 +160,7 @@ export function addTile(s: ViewTabsState, t: TilesState, id: string, liveId: str
+   if (!tabOf(s, id)) return t;
+   if (t.tiles.includes(id)) return t;
+   if (!isTiled(t)) return { layout: 'split_h', tiles: [s.activeId, id] };
+-  
++  if (t.tiles.includes(null)) return placeTab(s, t, id, liveId);
+   const layout = GROW_LAYOUT[t.layout];
+   if (layout === t.layout) return placeTab(s, t, id, liveId);
+   return { layout, tiles: [...t.tiles, id] };

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index ad2ed5f8..b2bf29db 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -222,7 +222,7 @@ export function describeLayout(s: ViewTabsState, t: TilesState, sceneId: string)
+         tab: id,
+         ...(tab ? { label: tab.label, kind: tab.kind } : {}),
+         // Pohľad z Presentation v dlaždici (D-161).
+-        
++        ...(tab?.viewId ? { view_id: tab.viewId, view: tab.label } : {}),
+         // 3D dlaždica mimo živej ukazuje snímku, kým na ňu používateľ neklikne.
+         ...(tab && isSceneTab(tab) ? { live: index === live } : {}),
+       };

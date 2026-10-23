@@ -9,11 +9,10 @@
  * plochy. Vykonanie (kamera, rez, zámok, pôdorys) je v `viewTabsApply.ts`,
  * store v `viewTabsStore.ts`.
  *
- * Druhy (od D-161): `3d` (voľná kamera, vždy prvá, nedá sa zavrieť) a `doc`
- * (karta dokumentu D-075). Pôdorysy a uložené pohľady záložku nemajú: pohľad zhora
- * je len kamera a rez na 3D (`mode=2d`), uložený pohľad je pohľad z Presentation.
- * Viewer má jeden 3D canvas, preto vedľa seba môže byť najviac jedna 3D záložka a
- * druhá je dokument.
+ * Druhy (od D-161): `3d` (voľná kamera, vždy prvá, nedá sa zavrieť), `doc` (karta dokumentu
+ * D-075) a `view` (pohľad z Presentation, záložka žije len v dlaždici). Pôdorysy záložku nemajú:
+ * pohľad zhora je len kamera a rez na 3D (`mode=2d`). Viewer má jeden 3D canvas, preto vedľa
+ * seba môže byť najviac jedna 3D záložka a druhá je dokument.
  */
 
 import { TAB_3D, isSceneTab, type ViewTab, type ViewTabsState } from './viewTabsLayout.js';
@@ -21,6 +20,7 @@ import { TAB_3D, isSceneTab, type ViewTab, type ViewTabsState } from './viewTabs
 export { TAB_3D, centerLayout, initialTabs, isSceneTab, type CenterLayout, type ViewTab, type ViewTabKind, type ViewTabsState } from './viewTabsLayout.js';
 
 export const docTabId = (docId: string) => `doc:${docId}`;
+export const viewTabId = (viewId: string) => `view:${viewId}`;
 
 const byId = (s: ViewTabsState, id: string | null) => (id ? s.tabs.find((t) => t.id === id) : undefined);
 
@@ -124,13 +124,34 @@ export function syncDocTabs(
   return next;
 }
 
-/** Odkaz z chatu: id, `3d`, menovka (bez ohľadu na veľkosť písmen) alebo id dokumentu. */
+/**
+ * Záložky pohľadov (D-161) podľa zoznamu z Presentation: premenovaný pohľad dostane novú menovku,
+ * zmazaný záložku zavrie. Záložku pohľadu otvára dlaždica, nie táto funkcia.
+ */
+export function syncViewTabs(s: ViewTabsState, views: readonly { id: string; name: string }[]): ViewTabsState {
+  const want = new Map(views.map((v) => [viewTabId(v.id), v.name]));
+  let next = s;
+  for (const t of s.tabs) if (t.kind === 'view' && !want.has(t.id)) next = closeTab(next, t.id);
+  const tabs = next.tabs.map((t) => (t.kind === 'view' && want.get(t.id) !== undefined && want.get(t.id) !== t.label ? { ...t, label: want.get(t.id)! } : t));
+  return tabs.some((t, i) => t !== next.tabs[i]) ? { ...next, tabs } : next;
+}
+
+/** Odstráni záložky pohľadov (bez dlaždíc nemajú miesto); aktívna sa vráti na 3D. */
+export function dropViewTabs(s: ViewTabsState): ViewTabsState {
+  if (!s.tabs.some((t) => t.kind === 'view')) return s;
+  const tabs = s.tabs.filter((t) => t.kind !== 'view');
+  const gone = (id: string | null) => id !== null && !tabs.some((t) => t.id === id);
+  return { tabs, activeId: gone(s.activeId) ? TAB_3D.id : s.activeId, besideId: gone(s.besideId) ? null : s.besideId };
+}
+
+/** Odkaz z chatu: id, `3d`, menovka (bez ohľadu na veľkosť písmen), id dokumentu alebo id pohľadu. */
 export function resolveTabRef(s: ViewTabsState, ref: string): ViewTab | undefined {
   const want = ref.trim().toLowerCase();
   if (!want) return undefined;
   return s.tabs.find((t) => t.id.toLowerCase() === want)
     ?? s.tabs.find((t) => t.label.toLowerCase() === want)
-    ?? s.tabs.find((t) => t.docId?.toLowerCase() === want);
+    ?? s.tabs.find((t) => t.docId?.toLowerCase() === want)
+    ?? s.tabs.find((t) => t.viewId?.toLowerCase() === want);
 }
 
 /** `view_state.tabs` (AIM D-132): zoznam, aktívna a tá vedľa. */
@@ -140,6 +161,7 @@ export function describeTabs(s: ViewTabsState) {
     kind: t.kind,
     label: t.label,
     ...(t.docId ? { document_id: t.docId } : {}),
+    ...(t.viewId ? { view_id: t.viewId } : {}),
     active: t.id === s.activeId,
     beside: t.id === s.besideId,
   }));

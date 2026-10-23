@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/tiles-protocol.ts a/apps/viewer/src/aim/tiles-protocol.ts
+index 36d3ad29..538f4013 100644
+--- b/apps/viewer/src/aim/tiles-protocol.ts
++++ a/apps/viewer/src/aim/tiles-protocol.ts
+@@ -34,7 +34,7 @@ function isTile(v: unknown): v is TileWire {
+   const keys = Object.keys(v);
+   const o = v as Record<string, unknown>;
+   if (keys.length !== 1) return false;
+-  return keys[0] === 'tab' ? isText(o.tab) : keys[0] === 'plan' ? isText(o.plan) : false;
++  return keys[0] === 'tab' ? isText(o.tab) : keys[0] === 'plan' ? isText(o.plan) : keys[0] === 'view' ? isText(o.view) : false;
+ }
+ 
+ export function isTilesMessage(data: unknown): data is TilesMessage {
