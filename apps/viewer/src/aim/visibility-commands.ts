@@ -29,8 +29,6 @@ export interface VisibilityDeps {
   addToSelection: (globalId: number) => void;
   noteIssue: (text: string) => void;
   track: (p: Promise<unknown>) => void;
-  /** Pohľad pred zarámovaním (2D/split na podlaží cieľa alebo 3D, #97 V1); kľúč podlažia `modelId:expressId`. */
-  prepareFocusView: (storeyKeys: readonly (string | null)[]) => void;
   FOCUS_COLOR: string;
   FILTER_COLOR: string;
 }
@@ -155,12 +153,6 @@ export function runVisibilityCommand(
       if (solids.length > 0) bim.viewer.colorize(solids, d.FOCUS_COLOR);
       if (volumes.length > 0) bim.viewer.colorizeRgba(volumes, hexToRgba(d.FOCUS_COLOR, VOLUME_FOCUS_ALPHA));
       focused = refs;
-      const models = useViewerStore.getState().models;
-      d.prepareFocusView(refs.map((r) => {
-        // @raw-entity-enumeration-ok point lookup of a focused element's storey to pick the 2D plan; no membership is enumerated
-        const storey = models.get(r.modelId)?.ifcDataStore?.spatialHierarchy?.elementToStorey.get(r.expressId);
-        return storey === undefined ? null : `${r.modelId}:${storey}`;
-      }));
       d.track(frameRefs(bim, refs, 'FOCUS', d.noteIssue));
       return true;
     }

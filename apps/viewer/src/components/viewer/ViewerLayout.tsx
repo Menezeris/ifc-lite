@@ -28,7 +28,7 @@ import { MobileBottomSheet, useVisualViewportBottomInset } from './MobileBottomS
 import { MobilePanelLauncher } from './MobilePanelLauncher';
 import { MobilePanelSheet } from './MobilePanelSheet';
 import { ShieldAlert } from 'lucide-react';
-// >>> AIM-FORK: D-072/D-075 center panes and D-132 view tabs (logic in aim/useAimCenterPanes.ts)
+// >>> AIM-FORK: D-075 center panes and D-132 view tabs (logic in aim/useAimCenterPanes.ts)
 import { useAimCenterPanes } from '@/aim/useAimCenterPanes';
 // <<< AIM-FORK
 import { ExtensionDockHost } from '@/components/extensions/ExtensionDockHost';
@@ -47,9 +47,8 @@ import { BottomStrip } from './BottomStrip';
 import { loadBottomStripOrientation, persistBottomStripOrientation } from '@/lib/panels/bottom-strip-persistence';
 import { LEFT_PANEL_DEFAULT_SIZE } from '@/store/layoutReset';
 import { useOverlayCompositor } from './schedule/useOverlayCompositor';
-// >>> AIM-FORK: D-072 2D plan pane + D-075 document tabs pane in the center split
-// Lazy: the 2D plan and document panes (pdf.js surfaces) are off the boot path.
-const DrawingPlanPane = lazy(() => import('@/components/viewer/DrawingPlanPane').then((m) => ({ default: m.DrawingPlanPane })));
+// >>> AIM-FORK: D-075 document tabs pane in the center split
+// Lazy: the document pane (pdf.js surface) is off the boot path.
 const DocumentPane = lazy(() => import('@/components/documents/DocumentPane').then((m) => ({ default: m.DocumentPane })));
 const AimViewTabsBar = lazy(() => import('@/aim/AimViewTabsBar').then((m) => ({ default: m.AimViewTabsBar })));
 // <<< AIM-FORK
@@ -224,9 +223,9 @@ export function ViewerLayout() {
   const layoutResetEpoch = useViewerStore((s) => s.layoutResetEpoch); // "Reset layout" (#5854) restores the pane width
   useEffect(() => { if (layoutResetEpoch > 0) leftPanelRef.current?.resize(`${LEFT_PANEL_DEFAULT_SIZE}%`); }, [layoutResetEpoch]);
 
-  // >>> AIM-FORK: D-072 split plan, D-075 2D mode + document pane, D-132 view tabs (aim/useAimCenterPanes.ts)
+  // >>> AIM-FORK: D-075 document pane, D-132 view tabs (aim/useAimCenterPanes.ts)
   const {
-    underlaySplitView, underlayPlanFull, planePanelRef, viewport3dPanelRef, onViewport3dResize,
+    viewport3dPanelRef, onViewport3dResize,
     docPaneOpen, docPaneVisible, docPanelRef, onDocPaneResize, tileFrame,
   } = useAimCenterPanes(isMobile);
   // <<< AIM-FORK
@@ -327,17 +326,11 @@ export function ViewerLayout() {
                       {/* Model workspace (#6232): its tool rail, then the Plan ‖ 3D split. */}
                       <ModelToolRail />
                       <ModelWorkspaceSplit>
-                      {/* >>> AIM-FORK: D-072 2D plan | 3D | D-075 document pane. The plan and
-                          document Panels are collapsible so ViewportContainer stays mounted. */}
+                      {/* >>> AIM-FORK: 3D | D-075 document pane. The document Panel is
+                          collapsible so ViewportContainer stays mounted. */}
                       <div className="flex h-full w-full min-w-0 flex-col">
                       <Suspense fallback={null}><AimViewTabsBar /></Suspense>
                       <PanelGroup orientation="horizontal" className="min-h-0 w-full flex-1">
-                        <Panel id="drawing-plan-panel" defaultSize={0} minSize={20} collapsible collapsedSize={0} panelRef={planePanelRef}>
-                          <Suspense fallback={null}><DrawingPlanPane /></Suspense>
-                        </Panel>
-                        <PanelResizeHandle
-                          className={`w-1.5 bg-border hover:bg-primary/50 active:bg-primary/70 transition-colors cursor-col-resize ${underlaySplitView && !underlayPlanFull ? '' : 'hidden'}`}
-                        />
                         <Panel id="aim-viewport-3d-panel" defaultSize={100} minSize={30} collapsible collapsedSize={0} panelRef={viewport3dPanelRef} onResize={onViewport3dResize}>
                       {/* D-157 tiles: the 3D canvas moves into the live tile; the lazy tabs bar portals the grid here. */}
                       <div className="relative h-full w-full" data-aim-tiles>
@@ -416,21 +409,10 @@ export function ViewerLayout() {
               <ViewportContainer />
             </div>
 
-            {/* D-072 split view on mobile: a phone can't fit a side-by-side
-                split, so the 2D plan takes over as a full-screen overlay
-                (tap the plan to jump the 3D camera, exit to return). */}
-            {underlaySplitView && (
-              <div className="absolute inset-0 z-40 bg-background">
-                <Suspense fallback={null}><DrawingPlanPane /></Suspense>
-              </div>
-            )}
-
-            {/* D-075 document tabs on mobile: same trick — the document pane
-                takes over full-screen while tabs are open (closing the last
-                tab returns to the 3D view). The 2D/Split plan overlay wins
-                when both are active — entering it is the more recent intent
-                and this pane has no own exit besides closing all tabs. */}
-            {docPaneOpen && !underlaySplitView && (
+            {/* D-075 document tabs on mobile: the document pane takes over
+                full-screen while tabs are open (closing the last tab returns
+                to the 3D view). */}
+            {docPaneOpen && (
               <div className="absolute inset-0 z-40 bg-background">
                 <Suspense fallback={null}><DocumentPane /></Suspense>
               </div>

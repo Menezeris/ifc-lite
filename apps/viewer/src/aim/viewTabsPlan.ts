@@ -9,21 +9,18 @@
  * plochy. Vykonanie (kamera, rez, zámok, pôdorys) je v `viewTabsApply.ts`,
  * store v `viewTabsStore.ts`.
  *
- * Druhy: `3d` (voľná kamera, vždy prvá, nedá sa zavrieť), `plan` (pôdorys
- * podlažia za behu z IfcBuildingStorey: zamknutý kolmý pohľad zhora s rezom,
- * D-072), `view` (uložený pohľad hosta, D-122: orez a zamknutá kamera) a `doc`
- * (karta dokumentu D-075). Viewer má jeden 3D canvas, preto vedľa seba môže byť
- * najviac jedna 3D záložka; druhá je dokument, alebo pôdorys ako 2D panel plánu
- * (D-072, len s kalibrovaným podkladom).
+ * Druhy (od D-161): `3d` (voľná kamera, vždy prvá, nedá sa zavrieť) a `doc`
+ * (karta dokumentu D-075). Pôdorysy a uložené pohľady záložku nemajú: pohľad zhora
+ * je len kamera a rez na 3D (`mode=2d`), uložený pohľad je pohľad z Presentation.
+ * Viewer má jeden 3D canvas, preto vedľa seba môže byť najviac jedna 3D záložka a
+ * druhá je dokument.
  */
 
 import { TAB_3D, isSceneTab, type ViewTab, type ViewTabsState } from './viewTabsLayout.js';
 
 export { TAB_3D, centerLayout, initialTabs, isSceneTab, type CenterLayout, type ViewTab, type ViewTabKind, type ViewTabsState } from './viewTabsLayout.js';
 
-export const planTabId = (storeyGuid: string) => `plan:${storeyGuid}`;
 export const docTabId = (docId: string) => `doc:${docId}`;
-export const viewTabId = (viewId: string) => `view:${viewId}`;
 
 const byId = (s: ViewTabsState, id: string | null) => (id ? s.tabs.find((t) => t.id === id) : undefined);
 
@@ -55,9 +52,8 @@ export function activateTab(s: ViewTabsState, id: string): ViewTabsState {
 }
 
 /**
- * Prípustná dvojica vedľa seba: nikdy dve záložky toho istého druhu canvasu
- * (dve 3D, dva dokumenty sú jeden panel), pôdorys vedľa voľnej 3D ide ako 2D
- * panel plánu. Vráti, ktorá je aktívna (3D strana) a ktorá vedľa.
+ * Prípustná dvojica vedľa seba: 3D a dokument (dve 3D ani dva dokumenty nejdú).
+ * Vráti, ktorá je aktívna a ktorá vedľa.
  */
 export function besidePair(s: ViewTabsState, a: string, b: string): { active: string; beside: string } | null {
   const ta = byId(s, a);
@@ -65,9 +61,6 @@ export function besidePair(s: ViewTabsState, a: string, b: string): { active: st
   if (!ta || !tb || ta.id === tb.id) return null;
   if (isSceneTab(ta) && tb.kind === 'doc') return { active: ta.id, beside: tb.id };
   if (ta.kind === 'doc' && isSceneTab(tb)) return { active: ta.id, beside: tb.id };
-  // Pôdorys vedľa voľnej 3D: 3D je aktívna, pôdorys je 2D panel plánu.
-  if (ta.kind === '3d' && tb.kind === 'plan') return { active: ta.id, beside: tb.id };
-  if (ta.kind === 'plan' && tb.kind === '3d') return { active: tb.id, beside: ta.id };
   return null;
 }
 
@@ -79,7 +72,7 @@ export function besideRefusal(s: ViewTabsState, a: string, b: string): string | 
   if (!ta || !tb) return 'záložka nie je otvorená';
   if (ta.id === tb.id) return 'záložka nemôže byť vedľa seba samej';
   if (ta.kind === 'doc' && tb.kind === 'doc') return 'dva dokumenty vedľa seba zatiaľ nejdú';
-  return 'viewer má jeden 3D canvas: vedľa 3D ide dokument alebo pôdorys (2D plán), nie druhý 3D pohľad';
+  return 'viewer má jeden 3D canvas: vedľa 3D ide dokument, nie druhý 3D pohľad';
 }
 
 /** "Vedľa" pre aktívnu záložku; null = zrušiť. */
@@ -131,13 +124,13 @@ export function syncDocTabs(
   return next;
 }
 
-/** Odkaz z chatu: id, `3d`, menovka (bez ohľadu na veľkosť písmen) alebo GlobalId podlažia. */
+/** Odkaz z chatu: id, `3d`, menovka (bez ohľadu na veľkosť písmen) alebo id dokumentu. */
 export function resolveTabRef(s: ViewTabsState, ref: string): ViewTab | undefined {
   const want = ref.trim().toLowerCase();
   if (!want) return undefined;
   return s.tabs.find((t) => t.id.toLowerCase() === want)
     ?? s.tabs.find((t) => t.label.toLowerCase() === want)
-    ?? s.tabs.find((t) => t.storeyGuid?.toLowerCase() === want || t.docId?.toLowerCase() === want);
+    ?? s.tabs.find((t) => t.docId?.toLowerCase() === want);
 }
 
 /** `view_state.tabs` (AIM D-132): zoznam, aktívna a tá vedľa. */
@@ -146,7 +139,6 @@ export function describeTabs(s: ViewTabsState) {
     id: t.id,
     kind: t.kind,
     label: t.label,
-    ...(t.storeyGuid ? { storey_guid: t.storeyGuid } : {}),
     ...(t.docId ? { document_id: t.docId } : {}),
     active: t.id === s.activeId,
     beside: t.id === s.besideId,

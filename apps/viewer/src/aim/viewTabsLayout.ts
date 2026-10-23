@@ -3,23 +3,19 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * Záložky viewera (AIM D-132): typy, počiatočný stav a rozloženie strednej
+ * Záložky viewera (AIM D-132, od D-161 len 3D a dokumenty): typy, počiatočný stav a rozloženie strednej
  * plochy. Malý modul vo vstupnom balíku (`ViewerLayout` -> `useAimCenterPanes`);
  * ostatná logika záložiek (`viewTabsPlan.ts`) sa načíta lenivo s lištou.
  */
 
-export type ViewTabKind = '3d' | 'plan' | 'view' | 'doc';
+export type ViewTabKind = '3d' | 'doc';
 
 export interface ViewTab {
   id: string;
   kind: ViewTabKind;
   label: string;
-  /** Pôdorys: GlobalId podlažia. */
-  storeyGuid?: string;
   /** Karta dokumentu: id dokumentu v `viewerDocuments`. */
   docId?: string;
-  /** Uložený pohľad: kamera zamknutá (ťahanie posúva, neotáča). */
-  locked?: boolean;
 }
 
 export interface ViewTabsState {
@@ -33,7 +29,7 @@ export const TAB_3D: ViewTab = { id: '3d', kind: '3d', label: '3D' };
 
 export const initialTabs = (): ViewTabsState => ({ tabs: [TAB_3D], activeId: TAB_3D.id, besideId: null });
 
-/** 3D záložky zdieľajú jeden canvas (3d, pôdorys, uložený pohľad). */
+/** 3D záložky zdieľajú jeden canvas (dnes len `3d`; pohľady z Presentation sa v ňom aktivujú bez záložky). */
 export const isSceneTab = (t: ViewTab | undefined) => !!t && t.kind !== 'doc';
 
 const byId = (s: ViewTabsState, id: string | null) => (id ? s.tabs.find((t) => t.id === id) : undefined);
@@ -46,13 +42,11 @@ export interface CenterLayout {
   docPane: boolean;
   /** Dokument, ktorý má panel ukázať. */
   docId: string | null;
-  /** Pôdorys ako 2D panel plánu vedľa voľnej 3D (D-072 split). */
-  planBeside: string | null;
 }
 
 /** `tiled` (AIM D-157): pri dlaždiciach je 3D panel na celú plochu a dlaždice kreslí `AimTileGrid`. */
 export function centerLayout(s: ViewTabsState, tiled = false): CenterLayout {
-  if (tiled) return { collapse3d: false, docPane: false, docId: null, planBeside: null };
+  if (tiled) return { collapse3d: false, docPane: false, docId: null };
   const active = byId(s, s.activeId);
   const beside = byId(s, s.besideId);
   const doc = active?.kind === 'doc' ? active : beside?.kind === 'doc' ? beside : undefined;
@@ -60,7 +54,5 @@ export function centerLayout(s: ViewTabsState, tiled = false): CenterLayout {
     collapse3d: active?.kind === 'doc' && !beside,
     docPane: !!doc,
     docId: doc?.docId ?? null,
-    // Len vedľa voľnej 3D; pri dokumente je pôdorys sám 3D stranou (zamknutý pohľad v canvase).
-    planBeside: active?.kind === '3d' && beside?.kind === 'plan' ? (beside.storeyGuid ?? null) : null,
   };
 }

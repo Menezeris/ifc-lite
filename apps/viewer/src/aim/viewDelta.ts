@@ -19,8 +19,6 @@ export interface ViewSnapshot {
   /** Opis rezu (os, poloha, otočenie); null = bez rezu. */
   section: string | null;
   selection: number;
-  /** Režim a podlažie (`3d`, `2d 1NP`...). */
-  mode: string;
   /** Aktívna lens (`AIM chat`, iná lens) a počet jej pravidiel; null = žiadna. */
   lens: string | null;
 }
@@ -40,7 +38,6 @@ export function describeViewChanges(prev: ViewSnapshot, now: ViewSnapshot): stri
     prev.hidden !== now.hidden ? `skryté prvky ${prev.hidden} -> ${now.hidden}` : null,
     prev.section !== now.section ? `rez ${prev.section ?? 'žiadny'} -> ${now.section ?? 'zrušený'}` : null,
     prev.selection !== now.selection ? `výber ${prev.selection} -> ${now.selection} prvkov` : null,
-    prev.mode !== now.mode ? `režim ${prev.mode} -> ${now.mode}` : null,
     prev.lens !== now.lens ? `lens ${prev.lens ?? 'žiadna'} -> ${now.lens ?? 'vypnutá'}` : null,
   ];
   return out.filter((s): s is string => s !== null);

@@ -20,7 +20,6 @@ import { bcfWorldOffset } from '@/hooks/bcf/viewpoint-world-frame';
 import { percentToWorld, sectionAxisRange } from '@/lib/section/section-distance';
 import type { AxisBounds } from '@/lib/section/section-distance';
 import { expandToGeometryBearingIds } from '@/utils/aggregation';
-import { deriveViewMode } from '@/hooks/viewModeCore';
 import { RelationshipType } from '@ifc-lite/data';
 import { summarizeSelection, visibilityGuids, type SelectedEntityInfo } from './selectionSummary.js';
 import { describePanels } from './aimPanelsPlan.js';
@@ -175,13 +174,17 @@ function selectedEntityInfo(state: State, id: number, g: GuidHelpers): SelectedE
   };
 }
 
-/** `QUERY view_state`: rez, kamera, režim, výber a viditeľnosť (počty aj GUIDy skrytých a izolovaných). */
+/**
+ * Aktívny pohľad z Presentation (AIM D-161) alebo null: `id` je id riadku `saved_views`, `objects` počet prvkov
+ * košíka, `section` či má pohľad rez. Pohľad prestane byť aktívny, keď sa upraví košík (upstream).
+ */
+export function activeViewInfo(state: State) {
+  const view = state.activeBasketViewId === null ? undefined : state.basketViews.find((v) => v.id === state.activeBasketViewId);
+  return view ? { id: view.id, name: view.name, objects: view.entityRefs.length, section: !!view.section?.plane.enabled } : null;
+}
+
+/** `QUERY view_state`: rez, kamera, aktívny pohľad, výber a viditeľnosť (počty aj GUIDy skrytých a izolovaných). Režim 2D/split od D-161 nie je. */
 export function queryViewState(state: State, g: GuidHelpers) {
-  const mode = deriveViewMode({
-    splitView: state.underlaySplitView,
-    planFull: state.underlayPlanFull,
-    viewLocked: state.underlayViewLocked,
-  });
   const offset = worldOffset(state);
   const plane = activeSectionPlane(state);
   const range = plane ? sectionAxisRange(g.sectionRenderBounds(state), plane.axis) : null;
@@ -209,7 +212,7 @@ export function queryViewState(state: State, g: GuidHelpers) {
   const guidOf = (id: number) => g.guidForEntity(state.models, resolveEntityRef(id));
   return {
     frame: 'ifc_world', units: 'm',
-    mode, storey_guid: state.underlayActiveStoreyGuid ?? state.underlayLastStoreyGuid ?? null,
+    view: activeViewInfo(state),
     section,
     camera: camera ? describeCamera(camera, offset, state.projectionMode) : null,
     selection: { ...summarizeSelection(selected.map((id) => selectedEntityInfo(state, id, g))), ...(bbox ? { bbox: describeBox(renderBoxToIfc(bbox, offset)) } : {}) },
