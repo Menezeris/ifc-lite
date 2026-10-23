@@ -9,7 +9,7 @@
  */
 
 import { create } from 'zustand';
-import { describePlanMarker, type PlanMarker } from './planPosition.js';
+import { describePlanMarkers, type PlanMarker } from './planPosition.js';
 
 interface AimPlanPositionStore {
   enabled: boolean;
@@ -31,6 +31,5 @@ export function reportPlanMarker(docId: string, page: number, marker: PlanMarker
 }
 
 export function planPositionState() {
-  const first = latest.values().next().value ?? null;
-  return describePlanMarker(useAimPlanPosition.getState().enabled, first);
+  return describePlanMarkers(useAimPlanPosition.getState().enabled, [...latest.values()]);
 }
