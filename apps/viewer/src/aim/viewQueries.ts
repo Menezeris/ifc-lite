@@ -28,6 +28,7 @@ import { useAimInspectorStore } from './aimInspectorStore.js';
 import { useAimDocRegionStore } from './docRegion.js';
 import { getLinkDraft } from './docLinkDraftStore.js';
 import { useAimUnderlays3d } from './aimUnderlays3d.js';
+import { planPositionState } from './aimPlanPosition.js';
 import { aimBcfContext } from './bcf-protocol.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { describeTabs } from './viewTabsPlan.js';
@@ -234,6 +235,8 @@ export function queryViewState(state: State, g: GuidHelpers) {
     panel_view: panelViewState(),
     // AIM D-133 doplnok (#170): podklady PDF v 3D zobrazené (true) alebo skryté (false); stav viewera.
     underlays_3d: !useAimUnderlays3d.getState().hidden,
+    // AIM D-161 bod 8 (#282): bodka polohy a smer kamery na PDF (zapnuté, či sa kreslí, kde a kam).
+    plan_position: planPositionState(),
     property_focus: useAimInspectorStore.getState().propertyFocus,
     document: useAimDocRegionStore.getState().visible,
     // AIM D-160: návrh ručnej opravy odkazu popisku na výkrese; uloží ho chat (open_drawing link from_draft).

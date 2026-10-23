@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/planPosition.ts a/apps/viewer/src/aim/planPosition.ts
+index 58ad337e..d4d1fb96 100644
+--- b/apps/viewer/src/aim/planPosition.ts
++++ a/apps/viewer/src/aim/planPosition.ts
+@@ -56,7 +56,7 @@ export function planMarker(
+     const page = ifcMetresToPage(placement.affine, worldToIfcMetres(cam.position, offset));
+     let fx = cam.target.x - cam.position.x;
+     let fz = cam.target.z - cam.position.z;
+-    if (false) {
++    if (Math.hypot(fx, fz) < 1e-3) {
+       fx = cam.up.x;
+       fz = cam.up.z;
+     }

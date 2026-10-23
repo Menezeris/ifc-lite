@@ -32,6 +32,9 @@ export const aimForkEn = {
   /** Underlays panel switch (AIM D-133 addendum, #170): hides the PDF underlays in the 3D view only. */
   'aimFork.underlays3d.label': 'Show in 3D',
   'aimFork.underlays3d.hint': 'Hides the PDF drawings in the 3D view only. Calibration stays saved; the 2D plan is unchanged.',
+  /** Camera position and view direction on a calibrated PDF plan (AIM D-161 step 8, #282). */
+  'aimFork.planPosition.label': 'Position',
+  'aimFork.planPosition.hint': 'Shows the 3D camera position and view direction on the calibrated plan',
   /** Highlighted download button after an export request from the AIM chat (AIM D-149): the browser needs the user's click. */
   'aimFork.listExport.action': 'Download {format}',
   'aimFork.listExport.hint': 'Requested from the AIM chat: click to download',
