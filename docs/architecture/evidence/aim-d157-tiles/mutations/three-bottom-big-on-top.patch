@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index 8642911b..ccc27219 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -37,7 +37,7 @@ export const TILE_RECTS: Record<TileLayout, readonly TileRect[]> = {
+   three_left: [r(0, 0, H, 1), r(H, 0, H, H), r(H, H, H, H)],
+   three_right: [r(H, 0, H, 1), r(0, 0, H, H), r(0, H, H, H)],
+   three_top: [r(0, 0, 1, H), r(0, H, H, H), r(H, H, H, H)],
+-  three_bottom: [r(0, 0, 1, H), r(0, H, H, H), r(H, H, H, H)],
++  three_bottom: [r(0, H, 1, H), r(0, 0, H, H), r(H, 0, H, H)],
+   three_h: [r(0, 0, T, 1), r(T, 0, T, 1), r(2 * T, 0, T, 1)],
+   three_v: [r(0, 0, 1, T), r(0, T, 1, T), r(0, 2 * T, 1, T)],
+   grid4: [r(0, 0, H, H), r(H, 0, H, H), r(0, H, H, H), r(H, H, H, H)],

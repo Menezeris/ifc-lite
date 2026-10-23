@@ -1,0 +1,44 @@
+{
+  "snapshot-needs-camera": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docIssueModel.test.ts; that file has a green, attributable baseline.",
+    "base": "3510a1db354b6b079d4d8eedf47ff5a1408fe7f7",
+    "head": "ad262ba4082785497462a678a4cb7252641551f3",
+    "production": [
+      "apps/viewer/src/aim/docIssueModel.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docIssueModel.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "snapshot-url-region": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docIssueModel.test.ts; that file has a green, attributable baseline.",
+    "base": "3510a1db354b6b079d4d8eedf47ff5a1408fe7f7",
+    "head": "ad262ba4082785497462a678a4cb7252641551f3",
+    "production": [
+      "apps/viewer/src/aim/docIssueModel.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docIssueModel.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "host-snapshots": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/bcf-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "3510a1db354b6b079d4d8eedf47ff5a1408fe7f7",
+    "head": "ad262ba4082785497462a678a4cb7252641551f3",
+    "production": [
+      "apps/viewer/src/aim/aimBcf.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/bcf-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

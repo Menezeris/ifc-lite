@@ -45,6 +45,13 @@ export function isBcfLoadMessage(data: unknown, parentOrigin: string | null): da
   return parentOrigin === null || url.origin === parentOrigin;
 }
 
+/** Project and origin of the last AIM_BCF_LOAD: local topics and PDF issue links (AIM D-158). */
+let aimBcf: { projectId: string; origin: string } | null = null;
+
+export function aimBcfContext(): { projectId: string; origin: string } | null {
+  return aimBcf;
+}
+
 /**
  * Start the pull (lazy `aimBcf.ts`). The bridge passes the store getter, so
  * neither this entry module nor the lazy one imports the store itself.
@@ -53,6 +60,7 @@ export function loadBcfTopics(
   msg: BcfLoadMessage,
   getState: () => { bcfProject: BCFProject | null; setBcfProject: (project: BCFProject) => void },
 ): void {
+  aimBcf = { projectId: msg.projectId, origin: new URL(msg.baseUrl).origin };
   void import('./aimBcf.js')
     .then(({ loadAimBcfTopics }) => loadAimBcfTopics(msg, {
       getProject: () => getState().bcfProject,

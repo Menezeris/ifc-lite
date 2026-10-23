@@ -50,7 +50,9 @@ export interface CenterLayout {
   planBeside: string | null;
 }
 
-export function centerLayout(s: ViewTabsState): CenterLayout {
+/** `tiled` (AIM D-157): pri dlaždiciach je 3D panel na celú plochu a dlaždice kreslí `AimTileGrid`. */
+export function centerLayout(s: ViewTabsState, tiled = false): CenterLayout {
+  if (tiled) return { collapse3d: false, docPane: false, docId: null, planBeside: null };
   const active = byId(s, s.activeId);
   const beside = byId(s, s.besideId);
   const doc = active?.kind === 'doc' ? active : beside?.kind === 'doc' ? beside : undefined;

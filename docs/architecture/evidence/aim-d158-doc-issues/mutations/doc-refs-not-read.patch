@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimBcf.ts a/apps/viewer/src/aim/aimBcf.ts
+index 5776ba0c..7cd9f28e 100644
+--- b/apps/viewer/src/aim/aimBcf.ts
++++ a/apps/viewer/src/aim/aimBcf.ts
+@@ -38,7 +38,7 @@ export const DOCUMENTS_HEADING = 'Dokumenty (AIM):';
+  */
+ async function attachDocumentReferences(project: BCFProject, msg: BcfLoadMessage, fetchFn: typeof fetch): Promise<void> {
+   const base = msg.baseUrl.replace(/\/+$/, '');
+-  const wanted = [...project.topics.values()].filter((t) => false && t.description?.includes(DOCUMENTS_HEADING));
++  const wanted = [...project.topics.values()].filter((t) => t.description?.includes(DOCUMENTS_HEADING));
+   await Promise.all(wanted.map(async (topic) => {
+     try {
+       const url = `${base}/2.1/projects/${encodeURIComponent(msg.projectId)}/topics/${encodeURIComponent(topic.guid)}/document_references`;

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docIssueModel.ts a/apps/viewer/src/aim/docIssueModel.ts
+index 526f0e46..5fc4a2ac 100644
+--- b/apps/viewer/src/aim/docIssueModel.ts
++++ a/apps/viewer/src/aim/docIssueModel.ts
+@@ -98,7 +98,7 @@ export function docSnapshotUrl(origin: string | null, t: DocIssueTarget): string
+  */
+ export function docSnapshotViewpoint(topic: BCFTopic | undefined, snapshot: string, guid: string): BCFViewpoint | null {
+   const base = topic?.viewpoints.find((v) => v.perspectiveCamera || v.orthogonalCamera);
+-  if (!snapshot.startsWith('data:image/')) return null;
++  if (!base || !snapshot.startsWith('data:image/')) return null;
+   return {
+     guid,
+     ...(base.perspectiveCamera ? { perspectiveCamera: base.perspectiveCamera } : {}),

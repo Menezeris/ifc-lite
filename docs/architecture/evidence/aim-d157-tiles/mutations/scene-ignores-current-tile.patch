@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index 6743270b..ccc27219 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -180,6 +180,7 @@ export function reconcileTiles(s: ViewTabsState, t: TilesState, liveId: string |
+ export function tileScene(s: ViewTabsState, t: TilesState, current: string): string {
+   const active = tabOf(s, s.activeId);
+   if (isSceneTab(active)) return active!.id;
++  if (t.tiles.includes(current)) return current;
+   const first = t.tiles.find((id) => isSceneTab(tabOf(s, id)));
+   return first ?? current;
+ }

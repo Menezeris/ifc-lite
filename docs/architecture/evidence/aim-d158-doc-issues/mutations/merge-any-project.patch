@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docIssueModel.ts a/apps/viewer/src/aim/docIssueModel.ts
+index c4b2d4ac..a8c077d4 100644
+--- b/apps/viewer/src/aim/docIssueModel.ts
++++ a/apps/viewer/src/aim/docIssueModel.ts
+@@ -207,7 +207,7 @@ export function describeLocalTopics(project: BCFProject | null, aimProjectId: st
+  */
+ export function mergeAimProject(current: BCFProject | null, fresh: BCFProject, previous: BCFProject | null): BCFProject | null {
+   if (current === null || current === previous || current.topics.size === 0) return fresh;
+-  if (!previous) return null;
++  if (!previous || !fresh.projectId || current.projectId !== fresh.projectId) return null;
+   const topics = new Map(fresh.topics);
+   for (const [guid, topic] of current.topics) {
+     if (isLocalTopic(topic) && !topics.has(guid)) topics.set(guid, topic);

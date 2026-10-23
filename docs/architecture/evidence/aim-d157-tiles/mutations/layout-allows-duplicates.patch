@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index b530ac05..ccc27219 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -106,7 +106,7 @@ export function layoutTiles(
+   const out: (string | null | undefined)[] = [];
+   for (let i = 0; i < n; i++) {
+     const id = requested[i];
+-    if (id && tabOf(s, id)) {
++    if (id && tabOf(s, id) && !used.has(id)) {
+       used.add(id);
+       out.push(id);
+     } else {
