@@ -6,23 +6,24 @@
  * Vykonanie bridge správ pohľadu (AIM D-083 fáza 1) cez existujúce cesty
  * viewera: rez cez `showSectionCut`/`clearSectionCut` (tá istá cesta ako SDK
  * `setSection` a BCF viewpoint, Section tool ho ukáže a dá sa posúvať),
- * kamera cez `cameraCallbacks` + `bim.viewer.flyTo` (lenivo `viewCamera.ts`, D-098), režim cez `useViewMode`
- * (prepínač 3D|2D|Split, D-075). Vracia ref, aby ho listener v AimBridge
+ * kamera cez `cameraCallbacks` + `bim.viewer.flyTo` (lenivo `viewCamera.ts`, D-098). `SET_VIEW_MODE`
+ * nie je režim (D-161): `2d` = kamera zhora a vodorovný rez na bežnom 3D canvase (alebo uložený pohľad
+ * podlažia z Presentation), `3d` = perspektívna kamera, `split` = dlaždice (3D + výkres PDF podlažia). Vracia ref, aby ho listener v AimBridge
  * mohol volať bez re-registrácie. `QUERY` (AIM D-085) odpovedá rodičovi na `origin`.
  */
 
 import { useEffect, useRef } from 'react';
 import { useViewerStore } from '@/store';
 import { clearSectionCut, showSectionCut } from '@/store/section-active';
-import { sectionAxisRange } from '@/lib/section/section-distance';
+import { percentToWorld, sectionAxisRange } from '@/lib/section/section-distance';
 import { totalYupOffset } from '@/lib/geo/coordinate-frame';
-import { useViewMode } from '@/hooks/useViewMode';
+import { useFloorplanView } from '@/hooks/useFloorplanView';
 import type { BimContext } from '@ifc-lite/sdk';
 import { guidForEntity, resolveGuids, resolveSelector } from './bridge-protocol.js';
 import type { ViewInboundMessage } from './view-protocol.js';
-import { preloadTabs, useAimViewTabs, withTabs } from './viewTabsStore.js';
-import { sceneMode, settle3d } from './sceneMode.js';
-import { VIEWER_AXIS, cameraStep, focusViewStep, pickStorey, storeyCutPercent } from './viewCommands.js';
+import { preloadTabs, setTopView, withTabs } from './viewTabsStore.js';
+import { VIEWER_AXIS, cameraStep, pickStorey, storeyCutPercent } from './viewCommands.js';
+import { pickStoreyView, type StoreyViewCandidate } from './storeyViews.js';
 import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
 import { sectionRenderBounds as sectionBoundsWith } from './sectionRange.js';
 import { noteIssue, track } from './command-gate.js';
@@ -41,12 +42,6 @@ export function setFocusProvider(f: FocusSummary | undefined): void {
 let changesProvider: (() => string[]) | undefined;
 export function setChangesProvider(f: (() => string[]) | undefined): void {
   changesProvider = f;
-}
-
-/** Pohľad pre FOCUS (#97, V1): nastaví ho hook s najnovším režimom a podlažiami, volá ho lenivý FOCUS. */
-let focusView: ((storeyKeys: readonly (string | null)[]) => void) | undefined;
-export function prepareFocusView(storeyKeys: readonly (string | null)[]): void {
-  focusView?.(storeyKeys);
 }
 
 /** D-085 (obálky, stav, rez cez prvok) sa načíta až pri prvom použití - mimo vstupného balíka. */
@@ -92,6 +87,12 @@ function applyGizmo(show: boolean | undefined): void {
   if (state.sectionPlane.showGizmo !== want) state.setSectionPlaneShowGizmo(state.sectionPlane.id, want);
 }
 
+/** Uložené pohľady z Presentation (AIM D-161): lenivý most, ktorý sa pripojí pri prvej správe hosta. */
+let views: Promise<typeof import('./viewsBridge.js')> | null = null;
+export function runViewsMessage(raw: unknown, post: (msg: unknown) => void): void {
+  track((views ??= import('./viewsBridge.js')).then((m) => m.runViewsMessage(raw, { post, noteIssue, track, guids: GUIDS })));
+}
+
 /** Rezný box (AIM D-132) - tie isté obálky ako rez cez prvok, lenivo. */
 export function runSectionBox(raw: unknown): void {
   const run = ([q, b]: NonNullable<typeof boxModules>) => {
@@ -102,6 +103,40 @@ export function runSectionBox(raw: unknown): void {
   else track(loadBox().then(run));
 }
 
+/** Podlažie pre rez a pohľad zhora: elevácia v IFC (m) a model, z ktorého je rámec. */
+interface CutStorey { elevation: number; info: { modelId: string } }
+
+/**
+ * Vodorovný rez `offsetM` metrov nad úrovňou podlažia (tá istá cesta ako `SET_SECTION` s podlažím a `mode=2d`).
+ * false = rozsah modelu pre rez ešte nie je známy.
+ */
+function cutAtStorey(storey: CutStorey, offsetM: number, flipped: boolean, showGizmo: boolean | undefined): boolean {
+  const state = useViewerStore.getState();
+  // Rozsah, voči ktorému renderer reže, a rámec modelu, z ktorého je
+  // elevácia podlažia (#63: holá federovaná obálka posunula rez).
+  const range = sectionAxisRange(sectionRenderBounds(state), 'down');
+  // Rámec modelu podlažia; kým jeho geometria ešte prúdi, rámec prvého načítaného modelu.
+  const frame = state.models.get(storey.info.modelId)?.geometryResult?.coordinateInfo
+    ?? [...state.models.values()].find((m) => m.geometryResult?.coordinateInfo)?.geometryResult?.coordinateInfo;
+  const offY = totalYupOffset(frame).y;
+  const position = storeyCutPercent(storey.elevation, offsetM, offY, range);
+  if (position === null) return false;
+  showSectionCut(useViewerStore.getState, { axis: 'down', position, flipped });
+  applyGizmo(showGizmo);
+  return true;
+}
+
+/** Výška rezu nad podlahou pre pohľad zhora (`mode=2d`), m: štandardný rez pôdorysu. */
+const TOP_VIEW_CUT_M = 1.2;
+
+/** Perspektívna kamera po `mode=3d`; z pohľadu zhora (ortho) sa vráti aj do izometrie. */
+function perspective3d(): void {
+  const s = useViewerStore.getState();
+  if (s.projectionMode === 'perspective') return;
+  s.setProjectionMode('perspective');
+  s.cameraCallbacks.home?.();
+}
+
 /** Stav pre `APPLIED` (D-101): rez, režim, výber a viditeľnosť po vykonaní príkazov. */
 export async function appliedViewState(): Promise<Record<string, unknown>> {
   const q = await loadQueries();
@@ -110,7 +145,7 @@ export async function appliedViewState(): Promise<Record<string, unknown>> {
   const s = q.queryViewState(useViewerStore.getState(), { ...GUIDS, focus: focusProvider });
   return {
     ...(autoRotating ? { auto_rotate: true } : {}),
-    mode: s.mode, storey_guid: s.storey_guid, section: s.section, camera: s.camera,
+    section: s.section, camera: s.camera, view: s.view,
     // Limit vypršal počas pohybu (používateľ otáča kamerou): póza nie je cieľ, nech to host vie.
     ...(settled ? {} : { camera_moving: true }),
     selection_count: s.selection.count, hidden_count: s.hidden_count, isolated_count: s.isolated_count, focus: s.focus,
@@ -120,7 +155,7 @@ export async function appliedViewState(): Promise<Record<string, unknown>> {
 
 
 export function useAimViewCommands(bim: BimContext) {
-  const { mode, setMode, setStorey, storeys, activeStorey } = useViewMode();
+  const { storeyOptions: storeys } = useFloorplanView();
   const sectionToken = useRef(0);
   // Voľba widgetu patrí relácii mosta: nová relácia (iný `bim`) začína s predvoleným widgetom.
   useEffect(() => {
@@ -133,17 +168,39 @@ export function useAimViewCommands(bim: BimContext) {
       lastGizmo = undefined;
       autoRotating = false;
       void autoRotate?.then((m) => m.stopAutoRotate());
+      void views?.then((m) => m.stopViewsBridge());
     };
   }, [bim]);
-  /** Záložka 3D bez zvyšného zámku kamery, rezu podlažia a ortografickej projekcie (#216). */
-  const free3d = () => {
-    const s = useViewerStore.getState();
-    const step = settle3d({ viewLocked: s.underlayViewLocked, splitView: s.underlaySplitView, projection: s.projectionMode === 'orthographic' ? 'orthographic' : 'perspective' });
-    if (step.leaveLocked) setMode('3d');
-    if (step.perspective) s.setProjectionMode('perspective');
+  /**
+   * Pohľad zhora na podlažie (`mode=2d`, D-161) na bežnom 3D canvase: bez zámku a bez záložky. Ak je v
+   * Presentation uložený pohľad toho podlažia (vodorovný rez v jeho rozsahu), aktivuje sa ten; inak
+   * rez 1,2 m nad podlahou a ortografická kamera zhora. Orbit, posun a nástroje fungujú hneď ďalej.
+   */
+  const openTop = async (guid: string | undefined, note: (issue: string) => void): Promise<void> => {
+    const target = guid ? storeys.find((s) => s.guid === guid) : storeys[0];
+    if (!target) return note(guid ? 'SET_VIEW_MODE: podlažie sa vo vieweri nenašlo' : 'SET_VIEW_MODE: model nemá podlažia');
+    const state = useViewerStore.getState();
+    const bounds = sectionRenderBounds(state);
+    const offY = totalYupOffset(state.models.get(target.info.modelId)?.geometryResult?.coordinateInfo
+      ?? [...state.models.values()].find((m) => m.geometryResult?.coordinateInfo)?.geometryResult?.coordinateInfo).y;
+    const range = sectionAxisRange(bounds, 'down');
+    const candidates: StoreyViewCandidate[] = state.basketViews.map((v) => ({
+      id: v.id, name: v.name,
+      cutZ: (v.section?.planes ?? (v.section ? [v.section.plane] : [])).flatMap((p) => (
+        p.enabled && p.axis === 'down' && !p.box && !p.custom && range ? [percentToWorld(p.position, range) + offY] : []
+      )),
+    }));
+    const viewId = pickStoreyView(candidates, storeys, target.guid);
+    if (viewId) {
+      const { activateBasketViewFromStore } = await import('@/store/basket/basketViewActivator');
+      activateBasketViewFromStore(viewId);
+      return;
+    }
+    if (!cutAtStorey(target, TOP_VIEW_CUT_M, false, undefined)) return note('SET_VIEW_MODE: rozsah modelu pre rez nie je známy');
+    state.setProjectionMode('orthographic');
+    state.cameraCallbacks.setPresetView?.('top');
   };
   const run = (msg: ViewInboundMessage, origin = '*') => {
-    const state = useViewerStore.getState();
     switch (msg.type) {
       case 'SET_SECTION': {
         if (msg.action === 'gizmo') {
@@ -164,20 +221,7 @@ export function useAimViewCommands(bim: BimContext) {
             noteIssue('SET_SECTION: podlažie sa vo vieweri nenašlo');
             return;
           }
-          // Rozsah, voči ktorému renderer reže, a rámec modelu, z ktorého je
-          // elevácia podlažia (#63: holá federovaná obálka posunula rez).
-          const range = sectionAxisRange(sectionRenderBounds(state), 'down');
-          // Rámec modelu podlažia; kým jeho geometria ešte prúdi, rámec prvého načítaného modelu.
-          const frame = state.models.get(storey.info.modelId)?.geometryResult?.coordinateInfo
-            ?? [...state.models.values()].find((m) => m.geometryResult?.coordinateInfo)?.geometryResult?.coordinateInfo;
-          const offY = totalYupOffset(frame).y;
-          const position = storeyCutPercent(storey.elevation, msg.offsetM ?? 1.2, offY, range);
-          if (position === null) {
-            noteIssue('SET_SECTION: rozsah modelu pre rez nie je známy');
-            return;
-          }
-          showSectionCut(useViewerStore.getState, { axis: 'down', position, flipped: msg.flipped === true });
-          applyGizmo(msg.showGizmo);
+          if (!cutAtStorey(storey, msg.offsetM ?? 1.2, msg.flipped === true, msg.showGizmo)) noteIssue('SET_SECTION: rozsah modelu pre rez nie je známy');
           return;
         }
         if (msg.guids?.length || msg.coordinate !== undefined) {
@@ -244,16 +288,17 @@ export function useAimViewCommands(bim: BimContext) {
           noteIssue('SET_VIEW_MODE: podlažie sa vo vieweri nenašlo');
           return;
         }
-        // AIM D-132: 3D = záložka 3D, 2D = pôdorys podlažia v záložke, Split = pôdorys vedľa 3D.
-        const target = storey ?? activeStorey ?? storeys[0];
+        // AIM D-161: žiadny režim 2D. 3D = perspektívna kamera, 2D = pohľad zhora na podlažie na tom istom 3D
+        // canvase, split = dlaždice 3D + výkres PDF podlažia (D-157). Dokument na celú plochu sa vráti na 3D záložku.
+        const target = storey ?? storeys[0];
         const p = withTabs((m) => {
-          if (msg.mode === '3d') { m.activate('3d', noteIssue); m.beside(null, noteIssue); return; }
-          if (!target) return noteIssue('SET_VIEW_MODE: model nemá podlažia');
-          if (msg.mode === 'split') m.activate('3d', noteIssue);
-          m.openPlan(target.guid, { beside: msg.mode === 'split' }, noteIssue);
+          m.activate('3d');
+          if (msg.mode === '3d') { m.beside(null, noteIssue); return; }
+          const top = openTop(target?.guid, noteIssue);
+          if (msg.mode !== 'split' || !target) return top;
+          return top.then(() => m.splitWithDrawing(target.guid, noteIssue));
         });
-        // 3D vždy perspektívna a voľná, aj keď 3D záložka už bola aktívna (#216).
-        const done = msg.mode === '3d' ? (p ? p.then(free3d) : free3d()) : p;
+        const done = msg.mode === '3d' ? (p ? p.then(perspective3d) : perspective3d()) : p;
         if (done) track(done);
         return;
       }
@@ -264,26 +309,11 @@ export function useAimViewCommands(bim: BimContext) {
     }
   };
   const ref = useRef(run);
-  // Najnovšie podlažia a setMode bez re-registrácie listenera v AimBridge.
+  // Najnovšie podlažia bez re-registrácie listenera v AimBridge; staršie `VIEW_TABS open` pre pôdorys idú cez ne.
   useEffect(() => {
     ref.current = run;
-    focusView = (keys) => {
-      // Záložka 3D sa pri FOCUS nikdy neprepne do 2D; pôdorys prejde cez záložky (#216).
-      const tabs = useAimViewTabs.getState();
-      const kind = tabs.tabs.find((t) => t.id === tabs.sceneId)?.kind;
-      const step = focusViewStep(sceneMode(kind, mode), keys, activeStorey?.key ?? null, new Set(storeys.map((s) => s.key)));
-      if (step.kind === '3d') {
-        const p = withTabs((m) => { m.activate('3d', noteIssue); m.beside(null, noteIssue); });
-        track(Promise.resolve(p).then(free3d));
-      } else if (step.kind === 'storey') {
-        const storey = storeys.find((s) => s.key === step.key);
-        if (!storey) return;
-        if (kind === 'plan') {
-          const p = withTabs((m) => m.openPlan(storey.guid, {}, noteIssue));
-          if (p) track(p);
-        } else setStorey(storey);
-      }
-    };
+    setTopView(openTop);
+    return () => setTopView(null);
   });
   return ref;
 }

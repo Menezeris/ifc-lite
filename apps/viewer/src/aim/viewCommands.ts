@@ -50,32 +50,11 @@ export function cameraStep(preset: CameraPreset): CameraStep {
 }
 
 /**
- * Podlažie z bridge správy: bez GUID = `undefined` (useViewMode si vyberie
+ * Podlažie z bridge správy: bez GUID = `undefined` (volajúci si vyberie
  * aktívne/posledné), známy GUID = podlažie, neznámy GUID = `null` - správa sa
  * nevykoná, aby viewer potichu neprepol na iné podlažie, než host žiadal.
  */
 export function pickStorey<T extends { guid: string }>(storeys: readonly T[], guid?: string): T | undefined | null {
   if (!guid) return undefined;
   return storeys.find((s) => s.guid === guid) ?? null;
-}
-
-export type FocusViewStep = { kind: 'keep' } | { kind: 'storey'; key: string } | { kind: '3d' };
-
-/**
- * Pohľad pred FOCUS-om (AIM #97, V1): v 2D alebo split pláne iného podlažia by
- * zvýraznený prvok nebolo vidieť. Ciele na jednom známom podlaží (kľúč
- * `modelId:expressId`) presunú plán tam, ciele na viacerých podlažiach alebo
- * bez podlažia prepnú do 3D; v 3D sa nič nemení.
- */
-export function focusViewStep(
-  mode: '3d' | '2d' | 'split',
-  targets: readonly (string | null)[],
-  active: string | null,
-  known: ReadonlySet<string>,
-): FocusViewStep {
-  if (mode === '3d' || targets.length === 0) return { kind: 'keep' };
-  const keys = new Set(targets);
-  const [only] = keys;
-  if (keys.size === 1 && only && known.has(only)) return only === active ? { kind: 'keep' } : { kind: 'storey', key: only };
-  return { kind: '3d' };
 }

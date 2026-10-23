@@ -10,7 +10,6 @@
 
 import { useViewerStore } from '@/store';
 import { activeSectionPlane } from '@/store/section-active';
-import { deriveViewMode } from '@/hooks/viewModeCore';
 import { AUTO_COLOR_FROM_LIST_ID } from '@/lib/lens/persistence';
 import { describeViewChanges, sectionLabel, type ViewSnapshot } from './viewDelta.js';
 
@@ -25,7 +24,6 @@ function viewSnapshot(): ViewSnapshot {
     hidden: s.hiddenEntities.size,
     section: sectionLabel(activeSectionPlane(s)),
     selection: s.selectedEntityIds.size > 0 ? s.selectedEntityIds.size : s.selectedEntityId !== null ? 1 : 0,
-    mode: deriveViewMode({ splitView: s.underlaySplitView, planFull: s.underlayPlanFull, viewLocked: s.underlayViewLocked }),
     lens: s.activeLensId === null ? null
       : s.activeLensId === AUTO_COLOR_FROM_LIST_ID && lens ? `${lens.name} (${rules} pravidiel)` : (lens?.name ?? s.activeLensId),
   };

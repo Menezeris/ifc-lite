@@ -35,9 +35,6 @@ import { MOBILE_FILE_ACCEPT, isSupportedMobileModelFile } from '@/services/suppo
 import { surfaceCommand, type SurfaceCommandDefinition, type SurfaceCommandId } from './surface-commands';
 import { runSurfaceCommand, trackCommandExecution } from './surface-command-run';
 import { ActivityTrayDialog } from './activity/ActivityTray';
-// >>> AIM-FORK: 3D | 2D | Split view-mode switcher (D-075) on mobile too
-import { ViewModeSwitcher } from './ViewModeSwitcher';
-// <<< AIM-FORK
 
 export function MobileToolbar() {
   const { t } = useTranslation();
@@ -51,9 +48,6 @@ export function MobileToolbar() {
     models,
     loadFilesSequentially,
   } = useIfc();
-  // >>> AIM-FORK: drawing underlays present (D-072) → show the view-mode switcher
-  const hasUnderlays = useViewerStore((state) => state.underlayDrawings.size > 0);
-  // <<< AIM-FORK
   const activeProgress = useViewerStore(selectActiveLoadProgress);
 
   const hasModelsLoaded = models.size > 0 || (geometryResult?.meshes && geometryResult.meshes.length > 0);
@@ -223,16 +217,6 @@ export function MobileToolbar() {
           </Button>
         );
       })}
-
-      {/* >>> AIM-FORK: view-mode switcher (D-075), only once the AIM host has sent
-          drawing underlays — without them there is no 2D plan to switch to, and the
-          mobile command surface stays the upstream registry (#5870/#5878). */}
-      {hasModelsLoaded && hasUnderlays && (
-        <div className="flex-shrink-0 ml-0.5">
-          <ViewModeSwitcher />
-        </div>
-      )}
-      {/* <<< AIM-FORK */}
 
       {/* Spacer */}
       <div className="flex-1 min-w-2" />

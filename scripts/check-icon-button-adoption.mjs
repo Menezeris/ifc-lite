@@ -47,7 +47,7 @@ const BASELINE = {
   'viewer/tools/SectionToolbar.tsx': 1,
   // >>> AIM-FORK: fork-owned panels predating this gate (D-072 / D-075 / D-076);
   // ratchets down as they move to IconButton — see docs/FORK_MAINTENANCE.md.
-  'documents/DocumentsPanel.tsx': 6,
+  'documents/DocumentsPanel.tsx': 4,
   'documents/PdfDocumentView.tsx': 2,
   'viewer/CalibrationPdfOverlay.tsx': 2,
   'viewer/CalibrationPdfSurface.tsx': 3,

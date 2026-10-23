@@ -38,13 +38,16 @@ import { applySectionCap, isSectionCapMessage } from './sectionCap.js';
 import { isDerivationsMessage } from './derivations-protocol.js';
 import { isBcfLoadMessage, loadBcfTopics } from './bcf-protocol.js';
 import { dispatchLensMessage, isLensEnvelope, lensSettled, listSettled, resetLensFromChat } from './lens-protocol.js';
-import { appliedViewState, prepareFocusView, runSectionBox, setChangesProvider, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
+import { appliedViewState, runSectionBox, runViewsMessage, setChangesProvider, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
 import { createViewChangeTracker } from './viewChanges.js';
 import type { AutoloadLatch } from './autoloadLatch.js';
 import type { BridgeEntryDeps } from './AimBridgeMount.js';
 
 /** Správy AIM D-132 sa overia až v lenivom module; tu len typ (vstupný balík). */
 const aimTyped = (d: unknown, type: string) => !!d && typeof d === 'object' && (d as { source?: unknown }).source === SOURCE && (d as { type?: unknown }).type === type;
+
+/** Správy hosta o uložených pohľadoch (AIM D-161); tvar overuje `views-protocol.ts` až v lenivom module. */
+const VIEWS_TYPES = ['VIEWS_LOAD', 'VIEW_ACTIVATE', 'VIEW_CAPTURE'];
 
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
@@ -60,7 +63,7 @@ const STREAM_GRACE_MS = 30_000;
 export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry: BridgeEntryDeps }) {
   const { bim, selectPickedGlobalId } = entry;
   /** Helpery pre lenivý modul príkazov viditeľnosti. */
-  const visDeps = { resolveGuids, resolveSelector, selectPickedGlobalId, addToSelection: entry.addToSelection, noteIssue, track, FOCUS_COLOR, FILTER_COLOR, prepareFocusView };
+  const visDeps = { resolveGuids, resolveSelector, selectPickedGlobalId, addToSelection: entry.addToSelection, noteIssue, track, FOCUS_COLOR, FILTER_COLOR };
   const parentOriginRef = useRef<string | null>(null);
   const embeddedRef = useRef(false);
   // Brána príkazov (AIM D-101): do načítania modelov a dotečenia geometrie sa
@@ -148,6 +151,11 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
       if (aimTyped(e.data, 'VIEW_TABS')) {
         const raw: unknown = e.data; // Záložky z chatu (D-132), overenie aj vykonanie v lenivom module, v poradí
         command(() => { const p = withTabs((m) => m.runTabsMessage(raw, noteIssue)); if (p) track(p); });
+        return;
+      }
+      if (VIEWS_TYPES.some((t) => aimTyped(e.data, t))) {
+        const raw: unknown = e.data; // Uložené pohľady z Presentation (D-161), overenie aj vykonanie v lenivom module
+        command(() => runViewsMessage(raw, (m) => window.parent.postMessage(m, origin())));
         return;
       }
       if (aimTyped(e.data, 'SET_SECTION_BOX')) {

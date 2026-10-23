@@ -5,15 +5,16 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
-import { initialTabs, openTab, closeTab, type ViewTab, type ViewTabsState } from './viewTabsPlan.js';
+import { initialTabs, openTab, type ViewTab, type ViewTabsState } from './viewTabsPlan.js';
 import {
   TILE_LAYOUTS, TILE_RECTS, describeLayout, isTileLayout, layoutTiles, liveTile, placeTab, reconcileTiles, setTile,
   singleTiles, tileScene, type TilesState,
 } from './viewTilesPlan.js';
 import { isTilesMessage } from './tiles-protocol.js';
 
-const plan1: ViewTab = { id: 'plan:G1', kind: 'plan', label: '1NP', storeyGuid: 'G1' };
-const plan2: ViewTab = { id: 'plan:G2', kind: 'plan', label: '2NP', storeyGuid: 'G2' };
+// Druhé a tretie 3D scény: logika dlaždíc je všeobecná (pohľady z Presentation v dlaždiciach, D-161 krok Fork B).
+const plan1: ViewTab = { id: 'plan:G1', kind: '3d', label: '1NP' };
+const plan2: ViewTab = { id: 'plan:G2', kind: '3d', label: '2NP' };
 const docA: ViewTab = { id: 'doc:A', kind: 'doc', label: 'A.pdf', docId: 'A' };
 const docB: ViewTab = { id: 'doc:B', kind: 'doc', label: 'B.pdf', docId: 'B' };
 
@@ -104,7 +105,7 @@ describe('dlaždice záložiek (AIM D-157)', () => {
   it('reconcileTiles: zavretá záložka uvoľní dlaždicu pre neukázanú, aktívna sa dostane do dlaždice', () => {
     let s = four();
     const t: TilesState = { layout: 'split_h', tiles: ['3d', 'plan:G1'] };
-    s = closeTab({ ...s, activeId: '3d' }, 'plan:G1');
+    s = { ...s, activeId: '3d', tabs: s.tabs.filter((x) => x.id !== 'plan:G1') }; // druhú 3D scénu closeTab nezavrie (kind 3d)
     assert.deepStrictEqual(reconcileTiles(s, t, '3d').tiles, ['3d', 'plan:G2']);
     // Prázdna dlaždica ostane prázdna, kým ju nevyplní aktívna.
     const one: ViewTabsState = { ...initialTabs() };
@@ -134,7 +135,7 @@ describe('dlaždice záložiek (AIM D-157)', () => {
       kind: 'three_left',
       tiles: [
         { index: 0, tab: '3d', label: '3D', kind: '3d', live: true },
-        { index: 1, tab: 'plan:G1', label: '1NP', kind: 'plan', live: false },
+        { index: 1, tab: 'plan:G1', label: '1NP', kind: '3d', live: false },
         { index: 2, tab: null },
       ],
       live_tab: '3d',

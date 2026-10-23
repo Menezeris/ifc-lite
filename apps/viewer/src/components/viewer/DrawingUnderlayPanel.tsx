@@ -79,10 +79,9 @@ export function DrawingUnderlayPanel({ onClose }: DrawingUnderlayPanelProps) {
 
   // storeyOptions: shared resolution (useFloorplanView) — placements are
   // keyed to the storey GUID (stable across loads), never the expressId.
-  const { storeyOptions, enterDrawingView, enterSplitView, exitSplitView, retargetView } =
+  const { storeyOptions, enterDrawingView, retargetView } =
     useFloorplanView();
   const retargetCalibrationStorey = useViewerStore((s) => s.retargetUnderlayCalibrationStorey);
-  const splitView = useViewerStore((s) => s.underlaySplitView);
 
   const [storeyKey, setStoreyKey] = useState<string>('');
   const selectedStorey =
@@ -255,7 +254,7 @@ export function DrawingUnderlayPanel({ onClose }: DrawingUnderlayPanelProps) {
           value={selectedStorey?.key ?? ''}
           onChange={(e) => {
             setStoreyKey(e.target.value);
-            // A live drawing/split view follows the dropdown: re-cut the 3D
+            // A live calibration view follows the dropdown: re-cut the 3D
             // at the new level; mid-calibration also rebind the draft (its
             // model points are cleared — they sat on the old floor).
             const option = storeyOptions.find((s) => s.key === e.target.value);
@@ -277,22 +276,6 @@ export function DrawingUnderlayPanel({ onClose }: DrawingUnderlayPanelProps) {
             </option>
           ))}
         </select>
-        <Button
-          variant={splitView ? 'default' : 'outline'}
-          size="sm"
-          className="h-6 shrink-0 px-2 text-[11px]"
-          disabled={!selectedStorey && !splitView}
-          onClick={() => {
-            if (splitView) {
-              exitSplitView();
-              return;
-            }
-            if (selectedStorey) enterSplitView(selectedStorey.info);
-          }}
-          title="Split view: 2D plan beside a navigable 3D, camera synced (Ctrl+scroll moves the storey cut)"
-        >
-          {splitView ? 'Exit split' : 'Split view'}
-        </Button>
       </div>
 
       <ScrollArea className="min-h-0 flex-1">

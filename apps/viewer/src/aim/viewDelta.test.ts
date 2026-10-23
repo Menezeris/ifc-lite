@@ -8,7 +8,7 @@ import { describe, it } from 'node:test';
 import { describeViewChanges, sectionLabel, type ViewSnapshot } from './viewDelta.js';
 
 const AFTER_COMMAND: ViewSnapshot = {
-  isolated: 21, xray: null, hidden: 0, section: 'down 30.1 %', selection: 0, mode: '3d', lens: 'AIM chat (2 pravidiel)',
+  isolated: 21, xray: null, hidden: 0, section: 'down 30.1 %', selection: 0, lens: 'AIM chat (2 pravidiel)',
 };
 
 describe('viewDelta (AIM D-125)', () => {
@@ -20,16 +20,15 @@ describe('viewDelta (AIM D-125)', () => {
     assert.deepEqual(describeViewChanges(AFTER_COMMAND, { ...AFTER_COMMAND, isolated: null }), ['izolácia zrušená (bolo 21 prvkov)']);
   });
 
-  it('každý kanál zvlášť: X-ray, skryté, rez, výber, režim, lens', () => {
+  it('každý kanál zvlášť: X-ray, skryté, rez, výber, lens', () => {
     const now: ViewSnapshot = {
-      isolated: 21, xray: 52, hidden: 3103, section: null, selection: 1, mode: '2d', lens: null,
+      isolated: 21, xray: 52, hidden: 3103, section: null, selection: 1, lens: null,
     };
     assert.deepEqual(describeViewChanges(AFTER_COMMAND, now), [
       'X-ray zapnutá (52 prvkov)',
       'skryté prvky 0 -> 3103',
       'rez down 30.1 % -> zrušený',
       'výber 0 -> 1 prvkov',
-      'režim 3d -> 2d',
       'lens AIM chat (2 pravidiel) -> vypnutá',
     ]);
     assert.deepEqual(describeViewChanges({ ...AFTER_COMMAND, isolated: 5 }, AFTER_COMMAND), ['izolácia zmenená (5 -> 21 prvkov)']);

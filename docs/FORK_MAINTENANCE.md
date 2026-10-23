@@ -50,9 +50,9 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/bootstrap.tsx` | 1 | assetin design-kit import order — tokens first, after `index.css` (D-070; upstream moved the entry imports here from `main.tsx`) |
 | `apps/viewer/src/App.tsx` | 2 | `import { AimBridge }` + `<AimBridge />` mount inside `SourceHostProvider` |
 | `apps/viewer/src/hooks/useModelUrlAutoload.ts` | 3 | `?models=` federated autoload + origin allowlist (`lib/autoload.ts`), `AUTOLOAD_COMPLETE_EVENT` for AimBridge, gzip revision archives with the plain model name (`aim/modelFile.ts`, AIM D-135) |
-| `apps/viewer/src/components/viewer/ViewerLayout.tsx` | 6 | D-072 2D plan pane + D-075 document pane in the center split (around upstream's `ModelWorkspaceSplit`) and the AIM D-132 view tab bar above it; the pane logic lives in `aim/useAimCenterPanes.ts` |
+| `apps/viewer/src/components/viewer/ViewerLayout.tsx` | 6 | D-075 document pane in the center split (around upstream's `ModelWorkspaceSplit`) and the AIM D-132 view tab bar above it; the pane logic lives in `aim/useAimCenterPanes.ts`. The D-072 2D plan pane (`DrawingPlanPane`) is no longer mounted (D-161) |
+| `apps/viewer/src/components/viewer/presentation/PresentationPanel.tsx` | 2 | Save works with an empty basket: `handleSaveCurrent` runs `executeBasketSet()` first ("=": selection, else everything visible) and the button is no longer disabled by an empty basket (AIM D-161) |
 | `apps/viewer/src/components/viewer/MobileBottomSheet.tsx` | 1 | `z-50` so sheets sit above the full-screen plan/document overlays |
-| `apps/viewer/src/components/viewer/MobileToolbar.tsx` | 2 | `<ViewModeSwitcher />` (D-075) |
 | `apps/viewer/src/components/viewer/PropertiesPanel.tsx` | 8 | AIM \| IFC inspector tabs + `<AimCard />`, native content wrapped, mobile scroll host (D-077); a property focus from the chat highlights the row without entering edit mode (AIM D-113) |
 | `apps/viewer/src/lib/appearance/pdf/browser-backend.ts` | 1 | pdf.js **legacy build** and its worker (AIM #97): the modern build needs `Map.getOrInsertComputed` and `Math.sumPrecise`, so Safari < 26.2 (all of iOS 18) and Chrome < 147 could not draw a page; guarded by `aim/pdfjs-legacy-build.test.ts` |
 | `apps/viewer/src/lib/pdf/rasterize.ts` | 2 | the same legacy build for the drawing underlay rasterizer (AIM #97); decoder data for masked images from `aim/pdfDecoderData.ts` (AIM #238) |
@@ -67,10 +67,11 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/components/viewer/hierarchy/HierarchyNode.tsx` | 4 | AIM badge icons + per-GUID counts (D-077) |
 | `apps/viewer/src/components/viewer/Viewport.tsx` | 2 | `useDrawingUnderlay` (D-072) |
 | `apps/viewer/src/components/viewer/ViewportContainer.tsx` | 4 | Reality Capture pin layer (D-073; it also mounts the 2D room fill `aim/AimRoomFillLayer.tsx`, AIM D-119), calibration / split-view overlays (D-072) |
+| `apps/viewer/src/hooks/useDrawingUnderlay.ts` | 4 | underlays on/off in 3D (D-133 addendum); with a horizontal cut only the underlay of the storey below it is drawn (`aim/underlayAtCut.ts`, D-161) |
 | `apps/viewer/src/components/viewer/viewport-render-options.ts` | 2 | drawing-view storey cut wins over the Section clip (`aim/underlayCut.ts`, D-072) |
 | `apps/viewer/src/components/viewer/selectionHandlers.ts` | 2 | underlay calibration model-point pick (`aim/underlayPick.ts`, D-072) |
-| `apps/viewer/src/components/viewer/useMouseControls.ts` | 2 | drawing view: drag pans; Ctrl/Cmd+wheel moves the cut while it is active (D-072) |
-| `apps/viewer/src/hooks/useFloorplanView.ts` | 2 | `StoreyInfo` alias + projection/camera selectors for the drawing / split / 2D views (D-072, D-075) |
+| `apps/viewer/src/components/viewer/useMouseControls.ts` | 2 | drag pans instead of orbiting only while an underlay calibration runs (D-072, D-161: a stale lock never blocks orbit); Ctrl/Cmd+wheel moves the cut while it is active |
+| `apps/viewer/src/hooks/useFloorplanView.ts` | 2 | `StoreyInfo` alias + projection/camera selectors for the calibration drawing view (D-072). The split / plan-full entry points (`enterSplitView`, `enterPlanView`) stay as upstream-shaped code, no AIM surface calls them since D-161 |
 | `apps/viewer/src/components/viewer/ribbon/RibbonToolbar.tsx` | 3 | fork-only **AIM** ribbon tab (id `documents`) — strip entry + band mount (D-072/D-075, Derivations group D-089) |
 | `apps/viewer/src/store/constants.ts` | 1 | `'documents'` added to `RibbonTabId` |
 | `apps/viewer/src/store/index.ts` | 1 | fork-only store slices (underlays D-072, documents D-075, identifier links D-076) |
