@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimIdsLocal.ts a/apps/viewer/src/aim/aimIdsLocal.ts
+index 60133508..17270835 100644
+--- b/apps/viewer/src/aim/aimIdsLocal.ts
++++ a/apps/viewer/src/aim/aimIdsLocal.ts
+@@ -99,7 +99,7 @@ export function buildIdsLocal(input: IdsLocalInput, withXml: boolean): Record<st
+   const { studio, validation, slots } = input;
+   if (studio) {
+     const slot = slots.studio;
+-    const linked = !!slot?.code;
++    const linked = !!slot?.code && slot.docId === studio.docId;
+     out.studio = {
+       title: studio.title,
+       specs: studio.specs,

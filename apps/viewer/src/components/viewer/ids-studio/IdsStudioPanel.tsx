@@ -19,6 +19,9 @@ import { exportIds, exportIdsz } from '@/lib/ids-studio/export';
 import { downloadFile } from '@/lib/export/download';
 import { tourAnchor, TOUR_ANCHORS } from '@/lib/tours/anchors';
 import { cn } from '@/lib/utils';
+// >>> AIM-FORK: "Save to AIM" bar for the IDS stored in AIM (D-162)
+import { AimIdsBarLazy } from '@/aim/AimIdsBarLazy';
+// <<< AIM-FORK
 import { DiagnosticsPanel } from './DiagnosticsPanel';
 import { SeverityIcon } from './DiagnosticItem';
 import { RejectionBanner } from './RejectionBanner';
@@ -87,6 +90,9 @@ export function IdsStudioPanel() {
           <X className="h-3.5 w-3.5" aria-hidden />
         </IconButton>
       </div>
+      {/* >>> AIM-FORK: Save to AIM (D-162) */}
+      <AimIdsBarLazy target="studio" />
+      {/* <<< AIM-FORK */}
       {saveError && <p role="alert" className="border-b border-border px-2 py-1 text-2xs text-destructive break-words">{t('idsStudio.header.saveFailed', { reason: saveError })}</p>}
       {!ready && <p className="border-b border-border px-2 py-1 text-2xs text-muted-foreground">{t('idsStudio.loadingSchema')}</p>}
       <div className="min-h-[8rem] flex-[2] border-b border-border"><StudioOutline doc={doc} /></div>

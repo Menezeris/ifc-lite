@@ -37,10 +37,13 @@ import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import type { SectionPlaneAxis } from '@/store/types';
 import type { SectionAxis, SectionFit, ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
 import { describeList } from './aimListState.js';
+import { describeIdsLocal } from './aimIdsStore.js';
 import {
   cutPercent, hostAxis, viewerAxis, ifcCoordinateToRender, ifcPointToRender, renderBoxToIfc, renderDirToIfc, renderPointToIfc, sectionThroughBox, unionBoxes,
   type Box3, type Vec3,
 } from './viewFrame.js';
+
+export { briefIdsLocal } from './aimIdsLocal.js';
 
 type State = ReturnType<typeof useViewerStore.getState>;
 
@@ -241,6 +244,8 @@ export function queryViewState(state: State, g: GuidHelpers) {
     list: describeList(),
     // AIM D-157: dlaždice (rozloženie, záložka v každej dlaždici, živá 3D).
     layout: tilesLayout(),
+    // AIM D-162: IDS otvorené v Studiu a v paneli validácie (kód a verzia v AIM, upravené, výsledky); XML Studia pre `from_viewer`.
+    ids_local: describeIdsLocal(true),
   };
 }
 

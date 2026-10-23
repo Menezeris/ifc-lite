@@ -150,6 +150,7 @@ export async function appliedViewState(): Promise<Record<string, unknown>> {
     ...(settled ? {} : { camera_moving: true }),
     selection_count: s.selection.count, hidden_count: s.hidden_count, isolated_count: s.isolated_count, focus: s.focus,
     panels: s.panels, underlays_3d: s.underlays_3d, ...(s.panel_view ? { panel_view: s.panel_view } : {}), tabs: s.tabs, layout: s.layout, ...(s.property_focus ? { property_focus: s.property_focus } : {}), ...(s.document ? { document: s.document } : {}),
+    ...(s.ids_local ? { ids_local: q.briefIdsLocal(s.ids_local) } : {}),
   };
 }
 

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimIdsLocal.ts a/apps/viewer/src/aim/aimIdsLocal.ts
+index 54728ef1..17270835 100644
+--- b/apps/viewer/src/aim/aimIdsLocal.ts
++++ a/apps/viewer/src/aim/aimIdsLocal.ts
+@@ -65,7 +65,7 @@ const link = (slot: IdsSlot | null, linked: boolean) => (linked && slot?.code ?
+ 
+ function xmlPart(xml: string | null, withXml: boolean) {
+   if (xml === null) return {};
+-  return { bytes: xml.length, ...(withXml ? (true ? { xml } : { xml_truncated: true }) : {}) };
++  return { bytes: xml.length, ...(withXml ? (xml.length <= MAX_LOCAL_XML ? { xml } : { xml_truncated: true }) : {}) };
+ }
+ 
+ function resultsOf(report: LocalReport, identifiers: ReadonlyMap<string, string | undefined>) {

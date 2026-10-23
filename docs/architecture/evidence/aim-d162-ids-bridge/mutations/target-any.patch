@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/ids-protocol.ts a/apps/viewer/src/aim/ids-protocol.ts
+index 612057f2..20ef6e17 100644
+--- b/apps/viewer/src/aim/ids-protocol.ts
++++ a/apps/viewer/src/aim/ids-protocol.ts
+@@ -64,7 +64,7 @@ export const IDS_INBOUND_TYPES: readonly string[] = ['IDS_LOAD', 'IDS_SAVED'];
+ 
+ const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+ const isText = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0 && v.length <= MAX_TEXT;
+-const isTarget = (v: unknown): v is IdsTarget => typeof v === 'string';
++const isTarget = (v: unknown): v is IdsTarget => v === 'studio' || v === 'validation';
+ const isVersion = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 1;
+ const optional = (v: unknown, ok: (x: unknown) => boolean) => v === undefined || ok(v);
+ 
