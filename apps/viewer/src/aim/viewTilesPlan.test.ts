@@ -5,7 +5,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
-import { initialTabs, openTab, closeTab, type ViewTab, type ViewTabsState } from './viewTabsPlan.js';
+import { initialTabs, openTab, type ViewTab, type ViewTabsState } from './viewTabsPlan.js';
 import {
   TILE_LAYOUTS, TILE_RECTS, describeLayout, isTileLayout, layoutTiles, liveTile, placeTab, reconcileTiles, setTile,
   singleTiles, tileScene, type TilesState,

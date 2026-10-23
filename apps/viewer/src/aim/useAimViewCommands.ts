@@ -201,7 +201,6 @@ export function useAimViewCommands(bim: BimContext) {
     state.cameraCallbacks.setPresetView?.('top');
   };
   const run = (msg: ViewInboundMessage, origin = '*') => {
-    const state = useViewerStore.getState();
     switch (msg.type) {
       case 'SET_SECTION': {
         if (msg.action === 'gizmo') {
