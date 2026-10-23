@@ -30,6 +30,7 @@ import { noteIssue, track } from './command-gate.js';
 import { waitCameraSettled } from './cameraSettle.js';
 import { AUTO_ROTATE_SPEED } from './autoRotatePlan.js';
 import { useAimUnderlays3d } from './aimUnderlays3d.js';
+import { useAimPlanPosition } from './aimPlanPosition.js';
 
 type FocusSummary = () => { count: number; guids: string[] };
 /** Zvýraznenie z FOCUS (#94) - poskytne ho AimBridge po lenivom načítaní príkazov viditeľnosti. */
@@ -149,7 +150,7 @@ export async function appliedViewState(): Promise<Record<string, unknown>> {
     // Limit vypršal počas pohybu (používateľ otáča kamerou): póza nie je cieľ, nech to host vie.
     ...(settled ? {} : { camera_moving: true }),
     selection_count: s.selection.count, hidden_count: s.hidden_count, isolated_count: s.isolated_count, focus: s.focus,
-    panels: s.panels, underlays_3d: s.underlays_3d, ...(s.panel_view ? { panel_view: s.panel_view } : {}), tabs: s.tabs, layout: s.layout, ...(s.property_focus ? { property_focus: s.property_focus } : {}), ...(s.document ? { document: s.document } : {}),
+    panels: s.panels, underlays_3d: s.underlays_3d, ...(s.plan_position ? { plan_position: s.plan_position } : {}), ...(s.panel_view ? { panel_view: s.panel_view } : {}), tabs: s.tabs, layout: s.layout, ...(s.property_focus ? { property_focus: s.property_focus } : {}), ...(s.document ? { document: s.document } : {}),
     ...(s.ids_local ? { ids_local: q.briefIdsLocal(s.ids_local) } : {}),
   };
 }
@@ -273,6 +274,10 @@ export function useAimViewCommands(bim: BimContext) {
       }
       case 'SET_UNDERLAYS_3D': {
         useAimUnderlays3d.getState().setShown(msg.show);
+        return;
+      }
+      case 'SET_PLAN_POSITION': {
+        useAimPlanPosition.getState().setEnabled(msg.show);
         return;
       }
       case 'SCROLL_PANEL': {

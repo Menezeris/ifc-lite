@@ -119,6 +119,8 @@ export type ViewInboundMessage =
   | { source: typeof SOURCE; type: 'SET_PANELS'; panels: PanelsRequest }
   /** PDF podklady v 3D zapnúť / vypnúť (AIM D-133 doplnok, #170); stav viewera, nič sa neukladá. */
   | { source: typeof SOURCE; type: 'SET_UNDERLAYS_3D'; show: boolean }
+  /** Poloha a smer kamery na kalibrovanom PDF zapnúť / vypnúť (AIM D-161 bod 8, #282); stav viewera. */
+  | { source: typeof SOURCE; type: 'SET_PLAN_POSITION'; show: boolean }
   /**
    * Posun obsahu panela (AIM #183, D-150): o stranu hore / dole, na začiatok, na koniec (`direction`), na
    * položku podľa textu (`item`) alebo na polohu v % (`percent`); `panel` chýba = panel vlastností.
@@ -237,6 +239,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
         && optional(m.speedDegS, (v) => inRange(v, AUTO_ROTATE_SPEED.min, AUTO_ROTATE_SPEED.max))
         && optional(m.direction, (d) => (AUTO_ROTATE_DIRECTIONS as readonly unknown[]).includes(d));
     case 'SET_UNDERLAYS_3D':
+    case 'SET_PLAN_POSITION':
       return typeof m.show === 'boolean';
     case 'QUERY':
       return isId(m.id)
