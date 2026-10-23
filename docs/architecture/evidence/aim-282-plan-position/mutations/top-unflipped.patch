@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/planPosition.ts a/apps/viewer/src/aim/planPosition.ts
+index d1939813..ae8d8ebc 100644
+--- b/apps/viewer/src/aim/planPosition.ts
++++ a/apps/viewer/src/aim/planPosition.ts
+@@ -65,7 +65,7 @@ export function planMarker(
+     const q = applyAffine(inv, { x: fx, y: -fz });
+     const angleDeg = (Math.atan2(q.x - o.x, q.y - o.y) * 180) / Math.PI;
+     const left = (page.x / w) * 100;
+-    const top = (page.y / h) * 100;
++    const top = ((h - page.y) / h) * 100;
+     if (![left, top, angleDeg].every(Number.isFinite)) return null;
+     if (left < -EDGE_PCT || left > 100 + EDGE_PCT || top < -EDGE_PCT || top > 100 + EDGE_PCT) return null;
+     return { left, top, angleDeg };

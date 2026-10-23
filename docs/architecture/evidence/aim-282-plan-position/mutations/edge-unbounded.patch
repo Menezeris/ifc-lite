@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/planPosition.ts a/apps/viewer/src/aim/planPosition.ts
+index 2a299e09..ae8d8ebc 100644
+--- b/apps/viewer/src/aim/planPosition.ts
++++ a/apps/viewer/src/aim/planPosition.ts
+@@ -67,6 +67,7 @@ export function planMarker(
+     const left = (page.x / w) * 100;
+     const top = ((h - page.y) / h) * 100;
+     if (![left, top, angleDeg].every(Number.isFinite)) return null;
++    if (left < -EDGE_PCT || left > 100 + EDGE_PCT || top < -EDGE_PCT || top > 100 + EDGE_PCT) return null;
+     return { left, top, angleDeg };
+   } catch {
+     return null;
