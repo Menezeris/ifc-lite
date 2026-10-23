@@ -11,6 +11,8 @@ import {
   describeLocalTopics,
   docIssueReference,
   docIssueUrl,
+  docSnapshotUrl,
+  docSnapshotViewpoint,
   issuesOnPage,
   mergeAimProject,
   newTopicGuid,
@@ -153,5 +155,50 @@ describe('pripomienka na PDF (AIM D-158)', () => {
       assert.deepEqual(parseDocIssueUrl(refs[0].url ?? refs[0].referencedDocument), { docId: DOC, page: 2, region: { x: 0.5, y: 0, w: 0.25, h: 0.5 } }, version);
       assert.equal(refs[0].description, 'Pôdorys 1NP, strana 2, oblasť x 50 %, y 0 %, 25 x 50 %', version);
     }
+  });
+
+  it('snímka výrezu od hosta (krok 3): adresa s oblasťou v %, bez hosta nič', () => {
+    const t = { docId: DOC, page: 2, region: { x: 0.5, y: 0, w: 0.25, h: 0.5 } };
+    assert.equal(docSnapshotUrl(`${HOST}/`, t), `${HOST}/api/drawing/${DOC}/snapshot?page=2&region=50_0_25_50`);
+    assert.equal(docSnapshotUrl(HOST, { ...t, region: null }), `${HOST}/api/drawing/${DOC}/snapshot?page=2`);
+    assert.equal(docSnapshotUrl(null, t), null);
+    // Odkaz hosta s RFC 8118 viewrect za #page sa rozloží rovnako.
+    assert.deepEqual(parseDocIssueUrl(`/drawing/${DOC}#page=3&viewrect=1,2,3,4`), { docId: DOC, page: 3, region: null });
+  });
+
+  it('pohľad so snímkou preberie kameru a rez prvého pohľadu; téma bez kamery ho nedostane', () => {
+    const cam = {
+      cameraViewPoint: { x: 1, y: 2, z: 3 },
+      cameraDirection: { x: 0, y: 1, z: 0 },
+      cameraUpVector: { x: 0, y: 0, z: 1 },
+      fieldOfView: 60,
+      aspectRatio: 1.5,
+    };
+    const plane = { location: { x: 0, y: 0, z: 1.2 }, direction: { x: 0, y: 0, z: -1 } };
+    const withCam = topic('t', { viewpoints: [{ guid: 'vp3d', perspectiveCamera: cam, clippingPlanes: [plane] }] });
+    const png = 'data:image/png;base64,iVBORw0KGgo=';
+    assert.deepEqual(docSnapshotViewpoint(withCam, png, 'vpdoc'), { guid: 'vpdoc', perspectiveCamera: cam, clippingPlanes: [plane], snapshot: png });
+    assert.equal(docSnapshotViewpoint(topic('t'), png, 'vpdoc'), null);
+    assert.equal(docSnapshotViewpoint(topic('t', { viewpoints: [{ guid: 'x' }] }), png, 'vpdoc'), null);
+    assert.equal(docSnapshotViewpoint(withCam, 'nie obrázok', 'vpdoc'), null);
+  });
+
+  it('lokálna pripomienka so snímkou: export 3.0 prejde, snímka je v ňom a bcf_local berie 3D pohľad', async () => {
+    const cam = {
+      cameraViewPoint: { x: 1, y: 2, z: 3 },
+      cameraDirection: { x: 0, y: 1, z: 0 },
+      cameraUpVector: { x: 0, y: 0, z: 1 },
+      fieldOfView: 60,
+      aspectRatio: 1.5,
+    };
+    const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    const t = topic('t', { topicType: 'Issue', topicStatus: 'Open', creationAuthor: 'samuel', creationDate: '2026-10-23T00:00:00Z', viewpoints: [{ guid: 'vp3d', perspectiveCamera: cam }] });
+    t.viewpoints.push(docSnapshotViewpoint(t, png, 'vpdoc')!);
+    const p = { version: '3.0', projectId: 'aim', topics: new Map([['t', t]]) } as unknown as BCFProject;
+    const back = await readBCF(await writeBCF(p));
+    const vps = [...back.topics.values()][0].viewpoints;
+    assert.deepEqual(vps.map((v) => v.guid), ['vp3d', 'vpdoc']);
+    assert.equal(vps[1].snapshot, png);
+    assert.equal(describeLocalTopics(p, 'aim').topics[0].viewpoint?.guid, 'vp3d');
   });
 });

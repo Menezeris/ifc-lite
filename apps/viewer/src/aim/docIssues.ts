@@ -18,7 +18,15 @@ import { useViewerStore } from '@/store';
 import { anchorSelector, TOUR_ANCHORS } from '@/lib/tours/anchors';
 import { aimBcfContext } from './bcf-protocol.js';
 import { highlightStyle } from './docRegion.js';
-import { docIssueReference, issuesOnPage, newTopicGuid, regionFromDrag, type DocIssueTarget } from './docIssueModel.js';
+import {
+  docIssueReference,
+  docSnapshotUrl,
+  docSnapshotViewpoint,
+  issuesOnPage,
+  newTopicGuid,
+  regionFromDrag,
+  type DocIssueTarget,
+} from './docIssueModel.js';
 
 export type DocIssuePhase = 'idle' | 'drawing' | 'form';
 
@@ -92,6 +100,7 @@ export async function openIssueForm(target: DocIssueTarget, docName: string): Pr
     finish(null);
     const topic = useViewerStore.getState().bcfProject?.topics.get(guid);
     useViewerStore.getState().updateTopic(guid, { documentReferences: [...(topic?.documentReferences ?? []), ref] });
+    void attachSnapshot(guid, target);
     return true;
   };
   const unsubscribe = useViewerStore.subscribe((s, prev) => {
@@ -109,6 +118,33 @@ export async function openIssueForm(target: DocIssueTarget, docName: string): Pr
     if ((back && Date.now() - started > POLL_MS) || Date.now() - started > FORM_TIMEOUT_MS) finish(null);
   }, POLL_MS);
   return true;
+}
+
+const blobToDataUrl = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+
+/**
+ * Snímka výrezu od hosta (AIM D-158 krok 3) do pohľadu lokálnej pripomienky, aby ju mal aj
+ * export .bcfzip pred uložením v chate. Je to pohodlie: chyba alebo starší host = bez snímky.
+ */
+async function attachSnapshot(guid: string, target: DocIssueTarget): Promise<void> {
+  const url = docSnapshotUrl(aimBcfContext()?.origin ?? null, target);
+  if (!url) return;
+  try {
+    const res = await fetch(url);
+    if (!res.ok || !res.headers.get('content-type')?.startsWith('image/')) return;
+    const snapshot = await blobToDataUrl(await res.blob());
+    const topic = useViewerStore.getState().bcfProject?.topics.get(guid);
+    const vp = docSnapshotViewpoint(topic, snapshot, crypto.randomUUID());
+    if (vp) useViewerStore.getState().addViewpoint(guid, vp);
+  } catch (err) {
+    console.warn('[aim] snímka pripomienky', err);
+  }
 }
 
 /** Klik na rámik: téma v paneli BCF. */

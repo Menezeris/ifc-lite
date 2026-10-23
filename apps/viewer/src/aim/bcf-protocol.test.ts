@@ -48,7 +48,7 @@ describe('AIM_BCF_LOAD (AIM D-099)', () => {
       } as never,
       fetchProjectAsBCF: (async (_client: unknown, projectId: string, options: { includeSnapshots?: boolean }) => {
         assert.equal(projectId, 'aim');
-        assert.equal(options.includeSnapshots, false);
+        assert.equal(options.includeSnapshots, true);
         return { project: pulled, warnings: [] };
       }) as never,
     });
