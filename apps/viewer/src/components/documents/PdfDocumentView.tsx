@@ -31,6 +31,7 @@ import {
 import { PageIdentifierLinks } from './PageIdentifierLinks';
 import { useAimDocRegion } from '@/aim/docRegion'; // >>> AIM-FORK (D-117) <<< AIM-FORK
 import { useAimDocBodyWidth } from '@/aim/useDocBodyWidth'; // >>> AIM-FORK (AIM #239) <<< AIM-FORK
+import { AimPlanMarker } from '@/aim/AimPlanMarker'; // >>> AIM-FORK (D-161 step 3, #282) <<< AIM-FORK
 
 /**
  * Raster ceiling (longest edge, device px). Deep zoom into drawings needs
@@ -786,6 +787,7 @@ function PdfPage({
       <div ref={textHostRef} className="pdf-doc-text-layer" />
       {/* Identifier hyperlinks (D-076): clickable element codes on the page. */}
       <PageIdentifierLinks pdf={pdf} page={page} render={render} docId={docId} />
+      <AimPlanMarker docId={docId} page={page} /> {/* >>> AIM-FORK (D-161 step 3, #282): camera position and view direction on a calibrated plan <<< AIM-FORK */}
     </div>
   );
 }
