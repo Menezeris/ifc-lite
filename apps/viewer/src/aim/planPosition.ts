@@ -74,29 +74,31 @@ export function planMarker(
   }
 }
 
-/** Stav pre `get_viewer_state.plan_position`: zaokrúhlené, aby sa hodnota nemenila na každý šum. */
-export function describePlanMarker(
+export interface PlanMarkerState {
+  document_id: string;
+  page: number;
+  x_pct: number;
+  y_pct: number;
+  heading_deg: number;
+}
+
+/**
+ * Stav pre `get_viewer_state.plan_position`: všetky značky, ktoré sa práve kreslia (záložka a dlaždice, aj dva
+ * rôzne PDF naraz), zoradené podľa dokumentu a strany. Hodnoty sú zaokrúhlené, aby sa nemenili na každý šum.
+ */
+export function describePlanMarkers(
   enabled: boolean,
-  shown: { docId: string; page: number; marker: PlanMarker } | null,
-): {
-  enabled: boolean;
-  shown: boolean;
-  document_id?: string;
-  page?: number;
-  x_pct?: number;
-  y_pct?: number;
-  heading_deg?: number;
-} {
-  if (!shown) return { enabled, shown: false };
+  shown: readonly { docId: string; page: number; marker: PlanMarker }[],
+): { enabled: boolean; shown: boolean; markers: PlanMarkerState[] } {
   const r1 = (n: number) => Math.round(n * 10) / 10;
-  const heading = ((Math.round(shown.marker.angleDeg) % 360) + 360) % 360;
-  return {
-    enabled,
-    shown: true,
-    document_id: shown.docId,
-    page: shown.page,
-    x_pct: r1(shown.marker.left),
-    y_pct: r1(shown.marker.top),
-    heading_deg: heading,
-  };
+  const markers = [...shown]
+    .sort((a, b) => (a.docId < b.docId ? -1 : a.docId > b.docId ? 1 : a.page - b.page))
+    .map(({ docId, page, marker }) => ({
+      document_id: docId,
+      page,
+      x_pct: r1(marker.left),
+      y_pct: r1(marker.top),
+      heading_deg: ((Math.round(marker.angleDeg) % 360) + 360) % 360,
+    }));
+  return { enabled, shown: markers.length > 0, markers };
 }

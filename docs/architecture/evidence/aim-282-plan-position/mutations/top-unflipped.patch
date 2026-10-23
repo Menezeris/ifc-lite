@@ -1,5 +1,5 @@
 diff --git b/apps/viewer/src/aim/planPosition.ts a/apps/viewer/src/aim/planPosition.ts
-index d1939813..ae8d8ebc 100644
+index 423828d8..d4d1fb96 100644
 --- b/apps/viewer/src/aim/planPosition.ts
 +++ a/apps/viewer/src/aim/planPosition.ts
 @@ -65,7 +65,7 @@ export function planMarker(

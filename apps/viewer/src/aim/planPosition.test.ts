@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, it } from 'node:test';
 
-import { describePlanMarker, planMarker, type PlanPlacementLike } from './planPosition.js';
+import { describePlanMarkers, planMarker, type PlanPlacementLike } from './planPosition.js';
 import { planPositionState, reportPlanMarker, useAimPlanPosition } from './aimPlanPosition.js';
 import { isViewMessage } from './view-protocol.js';
 import { SOURCE } from './bridge-protocol.js';
@@ -62,14 +62,28 @@ describe('poloha kamery na PDF (AIM D-161 bod 8, #282)', () => {
   });
 
   it('stav: zapnuté bez značky, so značkou, vypnuté', () => {
-    assert.deepEqual(planPositionState(), { enabled: true, shown: false });
+    assert.deepEqual(planPositionState(), { enabled: true, shown: false, markers: [] });
     reportPlanMarker('d', 1, { left: 25.04, top: 75, angleDeg: -90 });
     assert.deepEqual(planPositionState(), {
-      enabled: true, shown: true, document_id: 'd', page: 1, x_pct: 25, y_pct: 75, heading_deg: 270,
+      enabled: true,
+      shown: true,
+      markers: [{ document_id: 'd', page: 1, x_pct: 25, y_pct: 75, heading_deg: 270 }],
     });
     useAimPlanPosition.getState().setEnabled(false);
     assert.equal(planPositionState().enabled, false);
-    assert.deepEqual(describePlanMarker(false, null), { enabled: false, shown: false });
+    assert.deepEqual(describePlanMarkers(false, []), { enabled: false, shown: false, markers: [] });
+  });
+
+  it('dve dlaždice s rôznymi PDF: stav nesie obe značky, zoradené podľa dokumentu a strany', () => {
+    reportPlanMarker('b', 2, { left: 10, top: 20, angleDeg: 90 });
+    reportPlanMarker('a', 1, { left: 30, top: 40, angleDeg: 0 });
+    reportPlanMarker('b', 1, { left: 50, top: 60, angleDeg: 180 });
+    const s = planPositionState();
+    assert.equal(s.shown, true);
+    assert.deepEqual(s.markers.map((m) => `${m.document_id}:${m.page}`), ['a:1', 'b:1', 'b:2']);
+    reportPlanMarker('a', 1, null);
+    reportPlanMarker('b', 1, null);
+    reportPlanMarker('b', 2, null);
   });
 
   it('správa SET_PLAN_POSITION prejde len s boolean show', () => {

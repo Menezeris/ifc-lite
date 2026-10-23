@@ -1,102 +1,16 @@
 {
-  "top-unflipped": {
-    "observer": "tests",
-    "baseline": {
-      "kind": "pass",
-      "passed": 7,
-      "total": 7
-    },
-    "reverted": {
-      "kind": "assertion-failure",
-      "passed": 6,
-      "failed": 1,
-      "total": 7,
-      "evidence": []
-    },
-    "ledger": [
-      {
-        "file": "apps/viewer/src/aim/planPosition.test.ts",
-        "role": "executable",
-        "runKey": "test:apps/viewer/src/aim/planPosition.test.ts",
-        "adapter": "node-test",
-        "runner": {
-          "family": "node-test",
-          "command": [
-            "tsx",
-            "--import",
-            "./src/test/vite-module-hooks.mjs",
-            "--test-timeout=120000",
-            "--test-concurrency=1",
-            "--test",
-            "src/aim/planPosition.test.ts"
-          ]
-        },
-        "features": [],
-        "attribution": "runtime-v8-file",
-        "baseline": {
-          "kind": "pass",
-          "passed": 7,
-          "failed": 0,
-          "total": 7,
-          "exitCode": 0,
-          "signal": null,
-          "toolchain": "node v22.22.0",
-          "attributed": true,
-          "files": [
-            "apps/viewer/src/aim/planPosition.test.ts"
-          ],
-          "testIdentities": [],
-          "evidence": []
-        },
-        "reverted": {
-          "kind": "assertion-failure",
-          "passed": 6,
-          "failed": 1,
-          "total": 7,
-          "exitCode": 1,
-          "signal": null,
-          "toolchain": "node v22.22.0",
-          "attributed": true,
-          "files": [
-            "apps/viewer/src/aim/planPosition.test.ts"
-          ],
-          "testIdentities": [],
-          "evidence": []
-        }
-      }
-    ],
-    "schemaVersion": 2,
-    "channel": "pull-request",
-    "verdict": "OBSERVED",
-    "exitCode": 0,
-    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planPosition.test.ts; that file has a green, attributable baseline.",
-    "base": "8cb46632e7a81ef52008ee8e042d1f9b6c258357",
-    "head": "aa1303442b18dc6c7ef8da32fca173dcc99e07e4",
-    "production": [
-      "apps/viewer/src/aim/planPosition.ts"
-    ],
-    "tests": [
-      "apps/viewer/src/aim/planPosition.test.ts"
-    ],
-    "invocationId": "c956ca6f-c4b5-4325-9171-e0196b899b0e",
-    "timing": {
-      "startedAt": "2026-10-23T19:54:42.755Z",
-      "finishedAt": "2026-10-23T19:54:45.165Z"
-    },
-    "restoration": "verified"
-  },
   "edge-unbounded": {
     "observer": "tests",
     "baseline": {
       "kind": "pass",
-      "passed": 7,
-      "total": 7
+      "passed": 8,
+      "total": 8
     },
     "reverted": {
       "kind": "assertion-failure",
-      "passed": 6,
+      "passed": 7,
       "failed": 1,
-      "total": 7,
+      "total": 8,
       "evidence": []
     },
     "ledger": [
@@ -121,9 +35,9 @@
         "attribution": "runtime-v8-file",
         "baseline": {
           "kind": "pass",
-          "passed": 7,
+          "passed": 8,
           "failed": 0,
-          "total": 7,
+          "total": 8,
           "exitCode": 0,
           "signal": null,
           "toolchain": "node v22.22.0",
@@ -136,9 +50,9 @@
         },
         "reverted": {
           "kind": "assertion-failure",
-          "passed": 6,
+          "passed": 7,
           "failed": 1,
-          "total": 7,
+          "total": 8,
           "exitCode": 1,
           "signal": null,
           "toolchain": "node v22.22.0",
@@ -157,32 +71,32 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planPosition.test.ts; that file has a green, attributable baseline.",
     "base": "8cb46632e7a81ef52008ee8e042d1f9b6c258357",
-    "head": "aa1303442b18dc6c7ef8da32fca173dcc99e07e4",
+    "head": "c9b96d8f8effd7f9168c37ce171e0652c6c1ee5a",
     "production": [
       "apps/viewer/src/aim/planPosition.ts"
     ],
     "tests": [
       "apps/viewer/src/aim/planPosition.test.ts"
     ],
-    "invocationId": "509d010d-d516-4bb8-a5b8-4cd631cfea9f",
+    "invocationId": "79e60f31-9a74-41ca-8c84-b805c7cba4ca",
     "timing": {
-      "startedAt": "2026-10-23T19:54:45.229Z",
-      "finishedAt": "2026-10-23T19:54:47.646Z"
+      "startedAt": "2026-10-23T20:11:47.294Z",
+      "finishedAt": "2026-10-23T20:11:49.622Z"
     },
     "restoration": "verified"
   },
-  "up-fallback-dropped": {
+  "first-marker-only": {
     "observer": "tests",
     "baseline": {
       "kind": "pass",
-      "passed": 7,
-      "total": 7
+      "passed": 8,
+      "total": 8
     },
     "reverted": {
       "kind": "assertion-failure",
-      "passed": 6,
+      "passed": 7,
       "failed": 1,
-      "total": 7,
+      "total": 8,
       "evidence": []
     },
     "ledger": [
@@ -207,9 +121,9 @@
         "attribution": "runtime-v8-file",
         "baseline": {
           "kind": "pass",
-          "passed": 7,
+          "passed": 8,
           "failed": 0,
-          "total": 7,
+          "total": 8,
           "exitCode": 0,
           "signal": null,
           "toolchain": "node v22.22.0",
@@ -222,9 +136,9 @@
         },
         "reverted": {
           "kind": "assertion-failure",
-          "passed": 6,
+          "passed": 7,
           "failed": 1,
-          "total": 7,
+          "total": 8,
           "exitCode": 1,
           "signal": null,
           "toolchain": "node v22.22.0",
@@ -243,103 +157,17 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planPosition.test.ts; that file has a green, attributable baseline.",
     "base": "8cb46632e7a81ef52008ee8e042d1f9b6c258357",
-    "head": "aa1303442b18dc6c7ef8da32fca173dcc99e07e4",
+    "head": "c9b96d8f8effd7f9168c37ce171e0652c6c1ee5a",
     "production": [
       "apps/viewer/src/aim/planPosition.ts"
     ],
     "tests": [
       "apps/viewer/src/aim/planPosition.test.ts"
     ],
-    "invocationId": "62a322a0-4525-49c7-83a6-86a4e173f28d",
+    "invocationId": "687e3ee4-3513-4657-81d1-99bf82c903d5",
     "timing": {
-      "startedAt": "2026-10-23T19:54:47.702Z",
-      "finishedAt": "2026-10-23T19:54:50.118Z"
-    },
-    "restoration": "verified"
-  },
-  "heading-not-wrapped": {
-    "observer": "tests",
-    "baseline": {
-      "kind": "pass",
-      "passed": 7,
-      "total": 7
-    },
-    "reverted": {
-      "kind": "assertion-failure",
-      "passed": 6,
-      "failed": 1,
-      "total": 7,
-      "evidence": []
-    },
-    "ledger": [
-      {
-        "file": "apps/viewer/src/aim/planPosition.test.ts",
-        "role": "executable",
-        "runKey": "test:apps/viewer/src/aim/planPosition.test.ts",
-        "adapter": "node-test",
-        "runner": {
-          "family": "node-test",
-          "command": [
-            "tsx",
-            "--import",
-            "./src/test/vite-module-hooks.mjs",
-            "--test-timeout=120000",
-            "--test-concurrency=1",
-            "--test",
-            "src/aim/planPosition.test.ts"
-          ]
-        },
-        "features": [],
-        "attribution": "runtime-v8-file",
-        "baseline": {
-          "kind": "pass",
-          "passed": 7,
-          "failed": 0,
-          "total": 7,
-          "exitCode": 0,
-          "signal": null,
-          "toolchain": "node v22.22.0",
-          "attributed": true,
-          "files": [
-            "apps/viewer/src/aim/planPosition.test.ts"
-          ],
-          "testIdentities": [],
-          "evidence": []
-        },
-        "reverted": {
-          "kind": "assertion-failure",
-          "passed": 6,
-          "failed": 1,
-          "total": 7,
-          "exitCode": 1,
-          "signal": null,
-          "toolchain": "node v22.22.0",
-          "attributed": true,
-          "files": [
-            "apps/viewer/src/aim/planPosition.test.ts"
-          ],
-          "testIdentities": [],
-          "evidence": []
-        }
-      }
-    ],
-    "schemaVersion": 2,
-    "channel": "pull-request",
-    "verdict": "OBSERVED",
-    "exitCode": 0,
-    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planPosition.test.ts; that file has a green, attributable baseline.",
-    "base": "8cb46632e7a81ef52008ee8e042d1f9b6c258357",
-    "head": "aa1303442b18dc6c7ef8da32fca173dcc99e07e4",
-    "production": [
-      "apps/viewer/src/aim/planPosition.ts"
-    ],
-    "tests": [
-      "apps/viewer/src/aim/planPosition.test.ts"
-    ],
-    "invocationId": "c0a70641-e4d2-4416-a54a-975633fa6a48",
-    "timing": {
-      "startedAt": "2026-10-23T19:54:50.176Z",
-      "finishedAt": "2026-10-23T19:54:52.738Z"
+      "startedAt": "2026-10-23T20:11:56.742Z",
+      "finishedAt": "2026-10-23T20:11:59.004Z"
     },
     "restoration": "verified"
   },
@@ -347,14 +175,14 @@
     "observer": "tests",
     "baseline": {
       "kind": "pass",
-      "passed": 7,
-      "total": 7
+      "passed": 8,
+      "total": 8
     },
     "reverted": {
       "kind": "assertion-failure",
-      "passed": 6,
+      "passed": 7,
       "failed": 1,
-      "total": 7,
+      "total": 8,
       "evidence": []
     },
     "ledger": [
@@ -379,9 +207,9 @@
         "attribution": "runtime-v8-file",
         "baseline": {
           "kind": "pass",
-          "passed": 7,
+          "passed": 8,
           "failed": 0,
-          "total": 7,
+          "total": 8,
           "exitCode": 0,
           "signal": null,
           "toolchain": "node v22.22.0",
@@ -394,9 +222,9 @@
         },
         "reverted": {
           "kind": "assertion-failure",
-          "passed": 6,
+          "passed": 7,
           "failed": 1,
-          "total": 7,
+          "total": 8,
           "exitCode": 1,
           "signal": null,
           "toolchain": "node v22.22.0",
@@ -415,17 +243,189 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planPosition.test.ts; that file has a green, attributable baseline.",
     "base": "8cb46632e7a81ef52008ee8e042d1f9b6c258357",
-    "head": "aa1303442b18dc6c7ef8da32fca173dcc99e07e4",
+    "head": "c9b96d8f8effd7f9168c37ce171e0652c6c1ee5a",
     "production": [
       "apps/viewer/src/aim/planPosition.ts"
     ],
     "tests": [
       "apps/viewer/src/aim/planPosition.test.ts"
     ],
-    "invocationId": "78323914-225c-4e0d-a762-d2c7639c6440",
+    "invocationId": "bcd47d3b-82b4-4728-9330-3a4fda797901",
     "timing": {
-      "startedAt": "2026-10-23T19:54:52.802Z",
-      "finishedAt": "2026-10-23T19:54:55.263Z"
+      "startedAt": "2026-10-23T20:11:54.384Z",
+      "finishedAt": "2026-10-23T20:11:56.687Z"
+    },
+    "restoration": "verified"
+  },
+  "heading-not-wrapped": {
+    "observer": "tests",
+    "baseline": {
+      "kind": "pass",
+      "passed": 8,
+      "total": 8
+    },
+    "reverted": {
+      "kind": "assertion-failure",
+      "passed": 7,
+      "failed": 1,
+      "total": 8,
+      "evidence": []
+    },
+    "ledger": [
+      {
+        "file": "apps/viewer/src/aim/planPosition.test.ts",
+        "role": "executable",
+        "runKey": "test:apps/viewer/src/aim/planPosition.test.ts",
+        "adapter": "node-test",
+        "runner": {
+          "family": "node-test",
+          "command": [
+            "tsx",
+            "--import",
+            "./src/test/vite-module-hooks.mjs",
+            "--test-timeout=120000",
+            "--test-concurrency=1",
+            "--test",
+            "src/aim/planPosition.test.ts"
+          ]
+        },
+        "features": [],
+        "attribution": "runtime-v8-file",
+        "baseline": {
+          "kind": "pass",
+          "passed": 8,
+          "failed": 0,
+          "total": 8,
+          "exitCode": 0,
+          "signal": null,
+          "toolchain": "node v22.22.0",
+          "attributed": true,
+          "files": [
+            "apps/viewer/src/aim/planPosition.test.ts"
+          ],
+          "testIdentities": [],
+          "evidence": []
+        },
+        "reverted": {
+          "kind": "assertion-failure",
+          "passed": 7,
+          "failed": 1,
+          "total": 8,
+          "exitCode": 1,
+          "signal": null,
+          "toolchain": "node v22.22.0",
+          "attributed": true,
+          "files": [
+            "apps/viewer/src/aim/planPosition.test.ts"
+          ],
+          "testIdentities": [],
+          "evidence": []
+        }
+      }
+    ],
+    "schemaVersion": 2,
+    "channel": "pull-request",
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planPosition.test.ts; that file has a green, attributable baseline.",
+    "base": "8cb46632e7a81ef52008ee8e042d1f9b6c258357",
+    "head": "c9b96d8f8effd7f9168c37ce171e0652c6c1ee5a",
+    "production": [
+      "apps/viewer/src/aim/planPosition.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/planPosition.test.ts"
+    ],
+    "invocationId": "2101e551-7aba-486f-bf96-f945a10aa966",
+    "timing": {
+      "startedAt": "2026-10-23T20:11:52.041Z",
+      "finishedAt": "2026-10-23T20:11:54.324Z"
+    },
+    "restoration": "verified"
+  },
+  "markers-unsorted": {
+    "observer": "tests",
+    "baseline": {
+      "kind": "pass",
+      "passed": 8,
+      "total": 8
+    },
+    "reverted": {
+      "kind": "assertion-failure",
+      "passed": 7,
+      "failed": 1,
+      "total": 8,
+      "evidence": []
+    },
+    "ledger": [
+      {
+        "file": "apps/viewer/src/aim/planPosition.test.ts",
+        "role": "executable",
+        "runKey": "test:apps/viewer/src/aim/planPosition.test.ts",
+        "adapter": "node-test",
+        "runner": {
+          "family": "node-test",
+          "command": [
+            "tsx",
+            "--import",
+            "./src/test/vite-module-hooks.mjs",
+            "--test-timeout=120000",
+            "--test-concurrency=1",
+            "--test",
+            "src/aim/planPosition.test.ts"
+          ]
+        },
+        "features": [],
+        "attribution": "runtime-v8-file",
+        "baseline": {
+          "kind": "pass",
+          "passed": 8,
+          "failed": 0,
+          "total": 8,
+          "exitCode": 0,
+          "signal": null,
+          "toolchain": "node v22.22.0",
+          "attributed": true,
+          "files": [
+            "apps/viewer/src/aim/planPosition.test.ts"
+          ],
+          "testIdentities": [],
+          "evidence": []
+        },
+        "reverted": {
+          "kind": "assertion-failure",
+          "passed": 7,
+          "failed": 1,
+          "total": 8,
+          "exitCode": 1,
+          "signal": null,
+          "toolchain": "node v22.22.0",
+          "attributed": true,
+          "files": [
+            "apps/viewer/src/aim/planPosition.test.ts"
+          ],
+          "testIdentities": [],
+          "evidence": []
+        }
+      }
+    ],
+    "schemaVersion": 2,
+    "channel": "pull-request",
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planPosition.test.ts; that file has a green, attributable baseline.",
+    "base": "8cb46632e7a81ef52008ee8e042d1f9b6c258357",
+    "head": "c9b96d8f8effd7f9168c37ce171e0652c6c1ee5a",
+    "production": [
+      "apps/viewer/src/aim/planPosition.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/planPosition.test.ts"
+    ],
+    "invocationId": "fdc9c1ef-2051-48a1-8401-2941de1b6870",
+    "timing": {
+      "startedAt": "2026-10-23T20:11:59.062Z",
+      "finishedAt": "2026-10-23T20:12:01.425Z"
     },
     "restoration": "verified"
   },
@@ -433,14 +433,14 @@
     "observer": "tests",
     "baseline": {
       "kind": "pass",
-      "passed": 7,
-      "total": 7
+      "passed": 8,
+      "total": 8
     },
     "reverted": {
       "kind": "assertion-failure",
-      "passed": 6,
+      "passed": 7,
       "failed": 1,
-      "total": 7,
+      "total": 8,
       "evidence": []
     },
     "ledger": [
@@ -465,9 +465,9 @@
         "attribution": "runtime-v8-file",
         "baseline": {
           "kind": "pass",
-          "passed": 7,
+          "passed": 8,
           "failed": 0,
-          "total": 7,
+          "total": 8,
           "exitCode": 0,
           "signal": null,
           "toolchain": "node v22.22.0",
@@ -480,9 +480,9 @@
         },
         "reverted": {
           "kind": "assertion-failure",
-          "passed": 6,
+          "passed": 7,
           "failed": 1,
-          "total": 7,
+          "total": 8,
           "exitCode": 1,
           "signal": null,
           "toolchain": "node v22.22.0",
@@ -501,17 +501,189 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planPosition.test.ts; that file has a green, attributable baseline.",
     "base": "8cb46632e7a81ef52008ee8e042d1f9b6c258357",
-    "head": "aa1303442b18dc6c7ef8da32fca173dcc99e07e4",
+    "head": "c9b96d8f8effd7f9168c37ce171e0652c6c1ee5a",
     "production": [
       "apps/viewer/src/aim/view-protocol.ts"
     ],
     "tests": [
       "apps/viewer/src/aim/planPosition.test.ts"
     ],
-    "invocationId": "ca9518fb-a958-4a5b-ade6-8cc681710ec9",
+    "invocationId": "6f991dac-79a1-4ce3-879a-d7c0b0399f4f",
     "timing": {
-      "startedAt": "2026-10-23T19:54:55.325Z",
-      "finishedAt": "2026-10-23T19:54:57.826Z"
+      "startedAt": "2026-10-23T20:12:01.483Z",
+      "finishedAt": "2026-10-23T20:12:03.947Z"
+    },
+    "restoration": "verified"
+  },
+  "top-unflipped": {
+    "observer": "tests",
+    "baseline": {
+      "kind": "pass",
+      "passed": 8,
+      "total": 8
+    },
+    "reverted": {
+      "kind": "assertion-failure",
+      "passed": 7,
+      "failed": 1,
+      "total": 8,
+      "evidence": []
+    },
+    "ledger": [
+      {
+        "file": "apps/viewer/src/aim/planPosition.test.ts",
+        "role": "executable",
+        "runKey": "test:apps/viewer/src/aim/planPosition.test.ts",
+        "adapter": "node-test",
+        "runner": {
+          "family": "node-test",
+          "command": [
+            "tsx",
+            "--import",
+            "./src/test/vite-module-hooks.mjs",
+            "--test-timeout=120000",
+            "--test-concurrency=1",
+            "--test",
+            "src/aim/planPosition.test.ts"
+          ]
+        },
+        "features": [],
+        "attribution": "runtime-v8-file",
+        "baseline": {
+          "kind": "pass",
+          "passed": 8,
+          "failed": 0,
+          "total": 8,
+          "exitCode": 0,
+          "signal": null,
+          "toolchain": "node v22.22.0",
+          "attributed": true,
+          "files": [
+            "apps/viewer/src/aim/planPosition.test.ts"
+          ],
+          "testIdentities": [],
+          "evidence": []
+        },
+        "reverted": {
+          "kind": "assertion-failure",
+          "passed": 7,
+          "failed": 1,
+          "total": 8,
+          "exitCode": 1,
+          "signal": null,
+          "toolchain": "node v22.22.0",
+          "attributed": true,
+          "files": [
+            "apps/viewer/src/aim/planPosition.test.ts"
+          ],
+          "testIdentities": [],
+          "evidence": []
+        }
+      }
+    ],
+    "schemaVersion": 2,
+    "channel": "pull-request",
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planPosition.test.ts; that file has a green, attributable baseline.",
+    "base": "8cb46632e7a81ef52008ee8e042d1f9b6c258357",
+    "head": "c9b96d8f8effd7f9168c37ce171e0652c6c1ee5a",
+    "production": [
+      "apps/viewer/src/aim/planPosition.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/planPosition.test.ts"
+    ],
+    "invocationId": "6b0b11f5-cbb7-4e32-8e8c-4d89d7d2aa12",
+    "timing": {
+      "startedAt": "2026-10-23T20:11:44.730Z",
+      "finishedAt": "2026-10-23T20:11:47.225Z"
+    },
+    "restoration": "verified"
+  },
+  "up-fallback-dropped": {
+    "observer": "tests",
+    "baseline": {
+      "kind": "pass",
+      "passed": 8,
+      "total": 8
+    },
+    "reverted": {
+      "kind": "assertion-failure",
+      "passed": 7,
+      "failed": 1,
+      "total": 8,
+      "evidence": []
+    },
+    "ledger": [
+      {
+        "file": "apps/viewer/src/aim/planPosition.test.ts",
+        "role": "executable",
+        "runKey": "test:apps/viewer/src/aim/planPosition.test.ts",
+        "adapter": "node-test",
+        "runner": {
+          "family": "node-test",
+          "command": [
+            "tsx",
+            "--import",
+            "./src/test/vite-module-hooks.mjs",
+            "--test-timeout=120000",
+            "--test-concurrency=1",
+            "--test",
+            "src/aim/planPosition.test.ts"
+          ]
+        },
+        "features": [],
+        "attribution": "runtime-v8-file",
+        "baseline": {
+          "kind": "pass",
+          "passed": 8,
+          "failed": 0,
+          "total": 8,
+          "exitCode": 0,
+          "signal": null,
+          "toolchain": "node v22.22.0",
+          "attributed": true,
+          "files": [
+            "apps/viewer/src/aim/planPosition.test.ts"
+          ],
+          "testIdentities": [],
+          "evidence": []
+        },
+        "reverted": {
+          "kind": "assertion-failure",
+          "passed": 7,
+          "failed": 1,
+          "total": 8,
+          "exitCode": 1,
+          "signal": null,
+          "toolchain": "node v22.22.0",
+          "attributed": true,
+          "files": [
+            "apps/viewer/src/aim/planPosition.test.ts"
+          ],
+          "testIdentities": [],
+          "evidence": []
+        }
+      }
+    ],
+    "schemaVersion": 2,
+    "channel": "pull-request",
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/planPosition.test.ts; that file has a green, attributable baseline.",
+    "base": "8cb46632e7a81ef52008ee8e042d1f9b6c258357",
+    "head": "c9b96d8f8effd7f9168c37ce171e0652c6c1ee5a",
+    "production": [
+      "apps/viewer/src/aim/planPosition.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/planPosition.test.ts"
+    ],
+    "invocationId": "3f784fb6-9292-4296-8084-61d32fe73be9",
+    "timing": {
+      "startedAt": "2026-10-23T20:11:49.687Z",
+      "finishedAt": "2026-10-23T20:11:51.986Z"
     },
     "restoration": "verified"
   }
