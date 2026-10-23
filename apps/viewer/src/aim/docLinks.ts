@@ -14,11 +14,14 @@
 import { useEffect, type RefObject } from 'react';
 import { create } from 'zustand';
 import { SOURCE } from './bridge-protocol.js';
+import { setLinkDraft } from './docLinkDraftStore.js';
 
 export interface DocLinkTarget {
   guid: string;
   ref: string;
   name?: string;
+  /** Zóna (IfcZone) bez geometrie: GUIDy jej miestností, klik vyberie prvú, ktorá je vo vieweri (AIM D-160). */
+  members?: string[];
 }
 
 /** Oblasť popisku v zlomkoch strany (0-1, počiatok vľavo hore). */
@@ -30,6 +33,8 @@ export interface DocLink {
   label: string;
   status: 'unique' | 'candidates';
   targets: DocLinkTarget[];
+  /** Ručné priradenie z chatu (AIM D-160), nie odvodenie z popisku. */
+  manual?: boolean;
   /** Značka typu s viac výskytmi: klik otvorí tento IFC typ, `targets` sú vedľajšia voľba. */
   type?: DocLinkTarget;
 }
@@ -43,6 +48,7 @@ export interface DocLinksMessage {
 /** Najviac oblastí na stranu (pôdorys 1NP ich má okolo 100) a kandidátov na oblasť. */
 export const MAX_LINKS_PER_PAGE = 600;
 export const MAX_TARGETS = 12;
+export const MAX_MEMBERS = 40;
 const MAX_TEXT = 80;
 
 export function isDocLinksMessage(data: unknown): data is DocLinksMessage {
@@ -105,7 +111,11 @@ function normalizeTarget(raw: unknown): DocLinkTarget | null {
   const ref = text(t.ref);
   if (!guid || !ref) return null;
   const name = text(t.name);
-  return name ? { guid, ref, name } : { guid, ref };
+  const members = (Array.isArray(t.members) ? t.members : [])
+    .map(text)
+    .filter((m): m is string => m !== null)
+    .slice(0, MAX_MEMBERS);
+  return { guid, ref, ...(name ? { name } : {}), ...(members.length > 0 ? { members } : {}) };
 }
 
 function normalizeLink(raw: unknown): DocLink | null {
@@ -131,6 +141,7 @@ function normalizeLink(raw: unknown): DocLink | null {
     label: text(l.label) ?? targets[0].ref,
     status: targets.length > 1 ? 'candidates' : 'unique',
     targets,
+    ...(l.manual === true ? { manual: true } : {}),
     ...(type ? { type } : {}),
   };
 }
@@ -164,7 +175,7 @@ export function linkTitle(link: DocLink): string {
     : link.status === 'unique'
       ? `${first.ref}${first.name ? ` ${first.name}` : ''}`
       : `kandidáti (${link.targets.length}): ${link.targets.map((t) => t.ref).join(', ')}`;
-  return `${link.label} -> ${to} (AIM: odvodené z popisku)`;
+  return `${link.label} -> ${to} (${link.manual ? 'AIM: ručne priradené' : 'AIM: odvodené z popisku'})`;
 }
 
 interface DocLinksState {
@@ -177,11 +188,19 @@ interface DocLinksState {
 export const useAimDocLinksStore = create<DocLinksState>((set, get) => ({
   pages: new Map(),
   nonce: 0,
-  setDocuments: (documents) => set({ pages: normalizeDocLinks(documents), nonce: get().nonce + 1 }),
+  setDocuments: (documents) => {
+    // Nové odkazy z hosta (aj po uložení opravy v chate): návrh opravy a jeho značka končia (AIM D-160).
+    setLinkDraft(null);
+    if (typeof document !== 'undefined') document.querySelectorAll('[data-aim-link-draft]').forEach((n) => n.remove());
+    set({ pages: normalizeDocLinks(documents), nonce: get().nonce + 1 });
+  },
 }));
 
-/** Vyber prvok odkazu; false = prvok nie je v načítaných modeloch (alebo výber ešte nie je napojený). */
-const selectDocLinkTarget = (guid: string): boolean => selectGuid(guid);
+/**
+ * Vyber prvok odkazu; false = prvok nie je v načítaných modeloch (alebo výber ešte nie je napojený).
+ * Zóna bez geometrie vyberie prvú svoju miestnosť, ktorá vo vieweri je (AIM D-160).
+ */
+const selectDocLinkTarget = (t: DocLinkTarget): boolean => selectGuid(t.guid) || (t.members ?? []).some(selectGuid);
 
 const LAYER_ATTR = 'data-aim-links';
 const PICKER_ATTR = 'data-aim-link-picker';
@@ -226,7 +245,7 @@ function openPicker(layer: HTMLElement, link: DocLink): void {
       background: 'transparent', border: '0', cursor: 'pointer', color: 'inherit', font: 'inherit',
     });
     item.addEventListener('click', () => {
-      if (selectDocLinkTarget(t.guid)) box.remove();
+      if (selectDocLinkTarget(t)) box.remove();
       else flagMissing(item);
     });
     box.appendChild(item);
@@ -234,7 +253,7 @@ function openPicker(layer: HTMLElement, link: DocLink): void {
   layer.appendChild(box);
 }
 
-function linkBox(layer: HTMLElement, link: DocLink): HTMLElement {
+function linkBox(layer: HTMLElement, link: DocLink, ctx: { docId: string; page: number }): HTMLElement {
   const el = document.createElement('div');
   el.setAttribute('role', 'button');
   el.tabIndex = 0;
@@ -248,23 +267,58 @@ function linkBox(layer: HTMLElement, link: DocLink): HTMLElement {
   stopPointer(el);
   const activate = () => {
     // Značka typu: otvor IFC typ; výber výskytov je záloha, keď typ vo vieweri nie je.
-    if (link.type && selectDocLinkTarget(link.type.guid)) return;
+    if (link.type && selectDocLinkTarget(link.type)) return;
     if (link.status === 'candidates') openPicker(layer, link);
-    else if (!selectDocLinkTarget(link.targets[0].guid)) flagMissing(el);
+    else if (!selectDocLinkTarget(link.targets[0])) flagMissing(el);
   };
-  el.addEventListener('click', activate);
+  // Alt+klik alebo pravé tlačidlo: ručná oprava odkazu (AIM D-160, lenivý modul docLinkDraft).
+  const edit = () => void import('./docLinkDraft.js').then((m) => m.openLinkMenu(layer, link, ctx));
+  el.addEventListener('click', (e) => (e.altKey ? edit() : activate()));
+  el.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    edit();
+  });
   el.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
-    activate();
+    if (e.altKey) edit();
+    else activate();
   });
   return el;
+}
+
+const armed = new WeakSet<HTMLElement>();
+
+/**
+ * Alt+ťah na strane označí text bez odkazu pre ručné priradenie (AIM D-160). Modul návrhu sa
+ * načíta až pri prvom geste; koniec ťahu sa zachytí hneď, aby ho rýchle gesto nestratilo.
+ */
+function armDraft(pageEl: HTMLElement, docId: string, page: number): void {
+  if (armed.has(pageEl)) return;
+  armed.add(pageEl);
+  pageEl.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (!e.altKey || e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const from = { x: e.clientX, y: e.clientY };
+      const loaded = import('./docLinkDraft.js');
+      window.addEventListener(
+        'pointerup',
+        (u) => void loaded.then((m) => m.draftFromDrag(pageEl, { docId, page }, from, { x: u.clientX, y: u.clientY })),
+        { once: true },
+      );
+    },
+    true,
+  );
 }
 
 /** Vrstva odkazov nad každou vykreslenou stranou dokumentu; prekreslí sa pri novej správe. */
 function syncLinkLayers(pageEls: Map<number, HTMLDivElement> | null, docId: string, state: DocLinksState): void {
   if (!pageEls) return;
   for (const [page, el] of pageEls) {
+    armDraft(el, docId, page);
     const layer = el.querySelector<HTMLDivElement>(`:scope > [${LAYER_ATTR}]`);
     const links = state.pages.get(pageKey(docId, page));
     if (!links) {
@@ -277,7 +331,7 @@ function syncLinkLayers(pageEls: Map<number, HTMLDivElement> | null, docId: stri
     next.setAttribute(LAYER_ATTR, String(state.nonce));
     // Nad výrezovým plátnom karty (ako odkazy D-076), pod rámikmi by klik nešiel.
     Object.assign(next.style, { position: 'absolute', inset: '0', pointerEvents: 'none', zIndex: '10' });
-    for (const link of links) next.appendChild(linkBox(next, link));
+    for (const link of links) next.appendChild(linkBox(next, link, { docId, page }));
     el.appendChild(next);
   }
 }

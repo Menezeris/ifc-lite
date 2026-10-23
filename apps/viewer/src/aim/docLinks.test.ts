@@ -9,11 +9,13 @@ import {
   handleDocLinksMessage,
   isDocLinksMessage,
   linkTitle,
+  MAX_MEMBERS,
   MAX_TARGETS,
   normalizeDocLinks,
   pageKey,
   useAimDocLinksStore,
 } from './docLinks.js';
+import { getLinkDraft, setLinkDraft } from './docLinkDraftStore.js';
 
 const door = { guid: '0DoorGuid0000000000001', ref: 'DD01.08.0001' };
 const link = (over: Record<string, unknown> = {}) => ({
@@ -147,5 +149,38 @@ describe('acceptsDocLinksEvent (AIM D-130)', () => {
     assert.equal(acceptsDocLinksEvent({ source: {}, origin: 'https://aim.example' }, parent, 'https://aim.example/ifc'), false);
     assert.equal(acceptsDocLinksEvent({ source: parent, origin: 'https://evil.example' }, parent, 'https://aim.example/ifc'), false);
     assert.equal(acceptsDocLinksEvent({ source: parent, origin: 'https://any.example' }, parent, ''), true);
+  });
+});
+
+describe('zóny a ručné odkazy (AIM D-160)', () => {
+  const zone = { guid: '0ZoneGuid00000000000001', ref: 'PU.N1.01', name: 'PU N1.01', members: ['0Room1', '0Room2', 7, ''] };
+
+  it('cieľ nesie členov zóny, len textové a neprázdne', () => {
+    const [l] = normalizeDocLinks([{ documentId: 'd', page: 1, links: [link({ targets: [zone] })] }]).get(pageKey('d', 1)) ?? [];
+    assert.deepEqual(l.targets[0].members, ['0Room1', '0Room2']);
+  });
+
+  it('členov je najviac MAX_MEMBERS a cieľ bez nich pole nemá', () => {
+    const many = Array.from({ length: MAX_MEMBERS + 5 }, (_, i) => `r${i}`);
+    const [l] = normalizeDocLinks([{ documentId: 'd', page: 1, links: [link({ targets: [{ ...zone, members: many }, door]})] }]).get(pageKey('d', 1)) ?? [];
+    assert.equal(l.targets[0].members?.length, MAX_MEMBERS);
+    assert.equal('members' in l.targets[1], false);
+  });
+
+  it('manual prejde len ako true a mení popis', () => {
+    const [auto] = normalizeDocLinks([{ documentId: 'd', page: 1, links: [link()] }]).get(pageKey('d', 1)) ?? [];
+    const [hand] = normalizeDocLinks([{ documentId: 'd', page: 1, links: [link({ manual: true })] }]).get(pageKey('d', 1)) ?? [];
+    const [fake] = normalizeDocLinks([{ documentId: 'd', page: 1, links: [link({ manual: 'ano' })] }]).get(pageKey('d', 1)) ?? [];
+    assert.equal(auto.manual, undefined);
+    assert.equal(hand.manual, true);
+    assert.equal(fake.manual, undefined);
+    assert.match(linkTitle(hand), /ručne priradené/);
+    assert.match(linkTitle(auto), /odvodené/);
+  });
+
+  it('nová správa od hosta zruší rozpracovaný návrh opravy', () => {
+    setLinkDraft({ document_id: 'd', page: 1, text: 'PU', bbox: { x: 1, y: 1, width: 1, height: 1 }, action: 'clear' });
+    useAimDocLinksStore.getState().setDocuments([]);
+    assert.equal(getLinkDraft(), null);
   });
 });
