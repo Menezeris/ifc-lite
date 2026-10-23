@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimIdsLocal.ts a/apps/viewer/src/aim/aimIdsLocal.ts
+index 9af74b6e..17270835 100644
+--- b/apps/viewer/src/aim/aimIdsLocal.ts
++++ a/apps/viewer/src/aim/aimIdsLocal.ts
+@@ -105,7 +105,7 @@ export function buildIdsLocal(input: IdsLocalInput, withXml: boolean): Record<st
+       specs: studio.specs,
+       ...link(slot, linked),
+       from_aim: linked,
+-      dirty: linked ? studio.xml !== slot?.baseline : false,
++      dirty: linked ? studio.xml !== slot?.baseline : true,
+       ...xmlPart(studio.xml, withXml),
+     };
+   }

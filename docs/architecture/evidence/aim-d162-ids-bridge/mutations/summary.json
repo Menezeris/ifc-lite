@@ -1,0 +1,170 @@
+{
+  "brief-studio-only": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimIdsLocal.test.ts; that file has a green, attributable baseline.",
+    "base": "04e11cb9e3d53ee18c4beae9334d27a3e8f763f5",
+    "head": "5649a627cc1d38e098ac0239cc64f1694eab852d",
+    "production": [
+      "apps/viewer/src/aim/aimIdsLocal.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimIdsLocal.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "dirty-never": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimIdsLocal.test.ts; that file has a green, attributable baseline.",
+    "base": "04e11cb9e3d53ee18c4beae9334d27a3e8f763f5",
+    "head": "5649a627cc1d38e098ac0239cc64f1694eab852d",
+    "production": [
+      "apps/viewer/src/aim/aimIdsLocal.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimIdsLocal.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "docid-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimIdsLocal.test.ts; that file has a green, attributable baseline.",
+    "base": "04e11cb9e3d53ee18c4beae9334d27a3e8f763f5",
+    "head": "5649a627cc1d38e098ac0239cc64f1694eab852d",
+    "production": [
+      "apps/viewer/src/aim/aimIdsLocal.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimIdsLocal.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "only-keeps-all": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimIdsSpec.test.ts; that file has a green, attributable baseline.",
+    "base": "04e11cb9e3d53ee18c4beae9334d27a3e8f763f5",
+    "head": "5649a627cc1d38e098ac0239cc64f1694eab852d",
+    "production": [
+      "apps/viewer/src/aim/aimIdsSpec.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimIdsSpec.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "run-any-type": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/ids-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "04e11cb9e3d53ee18c4beae9334d27a3e8f763f5",
+    "head": "5649a627cc1d38e098ac0239cc64f1694eab852d",
+    "production": [
+      "apps/viewer/src/aim/ids-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/ids-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "spec-case-sensitive": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimIdsSpec.test.ts; that file has a green, attributable baseline.",
+    "base": "04e11cb9e3d53ee18c4beae9334d27a3e8f763f5",
+    "head": "5649a627cc1d38e098ac0239cc64f1694eab852d",
+    "production": [
+      "apps/viewer/src/aim/aimIdsSpec.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimIdsSpec.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "spec-id-first": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimIdsSpec.test.ts; that file has a green, attributable baseline.",
+    "base": "04e11cb9e3d53ee18c4beae9334d27a3e8f763f5",
+    "head": "5649a627cc1d38e098ac0239cc64f1694eab852d",
+    "production": [
+      "apps/viewer/src/aim/aimIdsSpec.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimIdsSpec.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "target-any": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/ids-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "04e11cb9e3d53ee18c4beae9334d27a3e8f763f5",
+    "head": "5649a627cc1d38e098ac0239cc64f1694eab852d",
+    "production": [
+      "apps/viewer/src/aim/ids-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/ids-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "unlinked-clean": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimIdsLocal.test.ts; that file has a green, attributable baseline.",
+    "base": "04e11cb9e3d53ee18c4beae9334d27a3e8f763f5",
+    "head": "5649a627cc1d38e098ac0239cc64f1694eab852d",
+    "production": [
+      "apps/viewer/src/aim/aimIdsLocal.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimIdsLocal.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "version-zero": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/ids-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "04e11cb9e3d53ee18c4beae9334d27a3e8f763f5",
+    "head": "5649a627cc1d38e098ac0239cc64f1694eab852d",
+    "production": [
+      "apps/viewer/src/aim/ids-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/ids-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "xml-cap-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimIdsLocal.test.ts; that file has a green, attributable baseline.",
+    "base": "04e11cb9e3d53ee18c4beae9334d27a3e8f763f5",
+    "head": "5649a627cc1d38e098ac0239cc64f1694eab852d",
+    "production": [
+      "apps/viewer/src/aim/aimIdsLocal.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimIdsLocal.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "xml-unbounded": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/ids-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "04e11cb9e3d53ee18c4beae9334d27a3e8f763f5",
+    "head": "5649a627cc1d38e098ac0239cc64f1694eab852d",
+    "production": [
+      "apps/viewer/src/aim/ids-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/ids-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

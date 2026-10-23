@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimIdsLocal.ts a/apps/viewer/src/aim/aimIdsLocal.ts
+index e4c06bf1..17270835 100644
+--- b/apps/viewer/src/aim/aimIdsLocal.ts
++++ a/apps/viewer/src/aim/aimIdsLocal.ts
+@@ -128,7 +128,7 @@ export function buildIdsLocal(input: IdsLocalInput, withXml: boolean): Record<st
+ /** `ids_local` bez XML dokumentov (potvrdenie príkazu `APPLIED` ich nenesie). */
+ export function briefIdsLocal(local: Record<string, unknown>): Record<string, unknown> {
+   const out: Record<string, unknown> = { ...local };
+-  for (const key of ['studio'] as const) {
++  for (const key of ['studio', 'validation'] as const) {
+     const part = local[key];
+     if (part && typeof part === 'object' && 'xml' in part) {
+       const { xml: _xml, ...rest } = part as Record<string, unknown>;

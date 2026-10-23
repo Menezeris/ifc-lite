@@ -28,6 +28,9 @@ import { IDSPanelResults } from './IDSPanelResults';
 import { IDSPanelStates, idsProgressState } from './IDSPanelStates';
 import { AnalysisPanel, AnalysisPanelChrome } from './analysis/AnalysisPanel';
 import { DefinitionLibraryToolbar } from './validation/DefinitionLibraryToolbar';
+// >>> AIM-FORK: "Save to AIM" bar and the run requested from the AIM chat (D-162)
+import { AimIdsBarLazy } from '@/aim/AimIdsBarLazy';
+// <<< AIM-FORK
 
 // ============================================================================
 // Types
@@ -209,6 +212,9 @@ export function IDSPanel({ onClose, embedded = false }: IDSPanelProps) {
       staleFor={report}
     >
       <div className="flex-1 min-h-0 flex flex-col">
+        {/* >>> AIM-FORK: Save to AIM + run from chat (D-162) */}
+        {document && <AimIdsBarLazy target="validation" runValidation={runValidation} />}
+        {/* <<< AIM-FORK */}
         {!report && <DefinitionLibraryToolbar kind="ids" onImport={() => { void handleLoadIdsClick(); }} />}
         <IDSPanelStates
           ids={ids}

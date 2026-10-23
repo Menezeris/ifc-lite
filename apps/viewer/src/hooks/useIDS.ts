@@ -30,6 +30,9 @@ import type {
 } from '@ifc-lite/ids';
 import { isIDSValidationReport } from '@ifc-lite/ids';
 import { loadIdsContent } from './ids/loadIdsContent';
+// >>> AIM-FORK: a run of one specification, requested from the AIM chat (D-162)
+import { onlySpecification } from '@/aim/aimIdsSpec';
+// <<< AIM-FORK
 import { beginDefinitionImport, isDefinitionImportReading } from '@/lib/validation/definition-import-owner';
 import type { IDSBCFExportSettings, IDSExportProgress } from '@/components/viewer/IDSExportDialog';
 
@@ -68,7 +71,9 @@ export interface UseIDSResult extends Omit<UseValidationResults, 'report'> {
   loadIDSFile: (file: File) => Promise<void>;
   clearIDS: () => void;
 
-  runValidation: (targetModelId?: string) => Promise<IDSValidationReport | null>;
+  // >>> AIM-FORK: optional second argument, id of the only specification to run (D-162)
+  runValidation: (targetModelId?: string, onlySpecificationId?: string) => Promise<IDSValidationReport | null>;
+  // <<< AIM-FORK
   cancelValidation: () => void;
   clearValidation: () => void;
 
@@ -174,7 +179,9 @@ export function useIDS(options: UseIDSOptions = {}): UseIDSResult {
     useViewerStore.getState().deactivateValidationDefinition('ids');
   }, [cancelValidation]);
 
-  const runValidation = useCallback(async (targetModelId?: string): Promise<IDSValidationReport | null> => {
+  // >>> AIM-FORK: optional second argument, id of the only specification to run (D-162)
+  const runValidation = useCallback(async (targetModelId?: string, onlySpecificationId?: string): Promise<IDSValidationReport | null> => {
+  // <<< AIM-FORK
     if (isNativeWorkflowBusy()) {
       setIdsError('A workflow is running; wait or cancel it.');
       return null;
@@ -232,7 +239,9 @@ export function useIDS(options: UseIDSOptions = {}): UseIDSResult {
       };
 
       const { report: validationReport, snapshot } = await runIdsCheck({
-        document, modelId, dataStore, mutationView: getMutationView(modelId),
+        // >>> AIM-FORK: run of one specification (D-162)
+        document: onlySpecification(document, onlySpecificationId), modelId, dataStore, mutationView: getMutationView(modelId),
+        // <<< AIM-FORK
         locale, models, signal: abortController.signal, onProgress,
       });
 
