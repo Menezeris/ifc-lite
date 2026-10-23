@@ -16,6 +16,7 @@ import { SOURCE } from './bridge-core.js';
 import { idsHostPost } from './idsHost.js';
 import { isIdsInbound, type IdsLoadMessage, type IdsSavedMessage, type IdsSaveMessage, type IdsTarget } from './ids-protocol.js';
 import { activeIdsEntry, useAimIds, type IdsStatus } from './aimIdsStore.js';
+import { statusAfterDisconnect } from './aimIdsStatus.js';
 
 type StudioXml = typeof import('@/lib/ids-studio/xml').studioXml;
 
@@ -60,7 +61,7 @@ export function stopIds(): void {
   stopTracking = null;
   pending.clear();
   // Potvrdenie uloženia, ktoré už nepríde (pending je preč), by nechalo tlačidlo vypnuté navždy.
-  if (useAimIds.getState().status?.kind === 'saving') setStatus(null);
+  setStatus(statusAfterDisconnect(useAimIds.getState().status));
 }
 
 async function loadStudio(msg: IdsLoadMessage, deps: IdsDeps): Promise<void> {
