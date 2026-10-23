@@ -27,6 +27,7 @@ import { describePanels } from './aimPanelsPlan.js';
 import { panelViewState } from './aimPanelScroll.js';
 import { useAimInspectorStore } from './aimInspectorStore.js';
 import { useAimDocRegionStore } from './docRegion.js';
+import { getLinkDraft } from './docLinkDraftStore.js';
 import { useAimUnderlays3d } from './aimUnderlays3d.js';
 import { aimBcfContext } from './bcf-protocol.js';
 import { useAimViewTabs } from './viewTabsStore.js';
@@ -229,6 +230,8 @@ export function queryViewState(state: State, g: GuidHelpers) {
     underlays_3d: !useAimUnderlays3d.getState().hidden,
     property_focus: useAimInspectorStore.getState().propertyFocus,
     document: useAimDocRegionStore.getState().visible,
+    // AIM D-160: návrh ručnej opravy odkazu popisku na výkrese; uloží ho chat (open_drawing link from_draft).
+    link_draft: getLinkDraft(),
     // AIM D-132: záložky (aktívna a tá vedľa).
     tabs: describeTabs(useAimViewTabs.getState()),
     // AIM D-149: zoznam v paneli Lists (stĺpce, filtre, zoradenie, zoskupenie, súčty, maximalizácia).
