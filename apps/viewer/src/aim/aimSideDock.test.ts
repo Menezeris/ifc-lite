@@ -43,7 +43,6 @@ describe('bočný stĺpec: čo je naozaj vidno (AIM #212)', () => {
       floatingPanels: [{ id: 'lens', snap: 'right', w: 300, h: 300 }],
       poppedOutIds: [],
       listPanelVisible: false,
-      drawing2DPanelVisible: false,
     };
     assert.deepEqual(panelInfo(s, 'properties'), { open: true, where: 'right' });
     assert.deepEqual(panelInfo({ ...s, sidebarMode: 'collapsed' }, 'properties'), { open: false });
