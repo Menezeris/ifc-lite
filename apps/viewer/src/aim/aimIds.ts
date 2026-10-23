@@ -59,6 +59,8 @@ export function stopIds(): void {
   stopTracking?.();
   stopTracking = null;
   pending.clear();
+  // Potvrdenie uloženia, ktoré už nepríde (pending je preč), by nechalo tlačidlo vypnuté navždy.
+  if (useAimIds.getState().status?.kind === 'saving') setStatus(null);
 }
 
 async function loadStudio(msg: IdsLoadMessage, deps: IdsDeps): Promise<void> {
