@@ -35,7 +35,7 @@ export interface ViewsDeps {
 
 /** Ticho po poslednej zmene pohľadov, kým sa pošlú hostovi (zlúči rýchle zmeny a dobehnutie náhľadu). */
 const FLUSH_DELAY_MS = 150;
-/** Naraz zmizlo toľko pohľadov alebo viac: je to reset relácie, nie zmazanie používateľom. */
+/** Naraz zmizlo toľko pohľadov alebo viac spolu so zmenou modelov: je to reset relácie, nie zmazanie používateľom. */
 const MASS_REMOVAL = 3;
 
 interface Session {
@@ -53,6 +53,8 @@ interface Session {
   timer: ReturnType<typeof setTimeout> | null;
   /** Panel sa vyprázdnil novým súborom: nič sa nemaže, pohľady sa naplnia znova po načítaní modelov. */
   resetPending: boolean;
+  /** Modely pri poslednom odoslaní: hromadné zmiznutie pohľadov je reset len spolu so zmenou modelov. */
+  modelsAtFlush: ReturnType<typeof state>['models'];
 }
 
 let session: Session | null = null;
@@ -107,11 +109,14 @@ function flush(): void {
     post({ type: 'VIEW_SAVE', view: encodeView(v, order, env), ...(captureId ? { capture_id: captureId } : {}) });
   });
   const removed = [...sess.sent.keys()].filter((id) => !ids.has(id));
-  // Viac pohľadov naraz nezmizne rukou používateľa (panel ich maže po jednom): hosta sa to netýka.
-  if (removed.length >= MASS_REMOVAL) return void removed.forEach((id) => { sess.sent.delete(id); sess.seen.delete(id); });
+  const modelsChanged = state().models !== sess.modelsAtFlush;
+  sess.modelsAtFlush = state().models;
+  const forget = (id: string) => { sess.sent.delete(id); sess.seen.delete(id); sess.captureIds.delete(id); };
+  // Viac pohľadov naraz spolu s výmenou modelov je reset relácie (nový súbor), hosta sa to netýka;
+  // hromadné zmazanie rukou (modely nezmenené) sa hostovi hlási.
+  if (removed.length >= MASS_REMOVAL && modelsChanged) return void removed.forEach(forget);
   for (const id of removed) {
-    sess.sent.delete(id);
-    sess.seen.delete(id);
+    forget(id);
     post({ type: 'VIEW_DELETE', id });
   }
 }
@@ -154,7 +159,7 @@ function hydrate(wires: readonly ViewWire[]): void {
 function start(deps: ViewsDeps): Session {
   const sess: Session = {
     deps, unsubscribe: () => {}, synced: new Set(), known: [], sent: new Map(), seen: new Map(), captureIds: new Map(),
-    timer: null, resetPending: false,
+    timer: null, resetPending: false, modelsAtFlush: state().models,
   };
   session = sess;
   sess.unsubscribe = useViewerStore.subscribe((s, prev) => {
