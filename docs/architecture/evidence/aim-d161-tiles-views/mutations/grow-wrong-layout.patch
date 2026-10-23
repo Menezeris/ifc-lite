@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index 1a5588f3..b2bf29db 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -147,7 +147,7 @@ function lastIndex<T>(xs: readonly T[], ok: (x: T) => boolean): number {
+ 
+ /** Rozloženie o jednu dlaždicu väčšie (D-161, "Otvoriť v novej dlaždici"); `grid4` je strop. */
+ export const GROW_LAYOUT: Record<TileLayout, TileLayout> = {
+-  single: 'split_h', split_h: 'three_right', split_v: 'three_top',
++  single: 'split_h', split_h: 'three_left', split_v: 'three_top',
+   three_left: 'grid4', three_right: 'grid4', three_top: 'grid4', three_bottom: 'grid4', three_h: 'grid4', three_v: 'grid4',
+   grid4: 'grid4',
+ };
