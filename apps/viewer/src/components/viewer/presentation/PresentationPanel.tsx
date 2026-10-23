@@ -82,7 +82,10 @@ export function PresentationPanel() {
   }, []);
 
   const handleSaveCurrent = useCallback(async () => {
-    if (pinboardEntities.size === 0 || savingThumbnail) return;
+    // >>> AIM-FORK: an empty basket saves too, after the same "=" (D-161)
+    if (savingThumbnail) return;
+    if (pinboardEntities.size === 0) executeBasketSet();
+    // <<< AIM-FORK
 
     setSavingThumbnail(true);
     try {
@@ -268,7 +271,9 @@ export function PresentationPanel() {
             variant="default"
             size="icon-sm"
             onClick={handleSaveCurrent}
-            disabled={pinboardEntities.size === 0 || savingThumbnail}
+            // >>> AIM-FORK: empty basket is saved after "=" (D-161)
+            disabled={savingThumbnail}
+            // <<< AIM-FORK
             label={t('presentationPanel.saveCurrentViewTitle')}
           >
             <Save className="h-4 w-4" />
