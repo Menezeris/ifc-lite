@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/storeyViews.ts a/apps/viewer/src/aim/storeyViews.ts
+index 033a95e2..81a486e3 100644
+--- b/apps/viewer/src/aim/storeyViews.ts
++++ a/apps/viewer/src/aim/storeyViews.ts
+@@ -21,7 +21,7 @@ export interface StoreyLevel { guid: string; name: string; elevation: number }
+ /** Úroveň najbližšieho vyššieho podlažia (m), alebo nekonečno pre najvyššie; rovnaké úrovne federácie sa preskočia. */
+ export function nextLevel(storeys: readonly StoreyLevel[], elevation: number): number {
+   let next = Number.POSITIVE_INFINITY;
+-  for (const s of storeys) if (s.elevation >= elevation && s.elevation < next) next = s.elevation;
++  for (const s of storeys) if (s.elevation > elevation && s.elevation < next) next = s.elevation;
+   return next;
+ }
+ 

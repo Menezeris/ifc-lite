@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewsBridge.ts a/apps/viewer/src/aim/viewsBridge.ts
+index c5662dd8..1f08901c 100644
+--- b/apps/viewer/src/aim/viewsBridge.ts
++++ a/apps/viewer/src/aim/viewsBridge.ts
+@@ -160,7 +160,7 @@ function start(deps: ViewsDeps): Session {
+   sess.unsubscribe = useViewerStore.subscribe((s, prev) => {
+     if (s.basketViews !== prev.basketViews) {
+       // Nový súbor (`session-reset`) vyprázdni panel a vymení modely naraz; zmazanie rukou nemení modely.
+-      if (prev.basketViews.length > 0 && s.basketViews.length === 0 && false) sess.resetPending = true;
++      if (prev.basketViews.length > 0 && s.basketViews.length === 0 && s.models !== prev.models) sess.resetPending = true;
+       schedule();
+     }
+     if (sess.resetPending && s.models.size > 0 && !s.geometryStreamingActive && sess.known.length > 0) hydrate(sess.known);

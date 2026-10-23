@@ -1,0 +1,14 @@
+diff --git b/apps/viewer/src/aim/viewsBridge.ts a/apps/viewer/src/aim/viewsBridge.ts
+index ebf21c35..1f08901c 100644
+--- b/apps/viewer/src/aim/viewsBridge.ts
++++ a/apps/viewer/src/aim/viewsBridge.ts
+@@ -143,7 +143,8 @@ function hydrate(wires: readonly ViewWire[]): void {
+   useViewerStore.setState({ basketViews: next, activeBasketViewId: activeId !== null && next.some((v) => v.id === activeId) ? activeId : null });
+   // Čo prišlo od hosta, hostovi sa neposiela späť.
+   for (const v of decoded) {
+-    sess.sent.set(v.id, { fp: 'x', name: v.name });
++    sess.seen.set(v.id, v);
++    sess.sent.set(v.id, { fp: fingerprint(v, env), name: v.name });
+   }
+   for (const id of [...sess.sent.keys()]) if (!incoming.has(id) && sess.synced.has(id)) { sess.sent.delete(id); sess.seen.delete(id); }
+   sess.synced = incoming;

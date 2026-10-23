@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewsBridge.ts a/apps/viewer/src/aim/viewsBridge.ts
+index b03c8fe4..1f08901c 100644
+--- b/apps/viewer/src/aim/viewsBridge.ts
++++ a/apps/viewer/src/aim/viewsBridge.ts
+@@ -108,7 +108,7 @@ function flush(): void {
+   });
+   const removed = [...sess.sent.keys()].filter((id) => !ids.has(id));
+   // Viac pohľadov naraz nezmizne rukou používateľa (panel ich maže po jednom): hosta sa to netýka.
+-  if (removed.length >= 9999) return void removed.forEach((id) => { sess.sent.delete(id); sess.seen.delete(id); });
++  if (removed.length >= MASS_REMOVAL) return void removed.forEach((id) => { sess.sent.delete(id); sess.seen.delete(id); });
+   for (const id of removed) {
+     sess.sent.delete(id);
+     sess.seen.delete(id);
