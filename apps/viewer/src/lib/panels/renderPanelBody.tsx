@@ -17,7 +17,7 @@ import { panelModelGateMode, type WorkspacePanelId } from './registry';
 import { ChunkErrorBoundary } from '@/components/ChunkErrorBoundary';
 import { HierarchyPanel } from '@/components/viewer/HierarchyPanel';
 import { PropertiesPanel } from '@/components/viewer/PropertiesPanel';
-import { ComparePanel } from '@/components/viewer/ComparePanel';
+const ComparePanel = lazy(() => import('@/components/viewer/ComparePanel').then(module => ({ default: module.ComparePanel })));
 import { BCFPanel } from '@/components/viewer/BCFPanel';
 import { ValidationPanel } from '@/components/viewer/validation/ValidationPanel';
 import { LensPanel } from '@/components/viewer/LensPanel';
@@ -176,9 +176,7 @@ function PointCloudPanelBody({ onClose }: { onClose: () => void }) {
 export function renderPanelBody(id: WorkspacePanelId, onClose: () => void): ReactNode {
   const body = panelBody(id, onClose);
   const gate = panelModelGateMode(id);
-  // >>> AIM-FORK: panel id marker for chat scroll / zoom (D-150); `contents` keeps the layout of the original line
-  return <div data-aim-panel={id} className="contents"><AssistantSourceContext panel={id}>{gate ? <PanelModelGate id={id} mode={gate} onClose={onClose}>{body}</PanelModelGate> : body}</AssistantSourceContext></div>;
-  // <<< AIM-FORK
+  return <AssistantSourceContext panel={id}>{gate ? <PanelModelGate id={id} mode={gate} onClose={onClose}>{body}</PanelModelGate> : body}</AssistantSourceContext>;
 }
 
 function panelBody(id: WorkspacePanelId, onClose: () => void): ReactNode {
@@ -192,7 +190,7 @@ function panelBody(id: WorkspacePanelId, onClose: () => void): ReactNode {
     // multi-selection, empty): the welcome tour's "Read its data" step broke
     // whenever the panel showed one of the branches that lacked it.
     case 'properties': return <div {...tourAnchor(TOUR_ANCHORS.propertiesPanel)} className="h-full"><PropertiesPanel /></div>;
-    case 'compare': return <ComparePanel onClose={onClose} />;
+    case 'compare': return <ChunkErrorBoundary key="compare" label="Compare models"><Suspense fallback={null}><ComparePanel onClose={onClose} /></Suspense></ChunkErrorBoundary>;
     case 'bcf': return <BCFPanel onClose={onClose} />;
     case 'validation': return <ValidationPanel onClose={onClose} />;
     case 'lens': return <LensPanel onClose={onClose} />;

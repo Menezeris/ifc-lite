@@ -17,7 +17,11 @@ import type { WorkspacePanelId } from '@/lib/panels/registry';
 const PanelContext = createContext<WorkspacePanelId | null>(null);
 /** Supplies the hosting panel id; the adapter register decides which source it discusses. */
 export function AssistantSourceContext({ panel, children }: { panel: WorkspacePanelId; children: ReactNode }) {
-  return <PanelContext.Provider value={panel}>{children}</PanelContext.Provider>;
+  // >>> AIM-FORK: panel id marker for chat scroll / zoom (D-150), here rather than as a
+  // wrapper in renderPanelBody so the host keeps upstream's element shape (#8017 test);
+  // `contents` keeps the layout
+  return <div data-aim-panel={panel} className="contents"><PanelContext.Provider value={panel}>{children}</PanelContext.Provider></div>;
+  // <<< AIM-FORK
 }
 
 /**

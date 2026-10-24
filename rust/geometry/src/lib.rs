@@ -84,6 +84,7 @@ pub mod analytic;
 mod axis_projection;
 mod curve_source;
 mod trimmed_curve;
+mod swept_disk_range;
 pub(crate) mod gradient;
 pub(crate) mod curve_segment;
 pub(crate) mod bool2d;
@@ -104,6 +105,9 @@ mod terrain_cdt;
 mod clash_contact_axes;
 pub mod clash_solid;
 pub mod csg;
+/// Opt-in geometry document: object-local display-mesh definitions and f64
+/// placed occurrences with typed identity and revision. Off every default path.
+pub mod document;
 /// Measurement-only CSG corpus capture (off-by-default `csg_capture` feature).
 #[cfg(feature = "csg_capture")]
 pub mod csg_capture;
@@ -182,6 +186,9 @@ mod scalar_adjoint;
 mod telemetry_transaction;
 pub use rect_fast::RectFastStats;
 pub(crate) mod router;
+/// Owned, explicitly partial construction batches before router publication.
+pub mod construction;
+pub mod program;
 /// Vector outlines traced from a slab of scan points (#6871). Reached through
 /// the root-level re-exports below.
 pub(crate) mod scan_outline;
@@ -223,7 +230,7 @@ pub use contour_bool2d::{
 pub use clash_solid::{intersection_solid, DegenerateReason, IntersectionSolid};
 pub use union_find::UnionFind;
 pub use csg::{calculate_normals, ClippingProcessor, GroupCut, GroupReject, Plane, Triangle};
-pub use diagnostics::{BoolFailure, BoolFailureReason, BoolOp};
+pub use diagnostics::{BoolFailure, BoolFailureReason, BoolOp, PendingDiagnosticState};
 pub use error::{Error, Result};
 pub use float_order::cmp_f64_nan_last;
 pub use geom_hash::{
@@ -280,7 +287,7 @@ pub use router::{
     GEOMETRY_DIAGNOSTICS_SCHEMA_VERSION, FACETED_BREP_DEDUP_FACE_LIMIT,
     ClassificationSummary, GeometryDiagnostics, GeometryProcessor, GeometryRouter,
     HostOpeningDiagnostic, ItemDedupCache, MappedInstancePlan, OpeningDiagnostic, OpeningKindDiag,
-    ReasonCount, RectFastSummary, RectParam, SharedMappedItemCache, SharedBrepSignatureCache, WorstHost,
+    ReasonCount, RectFastSummary, RectParam, SharedMappedItemCache, AccountedMappedItemCache, SharedBrepSignatureCache, WorstHost,
 };
 
 /// The large-coordinate threshold and its predicate, defined in
@@ -304,3 +311,6 @@ pub use void_index::{
 };
 
 mod exact_topology;
+
+/// Explicit resource admission for audited canonical execution sites.
+pub mod resource;
