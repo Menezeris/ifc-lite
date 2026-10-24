@@ -8,6 +8,7 @@ import { useViewerStore } from '@/store';
 import { chartAwareRendererSelectionFromStore } from '@/lib/charts/renderer-selection';
 import { preserveClashPaintInSelection } from '@/lib/clash/renderer-selection';
 import { sectionRenderClip } from '@/lib/section/section-render-clip';
+import { sectionCapHighlight } from '@/lib/section/cap-highlight';
 import { hoverOutlineTarget } from './useHoverOutline';
 // >>> AIM-FORK: drawing-view storey cut (D-072)
 import { underlayCutClip } from '@/aim/underlayCut';
@@ -43,6 +44,7 @@ export function viewportRenderOptions(
     ...underlayCutClip(p.underlayCutRef?.current ?? null, renderer.getModelBounds()),
     // <<< AIM-FORK
     ...hoverOutlineTarget(),
+    capHighlight: sectionCapHighlight(state, selection.selectedId, selection.selectedIds, p.selectedModelIndexRef.current),
     terrainClipY: p.terrainClipYRef.current ?? undefined,
   };
 }

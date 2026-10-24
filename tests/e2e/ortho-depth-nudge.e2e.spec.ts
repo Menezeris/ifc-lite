@@ -276,6 +276,31 @@ const isYellow: Classify = (r, g, b) => r > 120 && g > 120 && b < Math.min(r, g)
 /** Annotation ink, blended into the face it lies on: well darker than any plate. */
 const isInk: Classify = (r, g, b) => r + g + b < 220;
 
+// >>> AIM-FORK: subpixel-independent ink for a 1 px line (offer upstream). The AIM view tab
+// bar (D-157) leaves the canvas 715x535 instead of upstream's 715x563, which puts the
+// antialiased line across two pixel rows of about half ink each, so `isInk` (one pixel
+// under 220) found none although the line is drawn. A column counts as ink when its
+// darkness under the column's own brightest pixel, summed over the band, is at least what
+// one pixel at the `isInk` threshold carries on that background: the same sense of
+// threshold, whatever the line's subpixel phase.
+/** Columns of the capture-space box spanned by two points that carry a line's worth of ink. */
+function inkColumns(frame: Frame, corner: Point, opposite: Point): number {
+  const a = frame.px(corner), b = frame.px(opposite);
+  const x0 = Math.max(0, Math.ceil(Math.min(a.x, b.x))), x1 = Math.min(frame.width - 1, Math.floor(Math.max(a.x, b.x)));
+  const y0 = Math.max(0, Math.ceil(Math.min(a.y, b.y))), y1 = Math.min(frame.height - 1, Math.floor(Math.max(a.y, b.y)));
+  const sum = (x: number, y: number) => { const i = (y * frame.width + x) * 4; return frame.rgba[i]! + frame.rgba[i + 1]! + frame.rgba[i + 2]!; };
+  let columns = 0;
+  for (let x = x0; x <= x1; x++) {
+    let lightest = 0;
+    for (let y = y0; y <= y1; y++) lightest = Math.max(lightest, sum(x, y));
+    let darkness = 0;
+    for (let y = y0; y <= y1; y++) darkness += lightest - sum(x, y);
+    if (lightest > 220 && darkness > lightest - 220) columns++;
+  }
+  return columns;
+}
+// <<< AIM-FORK
+
 /** Classified pixel counts in the capture-space box spanned by two points, shrunk by `inset` px. */
 function count(frame: Frame, corner: Point, opposite: Point, inset: number, ...classes: Classify[]): number[] {
   const a = frame.px(corner), b = frame.px(opposite);
@@ -480,9 +505,11 @@ test.describe('clip planes', () => {
       const [nearGreen] = count(ahead, ...face(1, yNear + sliver, 0), 0, isGreen);
       expect(nearGreen, 'a top-hash plate just inside the near plane stays drawn').toBeGreaterThan(5000);
       const lineBand = (x0: number, x1: number, y: number): [Point, Point] => [[x0 + 0.05, y, 0.9 - 0.03], [x1 - 0.05, y, 0.9 + 0.03]];
-      const [farInk] = count(ahead, ...lineBand(-1.2, -0.4, yFar + sliver), 0, isInk);
+      // >>> AIM-FORK: ink columns, not `isInk` pixels: the line's subpixel phase depends on the canvas height (see inkColumns)
+      const farInk = inkColumns(ahead, ...lineBand(-1.2, -0.4, yFar + sliver));
       expect(farInk, 'an annotation line just beyond the far plane stays clipped').toBe(0);
-      const [nearInk] = count(ahead, ...lineBand(0.4, 1.2, yNear + sliver), 0, isInk);
+      const nearInk = inkColumns(ahead, ...lineBand(0.4, 1.2, yNear + sliver));
+      // <<< AIM-FORK
       expect(nearInk, 'an annotation line just inside the near plane stays drawn').toBeGreaterThan(50);
       const [controlYellow] = count(ahead, ...face(0, 0, -1.2), 0, isYellow);
       expect(controlYellow, 'a plate mid-range is drawn').toBeGreaterThan(5000);
