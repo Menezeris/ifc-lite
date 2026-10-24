@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index eeb819ff..f968b482 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -44,7 +44,7 @@ export function buildTest(i: TestInput): ClashTestWire {
+ 
+ /** Podpis testu pre "upravené"; názov a kód doň nepatria (menia sa len v AIM). */
+ export function testSignature(t: ClashTestWire): string {
+-  return JSON.stringify([t.a, t.b ?? t.a, t.mode, t.tolerance_mm ?? 0, t.clearance_mm ?? 0]);
++  return JSON.stringify([t.a, t.b ?? t.a, t.mode, t.tolerance_mm ?? 0, t.mode === 'clearance' ? t.clearance_mm ?? 0 : 0]);
+ }
+ 
+ /** Kolízia v tvare, ktorý potrebuje beh (podmnožina `Clash`). */

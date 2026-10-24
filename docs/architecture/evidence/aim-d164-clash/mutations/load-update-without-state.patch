@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index 84fc41ad..f968b482 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -89,6 +89,7 @@ export interface ReviewUpdate { key: string; status: ClashReviewState; comment?:
+ export function loadUpdates(rule: string, results: readonly ClashResultWire[], current: (key: string) => ReviewState | undefined): ReviewUpdate[] {
+   const out: ReviewUpdate[] = [];
+   for (const r of results) {
++    if (!r.review) continue;
+     const key = pairKey(rule, r.a.guid, r.b.guid);
+     const now = current(key);
+     if ((now?.status ?? 'open') === r.review && (now?.comment ?? '') === (r.comment ?? '')) continue;
