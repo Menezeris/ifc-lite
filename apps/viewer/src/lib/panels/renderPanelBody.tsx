@@ -176,9 +176,7 @@ function PointCloudPanelBody({ onClose }: { onClose: () => void }) {
 export function renderPanelBody(id: WorkspacePanelId, onClose: () => void): ReactNode {
   const body = panelBody(id, onClose);
   const gate = panelModelGateMode(id);
-  // >>> AIM-FORK: panel id marker for chat scroll / zoom (D-150); `contents` keeps the layout of the original line
-  return <div data-aim-panel={id} className="contents"><AssistantSourceContext panel={id}>{gate ? <PanelModelGate id={id} mode={gate} onClose={onClose}>{body}</PanelModelGate> : body}</AssistantSourceContext></div>;
-  // <<< AIM-FORK
+  return <AssistantSourceContext panel={id}>{gate ? <PanelModelGate id={id} mode={gate} onClose={onClose}>{body}</PanelModelGate> : body}</AssistantSourceContext>;
 }
 
 function panelBody(id: WorkspacePanelId, onClose: () => void): ReactNode {
