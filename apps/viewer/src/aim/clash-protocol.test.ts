@@ -38,7 +38,8 @@ describe('správy o clash z AIM (D-164)', () => {
     assert.equal(parseClashInbound(load({ results: [result({ review: 'fixed' })] })), null);
     assert.equal(parseClashInbound(load({ results: [result({ a: el('') })] })), null);
     assert.equal(parseClashInbound(load({ results: [result({ kind: 'touch' })] })), null);
-    assert.equal(parseClashInbound(load({ results: new Array(MAX_LOAD_RESULTS + 1).fill(result()) })), null);
+    // `ok(=== null)`: pri chybe by `equal` vypisovalo celé pole.
+    assert.ok(parseClashInbound(load({ results: new Array(MAX_LOAD_RESULTS + 1).fill(result()) })) === null);
     assert.equal(parseClashInbound(load({ results: 'x' })), null);
   });
 
@@ -58,7 +59,7 @@ describe('správy o clash z AIM (D-164)', () => {
     assert.equal(parseClashSave({}), null);
     assert.equal(parseClashSave({ run: { results: [result(), result({ distance: 'x' })] } }), null);
     assert.equal(parseClashSave({ reviews: [{ a: el('1'), b: el('2'), status: 'fixed' }] }), null);
-    assert.equal(parseClashSave({ run: { results: new Array(MAX_SAVE_RESULTS + 1).fill(result()) } }), null);
-    assert.equal(parseClashSave({ reviews: new Array(MAX_SAVE_REVIEWS + 1).fill({ a: el('1'), b: el('2'), status: 'open' }) }), null);
+    assert.ok(parseClashSave({ run: { results: new Array(MAX_SAVE_RESULTS + 1).fill(result()) } }) === null);
+    assert.ok(parseClashSave({ reviews: new Array(MAX_SAVE_REVIEWS + 1).fill({ a: el('1'), b: el('2'), status: 'open' }) }) === null);
   });
 });
