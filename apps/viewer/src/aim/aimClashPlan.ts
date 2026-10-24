@@ -3,134 +3,173 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * Čisté funkcie pre clash z AIM (D-164): z čoho sa skladá `CLASH_SAVE`, ktoré stavy sa pri `CLASH_LOAD` priradia
- * dvojiciam, podpis pre "upravené" a opis pre `view_state.clash_local`. Bez importov viewera, aby ich šlo
- * skúšať bez neho (v CI chýba wasm).
+ * Čisté funkcie pre clash z AIM (D-164): z čoho sa skladá `CLASH_SAVE` (test, výsledky behu, zmenené stavy dvojíc),
+ * ktoré stavy z `CLASH_LOAD` sa priradia dvojiciam, podpis testu pre "upravené" a opis pre `view_state.clash_local`.
+ * Bez importov viewera, aby ich šlo skúšať bez neho (v CI chýba wasm).
  */
 
 import {
-  MAX_CLASH_RESULTS, type ClashAimMode, type ClashAimResult, type ClashAimRun, type ClashAimStatus, type ClashAimTest,
+  MAX_SAVE_RESULTS, type ClashElementWire, type ClashKind, type ClashResultWire, type ClashReviewState, type ClashReviewWire,
+  type ClashSeverityWire, type ClashSideWire, type ClashTestWire,
 } from './clash-protocol.js';
 
 /** Kľúč kontroly dvojice: pravidlo a oba GUID zoradené, ako `clashReviewKey` z `@ifc-lite/clash`. */
 export const pairKey = (rule: string, a: string, b: string): string => (a <= b ? `${rule} ${a} ${b}` : `${rule} ${b} ${a}`);
 
-/** Vstup z panela: preset a globálne nastavenie (v m), čo viewer drží. */
-export interface ClashSettingsInput {
+export interface ReviewState { status: ClashReviewState; comment?: string }
+
+const mm = (m: number): number => Math.round(m * 1_000_000) / 1000;
+
+/** Test z panela: preset a globálne nastavenie (tolerancia a odstup v m, ako ich drží viewer). */
+export interface TestInput {
+  code?: string;
   name: string;
-  selectorA: string;
-  selectorB: string;
-  mode: ClashAimMode;
+  a: ClashSideWire;
+  b: ClashSideWire;
+  mode: ClashKind;
   tolerance: number;
   clearance: number;
 }
 
-const mm = (m: number): number => Math.round(m * 1_000_000) / 1000;
+const sameSide = (x: ClashSideWire, y: ClashSideWire): boolean => x.type === y.type && x.model === y.model && x.storey === y.storey;
 
-/** Test pre `CLASH_SAVE`; odstup sa posiela len v móde clearance. */
-export function buildTest(s: ClashSettingsInput): ClashAimTest {
+/** Test pre `CLASH_SAVE`: strana B sa vynechá, keď je rovnaká ako A (kolízie v rámci A); odstup len v móde clearance, aspoň 1 mm (host inak test odmietne). */
+export function buildTest(i: TestInput): ClashTestWire {
   return {
-    name: s.name, a: s.selectorA, b: s.selectorB, mode: s.mode, tolerance_mm: mm(s.tolerance),
-    ...(s.mode === 'clearance' ? { clearance_mm: mm(s.clearance) } : {}),
+    ...(i.code ? { code: i.code } : {}),
+    name: i.name, a: i.a, ...(sameSide(i.a, i.b) ? {} : { b: i.b }), mode: i.mode, tolerance_mm: mm(i.tolerance),
+    ...(i.mode === 'clearance' ? { clearance_mm: Math.max(mm(i.clearance), 1) } : {}),
   };
 }
 
+/** Podpis testu pre "upravené"; názov a kód doň nepatria (menia sa len v AIM). */
+export function testSignature(t: ClashTestWire): string {
+  return JSON.stringify([t.a, t.b ?? t.a, t.mode, t.tolerance_mm ?? 0, t.mode === 'clearance' ? t.clearance_mm ?? 0 : 0]);
+}
+
 /** Kolízia v tvare, ktorý potrebuje beh (podmnožina `Clash`). */
-export interface ClashLike {
+export interface ClashRich {
   rule: string;
-  a: { key: string };
-  b: { key: string };
+  status: 'hard' | 'clearance' | 'touch';
+  severity: ClashSeverityWire;
   distance: number;
+  a: { key: string; model: string; tag: string; name?: string };
+  b: { key: string; model: string; tag: string; name?: string };
 }
 
-/** Výsledky behu pre `CLASH_SAVE`: len kolízie pravidla testu, so stavom z kontrol; strop dáva `truncated`. */
-export function buildRun(
-  rule: string,
-  clashes: readonly ClashLike[],
-  review: (key: string) => { status: ClashAimStatus; comment?: string } | undefined,
-): ClashAimRun {
-  const mine = clashes.filter((c) => c.rule === rule);
-  const results: ClashAimResult[] = mine.slice(0, MAX_CLASH_RESULTS).map((c) => {
-    const r = review(pairKey(rule, c.a.key, c.b.key));
-    return {
-      a_guid: c.a.key, b_guid: c.b.key, status: r?.status ?? 'open', distance_mm: mm(c.distance),
-      ...(r?.comment ? { comment: r.comment.slice(0, 2000) } : {}),
-    };
-  });
-  return { results, ...(mine.length > results.length ? { truncated: true } : {}) };
+const SEVERITY_RANK: Record<ClashSeverityWire, number> = { critical: 0, major: 1, minor: 2, info: 3 };
+
+const elementOf = (e: ClashRich['a'], labelOf: (modelId: string) => string): ClashElementWire => ({
+  model: labelOf(e.model), guid: e.key, type: e.tag, ...(e.name ? { name: e.name } : {}),
+});
+
+/**
+ * Výsledky behu jedného pravidla pre `CLASH_SAVE`: najzávažnejšie prvé, nad stropom hosta sa orežú a `truncated` to
+ * povie. `touch` (dotyk bez prieniku) AIM nepozná, preto sa neposiela.
+ */
+export function buildResults(rule: string, clashes: readonly ClashRich[], labelOf: (modelId: string) => string): { results: ClashResultWire[]; truncated: boolean } {
+  const mine = clashes.filter((c) => c.rule === rule && c.status !== 'touch')
+    .sort((x, y) => SEVERITY_RANK[x.severity] - SEVERITY_RANK[y.severity] || x.distance - y.distance);
+  const results = mine.slice(0, MAX_SAVE_RESULTS).map((c): ClashResultWire => ({
+    kind: c.status as ClashKind, severity: c.severity, distance: c.distance, a: elementOf(c.a, labelOf), b: elementOf(c.b, labelOf),
+  }));
+  return { results, truncated: mine.length > results.length };
 }
 
-export interface ReviewUpdate { key: string; status: ClashAimStatus; comment?: string }
+/** Stavy pravidla (kľúče `pairKey`) zo všetkých kontrol viewera. */
+export function reviewSnapshot(rule: string, reviews: Iterable<[string, ReviewState]>): Map<string, ReviewState> {
+  const out = new Map<string, ReviewState>();
+  for (const [key, r] of reviews) if (key.startsWith(`${rule} `)) out.set(key, { status: r.status, ...(r.comment ? { comment: r.comment } : {}) });
+  return out;
+}
 
-/** Stavy z uloženého behu, ktoré sa líšia od toho, čo už viewer drží (ostatné sa nechávajú). */
-export function reviewUpdates(
-  rule: string,
-  results: readonly ClashAimResult[],
-  current: (key: string) => { status: ClashAimStatus; comment?: string } | undefined,
-): ReviewUpdate[] {
+export interface ReviewUpdate { key: string; status: ClashReviewState; comment?: string }
+
+/** Stavy z `CLASH_LOAD`, ktoré sa líšia od toho, čo viewer už drží (ostatné sa nechávajú). Výsledok bez `review` nič nemení. */
+export function loadUpdates(rule: string, results: readonly ClashResultWire[], current: (key: string) => ReviewState | undefined): ReviewUpdate[] {
   const out: ReviewUpdate[] = [];
   for (const r of results) {
-    const key = pairKey(rule, r.a_guid, r.b_guid);
+    if (!r.review) continue;
+    const key = pairKey(rule, r.a.guid, r.b.guid);
     const now = current(key);
-    if ((now?.status ?? 'open') === r.status && (now?.comment ?? '') === (r.comment ?? '')) continue;
-    out.push({ key, status: r.status, ...(r.comment ? { comment: r.comment } : {}) });
+    if ((now?.status ?? 'open') === r.review && (now?.comment ?? '') === (r.comment ?? '')) continue;
+    out.push({ key, status: r.review, ...(r.comment ? { comment: r.comment } : {}) });
   }
   return out;
 }
 
-export interface Counts { open: number; resolved: number; accepted: number }
+/** Dvojice (kľúč a prvky s modelom), ktoré viewer pozná, aby sa zmenený stav dal poslať ako `{model, guid}`. */
+export function knownPairs(rule: string, rows: readonly { a: ClashElementWire; b: ClashElementWire }[]): Map<string, { a: ClashElementWire; b: ClashElementWire }> {
+  return new Map(rows.map((r) => [pairKey(rule, r.a.guid, r.b.guid), { a: r.a, b: r.b }]));
+}
 
-export function countStatuses(results: readonly { status: ClashAimStatus }[]): Counts {
-  const c: Counts = { open: 0, resolved: 0, accepted: 0 };
-  for (const r of results) c[r.status] += 1;
+/**
+ * Zmenené stavy voči tomu, čo viewer dostal (alebo naposledy uložil): len zmenené dvojice, poznámka len keď sa mení
+ * (prázdna ju maže). Dvojica, ktorú viewer nepozná (nie je v behu ani v načítaných výsledkoch), sa nepošle: `skipped`.
+ */
+export function reviewChanges(
+  current: ReadonlyMap<string, ReviewState>,
+  baseline: ReadonlyMap<string, ReviewState>,
+  known: ReadonlyMap<string, { a: ClashElementWire; b: ClashElementWire }>,
+): { changes: ClashReviewWire[]; skipped: number } {
+  const changes: ClashReviewWire[] = [];
+  let skipped = 0;
+  for (const key of [...new Set([...current.keys(), ...baseline.keys()])].sort()) {
+    const now = current.get(key);
+    const was = baseline.get(key);
+    const status = now?.status ?? 'open';
+    const commentChanged = (now?.comment ?? '') !== (was?.comment ?? '');
+    if (status === (was?.status ?? 'open') && !commentChanged) continue;
+    const pair = known.get(key);
+    if (!pair) { skipped += 1; continue; }
+    changes.push({ a: pair.a, b: pair.b, status, ...(commentChanged ? { comment: now?.comment ?? '' } : {}) });
+  }
+  return { changes, skipped };
+}
+
+export interface RunCounts {
+  total: number;
+  by_status: { hard: number; clearance: number };
+  by_review: { open: number; resolved: number; accepted: number };
+}
+
+/** Počty behu pre `clash_local`: podľa druhu (dotyk sa nepočíta) a podľa stavu kontroly. */
+export function countRun(rule: string, clashes: readonly ClashRich[], review: (key: string) => ClashReviewState | undefined): RunCounts {
+  const c: RunCounts = { total: 0, by_status: { hard: 0, clearance: 0 }, by_review: { open: 0, resolved: 0, accepted: 0 } };
+  for (const k of clashes) {
+    if (k.rule !== rule || k.status === 'touch') continue;
+    c.total += 1;
+    c.by_status[k.status] += 1;
+    c.by_review[review(pairKey(rule, k.a.key, k.b.key)) ?? 'open'] += 1;
+  }
   return c;
 }
 
 /** Koľko uložených dvojíc sa v čerstvom behu našlo a koľko nie (zmenený model, iná tolerancia). */
-export function matchRun(expected: readonly ClashAimResult[], found: readonly ClashLike[], rule: string): { found: number; missing: number } {
+export function matchRun(expected: readonly ClashResultWire[], found: readonly ClashRich[], rule: string): { found: number; missing: number } {
   const keys = new Set(found.filter((c) => c.rule === rule).map((c) => pairKey(rule, c.a.key, c.b.key)));
-  const hit = expected.filter((r) => keys.has(pairKey(rule, r.a_guid, r.b_guid))).length;
+  const hit = expected.filter((r) => keys.has(pairKey(rule, r.a.guid, r.b.guid))).length;
   return { found: hit, missing: expected.length - hit };
 }
 
-/** Kontroly pravidla testu (kľúče `pairKey`) ako riadky výsledkov: to, čo používateľ rozhodol, nezávisle od behu. */
-export function reviewRows(rule: string, reviews: Iterable<[string, { status: ClashAimStatus; comment?: string }]>): ClashAimResult[] {
-  const rows: ClashAimResult[] = [];
-  for (const [key, r] of reviews) {
-    const [id, a, b] = key.split(' ');
-    if (id !== rule || !a || !b) continue;
-    rows.push({ a_guid: a, b_guid: b, status: r.status, ...(r.comment ? { comment: r.comment } : {}) });
-  }
-  return rows;
-}
-
-/** Podpis testu a stavov, podľa ktorého sa pozná "upravené, neuložené". */
-export function signature(test: Pick<ClashAimTest, 'a' | 'b' | 'mode' | 'tolerance_mm' | 'clearance_mm'>, results: readonly ClashAimResult[]): string {
-  const rows = results.map((r) => `${pairKey('', r.a_guid, r.b_guid)}|${r.status}|${r.comment ?? ''}`).sort();
-  return JSON.stringify([test.a, test.b, test.mode, test.tolerance_mm, test.mode === 'clearance' ? test.clearance_mm ?? 0 : 0, rows]);
-}
-
 export interface ClashLocalInput {
-  test: { id: string; version: number } | null;
-  name: string | null;
-  mode: ClashAimMode;
-  tolerance_mm: number;
-  hasRun: boolean;
-  running: boolean;
-  counts: Counts | null;
-  total: number;
+  test: ClashTestWire | null;
+  fromAim: boolean;
   dirty: boolean;
+  run: (RunCounts & { id?: string }) | null;
+  selected: { a: ClashElementWire; b: ClashElementWire } | null;
+  reviews: ClashReviewWire[];
   missing?: number;
 }
 
-/** `view_state.clash_local`: otvorený test, beh, počty podľa stavu a či je upravený; `undefined`, keď nič nie je. */
+/** `view_state.clash_local` v tvare, ktorý čaká host; `undefined`, keď nie je otvorený žiadny test. */
 export function describeClash(i: ClashLocalInput): Record<string, unknown> | undefined {
-  if (!i.test && !i.hasRun && !i.name) return undefined;
+  if (!i.test) return undefined;
+  const pick = (e: ClashElementWire) => ({ model: e.model, guid: e.guid });
   return {
-    ...(i.test ? { test: { id: i.test.id, version: i.test.version } } : {}),
-    ...(i.name ? { name: i.name } : {}),
-    mode: i.mode, tolerance_mm: i.tolerance_mm, running: i.running,
-    run: i.hasRun ? { total: i.total, ...(i.counts ?? {}), ...(i.missing ? { missing_from_saved: i.missing } : {}) } : null,
-    edited: i.dirty,
+    test: i.test, from_aim: i.fromAim, dirty: i.dirty,
+    ...(i.run ? { run: { ...(i.run.id ? { id: i.run.id } : {}), total: i.run.total, by_status: i.run.by_status, by_review: i.run.by_review, source: 'local', ...(i.missing ? { missing_from_saved: i.missing } : {}) } } : {}),
+    ...(i.selected ? { selected: { a: pick(i.selected.a), b: pick(i.selected.b) } } : {}),
+    ...(i.reviews.length ? { reviews: i.reviews } : {}),
   };
 }
