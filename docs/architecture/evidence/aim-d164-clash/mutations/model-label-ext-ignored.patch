@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index 1deda4c4..b3870d0b 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -52,7 +52,7 @@ const stripExt = (s: string): string => s.replace(/\.(ifc|ifcx|ifczip)$/i, '').t
+ /** Model podľa štítku z AIM: presné meno, id, alebo meno bez prípony (bez ohľadu na veľkosť písmen). */
+ export function matchModelLabel<M extends { id: string; name: string }>(models: Iterable<M>, label: string): M | undefined {
+   const want = stripExt(label);
+-  for (const m of models) if (m.name === label || m.id === label) return m;
++  for (const m of models) if (m.name === label || m.id === label || stripExt(m.name) === want) return m;
+   return undefined;
+ }
+ 
