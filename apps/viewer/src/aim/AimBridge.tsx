@@ -53,6 +53,9 @@ const VIEWS_TYPES = ['VIEWS_LOAD', 'VIEW_ACTIVATE', 'VIEW_CAPTURE'];
 /** IDS z AIM (D-162): lenivý modul, overí tvar správ `IDS_LOAD` a `IDS_SAVED` až po načítaní. */
 let ids: Promise<typeof import('./aimIds.js')> | null = null;
 const loadIds = () => (ids ??= import('./aimIds.js'));
+/** Clash z AIM (D-164): lenivý modul, overí tvar správ `CLASH_LOAD` a `CLASH_SAVED` až po načítaní. */
+let clash: Promise<typeof import('./aimClash.js')> | null = null;
+const loadClash = () => (clash ??= import('./aimClash.js'));
 
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
@@ -169,6 +172,12 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
         if (aimTyped(raw, 'IDS_LOAD')) command(run); else run();
         return;
       }
+      if (aimTyped(e.data, 'CLASH_LOAD') || aimTyped(e.data, 'CLASH_SAVED')) {
+        const raw: unknown = e.data; // Test clash a stavy z AIM do panela clash (D-164); potvrdenie uloženia ide hneď
+        const run = () => track(loadClash().then((m) => m.runClashMessage(raw, { noteIssue })));
+        if (aimTyped(raw, 'CLASH_LOAD')) command(run); else run();
+        return;
+      }
       if (aimTyped(e.data, 'SET_SECTION_BOX')) {
         const raw: unknown = e.data; // Rezný box (D-132)
         command(() => runSectionBox(raw));
@@ -242,6 +251,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
       window.removeEventListener('message', onMessage);
       setIdsHostPost(null);
       void ids?.then((m) => m.stopIds());
+      void clash?.then((m) => m.stopClash());
       useViewerStore.getState().setUnderlaySaveHandler(null);
       useViewerStore.getState().setDocumentEventHandler(null);
       useCapturePinsStore.getState().setEmitClick(null);

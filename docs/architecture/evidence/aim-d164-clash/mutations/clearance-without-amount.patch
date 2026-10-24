@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/clash-protocol.ts a/apps/viewer/src/aim/clash-protocol.ts
+index 03fcbd59..4d172ab1 100644
+--- b/apps/viewer/src/aim/clash-protocol.ts
++++ a/apps/viewer/src/aim/clash-protocol.ts
+@@ -131,6 +131,7 @@ export function parseClashTest(v: unknown): ClashTestWire | null {
+   for (const k of ['clearance_mm', 'tolerance_mm'] as const) {
+     if (!absent(v[k]) && (!isNum(v[k]) || (v[k] as number) < 0 || (v[k] as number) > 100_000)) return null;
+   }
++  if (v.mode === 'clearance' && !(isNum(v.clearance_mm) && v.clearance_mm > 0)) return null;
+   return {
+     ...(v.code ? { code: (v.code as string).trim() } : {}),
+     name: v.name.trim(),

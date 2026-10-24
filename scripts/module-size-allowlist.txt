@@ -67,7 +67,7 @@
    604 apps/viewer/src/components/viewer/BulkPropertyEditor.tsx
    485 apps/viewer/src/components/viewer/CesiumOverlay.tsx
   1434 apps/viewer/src/components/viewer/ChatPanel.tsx
-  1222 apps/viewer/src/components/viewer/ClashPanel.tsx
+  1225 apps/viewer/src/components/viewer/ClashPanel.tsx
    966 apps/viewer/src/components/viewer/DataConnector.tsx
   1698 apps/viewer/src/components/viewer/Drawing2DCanvas.tsx
    491 apps/viewer/src/components/viewer/DrawingPlanPane.tsx

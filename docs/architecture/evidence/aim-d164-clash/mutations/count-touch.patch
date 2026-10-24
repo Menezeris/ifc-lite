@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index a259629f..f968b482 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -137,7 +137,7 @@ export interface RunCounts {
+ export function countRun(rule: string, clashes: readonly ClashRich[], review: (key: string) => ClashReviewState | undefined): RunCounts {
+   const c: RunCounts = { total: 0, by_status: { hard: 0, clearance: 0 }, by_review: { open: 0, resolved: 0, accepted: 0 } };
+   for (const k of clashes) {
+-    if (k.rule !== rule) continue;
++    if (k.rule !== rule || k.status === 'touch') continue;
+     c.total += 1;
+     c.by_status[k.status] += 1;
+     c.by_review[review(pairKey(rule, k.a.key, k.b.key)) ?? 'open'] += 1;
