@@ -73,6 +73,10 @@ export function drawSectionOverlays(
     const { options, viewProj, modelBounds } = ctx;
     const extras = ctx.extraPlanes ?? [];
 
+    // The selected / hovered elements' cap polygons take their highlight colour (a
+    // no-op while unchanged), so the cut face reads as part of the element.
+    cap?.setCapHighlight(options.capHighlight ?? null);
+
     // Draw section plane visual BEFORE pass.end() (within same MSAA render pass)
     // Always show plane when sectionPlane options are provided (as preview or active)
     if (options.sectionPlane && gizmo && modelBounds) {
@@ -121,6 +125,7 @@ export function drawSectionOverlays(
                     rteCamera: ctx.rteCamera,
                     min: o.min,
                     max: o.max,
+                    sectionExcludedIds: options.sectionExcludedIds,
                     showFills,
                     showOutlines,
                     capStyle: showFills ? capDrawStyle(style, ctx.pixelRatio) : undefined,
@@ -147,6 +152,7 @@ export function drawSectionOverlays(
                 viewProj,
                 rteViewProj: ctx.rteViewProj,
                 rteCamera: ctx.rteCamera,
+                sectionExcludedIds: options.sectionExcludedIds,
                 showFills,
                 showOutlines: o?.showOutlines !== false,
                 capStyle: showFills ? capDrawStyle(style, ctx.pixelRatio) : undefined,

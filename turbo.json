@@ -9,6 +9,8 @@
     "Cargo.lock",
     "rust-toolchain.toml",
     "scripts/build-wasm.sh",
+    "scripts/build-imported-geometry.mjs",
+    "scripts/lib/imported-artifacts.mjs",
     "tsconfig.json",
     "tsconfig.packages.json",
     "tsconfig.tests.base.json",
@@ -52,7 +54,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "pkg/**"],
+      "outputs": ["dist/**", "pkg/**", "pkg-diff/**"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "src/**",

@@ -62,7 +62,8 @@
 use std::sync::OnceLock;
 
 use super::geom::opening_mesh_thinnest_axis_dir;
-use super::{cutter_is_closed_manifold, GeometryRouter, OpeningType, VoidContext};
+use super::{cutter_is_closed_manifold, OpeningType, VoidContext};
+use crate::program::openings::execute::Execution;
 use crate::cdt::triangulate_pslg;
 use crate::mesh::Mesh;
 use nalgebra::Point2;
@@ -139,9 +140,9 @@ mod diag {
     pub(super) fn defer(i: usize) {
         #[cfg(feature = "opening-perf-trace")]
         crate::opening_perf_trace::record(|c| c.prism_defers[i] = c.prism_defers[i].saturating_add(1));
-        crate::telemetry_transaction::record(move || {
-            DEFERS[i].fetch_add(1, Ordering::Relaxed);
-        });
+        crate::telemetry_transaction::record(
+            crate::telemetry_transaction::Event::PrismDefer { reason: i },
+        );
     }
 
     /// Record one analytic-cut host: (fires, openings cut, openings residual).
@@ -153,11 +154,19 @@ mod diag {
             c.prism_candidate_openings = c.prism_candidate_openings.saturating_add(committed_ops as u64);
             c.prism_residual_openings = c.prism_residual_openings.saturating_add(residual as u64);
         });
-        crate::telemetry_transaction::record(move || {
-            FIRES.fetch_add(1, Ordering::Relaxed);
-            OPENINGS_ANALYTIC.fetch_add(committed_ops as u64, Ordering::Relaxed);
-            OPENINGS_RESIDUAL.fetch_add(residual as u64, Ordering::Relaxed);
+        crate::telemetry_transaction::record(crate::telemetry_transaction::Event::PrismCut {
+            committed: committed_ops as u64,
+            residual: residual as u64,
         });
+    }
+
+    pub(crate) fn publish_defer(reason: usize) {
+        DEFERS[reason].fetch_add(1, Ordering::Relaxed);
+    }
+    pub(crate) fn publish_cut(committed: u64, residual: u64) {
+        FIRES.fetch_add(1, Ordering::Relaxed);
+        OPENINGS_ANALYTIC.fetch_add(committed, Ordering::Relaxed);
+        OPENINGS_RESIDUAL.fetch_add(residual, Ordering::Relaxed);
     }
 
     /// Read + reset the per-reason defer counters as (name, count) pairs.
@@ -210,6 +219,8 @@ mod diag {
 }
 
 use diag::{defer, record_cut};
+#[cfg(any(feature = "observability", feature = "csg_capture", feature = "debug_geometry"))]
+pub(crate) use diag::{publish_cut, publish_defer};
 pub use diag::{take_prism_defers, take_prism_stats};
 
 // ─────────────────────────── small f64 vector kit ───────────────────────────
@@ -2644,14 +2655,14 @@ fn cap_cdt_impl(
 
 // ─────────────────────────────── the driver ─────────────────────────────────
 
-impl GeometryRouter {
+impl Execution {
     /// Try the analytic prism subtraction on `mesh`.
     ///
     /// Iterates the merged openings in order; each opening whose cutter is a
     /// clean prism AND whose cut passes every self-check is subtracted
     /// analytically; every other opening lands in the returned residual
     /// context (cut by the exact kernel on the analytic result — the caller
-    /// recurses through [`GeometryRouter::apply_void_context`], mirroring the
+    /// recurses through [`Execution::apply_void_context`], mirroring the
     /// 2D path's residual composition). `None` ⇒ no opening was cut and the
     /// caller must run the FULL original context through the exact kernel.
     pub(super) fn try_prism_cut(
@@ -2850,15 +2861,15 @@ impl GeometryRouter {
         }
 
         let mut out = mesh_from_ptris(&tris, mesh);
-        // COPLANAR CONSOLIDATION: the conforming per-triangle CDT deliberately
-        // over-fragments faces (every decomposed host triangle keeps its own
-        // sub-triangulation, and caps carry their constraint scaffolding). Run
-        // the SAME coplanar merge the exact kernel and the rect/param fast
+        // Merge the per-triangle CDT fragments and cap scaffolding with the
+        // same coplanar consolidation the exact kernel and rect/param fast
         // paths apply (i_overlay union per plane bucket + CDT re-triangulation,
         // watertight-preserving), collapsing each planar face back to a few
         // large triangles — 2-3x fewer output triangles on the advanced_model
         // walls, matching the exact kernel's tessellation density.
-        out = crate::csg::ClippingProcessor::consolidate_coplanar(out);
+        let consolidated = crate::csg::ClippingProcessor::consolidate_prism_cut(out, mesh);
+        let boundary = consolidated.boundary;
+        out = consolidated.mesh;
         let consolidated_closure = ClosureVerdict::for_mesh(&out);
         if consolidated_closure.closed_enough_to_emit()
             && !consolidated_change_is_measurable(mesh, &out)
@@ -2917,7 +2928,7 @@ impl GeometryRouter {
                 }
                 let mut probe = refined.clone();
                 probe.clean_degenerate();
-                if directed_closed(&refined) && closed_enough_to_emit(&probe) {
+                if finish::can_adopt_refinement(boundary, &refined, &probe) {
                     out = refined;
                 }
             }
@@ -2925,7 +2936,7 @@ impl GeometryRouter {
         // The finalizer cleans before the ulp weld so discarded slivers cannot
         // choose a surviving seam coordinate, then audits the exact mesh it
         // returns. A closed pre-clean result remains the compatibility fallback.
-        let Some((finished, directed)) = finish_cut_verdict(out, mesh) else {
+        let Some((finished, directed)) = finish_cut_verdict(out, mesh, boundary) else {
             defer(9);
             return None;
         };
@@ -2935,9 +2946,8 @@ impl GeometryRouter {
         // small stored coordinates. Close them when that leaves the cut
         // strictly closed, else keep it. World-frame cuts are untouched.
         if mesh.origin != [0.0; 3] && !directed {
-            if let Some(closed) = tjunction_close::close_seams(&out, mesh) {
-                out = closed;
-            }
+            let closed = tjunction_close::close_seams(&out, mesh);
+            out = finish::adopt_seam_closure(out, closed, boundary);
         }
 
         // Residual openings in their original classification order.
