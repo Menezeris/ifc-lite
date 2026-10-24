@@ -22,6 +22,8 @@ export const aimForkEn = {
   'aimFork.ids.unlinked': 'Not in AIM yet. Saving creates a new IDS there.',
   'aimFork.ids.specNotFound': 'Specification "{spec}" was not found in this IDS.',
   'aimFork.legend.title': 'Legend',
+  /** Presentation view card (D-161): shows the view in a new tile next to the 3D view. */
+  'aimFork.views.openInNewTile': 'Open in a new tile',
   /** Rail / ribbon / palette group of the AIM panels (D-104), first of all groups. */
   'aimFork.panelGroups.aim': 'AIM',
   'aimFork.panelGroups.aimDescription': 'AIM platform: project documents, derived layers and drawing underlays from the AIM host',

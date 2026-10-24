@@ -14,6 +14,9 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import type { BasketView } from '@/store/slices/pinboardSlice';
+// >>> AIM-FORK: open a view in a new tile (D-161)
+import { AimOpenViewInTile } from '@/aim/AimOpenViewInTile';
+// <<< AIM-FORK
 
 export interface PresentationViewCardProps {
   view: BasketView;
@@ -104,6 +107,9 @@ export function PresentationViewCard({
         )}
       </div>
 
+      {/* >>> AIM-FORK: open a view in a new tile (D-161) */}
+      <AimOpenViewInTile viewId={view.id} className="absolute top-1 right-[4.75rem]" />
+      {/* <<< AIM-FORK */}
       <IconButton
         type="button"
         variant="secondary"

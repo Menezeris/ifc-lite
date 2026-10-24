@@ -1,0 +1,14 @@
+diff --git b/apps/viewer/src/aim/viewTabsPlan.ts a/apps/viewer/src/aim/viewTabsPlan.ts
+index 3deb85b4..9c901247 100644
+--- b/apps/viewer/src/aim/viewTabsPlan.ts
++++ a/apps/viewer/src/aim/viewTabsPlan.ts
+@@ -150,7 +150,8 @@ export function resolveTabRef(s: ViewTabsState, ref: string): ViewTab | undefine
+   if (!want) return undefined;
+   return s.tabs.find((t) => t.id.toLowerCase() === want)
+     ?? s.tabs.find((t) => t.label.toLowerCase() === want)
+-    ?? s.tabs.find((t) => t.docId?.toLowerCase() === want);
++    ?? s.tabs.find((t) => t.docId?.toLowerCase() === want)
++    ?? s.tabs.find((t) => t.viewId?.toLowerCase() === want);
+ }
+ 
+ /** `view_state.tabs` (AIM D-132): zoznam, aktívna a tá vedľa. */

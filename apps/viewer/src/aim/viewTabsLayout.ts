@@ -3,12 +3,12 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * Záložky viewera (AIM D-132, od D-161 len 3D a dokumenty): typy, počiatočný stav a rozloženie strednej
+ * Záložky viewera (AIM D-132, od D-161 3D, dokumenty a pohľady v dlaždiciach): typy, počiatočný stav a rozloženie strednej
  * plochy. Malý modul vo vstupnom balíku (`ViewerLayout` -> `useAimCenterPanes`);
  * ostatná logika záložiek (`viewTabsPlan.ts`) sa načíta lenivo s lištou.
  */
 
-export type ViewTabKind = '3d' | 'doc';
+export type ViewTabKind = '3d' | 'doc' | 'view';
 
 export interface ViewTab {
   id: string;
@@ -16,6 +16,8 @@ export interface ViewTab {
   label: string;
   /** Karta dokumentu: id dokumentu v `viewerDocuments`. */
   docId?: string;
+  /** Pohľad z Presentation (D-161, dlaždice): `BasketView.id`. Záložka žije len v dlaždici. */
+  viewId?: string;
 }
 
 export interface ViewTabsState {
@@ -29,7 +31,7 @@ export const TAB_3D: ViewTab = { id: '3d', kind: '3d', label: '3D' };
 
 export const initialTabs = (): ViewTabsState => ({ tabs: [TAB_3D], activeId: TAB_3D.id, besideId: null });
 
-/** 3D záložky zdieľajú jeden canvas (dnes len `3d`; pohľady z Presentation sa v ňom aktivujú bez záložky). */
+/** 3D záložky (`3d`, pohľad z Presentation v dlaždici) zdieľajú jeden canvas. */
 export const isSceneTab = (t: ViewTab | undefined) => !!t && t.kind !== 'doc';
 
 const byId = (s: ViewTabsState, id: string | null) => (id ? s.tabs.find((t) => t.id === id) : undefined);
