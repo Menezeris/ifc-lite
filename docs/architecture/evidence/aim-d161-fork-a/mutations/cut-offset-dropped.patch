@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/underlayAtCut.ts a/apps/viewer/src/aim/underlayAtCut.ts
+index 9830c494..fb6b3f75 100644
+--- b/apps/viewer/src/aim/underlayAtCut.ts
++++ a/apps/viewer/src/aim/underlayAtCut.ts
+@@ -43,5 +43,5 @@ export function horizontalCutZ(
+ ): number | null {
+   if (!plane || plane.axis !== 'down' || plane.box) return null;
+   const range = sectionAxisRange(bounds, 'down');
+-  return range ? percentToWorld(plane.position, range) : null;
++  return range ? percentToWorld(plane.position, range) + offsetY : null;
+ }

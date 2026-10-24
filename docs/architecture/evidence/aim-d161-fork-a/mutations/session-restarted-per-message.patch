@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewsBridge.ts a/apps/viewer/src/aim/viewsBridge.ts
+index 4973a48e..1f08901c 100644
+--- b/apps/viewer/src/aim/viewsBridge.ts
++++ a/apps/viewer/src/aim/viewsBridge.ts
+@@ -208,7 +208,7 @@ async function capture(msg: ViewCaptureMessage, deps: ViewsDeps): Promise<void>
+ export function runViewsMessage(raw: unknown, deps: ViewsDeps): Promise<void> | void {
+   if (!isViewsInbound(raw)) return deps.noteIssue('pohľady: neplatná správa (VIEWS_LOAD, VIEW_ACTIVATE, VIEW_CAPTURE)');
+   // Relácia trvá do odpojenia mosta; kanál a pomocníci sú pri každej správe tí istí, len nová obálka.
+-  (session = start(deps)).deps = deps;
++  (session ??= start(deps)).deps = deps;
+   switch (raw.type) {
+     case 'VIEWS_LOAD':
+       return hydrate((raw as ViewsLoadMessage).views);

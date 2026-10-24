@@ -1,0 +1,258 @@
+{
+  "activate-without-target": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/views-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/views-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/views-protocol.test.ts"
+    ],
+    "baseline": "pass — 3 passed / 3 collected",
+    "reverted": "assertion-failure — 2 passed, 1 failed / 3 collected",
+    "restoration": "verified"
+  },
+  "basket-all-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewsCodec.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/viewsCodec.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewsCodec.test.ts"
+    ],
+    "baseline": "pass — 10 passed / 10 collected",
+    "reverted": "assertion-failure — 9 passed, 1 failed / 10 collected",
+    "restoration": "verified"
+  },
+  "camera-offset-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewsCodec.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/viewsCodec.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewsCodec.test.ts"
+    ],
+    "baseline": "pass — 10 passed / 10 collected",
+    "reverted": "assertion-failure — 9 passed, 1 failed / 10 collected",
+    "restoration": "verified"
+  },
+  "cut-offset-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayAtCut.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/underlayAtCut.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayAtCut.test.ts"
+    ],
+    "baseline": "pass — 7 passed / 7 collected",
+    "reverted": "assertion-failure — 6 passed, 1 failed / 7 collected",
+    "restoration": "verified"
+  },
+  "fingerprint-includes-name": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewsCodec.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/viewsCodec.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewsCodec.test.ts"
+    ],
+    "baseline": "pass — 10 passed / 10 collected",
+    "reverted": "assertion-failure — 9 passed, 1 failed / 10 collected",
+    "restoration": "verified"
+  },
+  "hydrate-echoes-to-host": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/viewsBridge.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/viewsBridge.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/viewsBridge.test.ts"
+    ],
+    "baseline": "pass — 8 passed / 8 collected",
+    "reverted": "assertion-failure — 3 passed, 5 failed / 8 collected",
+    "restoration": "verified"
+  },
+  "mass-removal-guard-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/viewsBridge.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/viewsBridge.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/viewsBridge.test.ts"
+    ],
+    "baseline": "pass — 8 passed / 8 collected",
+    "reverted": "assertion-failure — 7 passed, 1 failed / 8 collected",
+    "restoration": "verified"
+  },
+  "next-level-same-level": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/storeyViews.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/storeyViews.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/storeyViews.test.ts"
+    ],
+    "baseline": "pass — 6 passed / 6 collected",
+    "reverted": "assertion-failure — 2 passed, 4 failed / 6 collected",
+    "restoration": "verified"
+  },
+  "plane-coordinate-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewsCodec.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/viewsCodec.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewsCodec.test.ts"
+    ],
+    "baseline": "pass — 10 passed / 10 collected",
+    "reverted": "assertion-failure — 9 passed, 1 failed / 10 collected",
+    "restoration": "verified"
+  },
+  "reset-detection-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/viewsBridge.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/viewsBridge.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/viewsBridge.test.ts"
+    ],
+    "baseline": "pass — 8 passed / 8 collected",
+    "reverted": "assertion-failure — 7 passed, 1 failed / 8 collected",
+    "restoration": "verified"
+  },
+  "session-restarted-per-message": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/viewsBridge.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/viewsBridge.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/viewsBridge.test.ts"
+    ],
+    "baseline": "pass — 8 passed / 8 collected",
+    "reverted": "assertion-failure — 6 passed, 2 failed / 8 collected",
+    "restoration": "verified"
+  },
+  "storey-upper-bound-inclusive": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/storeyViews.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/storeyViews.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/storeyViews.test.ts"
+    ],
+    "baseline": "pass — 6 passed / 6 collected",
+    "reverted": "assertion-failure — 5 passed, 1 failed / 6 collected",
+    "restoration": "verified"
+  },
+  "storey-view-name-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/storeyViews.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/storeyViews.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/storeyViews.test.ts"
+    ],
+    "baseline": "pass — 6 passed / 6 collected",
+    "reverted": "assertion-failure — 5 passed, 1 failed / 6 collected",
+    "restoration": "verified"
+  },
+  "underlay-flipped-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayAtCut.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/underlayAtCut.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayAtCut.test.ts"
+    ],
+    "baseline": "pass — 7 passed / 7 collected",
+    "reverted": "assertion-failure — 6 passed, 1 failed / 7 collected",
+    "restoration": "verified"
+  },
+  "underlay-nearest-lowest": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayAtCut.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/underlayAtCut.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayAtCut.test.ts"
+    ],
+    "baseline": "pass — 7 passed / 7 collected",
+    "reverted": "assertion-failure — 5 passed, 2 failed / 7 collected",
+    "restoration": "verified"
+  },
+  "views-load-some-valid": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/views-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "30b048050adfde6f1b6ddf327156af7d78b8bd0a",
+    "head": "16fc2f7656ba976bcecf488288d843bab0e75b3f",
+    "production": [
+      "apps/viewer/src/aim/views-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/views-protocol.test.ts"
+    ],
+    "baseline": "pass — 3 passed / 3 collected",
+    "reverted": "assertion-failure — 1 passed, 2 failed / 3 collected",
+    "restoration": "verified"
+  }
+}

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/storeyViews.ts a/apps/viewer/src/aim/storeyViews.ts
+index d7210984..81a486e3 100644
+--- b/apps/viewer/src/aim/storeyViews.ts
++++ a/apps/viewer/src/aim/storeyViews.ts
+@@ -27,7 +27,7 @@ export function nextLevel(storeys: readonly StoreyLevel[], elevation: number): n
+ 
+ /** Je rez v rozsahu podlažia? Spodná hranica s tolerancou 1 cm (rez presne na podlahe patrí tomuto podlažiu). */
+ export function cutInStorey(z: number, elevation: number, above: number): boolean {
+-  return z >= elevation - 0.01 && z <= above;
++  return z >= elevation - 0.01 && z < above;
+ }
+ 
+ /**
