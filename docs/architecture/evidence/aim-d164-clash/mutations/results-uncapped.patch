@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/clash-protocol.ts a/apps/viewer/src/aim/clash-protocol.ts
+index f6fd6f1a..8e1411af 100644
+--- b/apps/viewer/src/aim/clash-protocol.ts
++++ a/apps/viewer/src/aim/clash-protocol.ts
+@@ -109,7 +109,7 @@ function isResult(v: unknown): v is ClashAimResult {
+ }
+ 
+ export function isClashRun(v: unknown): v is ClashAimRun {
+-  return isObj(v) && Array.isArray(v.results) && v.results.every(isResult)
++  return isObj(v) && Array.isArray(v.results) && v.results.length <= MAX_CLASH_RESULTS && v.results.every(isResult)
+     && optional(v.truncated, (t) => typeof t === 'boolean');
+ }
+ 

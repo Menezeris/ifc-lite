@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index e72c35d8..242559f3 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -57,7 +57,7 @@ export function buildRun(
+       ...(r?.comment ? { comment: r.comment.slice(0, 2000) } : {}),
+     };
+   });
+-  return { results,  };
++  return { results, ...(mine.length > results.length ? { truncated: true } : {}) };
+ }
+ 
+ export interface ReviewUpdate { key: string; status: ClashAimStatus; comment?: string }

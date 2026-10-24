@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index a8752b1c..242559f3 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -13,7 +13,7 @@ import {
+ } from './clash-protocol.js';
+ 
+ /** Kľúč kontroly dvojice: pravidlo a oba GUID zoradené, ako `clashReviewKey` z `@ifc-lite/clash`. */
+-export const pairKey = (rule: string, a: string, b: string): string => `${rule} ${a} ${b}`;
++export const pairKey = (rule: string, a: string, b: string): string => (a <= b ? `${rule} ${a} ${b}` : `${rule} ${b} ${a}`);
+ 
+ /** Vstup z panela: preset a globálne nastavenie (v m), čo viewer drží. */
+ export interface ClashSettingsInput {

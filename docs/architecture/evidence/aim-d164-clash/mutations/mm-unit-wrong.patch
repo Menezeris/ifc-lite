@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index ee4c044e..242559f3 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -25,7 +25,7 @@ export interface ClashSettingsInput {
+   clearance: number;
+ }
+ 
+-const mm = (m: number): number => Math.round(m * 1_000_000) / 100;
++const mm = (m: number): number => Math.round(m * 1_000_000) / 1000;
+ 
+ /** Test pre `CLASH_SAVE`; odstup sa posiela len v móde clearance. */
+ export function buildTest(s: ClashSettingsInput): ClashAimTest {

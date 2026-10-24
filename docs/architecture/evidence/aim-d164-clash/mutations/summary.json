@@ -1,0 +1,170 @@
+{
+  "clearance-always-sent": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "ac7a37777471286a1bf052dab9ba08100a2bc611",
+    "head": "903a98a741cb489a891258d5b010e04c00ef7b18",
+    "production": [
+      "apps/viewer/src/aim/aimClashPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "clearance-in-hard-signature": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "ac7a37777471286a1bf052dab9ba08100a2bc611",
+    "head": "903a98a741cb489a891258d5b010e04c00ef7b18",
+    "production": [
+      "apps/viewer/src/aim/aimClashPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "describe-always-object": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "ac7a37777471286a1bf052dab9ba08100a2bc611",
+    "head": "903a98a741cb489a891258d5b010e04c00ef7b18",
+    "production": [
+      "apps/viewer/src/aim/aimClashPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "mm-unit-wrong": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "ac7a37777471286a1bf052dab9ba08100a2bc611",
+    "head": "903a98a741cb489a891258d5b010e04c00ef7b18",
+    "production": [
+      "apps/viewer/src/aim/aimClashPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "mode-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/clash-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "ac7a37777471286a1bf052dab9ba08100a2bc611",
+    "head": "903a98a741cb489a891258d5b010e04c00ef7b18",
+    "production": [
+      "apps/viewer/src/aim/clash-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/clash-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "pairkey-unsorted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "ac7a37777471286a1bf052dab9ba08100a2bc611",
+    "head": "903a98a741cb489a891258d5b010e04c00ef7b18",
+    "production": [
+      "apps/viewer/src/aim/aimClashPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "results-uncapped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/clash-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "ac7a37777471286a1bf052dab9ba08100a2bc611",
+    "head": "903a98a741cb489a891258d5b010e04c00ef7b18",
+    "production": [
+      "apps/viewer/src/aim/clash-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/clash-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "review-skip-equal-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "ac7a37777471286a1bf052dab9ba08100a2bc611",
+    "head": "903a98a741cb489a891258d5b010e04c00ef7b18",
+    "production": [
+      "apps/viewer/src/aim/aimClashPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "run-other-rules": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "ac7a37777471286a1bf052dab9ba08100a2bc611",
+    "head": "903a98a741cb489a891258d5b010e04c00ef7b18",
+    "production": [
+      "apps/viewer/src/aim/aimClashPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "status-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/clash-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "ac7a37777471286a1bf052dab9ba08100a2bc611",
+    "head": "903a98a741cb489a891258d5b010e04c00ef7b18",
+    "production": [
+      "apps/viewer/src/aim/clash-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/clash-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "tolerance-unbounded": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/clash-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "ac7a37777471286a1bf052dab9ba08100a2bc611",
+    "head": "903a98a741cb489a891258d5b010e04c00ef7b18",
+    "production": [
+      "apps/viewer/src/aim/clash-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/clash-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "truncated-flag-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "ac7a37777471286a1bf052dab9ba08100a2bc611",
+    "head": "903a98a741cb489a891258d5b010e04c00ef7b18",
+    "production": [
+      "apps/viewer/src/aim/aimClashPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashPlan.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

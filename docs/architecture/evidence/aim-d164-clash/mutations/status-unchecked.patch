@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/clash-protocol.ts a/apps/viewer/src/aim/clash-protocol.ts
+index 0ebfa8c9..8e1411af 100644
+--- b/apps/viewer/src/aim/clash-protocol.ts
++++ a/apps/viewer/src/aim/clash-protocol.ts
+@@ -103,7 +103,7 @@ export function isClashTest(v: unknown): v is ClashAimTest {
+ }
+ 
+ function isResult(v: unknown): v is ClashAimResult {
+-  return isObj(v) && isText(v.a_guid) && isText(v.b_guid)
++  return isObj(v) && isText(v.a_guid) && isText(v.b_guid) && isClashStatus(v.status)
+     && optional(v.distance_mm, (d) => typeof d === 'number' && Number.isFinite(d))
+     && optional(v.comment, (c) => typeof c === 'string' && c.length <= 2000);
+ }

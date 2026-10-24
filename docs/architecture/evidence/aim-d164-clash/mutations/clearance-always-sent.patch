@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index f4240eda..242559f3 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -31,7 +31,7 @@ const mm = (m: number): number => Math.round(m * 1_000_000) / 1000;
+ export function buildTest(s: ClashSettingsInput): ClashAimTest {
+   return {
+     name: s.name, a: s.selectorA, b: s.selectorB, mode: s.mode, tolerance_mm: mm(s.tolerance),
+-    clearance_mm: mm(s.clearance),
++    ...(s.mode === 'clearance' ? { clearance_mm: mm(s.clearance) } : {}),
+   };
+ }
+ 
