@@ -34,6 +34,7 @@ Each patch is written mutant to fixed (the orientation of `git diff base...head`
 | `snapshot-other-rules.patch` | `aimClashPlan.ts` | statuses of other rules count as changes of this test | `aimClashPlan.test.ts` |
 | `mm-unit-wrong.patch` | `aimClashPlan.ts` | metres are converted to the wrong unit | `aimClashPlan.test.ts` |
 | `count-touch.patch` | `aimClashPlan.ts` | touching pairs are counted in the run totals | `aimClashPlan.test.ts` |
+| `model-label-ext-ignored.patch` | `aimClashPlan.ts` | a model label without its extension (`ASR`) does not find `ASR.ifc` | `aimClashPlan.test.ts` |
 | `describe-without-test.patch` | `aimClashPlan.ts` | `clash_local` is an object even when no test is open | `aimClashPlan.test.ts` |
 
 `aimClash.ts`, `aimClashStore.ts`, `AimClashBar.tsx` and the `AimBridge.tsx` wiring are store and panel glue with no unit test; they were verified live (see the PR).

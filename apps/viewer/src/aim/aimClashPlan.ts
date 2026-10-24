@@ -47,6 +47,15 @@ export function testSignature(t: ClashTestWire): string {
   return JSON.stringify([t.a, t.b ?? t.a, t.mode, t.tolerance_mm ?? 0, t.mode === 'clearance' ? t.clearance_mm ?? 0 : 0]);
 }
 
+const stripExt = (s: string): string => s.replace(/\.(ifc|ifcx|ifczip)$/i, '').toLowerCase();
+
+/** Model podľa štítku z AIM: presné meno, id, alebo meno bez prípony (bez ohľadu na veľkosť písmen). */
+export function matchModelLabel<M extends { id: string; name: string }>(models: Iterable<M>, label: string): M | undefined {
+  const want = stripExt(label);
+  for (const m of models) if (m.name === label || m.id === label || stripExt(m.name) === want) return m;
+  return undefined;
+}
+
 /** Kolízia v tvare, ktorý potrebuje beh (podmnožina `Clash`). */
 export interface ClashRich {
   rule: string;

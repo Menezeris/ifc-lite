@@ -7,7 +7,7 @@ import { describe, it } from 'node:test';
 
 import { MAX_SAVE_RESULTS, parseClashSave, type ClashElementWire, type ClashResultWire } from './clash-protocol.js';
 import {
-  buildResults, buildTest, countRun, describeClash, knownPairs, loadUpdates, matchRun, pairKey, reviewChanges, reviewSnapshot, testSignature,
+  buildResults, buildTest, countRun, describeClash, knownPairs, loadUpdates, matchModelLabel, matchRun, pairKey, reviewChanges, reviewSnapshot, testSignature,
   type ClashRich, type ReviewState,
 } from './aimClashPlan.js';
 
@@ -107,6 +107,16 @@ describe('clash z AIM: čistá logika (D-164)', () => {
     const review = (key: string) => (key === 'r1 C D' ? 'accepted' as const : undefined);
     assert.deepEqual(countRun('r1', clashes, review), { total: 2, by_status: { hard: 1, clearance: 1 }, by_review: { open: 1, resolved: 0, accepted: 1 } });
     assert.deepEqual(matchRun([wire('B', 'A'), wire('X', 'Y')], clashes, 'r1'), { found: 1, missing: 1 });
+  });
+
+  it('matchModelLabel: štítok z AIM sa páruje podľa mena, mena bez prípony a id', () => {
+    const models = [{ id: 'm1', name: 'ASR.ifc' }, { id: 'm2', name: 'VZT_v3.IFC' }, { id: 'm3', name: 'ELE' }];
+    assert.equal(matchModelLabel(models, 'ASR.ifc')?.id, 'm1');
+    assert.equal(matchModelLabel(models, 'asr')?.id, 'm1');
+    assert.equal(matchModelLabel(models, 'VZT_v3')?.id, 'm2');
+    assert.equal(matchModelLabel(models, 'm3')?.id, 'm3');
+    assert.equal(matchModelLabel(models, 'ELE.ifc')?.id, 'm3');
+    assert.equal(matchModelLabel(models, 'VZT'), undefined);
   });
 
   it('describeClash: bez testu undefined, inak tvar pre hosta', () => {
