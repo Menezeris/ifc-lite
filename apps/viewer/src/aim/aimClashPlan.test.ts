@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
+import { MAX_CLASH_RESULTS } from './clash-protocol.js';
 import {
   buildRun, buildTest, countStatuses, describeClash, matchRun, pairKey, reviewRows, reviewUpdates, signature,
 } from './aimClashPlan.js';
@@ -31,6 +32,13 @@ describe('clash z AIM: čistá logika (D-164)', () => {
       { a_guid: 'E', b_guid: 'F', status: 'open', distance_mm: -12.3 },
     ]);
     assert.equal(run.truncated, undefined);
+  });
+
+  it('buildRun: nad stropom sa výsledky orežú a beh nesie truncated', () => {
+    const many = Array.from({ length: MAX_CLASH_RESULTS + 1 }, (_, i) => clash('r1', `A${i}`, `B${i}`));
+    const run = buildRun('r1', many, () => undefined);
+    assert.equal(run.results.length, MAX_CLASH_RESULTS);
+    assert.equal(run.truncated, true);
   });
 
   it('reviewUpdates: len zmenené stavy, rovnaké sa preskočia', () => {
