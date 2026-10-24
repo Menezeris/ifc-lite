@@ -17,7 +17,7 @@ import type { ClashSetFilter } from '@/lib/clash/set-filter';
 import { runRequestOf } from '@/lib/clash/run-request';
 import type { ClashElementWire, ClashResultWire, ClashSideWire, ClashTestWire } from './clash-protocol.js';
 import {
-  buildTest, countRun, describeClash, knownPairs, matchRun, reviewChanges, reviewSnapshot, testSignature,
+  buildTest, countRun, describeClash, knownPairs, matchModelLabel, matchRun, reviewChanges, reviewSnapshot, testSignature,
   type ClashRich, type ReviewState,
 } from './aimClashPlan.js';
 import { setClashLocalDescriber } from './clashLocal.js';
@@ -57,14 +57,8 @@ export const useAimClash = create<AimClashState>()(() => ({ slot: null, status: 
 /** Meno modelu, ako ho pozná host (štítok modelu vo federácii). */
 export const labelOf = (models: Models) => (modelId: string): string => models.get(modelId)?.name ?? modelId;
 
-const stripExt = (s: string): string => s.replace(/\.(ifc|ifcx|ifczip)$/i, '').toLowerCase();
-
-/** Model podľa štítku z AIM: presné meno, meno bez prípony alebo id. */
-export function modelByLabel(models: Models, label: string): ReturnType<Models['get']> {
-  const want = stripExt(label);
-  for (const m of models.values()) if (m.name === label || m.id === label || stripExt(m.name) === want) return m;
-  return undefined;
-}
+/** Model podľa štítku z AIM (`matchModelLabel`). */
+export const modelByLabel = (models: Models, label: string): ReturnType<Models['get']> => matchModelLabel(models.values(), label);
 
 const ruleValue = (m: { id: string; sourceFingerprint?: string }): string => m.sourceFingerprint ?? m.id;
 
