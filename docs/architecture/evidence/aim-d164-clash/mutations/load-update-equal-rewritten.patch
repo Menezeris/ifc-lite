@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index 65bf40c7..f968b482 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -92,6 +92,7 @@ export function loadUpdates(rule: string, results: readonly ClashResultWire[], c
+     if (!r.review) continue;
+     const key = pairKey(rule, r.a.guid, r.b.guid);
+     const now = current(key);
++    if ((now?.status ?? 'open') === r.review && (now?.comment ?? '') === (r.comment ?? '')) continue;
+     out.push({ key, status: r.review, ...(r.comment ? { comment: r.comment } : {}) });
+   }
+   return out;

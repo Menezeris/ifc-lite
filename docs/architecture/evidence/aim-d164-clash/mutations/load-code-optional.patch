@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/clash-protocol.ts a/apps/viewer/src/aim/clash-protocol.ts
+index f2594975..4d172ab1 100644
+--- b/apps/viewer/src/aim/clash-protocol.ts
++++ a/apps/viewer/src/aim/clash-protocol.ts
+@@ -216,7 +216,7 @@ export function parseClashInbound(data: unknown): ClashInboundMessage | null {
+   if (!isObj(data) || data.source !== SOURCE) return null;
+   if (data.type === 'CLASH_LOAD') {
+     const test = parseClashTest(data.test);
+-    if (!test) return null;
++    if (!test?.code) return null;
+     let results: ClashResultWire[] | undefined;
+     if (data.results !== undefined) {
+       if (!Array.isArray(data.results) || data.results.length > MAX_LOAD_RESULTS) return null;

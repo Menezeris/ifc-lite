@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index 50b4a38a..f968b482 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -14,7 +14,7 @@ import {
+ } from './clash-protocol.js';
+ 
+ /** Kľúč kontroly dvojice: pravidlo a oba GUID zoradené, ako `clashReviewKey` z `@ifc-lite/clash`. */
+-export const pairKey = (rule: string, a: string, b: string): string => `${rule} ${a} ${b}`;
++export const pairKey = (rule: string, a: string, b: string): string => (a <= b ? `${rule} ${a} ${b}` : `${rule} ${b} ${a}`);
+ 
+ export interface ReviewState { status: ClashReviewState; comment?: string }
+ 

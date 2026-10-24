@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index 69784379..f968b482 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -73,7 +73,7 @@ export function buildResults(rule: string, clashes: readonly ClashRich[], labelO
+   const results = mine.slice(0, MAX_SAVE_RESULTS).map((c): ClashResultWire => ({
+     kind: c.status as ClashKind, severity: c.severity, distance: c.distance, a: elementOf(c.a, labelOf), b: elementOf(c.b, labelOf),
+   }));
+-  return { results, truncated: false };
++  return { results, truncated: mine.length > results.length };
+ }
+ 
+ /** Stavy pravidla (kľúče `pairKey`) zo všetkých kontrol viewera. */

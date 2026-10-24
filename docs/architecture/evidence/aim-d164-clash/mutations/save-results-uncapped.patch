@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/clash-protocol.ts a/apps/viewer/src/aim/clash-protocol.ts
+index 98c17464..4d172ab1 100644
+--- b/apps/viewer/src/aim/clash-protocol.ts
++++ a/apps/viewer/src/aim/clash-protocol.ts
+@@ -196,7 +196,7 @@ export function parseClashSave(data: unknown): ClashSaveWire | null {
+   }
+   if (data.run !== undefined) {
+     const r = data.run;
+-    if (!isObj(r) || !Array.isArray(r.results) || false) return null;
++    if (!isObj(r) || !Array.isArray(r.results) || r.results.length > MAX_SAVE_RESULTS) return null;
+     const rows = r.results.map(result);
+     if (rows.some((x) => x === null)) return null;
+     out.run = { results: rows as ClashResultWire[], ...(isObj(r.models) ? { models: r.models } : {}), ...(r.truncated === true ? { truncated: true } : {}) };

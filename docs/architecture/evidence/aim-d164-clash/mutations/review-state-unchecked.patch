@@ -1,0 +1,14 @@
+diff --git b/apps/viewer/src/aim/clash-protocol.ts a/apps/viewer/src/aim/clash-protocol.ts
+index 9212b686..4d172ab1 100644
+--- b/apps/viewer/src/aim/clash-protocol.ts
++++ a/apps/viewer/src/aim/clash-protocol.ts
+@@ -156,7 +156,8 @@ function result(v: unknown): ClashResultWire | null {
+   const a = element(v.a);
+   const b = element(v.b);
+   if (!a || !b) return null;
+-    if (!absent(v.comment) && (typeof v.comment !== 'string' || v.comment.length > MAX_COMMENT)) return null;
++  if (!absent(v.review) && !oneOf(v.review, CLASH_STATUSES)) return null;
++  if (!absent(v.comment) && (typeof v.comment !== 'string' || v.comment.length > MAX_COMMENT)) return null;
+   const center = Array.isArray(v.center) && v.center.length === 3 && v.center.every(isNum) ? (v.center as number[]) : null;
+   return {
+     kind: v.kind,

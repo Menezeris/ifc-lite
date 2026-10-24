@@ -33,6 +33,8 @@ import { releaseOwnedClashVisibility } from '@/lib/clash/visibility-ownership';
 import { useViewerStore } from '@/store';
 import { ModelBadge } from './ModelBadge';
 import { ClashExportActions } from '@/components/viewer/clash/ClashExportActions';
+// AIM-FORK (D-164): next 1 line
+import { AimClashBarLazy } from '@/aim/AimClashBarLazy';
 import { ClashSettingsDialog } from '@/components/viewer/ClashSettingsDialog';
 import { ClashRevisionCompareDialog } from '@/components/viewer/ClashRevisionCompareDialog';
 import { ClashSavedReportsDialog } from '@/components/viewer/ClashSavedReportsDialog';
@@ -728,6 +730,7 @@ export function ClashPanel({ onClose }: ClashPanelProps) {
       progress={progressState}
       staleFor={rawResult}
     >
+      {/* >>> AIM-FORK: Save to AIM + run from chat (D-164) */}<AimClashBarLazy runPreset={runPreset} />{/* <<< AIM-FORK */}
       {showHelp && <ClashHelp />}
 
       {/* Run controls — collapse to a slim bar once a result exists so the list

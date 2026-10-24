@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index 16ca380a..f968b482 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -37,7 +37,7 @@ const sameSide = (x: ClashSideWire, y: ClashSideWire): boolean => x.type === y.t
+ export function buildTest(i: TestInput): ClashTestWire {
+   return {
+     ...(i.code ? { code: i.code } : {}),
+-    name: i.name, a: i.a, b: i.b, mode: i.mode, tolerance_mm: mm(i.tolerance),
++    name: i.name, a: i.a, ...(sameSide(i.a, i.b) ? {} : { b: i.b }), mode: i.mode, tolerance_mm: mm(i.tolerance),
+     ...(i.mode === 'clearance' ? { clearance_mm: Math.max(mm(i.clearance), 1) } : {}),
+   };
+ }

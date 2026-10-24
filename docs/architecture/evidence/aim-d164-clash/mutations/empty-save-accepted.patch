@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/clash-protocol.ts a/apps/viewer/src/aim/clash-protocol.ts
+index eda48fc2..4d172ab1 100644
+--- b/apps/viewer/src/aim/clash-protocol.ts
++++ a/apps/viewer/src/aim/clash-protocol.ts
+@@ -207,6 +207,7 @@ export function parseClashSave(data: unknown): ClashSaveWire | null {
+     if (rows.some((x) => x === null)) return null;
+     out.reviews = rows as ClashReviewWire[];
+   }
++  if (!out.test && !out.run && !out.reviews) return null;
+   return out;
+ }
+ 

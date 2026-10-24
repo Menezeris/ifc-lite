@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index 46abd1e4..f968b482 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -164,6 +164,7 @@ export interface ClashLocalInput {
+ 
+ /** `view_state.clash_local` v tvare, ktorý čaká host; `undefined`, keď nie je otvorený žiadny test. */
+ export function describeClash(i: ClashLocalInput): Record<string, unknown> | undefined {
++  if (!i.test) return undefined;
+   const pick = (e: ClashElementWire) => ({ model: e.model, guid: e.guid });
+   return {
+     test: i.test, from_aim: i.fromAim, dirty: i.dirty,
