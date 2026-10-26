@@ -29,7 +29,7 @@ export function AimMapSection({ modelId, ...mapProps }: AimMapSectionProps) {
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="flex items-center gap-1 text-xs text-teal-500 hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
+        className="flex min-h-6 items-center gap-1 text-xs text-teal-500 hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
       >
         <ChevronRight className={`h-3 w-3 transition-transform ${open ? 'rotate-90' : ''}`} />
         {t('aimFork.georefMap.toggle')}
