@@ -57,6 +57,8 @@ mod prepass_styled;
 pub use prepass_styled::flat_styles_rgba8_from_geometry_columns;
 mod prepass_type_material;
 mod processor;
+mod product_geometry_audit;
+pub use product_geometry_audit::ProductGeometryAudit;
 pub mod scan;
 pub(crate) mod point_pca;
 pub mod scan_proposals;
@@ -130,6 +132,10 @@ pub use symbolic::{
 // this re-export no consumer outside the crate can name it, so a textured
 // `MeshData` can be read but never constructed or matched.
 pub use types::mesh::{InstanceRecord, MeshData, MeshTextureData, RawInstanceOccurrence};
+pub use types::presentation::{
+    MeshPresentationProvenance, NormalProvenance, PaletteAbsence, PaletteBinding, TextureBinding,
+    UvAuthority,
+};
 pub use types::response::{
     CoordinateInfo, ModelMetadata, ParseResponse, ProcessingStats,
     QuickMetadataBootstrap, QuickMetadataEntitySummary, QuickMetadataPrunedEdge,

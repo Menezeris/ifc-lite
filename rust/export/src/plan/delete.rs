@@ -26,6 +26,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::index::{AttrRefs, FileIndex};
+use super::removal::RemovalReason;
 
 pub(crate) struct DeleteResult {
     /// Every id dropped from the output: the requested deletions, cascaded
@@ -40,6 +41,8 @@ pub(crate) struct DeleteResult {
     /// The openings and projections in `removed` with no element they
     /// belong to left ([`hosted_feature`]).
     pub(crate) unhosted: HashSet<u32>,
+    /// Why each id in `removed` went: the first reason it was removed for.
+    pub(crate) reasons: HashMap<u32, RemovalReason>,
 }
 
 /// True for an `IFCREL*` attribute IFC declares as a `SET [1:?]` member
@@ -101,8 +104,10 @@ fn prunable(file_schema: &str, entity_type: &str) -> bool {
 /// (the mandatory `VoidsElements` / `ProjectsElements` inverse), so it goes
 /// with its host, or with the relationship itself, whatever else still names
 /// it. A second host that survives (a file breaking the one-host rule) keeps
-/// it. Every removed relationship asks, so the last one to go decides, in any
-/// order. `None` too while the feature's referrers are not collected yet:
+/// it, and so does an Add that names it. A patch on it does not: the patch
+/// is refused, as a patch on anything the plan deletes is. Every removed
+/// relationship asks, so the last one to go decides, in any order. `None`
+/// too while the feature's referrers are not collected yet:
 /// the relationship itself always names it. `rel_attrs` are the
 /// relationship's parsed attributes.
 fn hosted_feature(index: &FileIndex, file_schema: &str, rel_type: &str, rel_attrs: &[AttrRefs], removed: &HashSet<u32>) -> Option<u32> {
@@ -145,6 +150,7 @@ struct Cascade<'i> {
     index: &'i FileIndex<'i>,
     file_schema: &'i str,
     removed: HashSet<u32>,
+    reasons: HashMap<u32, RemovalReason>,
     worklist: VecDeque<u32>,
     /// Per (referrer, attr index): the list as stripped so far. Filled for
     /// every top-level list of a referrer the first time a strip reaches
@@ -153,9 +159,14 @@ struct Cascade<'i> {
 }
 
 impl Cascade<'_> {
-    fn mark_removed(&mut self, id: u32) {
+    /// Remove `id` for `reason`, or note `reason` for an id already removed
+    /// (the earlier reason in [`RemovalReason`]'s order is kept).
+    fn mark_removed(&mut self, id: u32, reason: RemovalReason) {
         if self.removed.insert(id) {
+            self.reasons.insert(id, reason);
             self.worklist.push_back(id);
+        } else if let Some(known) = self.reasons.get_mut(&id) {
+            *known = known.first(reason);
         }
     }
 
@@ -185,7 +196,7 @@ impl Cascade<'_> {
             list.remaining -= count;
         }
         if list.remaining == 0 && list.mandatory {
-            self.mark_removed(referrer);
+            self.mark_removed(referrer, RemovalReason::Emptied);
         }
         true
     }
@@ -211,6 +222,10 @@ fn list_strips(index: &FileIndex, file_schema: &str, referrer: u32) -> Vec<(usiz
     strips
 }
 
+/// `feature_keepers` are the records an Add names: an opening or projection
+/// among them stays when its host goes, since the Add needs it. Nothing else
+/// keeps a hostless feature, not even a patch on it (see [`hosted_feature`]).
+///
 /// `resolve_deletes` also takes member removals that have nothing to do
 /// with a whole-object delete: a patch's copy-on-write detaching itself from
 /// a relationship it no longer wants. `extra_detach` is `(referrer, attr
@@ -229,12 +244,20 @@ pub(crate) fn resolve_deletes(
     requested: &HashSet<u32>,
     extra_detach: &[(u32, usize, u32)],
     protected: &HashSet<u32>,
+    feature_keepers: &HashSet<u32>,
 ) -> DeleteResult {
     let mut cascade = Cascade {
         index,
         file_schema,
         removed: requested.clone(),
-        worklist: requested.iter().copied().collect(),
+        reasons: requested.iter().map(|&id| (id, RemovalReason::Requested)).collect(),
+        // In id order: the walk, and so which reason is found first, is the
+        // same on every run.
+        worklist: {
+            let mut seeds: Vec<u32> = requested.iter().copied().collect();
+            seeds.sort_unstable();
+            seeds.into()
+        },
         lists: FxHashMap::default(),
     };
     // Distinct referrers each target still has, seeded from the file's
@@ -271,7 +294,7 @@ pub(crate) fn resolve_deletes(
         if !orphaned.contains(&dead) {
             for &(referrer, idx) in index.referrers(dead) {
                 if !cascade.removed.contains(&referrer) && !cascade.strip(referrer, idx, dead, false) {
-                    cascade.mark_removed(referrer);
+                    cascade.mark_removed(referrer, RemovalReason::Dangling);
                 }
             }
         }
@@ -280,9 +303,9 @@ pub(crate) fn resolve_deletes(
         let dead_attrs = index.attrs(dead).unwrap_or_default();
         // Recorded even when the feature already went another way, so which
         // removal the worklist reaches first does not change the answer.
-        if let Some(feature) = hosted_feature(index, file_schema, &dead_type, &dead_attrs, &cascade.removed).filter(|id| !protected.contains(id)) {
+        if let Some(feature) = hosted_feature(index, file_schema, &dead_type, &dead_attrs, &cascade.removed).filter(|id| !feature_keepers.contains(id)) {
             unhosted.insert(feature);
-            cascade.mark_removed(feature);
+            cascade.mark_removed(feature, RemovalReason::Unhosted);
         }
 
         // 2. `dead` no longer refers to anything; a target whose last
@@ -319,18 +342,18 @@ pub(crate) fn resolve_deletes(
             *left = left.saturating_sub(1);
             if *left == 0 {
                 orphaned.insert(target);
-                cascade.mark_removed(target);
+                cascade.mark_removed(target, RemovalReason::Released);
             }
         }
     }
 
-    let Cascade { removed, lists, .. } = cascade;
+    let Cascade { removed, reasons, lists, .. } = cascade;
     let stripped = lists
         .into_iter()
         .filter(|((referrer, _), list)| !removed.contains(referrer) && !list.stripped.is_empty())
         .map(|(slot, list)| (slot, list.stripped))
         .collect();
-    DeleteResult { removed, stripped, unhosted }
+    DeleteResult { removed, stripped, unhosted, reasons }
 }
 
 /// The records losing a record of `entity_type` with attributes `attrs` can

@@ -50,6 +50,8 @@ pub mod split_evidence;
 pub mod split_geometry;
 pub mod split_grid;
 pub mod class_families;
+#[doc(hidden)]
+pub mod class_normalization;
 pub mod split_types;
 mod split_lanes;
 pub mod split_merge;
@@ -70,7 +72,7 @@ mod js_json;
 mod projections;
 mod utf16;
 
-pub use fingerprint::{build_component_fingerprints, build_data_fingerprint};
+pub use fingerprint::{build_component_fingerprint_entries, build_component_fingerprints, build_data_fingerprint};
 pub use input::{
     DataFingerprintInput, PropertyEntryInput, PropertySetInput, PropertyValue, QuantitySetInput,
     TypeAssignmentInput,
@@ -92,3 +94,10 @@ mod lineage_tests;
 mod sidecar_parse;
 
 mod sidecar_value;
+
+pub use sidecar_value::{JsString, DocumentValue};
+pub mod document_serde;
+mod document_ser;
+mod document_key_ser;
+mod document_key_de;
+mod document_enum;

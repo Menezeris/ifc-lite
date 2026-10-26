@@ -360,6 +360,32 @@ fan-out, memory bandwidth, GPU); a change in those still needs an end-to-end
 A/B (`ab.sh`, the browser rigs below), and a green ratchet is no evidence for it.
 
 
+## Placement consumer consistency (#7779, #7906)
+
+Historical qualification of the original stack only (through `7cdd67bc3e`):
+the recovered stack has changed; its wall-time disposition is under
+"Current-main source recovery hold (#7880)" below. The following
+verdict is retained as historical evidence, not a current performance or
+output-identity claim.
+
+The frozen X3a, R2a and corrective-tail native cohort preserved mesh, vertex,
+triangle and per-mesh fingerprint output on Haus, ISSUE_129 and Holter. The
+tail stayed within the approved base-relative instruction band in every
+measured phase, while R2a exceeded it in duplex preprocessing. Both sides fit
+the committed small and large instruction ceilings; that does not erase the
+separate base-relative failure. Pool phase timers and wall medians also moved
+in different directions, so this is a mixed result with no speedup claim.
+The exact source pins, raw sample tables, phase comparisons and limits are in
+[#7906](https://github.com/LTplus-AG/ifc-lite/pull/7906).
+
+The separate shared-parent placement harness confirms analytic transforms and
+memo reuse through the production resolver and router. It does not measure
+throughput. Native instruction counts and this mechanism check do not qualify
+WASM worker scheduling or browser load time. Lesson: preserve phase-level
+failures and wall-time disagreements even when aggregate instructions and
+committed ceilings pass; attribute the retained preprocessing dumps before
+changing production work or accepting the regression.
+
 ## Generated shader commentary and eager bytes (#7918)
 
 WGSL comments inside generated shader strings survive JavaScript minification
@@ -4516,6 +4542,45 @@ explicitly, retain the current build policy and automatic lowering, and require
 a new measurement and maintainer decision for any later increase. Source-matched
 performance acceptance and transfer-size acceptance remain separate decisions.
 
+## Section-clipped IFC export (#7711)
+
+Section clipping is an opt-in export operation after the normal mutation-resolved
+STEP serialization. It reuses canonical meshing and the exact intersection kernel;
+ordinary loading and ordinary STEP export do not invoke it. The WASM and geometry
+bridge changes expose that operation without changing the load pipeline.
+Palette fragments are rejoined by source representation item and f64 origin
+before choosing solid clipping; appearance partitioning cannot decide whether a
+cut is capped, and a repeated leaf cannot collapse distant occurrences into one
+f32 clip frame. Strict export additionally requests per-product processing
+receipts and validates source references. Ordinary processing sinks do not
+request or allocate those receipts. These export-only integrity checks and the
+conservative diagnostic/texture refusals require separately attributed load-cost
+and real-model qualification, recorded below.
+Retained face colours use bounded BVH attribution after the exact topology cut.
+
+The [historical export cohort](evidence/section-export-7711/README.md) retains
+its original source attribution and operation timings. Its identical native
+controls do not qualify changed native code; the fresh comparison below does.
+
+The recovered backend `de3c774` was measured against authenticated main
+`141285f` in a fresh native worker-pool cohort. Six untimed full-payload calls
+preserve ordered mesh output, raw float bits, frames/metadata/instances and all
+diagnostic bytes on Haus, ISSUE_129 and heavy Holter. All timed counts and
+fingerprints match. The stock phase report identifies no real change but remains
+inconclusive; complete-load observations include small adverse changes. No speed
+or neutrality claim follows.
+
+Disposition: accept the disclosed ordinary native cost for the section-export
+capability demonstrated by the separate fresh Haus real-WASM crop and external
+IfcOpenShell/OCC witness. Ordinary sinks allocate no audit receipts, but the
+changed diagnostic drain order and unsupported-map key cloning therefore required this
+full-load measurement. The [retained native evidence](evidence/section-export-7711/recovery-native-load/README.md)
+separates that cost from the requested crop operation. It establishes no browser,
+GPU, crop-throughput or opt-in-audit throughput verdict. Existing native-instruction,
+bundle, parity and required CI gates remain binding; no baseline or ceiling was
+changed. Lesson: measure the default path even when its new consumer is opt-in,
+and keep actual crop behavior proof separate from load-cost acceptance.
+
 ## Standalone placement refusal reconciliation (#7877)
 
 The standalone native comparison preserves ordered mesh payloads, exact float/frame/metadata identity and complete diagnostic bytes on the catalog corpus. The stock reporter remains inconclusive; all-sample block summaries are retained beside the stock selected-row report, including the adverse parse observations and geometry offsets. The maintainer accepts the observed native cost for consistently refusing unreadable authored local, linear and grid placements while retaining absent-placement identity and readable degenerate-direction repair. This is a correctness tradeoff, not a speedup or statistical-neutrality claim. This is a maintainer judgment, not a statistical test result. The evidence does not waive browser/WASM qualification, WASM size budgets or required gates, and the later combined placement/memo measurements must not be relabelled as this standalone result.
@@ -4602,6 +4667,53 @@ adverse verdict, with causal attribution still unproven, rather than a neutralit
 claim. Existing native-instruction, bundle, parity and required CI ceilings stay
 binding. No benchmark rerun, baseline, acceptance band or pin change is made.
 
+
+### Canonical placement consumer own-layer native verdict (#7880)
+
+The fresh standalone03 `03e2ad` versus corrected-X `a806aed` native worker-pool
+cohort preserves complete ordered mesh/float/frame/metadata/instance output and
+all diagnostic bytes on Haus, ISSUE_129 and heavy Holter. Every timed count and
+fingerprint also matches. The stock report identifies no real phase change but
+remains inconclusive; complete-load observations are modestly adverse on all
+three controls. No speed or neutrality claim follows.
+
+Disposition: accept the disclosed native cost for canonical placement/direction
+consumer fixes with exact preserved geometry/refusal output. This is an accepted
+cost, not a required-gate waiver. The [own-layer evidence](evidence/placement-7779/recovery-x-native/README.md)
+retains every phase/sample and distinguishes the stock selected report from
+all-inner outer-block statistics. Both actual selected sources retain original
+core/geometry/processing and example compiler proof; the original X preparation's
+later R-guard failure remains failed. No prior timing observations are pooled or
+subtracted. Lesson: qualify the actual layer against its own base and preserve
+small adverse results even when full output matches and the stock report is
+inconclusive. Browser/WASM and other required CI/ratchet gates remain separate;
+no baseline, ceiling, acceptance band or pin changes.
+
+### Current-main source recovery hold (#7880)
+
+The public `e219be91b220` history is recovered onto actual merged main
+`c7d3855296fc` without replacing its ancestry. The type-map origin reader uses
+the current GeometryProgram controller, and the omitted derived-Axis1 repair
+and parsed Axis2 regression are carried as source. Lower-layer placement
+policy, resource accounting and diagnostics retain current-main authority.
+
+Historical (superseded by the disposition below): qualification remained
+**HOLD for X3a behavioral/oracle evidence, the required performance verdict
+and applicable gates**. Charter #7779 assigns X3a to #7880;
+Class R neutrality belongs to the later R2a layer (#7896). This source-only
+recovery ran no build, native test, browser/WASM campaign or performance measurement. Historical native observations above and the private
+75-test qualification do not qualify the recovered source. Root review and
+source-matched fleet qualification remain required; no output pin, baseline,
+ceiling or acceptance band is changed.
+
+**Disposition (2026-10-24): wall-time PASS by maintainer decision.** The
+90-pair wall-time cohort (job `313e11ca`, source `48f1c6c0` against base
+`61bfa85b`, 45 BC / 45 CB) was accepted as passing under non-inferiority:
+every fixture's 90% upper bound on the C/B ratio is below 1.02 (FZK-Haus
+[0.977, 1.003], ISSUE_129 [0.985, 1.008], ISSUE_053 [1.005, 1.013]). ISSUE_053
+is slightly slower but inside the band; the verdict is non-inferiority, not
+"no change". The HOLD paragraph above is retained as history. No baseline,
+ceiling, acceptance band or output pin is changed by this disposition.
 
 ## Allplan polyline full-path compatibility (#7983)
 
@@ -4710,3 +4822,50 @@ Lesson: a zero-duration phase can invalidate the whole timing verdict even when
 all pairs finish and artifact provenance holds. Preserve that verdict and the
 adverse small-control observations; do not rerun until green or substitute
 count equality for full output identity or browser worker-pool performance.
+
+### Canonical product protocol (E3, #7955)
+
+The [final-source evidence](https://github.com/LTplus-AG/ifc-lite/blob/e8068c4aa310f2263b571ffc7928723c1438059b/scripts/perf/evidence/product-state-e3-final/summary.json)
+compares the canonical product protocol with its landed E2b parent. Native
+result fingerprints and source-built WASM getter fingerprints match within
+the documented corpus and normalization scope. Workspace tests, strict Clippy
+and the three independent protocol, publication and retry-stop mutations pass
+their required controls. The [earlier evidence](https://github.com/LTplus-AG/ifc-lite/blob/41efcf427d46aa604384c014bd6f0fdef4448de1/scripts/perf/evidence/product-state-e3/summary.json)
+retains its earlier-source attribution.
+
+Verdict: disclosed correctness cost, with no speedup or performance-neutrality
+claim. The final native cohort flags slower geometry and total time on the
+small control; its aggregate qualification also remains inconclusive because
+one opening-fixture phase is below timer resolution. Holter is slower in every
+native pair even though the stock reporter does not flag that change. These
+observations remain adverse results. Instruction attribution measures a much
+smaller increase in work and does not explain the elapsed-time penalty. Fixed
+processor-placement diagnostics neither replace the original cohort nor prove
+its cause.
+
+The completed physical-GPU browser worker-pool cohort flags a slower first
+geometry batch on the small control. Complete metadata/render readiness stays
+within observed spread on all three models. All samples retain healthy GPU
+counters and matching mesh counts; representative screenshots show the actual
+models. That scope does not qualify interaction latency, long-lived memory,
+other browsers or retained execution.
+
+The landing tradeoff is the measured cost for source-bound, once-only work and
+correct interruption/report isolation. Keep the original failed native verdict
+and browser first-batch flag visible; no ceiling or tolerance changes are made
+by this evidence update. Final semantic review and current required checks
+remain mandatory. The full retained platform and release gates remain open.
+
+Lesson: a successful measurement process is not a no-regression verdict, and
+low instruction overhead cannot waive an elapsed-time regression. Report the
+complete paired observations and the accepted correctness tradeoff instead of
+replacing samples until the headline turns green.
+## Section-export measured engine budget decision
+
+The human approved retaining the section-export stack at its measured local
+engine budget, with the inherited tolerance and viewer budgets unchanged.
+The [decision evidence](../../docs/architecture/evidence/section-export-budget/README.md)
+binds the source, runtime custody, original size failure and completed consumer
+proof. Accepting this budget does not establish isolated feature cost or browser
+runtime cost. Preserve the original failures and unknown consumer attempt;
+hosted/parity and current performance remain holds, and merge is not approved.

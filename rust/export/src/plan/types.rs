@@ -68,6 +68,16 @@ pub struct PropWrite {
     pub unit: Option<String>,
     pub kind: PsetKind,
     pub scope: PropScope,
+    /// The express id of the exact `IfcPropertySingleValue` / `IfcQuantity*`
+    /// record to write, when the caller already holds it. The write then
+    /// lands on the set named `pset` that lists that record, however many
+    /// sets share that name, and is refused if no set of that name lists it
+    /// or the record's own name is not `prop`. With `PropScope::Occurrence`,
+    /// a target only the related type's set holds is not edited in place:
+    /// the write lands on the object's own record of that property, or on a
+    /// new copy that overrides it. `None` finds the first
+    /// property of that name in the first set of that name.
+    pub target: Option<u32>,
 }
 
 /// Rewrite a product's placement to `matrix` (row-major, file units, relative
@@ -153,8 +163,8 @@ pub enum Disposition {
     /// stays declared. The exception is an opening or projection, which IFC
     /// ties to exactly one element: it goes once no voids or projects
     /// relationship naming it is left (its host or that relationship
-    /// deleted), whatever else still names it, unless this plan patches it
-    /// or an Add names it. A record that names a deleted one through a
+    /// deleted), whatever else still names it, unless an Add names it; a
+    /// patch on it is refused. A record that names a deleted one through a
     /// single-valued attribute (a placement relative to a deleted placement,
     /// an object on that placement) goes too, since it cannot be written
     /// without a dangling reference.
@@ -194,6 +204,52 @@ pub struct PlanContext {
     /// (`2026-10-23T10:00:00`). A synthesized owner history's `CreationDate`
     /// is read from it; a bare integer there is taken as Unix seconds.
     pub time_stamp: Option<String>,
+    /// The application making this export. With it, additions are attributed
+    /// to it, modifications are recorded against it, and the header names it
+    /// (see [`ExportingApplication`]). Without it the executor keeps the
+    /// source's attribution and reports a finding when that matters.
+    pub application: Option<ExportingApplication>,
+    /// The header's `FILE_NAME` name. `None` writes `export.ifc`.
+    pub file_name: Option<String>,
+}
+
+/// The person on whose behalf the exporting application makes its changes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct ExportingPerson {
+    /// `IfcPerson.Identification` (`Id` in IFC2X3), e.g. a user name.
+    pub identification: String,
+    /// `IfcPerson.FamilyName`: the name shown for the person.
+    pub name: String,
+}
+
+/// Who an export attributes its changes to, per the buildingSMART
+/// `IfcChangeActionEnum` guidance: an object the exporting application adds
+/// is `ADDED` with that application as its `OwningApplication`; an object it
+/// modifies keeps its original owner and creation date, and gets
+/// `MODIFIED`, a `LastModifiedDate`, and the exporting user and application
+/// as `LastModifyingUser` and `LastModifyingApplication`.
+///
+/// There is no clock fallback: `changed_at` is the time of the change, as the
+/// caller states it, so the same inputs always produce the same bytes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct ExportingApplication {
+    /// `IfcApplication.ApplicationDeveloper`'s `IfcOrganization.Name`.
+    pub developer: String,
+    /// `IfcApplication.ApplicationFullName`.
+    pub full_name: String,
+    /// `IfcApplication.ApplicationIdentifier`.
+    pub identifier: String,
+    /// `IfcApplication.Version`.
+    pub version: String,
+    /// The user making the change. `None` names the application itself as
+    /// the person, because `IfcPersonAndOrganization` needs one.
+    pub person: Option<ExportingPerson>,
+    /// When the change was made: ISO 8601 (`2026-10-23T10:00:00`, UTC unless
+    /// it carries an offset) or Unix seconds. Written to every new owner
+    /// history and, in UTC, to the header's `time_stamp`.
+    pub changed_at: String,
 }
 
 /// The whole request: what happens to which objects, and the header
@@ -249,6 +305,9 @@ pub struct WriteReport {
     pub total: usize,
     pub written: usize,
     pub deleted: usize,
+    /// Patch dispositions that wrote something (not distinct objects: two
+    /// patches of one object count twice; a patch refused whole, or asking
+    /// for nothing, counts not at all).
     pub patched: usize,
     /// Add dispositions that were built. A refused Add is in `refusals`.
     pub added: usize,
@@ -256,6 +315,11 @@ pub struct WriteReport {
     pub findings: Vec<ValidationFinding>,
     /// Representations geometry patches removed from their products.
     pub dropped_representations: Vec<DroppedRepresentation>,
+    /// Every record removed from the output (`deleted` of them), sorted by
+    /// express id, each with why it went (see [`super::RemovalReason`] for
+    /// which reason a record that went for several reports). The same plan
+    /// reports the same reasons on every run.
+    pub removed: Vec<super::removal::Removal>,
 }
 
 /// Failure modes of [`super::execute`] itself, as opposed to a single
