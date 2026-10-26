@@ -33,7 +33,7 @@ import { useViewerStore } from '@/store';
 import { totalYupOffset } from '@/lib/geo/coordinate-frame';
 import { openPdfDocument, rasterizePdfPage } from '@/lib/pdf/rasterize';
 // >>> AIM-FORK: PDF underlays on/off in 3D from the AIM host and the panel switch (D-133 addendum)
-import { useAimUnderlays3d, underlaysHiddenIn3d, withUnderlay3dVisibility } from '@/aim/aimUnderlays3d';
+import { useAimUnderlays3d, underlaysHiddenIn3d, withUnderlay3dVisibility, skipUnderlayRaster } from '@/aim/aimUnderlays3d';
 import { aimHorizontalCutZ } from '@/aim/underlayCutZ';
 import { storeyZToDraw, underlayAtLevel } from '@/aim/underlayAtCut';
 // <<< AIM-FORK
@@ -203,6 +203,9 @@ export function useDrawingUnderlay({ rendererRef, isInitialized }: UseDrawingUnd
       const hasTexture = uploadedTexturesRef.current.get(drawing.id) === texKey;
       const upToDate = appliedPlacementsRef.current.get(drawing.id) === posKey;
       if (hasTexture && upToDate) continue;
+      // >>> AIM-FORK: a hidden underlay is not fetched or rasterized until shown
+      if (skipUnderlayRaster(placement, hasTexture)) continue;
+      // <<< AIM-FORK
 
       const corners = placementWorldCorners(placement, offset);
 

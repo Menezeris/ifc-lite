@@ -14,13 +14,15 @@
 import { create } from 'zustand';
 
 interface AimUnderlays3dStore {
-  /** true = uložené podklady sa v 3D nekreslia. Po obnove stránky false (zapnuté). */
+  /** true = uložené podklady sa v 3D nekreslia. Po obnove stránky true (vypnuté). */
   hidden: boolean;
   setShown: (show: boolean) => void;
 }
 
 export const useAimUnderlays3d = create<AimUnderlays3dStore>((set) => ({
-  hidden: false,
+  // After a page reload the underlays are off: the PDFs are neither fetched nor rasterized at
+  // startup, they turn on with the switch or set_view_mode underlays_3d=true
+  hidden: true,
   setShown: (show) => set({ hidden: !show }),
 }));
 
@@ -32,4 +34,9 @@ export function underlaysHiddenIn3d(flags: { hidden: boolean; viewLocked: boolea
 /** Placement pre renderer: pri skrytí `visible: false`, kalibrácia v store ostáva nedotknutá (kópia). */
 export function withUnderlay3dVisibility<T extends { visible: boolean }>(placement: T, hide: boolean): T {
   return hide && placement.visible ? { ...placement, visible: false } : placement;
+}
+
+/** Skrytý placement bez textúry sa nesťahuje ani nerasterizuje, až kým sa nezapne (štart viewera). */
+export function skipUnderlayRaster(placement: { visible: boolean }, hasTexture: boolean): boolean {
+  return !placement.visible && !hasTexture;
 }
