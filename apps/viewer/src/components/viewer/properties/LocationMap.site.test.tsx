@@ -59,7 +59,8 @@ const AIM_MAP_KEY = 'ifc-lite:properties:section:georef-map';
 function openMap(ui: HTMLElement): void {
   const toggle = [...ui.querySelectorAll('button')].find(b => b.textContent?.includes('Show map'));
   assert.ok(toggle, 'the Show map toggle is rendered');
-  click(toggle);
+  // the section state is persisted, so a later render may already start open
+  if (toggle.getAttribute('aria-expanded') !== 'true') click(toggle);
 }
 // <<< AIM-FORK
 afterEach(() => { cleanup(); resetMapWebglSupportForTests(); globalThis.fetch = originalFetch; useViewerStore.setState(originalState, true); localStorage.removeItem(AIM_MAP_KEY); });
