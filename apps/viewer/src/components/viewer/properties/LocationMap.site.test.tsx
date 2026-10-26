@@ -9,7 +9,7 @@ import { IfcParser, type IfcDataStore, type MapConversion, type ProjectedCRS } f
 import { fixtureModel, fixtureModels } from '@/test/store-fixture.js';
 import { useViewerStore } from '@/store';
 import { GeoreferencingPanel } from './GeoreferencingPanel.js';
-import { cleanup, render, waitFor } from '@/test/render.js';
+import { cleanup, click, render, waitFor } from '@/test/render.js';
 import { markMapWebglUnsupported, resetMapWebglSupportForTests } from '@/lib/geo/map-webgl-support.js';
 import { readSiteLocationReference, siteLocationDisagreement } from '@/lib/geo/site-location-disagreement.js';
 import { reprojectPointToLatLon } from '@/lib/geo/reproject.js';
@@ -54,7 +54,15 @@ const conversion: MapConversion = { id: 50, sourceCRS: 10, targetCRS: 51,
 const crs: ProjectedCRS = { id: 51, name: 'EPSG:9933', mapUnitScale: 1 };
 const originalFetch = globalThis.fetch;
 const originalState = useViewerStore.getState();
-afterEach(() => { cleanup(); resetMapWebglSupportForTests(); globalThis.fetch = originalFetch; useViewerStore.setState(originalState, true); });
+// >>> AIM-FORK: the panel's map section is closed by default, so tests that need the map open it like a user
+const AIM_MAP_KEY = 'ifc-lite:properties:section:georef-map';
+function openMap(ui: HTMLElement): void {
+  const toggle = [...ui.querySelectorAll('button')].find(b => b.textContent?.includes('Show map'));
+  assert.ok(toggle, 'the Show map toggle is rendered');
+  click(toggle);
+}
+// <<< AIM-FORK
+afterEach(() => { cleanup(); resetMapWebglSupportForTests(); globalThis.fetch = originalFetch; useViewerStore.setState(originalState, true); localStorage.removeItem(AIM_MAP_KEY); });
 
 it('#7666 DB_REF oracle stays quiet; a genuine 100m disagreement appears and clears on model/CRS edits', async () => {
   markMapWebglUnsupported('probe_no_context');
@@ -178,15 +186,31 @@ it('#7666 the georeferencing panel compares only its own model in a federation o
       georefMutations: new Map(),
     });
     const ui = render(<GeoreferencingPanel georef={georef} modelId="site" schemaVersion="IFC4" />);
+    openMap(ui);
     await waitFor(() => ui.textContent?.includes('about 100 m') === true, 'the selected model site reaches the map');
     cleanup();
     if (federated) {
       const other = render(<GeoreferencingPanel georef={georef} modelId="other" schemaVersion="IFC4" />);
+      openMap(other);
       await waitFor(() => other.querySelector('a[href*="google.com/maps"]') !== null, 'the other model resolves');
       assert.equal(other.querySelector('output'), null, 'a site in another model must not leak into this panel');
       cleanup();
     }
   }
+});
+
+it('AIM: the georeferencing map is not mounted at startup and mounts when the section is opened', async () => {
+  markMapWebglUnsupported('probe_no_context');
+  const store = await siteStore();
+  useViewerStore.setState({ ...fixtureModels({ ...fixtureModel('site'), ifcDataStore: store }), georefMutations: new Map() });
+  const georef = { hasGeoreference: true, source: 'mapConversion' as const, mapConversion: conversion, projectedCRS: crs };
+  const ui = render(<GeoreferencingPanel georef={georef} modelId="site" schemaVersion="IFC4" />);
+  const toggle = [...ui.querySelectorAll('button')].find(b => b.textContent?.includes('Show map'));
+  assert.equal(toggle?.getAttribute('aria-expanded'), 'false');
+  await act(async () => { await new Promise(r => setTimeout(r, 50)); });
+  assert.equal(ui.querySelector('a[href*="google.com/maps"]'), null, 'the map must not mount before it is asked for');
+  openMap(ui);
+  await waitFor(() => ui.querySelector('a[href*="google.com/maps"]') !== null, 'the map mounts after opening the section');
 });
 
 it('#7892 an explicit missing parent RefDirection cannot produce a site warning from a guessed origin', async () => {
