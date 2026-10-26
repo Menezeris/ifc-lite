@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimUnderlays3d.ts a/apps/viewer/src/aim/aimUnderlays3d.ts
+index 9107b1b0..b3529f77 100644
+--- b/apps/viewer/src/aim/aimUnderlays3d.ts
++++ a/apps/viewer/src/aim/aimUnderlays3d.ts
+@@ -22,7 +22,7 @@ interface AimUnderlays3dStore {
+ export const useAimUnderlays3d = create<AimUnderlays3dStore>((set) => ({
+   // After a page reload the underlays are off: the PDFs are neither fetched nor rasterized at
+   // startup, they turn on with the switch or set_view_mode underlays_3d=true
+-  hidden: false,
++  hidden: true,
+   setShown: (show) => set({ hidden: !show }),
+ }));
+ 

@@ -23,7 +23,9 @@ import type { CoordinateInfo, GeometryResult } from '@ifc-lite/geometry';
 import { EpsgLookupDialog, type EpsgResult } from './EpsgLookupDialog';
 import { FederationAlignmentControls } from './FederationAlignmentControls';
 import { PrecisionGridBadge } from './PrecisionGridBadge';
-import { LocationMap, type PickedPosition } from './LocationMap';
+// >>> AIM-FORK: the map mounts on request, not at startup (AimMapSection wraps LocationMap)
+import { AimMapSection, type PickedPosition } from '@/aim/AimMapSection';
+// <<< AIM-FORK
 import { computeOrthogonalHeightForBaseAltitude } from '@/lib/geo/cesium-placement';
 import {
   detectScaleUnitMismatch,
@@ -633,20 +635,17 @@ export function GeoreferencingPanel({ georef, modelId, enableEditing, schemaVers
         </div>
       )}
 
-      <LocationMap
-        dataStore={modelId ? models.get(modelId)?.ifcDataStore ?? undefined : undefined}
-        mapConversion={mergedConversion}
-        projectedCRS={mergedCRS}
-        coordinateInfo={coordinateInfo}
-        // Withhold geometry (rather than fall through to an unfiltered, leaky export) when this
-        // panel's model id hasn't resolved and more than one model is loaded — see `canExportKmz`.
-        geometryResult={canExportKmz ? geometryResult : null}
+      {/* >>> AIM-FORK: closed-by-default map section (modelId resolves dataStore and modelName) */}
+      <AimMapSection
+        modelId={modelId}
+        mapConversion={mergedConversion} projectedCRS={mergedCRS} coordinateInfo={coordinateInfo}
+        geometryResult={canExportKmz ? geometryResult : null /* withheld, not leaky, unless resolved: see canExportKmz */}
         instancedModelRange={instancedModelRange}
-        modelName={modelId ? models.get(modelId)?.name : undefined}
         lengthUnitScale={lengthUnitScale}
         editable={editable}
         onApplyPosition={editable ? handleApplyPosition : undefined}
       />
+      {/* <<< AIM-FORK */}
     </div>
   );
 }

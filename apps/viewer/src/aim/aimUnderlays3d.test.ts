@@ -5,22 +5,29 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, it } from 'node:test';
 
-import { useAimUnderlays3d, underlaysHiddenIn3d, withUnderlay3dVisibility } from './aimUnderlays3d.js';
+import { useAimUnderlays3d, underlaysHiddenIn3d, withUnderlay3dVisibility, skipUnderlayRaster } from './aimUnderlays3d.js';
 import { isViewMessage } from './view-protocol.js';
 import { SOURCE } from './bridge-protocol.js';
 
 describe('podklady PDF v 3D (AIM D-133 doplnok, #170)', () => {
-  beforeEach(() => useAimUnderlays3d.setState({ hidden: false }));
+  beforeEach(() => useAimUnderlays3d.setState({ hidden: true }));
 
-  it('predvolene sú podklady v 3D zapnuté', () => {
-    assert.equal(useAimUnderlays3d.getState().hidden, false);
+  it('predvolene sú podklady v 3D vypnuté (pri štarte sa nesťahujú)', () => {
+    useAimUnderlays3d.setState(useAimUnderlays3d.getInitialState(), true);
+    assert.equal(useAimUnderlays3d.getState().hidden, true);
+  });
+
+  it('skipUnderlayRaster: skrytý podklad bez textúry sa nerasterizuje, so textúrou alebo viditeľný áno', () => {
+    assert.equal(skipUnderlayRaster({ visible: false }, false), true);
+    assert.equal(skipUnderlayRaster({ visible: false }, true), false);
+    assert.equal(skipUnderlayRaster({ visible: true }, false), false);
   });
 
   it('setShown(false) ich skryje, setShown(true) vráti', () => {
-    useAimUnderlays3d.getState().setShown(false);
-    assert.equal(useAimUnderlays3d.getState().hidden, true);
     useAimUnderlays3d.getState().setShown(true);
     assert.equal(useAimUnderlays3d.getState().hidden, false);
+    useAimUnderlays3d.getState().setShown(false);
+    assert.equal(useAimUnderlays3d.getState().hidden, true);
   });
 
   it('skrytie platí v 3D, v zamknutom pôdoryse (2D) nie', () => {
