@@ -23,7 +23,9 @@ import type { CoordinateInfo, GeometryResult } from '@ifc-lite/geometry';
 import { EpsgLookupDialog, type EpsgResult } from './EpsgLookupDialog';
 import { FederationAlignmentControls } from './FederationAlignmentControls';
 import { PrecisionGridBadge } from './PrecisionGridBadge';
-import { LocationMap, type PickedPosition } from './LocationMap';
+// >>> AIM-FORK: the map mounts on request, not at startup (AimMapSection wraps LocationMap)
+import { AimMapSection, type PickedPosition } from '@/aim/AimMapSection';
+// <<< AIM-FORK
 import { computeOrthogonalHeightForBaseAltitude } from '@/lib/geo/cesium-placement';
 import {
   detectScaleUnitMismatch,
@@ -40,9 +42,6 @@ import { useTranslation } from '@/i18n';
 import { formatLocaleList, formatLocaleNumber } from '@/i18n/intlFormat';
 import { localizedApproxDistance, localizedRawValuesNote, localizedScaleOverride } from './georeference-i18n';
 import { GeorefRow, AngleRow } from './georef-rows';
-// >>> AIM-FORK: the map (maplibre + basemap tiles) mounts on request, not at startup
-import { usePersistentDisclosure } from './usePersistentDisclosure';
-// <<< AIM-FORK
 import { TerrainHeightButton } from './georef-terrain-height-button';
 
 // ── Main Panel ─────────────────────────────────────────────────────────
@@ -65,9 +64,6 @@ export interface GeoreferencingPanelProps {
 
 export function GeoreferencingPanel({ georef, modelId, enableEditing, schemaVersion, coordinateInfo, geometryResult, lengthUnitScale, storeyElevations }: GeoreferencingPanelProps) {
   const { t, locale } = useTranslation();
-  // >>> AIM-FORK: map section closed by default
-  const [aimMapOpen, setAimMapOpen] = usePersistentDisclosure('georef-map', false);
-  // <<< AIM-FORK
   const georefMutations = useViewerStore(s => s.georefMutations);
   const setGeorefField = useViewerStore(s => s.setGeorefField);
   const setGeorefFields = useViewerStore(s => s.setGeorefFields);
@@ -639,30 +635,16 @@ export function GeoreferencingPanel({ georef, modelId, enableEditing, schemaVers
         </div>
       )}
 
-      {/* >>> AIM-FORK: map closed by default, so maplibre and the basemap load only when asked for */}
-      <button
-        type="button"
-        onClick={() => setAimMapOpen(!aimMapOpen)}
-        aria-expanded={aimMapOpen}
-        className="flex items-center gap-1 text-xs text-teal-500 hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
-      >
-        <ChevronRight className={`h-3 w-3 transition-transform ${aimMapOpen ? 'rotate-90' : ''}`} />
-        {t('aimFork.georefMap.toggle')}
-      </button>
-      {aimMapOpen && <LocationMap
-        dataStore={modelId ? models.get(modelId)?.ifcDataStore ?? undefined : undefined}
-        mapConversion={mergedConversion}
-        projectedCRS={mergedCRS}
-        coordinateInfo={coordinateInfo}
-        // Withhold geometry (rather than fall through to an unfiltered, leaky export) when this
-        // panel's model id hasn't resolved and more than one model is loaded — see `canExportKmz`.
-        geometryResult={canExportKmz ? geometryResult : null}
+      {/* >>> AIM-FORK: closed-by-default map section (modelId resolves dataStore and modelName) */}
+      <AimMapSection
+        modelId={modelId}
+        mapConversion={mergedConversion} projectedCRS={mergedCRS} coordinateInfo={coordinateInfo}
+        geometryResult={canExportKmz ? geometryResult : null /* withheld, not leaky, unless resolved: see canExportKmz */}
         instancedModelRange={instancedModelRange}
-        modelName={modelId ? models.get(modelId)?.name : undefined}
         lengthUnitScale={lengthUnitScale}
         editable={editable}
         onApplyPosition={editable ? handleApplyPosition : undefined}
-      />}
+      />
       {/* <<< AIM-FORK */}
     </div>
   );
