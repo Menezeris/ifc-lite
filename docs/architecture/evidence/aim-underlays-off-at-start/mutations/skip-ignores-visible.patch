@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/aimUnderlays3d.ts a/apps/viewer/src/aim/aimUnderlays3d.ts
+index d99bb9f8..b3529f77 100644
+--- b/apps/viewer/src/aim/aimUnderlays3d.ts
++++ a/apps/viewer/src/aim/aimUnderlays3d.ts
+@@ -38,5 +38,5 @@ export function withUnderlay3dVisibility<T extends { visible: boolean }>(placeme
+ 
+ /** Skrytý placement bez textúry sa nesťahuje ani nerasterizuje, až kým sa nezapne (štart viewera). */
+ export function skipUnderlayRaster(placement: { visible: boolean }, hasTexture: boolean): boolean {
+-  return !hasTexture;
++  return !placement.visible && !hasTexture;
+ }
