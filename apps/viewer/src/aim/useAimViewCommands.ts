@@ -79,8 +79,8 @@ const TARGETS = { resolveGuids, resolveSelector };
  */
 let lastGizmo: boolean | undefined;
 
-/** Widget (quad, obrys, nápoveda a rukoväť) aktívneho rezu; bez hodnoty platí posledná voľba. */
-function applyGizmo(show: boolean | undefined): void {
+/** Widget (quad, obrys, nápoveda a rukoväť, aj steny boxu) aktívneho rezu; bez hodnoty platí posledná voľba. */
+export function applyGizmo(show: boolean | undefined): void {
   if (show !== undefined) lastGizmo = show;
   const want = show ?? lastGizmo;
   if (want === undefined) return;
@@ -98,7 +98,8 @@ export function runViewsMessage(raw: unknown, post: (msg: unknown) => void): voi
 export function runSectionBox(raw: unknown): void {
   const run = ([q, b]: NonNullable<typeof boxModules>) => {
     if (!b.isSectionBoxMessage(raw)) return noteIssue('SET_SECTION_BOX: neplatná správa');
-    track(q.applySectionBox(raw, GUIDS).then((ok) => { if (!ok) noteIssue('SET_SECTION_BOX: prvky bez geometrie'); }));
+    // Box je rez ako ostatné: skrytý widget od hosta (#322) platí aj pre neho.
+    track(q.applySectionBox(raw, GUIDS).then((ok) => { if (ok) applyGizmo(undefined); else noteIssue('SET_SECTION_BOX: prvky bez geometrie'); }));
   };
   if (boxModules) run(boxModules);
   else track(loadBox().then(run));
