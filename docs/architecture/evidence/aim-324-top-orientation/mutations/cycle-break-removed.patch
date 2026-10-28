@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/presetFresh.ts a/apps/viewer/src/aim/presetFresh.ts
+index 63cd701f..a8701ea9 100644
+--- b/apps/viewer/src/aim/presetFresh.ts
++++ a/apps/viewer/src/aim/presetFresh.ts
+@@ -29,7 +29,7 @@ const CYCLE_BREAK_DIRECTION = { x: 1, y: 1, z: 1 };
+ /** Použije stranu vždy ako prvé kliknutie na ňu; false, keď kamera nie je pripravená. */
+ export function applyFacePreset(cam: PresetCallbacks, view: FaceView): boolean {
+   if (!cam.setPresetView) return false;
+-  // mutant
++  cam.setPresetDirection?.(CYCLE_BREAK_DIRECTION);
+   cam.setPresetView(view);
+   return true;
+ }
