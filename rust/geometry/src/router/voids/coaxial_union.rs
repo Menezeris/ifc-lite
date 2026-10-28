@@ -50,16 +50,15 @@ mod union3d;
 
 use nalgebra::{Matrix4, Point2, Vector3};
 
-use super::geom::{
-    mesh_is_closed_exact, mesh_signed_volume, mesh_signed_volume_about, opening_mesh_thinnest_axis_dir,
-    volume_reference,
-};
+use super::admission::{accept_cut, admit_cutter, min_opening_volume};
+use super::geom::{mesh_is_closed_exact, mesh_signed_volume, opening_mesh_thinnest_axis_dir};
 use super::sweep::mesh_to_keep;
-use super::{OpeningType, NORMALIZE_EPSILON};
+use super::{CutterKind, NORMALIZE_EPSILON};
 use crate::bool2d::union_contours_to_shapes;
 use crate::csg::ClippingProcessor;
 use crate::extrusion::{apply_transform, extrude_profile_watertight};
 use crate::mesh::Mesh;
+use crate::program::openings::execute::Execution;
 use crate::router::GeometryRouter;
 
 #[cfg(test)]
@@ -113,7 +112,7 @@ struct Footprint {
     z_hi: f64,
 }
 
-impl GeometryRouter {
+impl Execution {
     /// Cut every OVERLAPPING opening cluster in `all_openings` from `result` via
     /// the coaxial footprint-union (or the 3D `union_many` fallback), marking the
     /// consumed openings in `consumed` and setting `host_mutated` on any real cut.
@@ -127,7 +126,7 @@ impl GeometryRouter {
     pub(super) fn coaxial_union_prepass(
         &self,
         result: &mut Mesh,
-        all_openings: &[&OpeningType],
+        all_openings: &[&CutterKind],
         consumed: &mut [bool],
         host_mutated: &mut bool,
         clipper: &ClippingProcessor,
@@ -143,37 +142,15 @@ impl GeometryRouter {
         // Admit candidates with the same light guards the sequential loop applies
         // (valid mesh, overlaps the host, above the volume floor). The footprint /
         // watertight validation happens per cluster below.
-        let (hmn, hmx) = result.bounds();
-        let min_vol = Self::min_opening_volume(self.tessellation_quality);
+        let host_bounds = result.bounds();
+        let min_vol = min_opening_volume(self.tessellation_quality);
         let mut cands: Vec<UnionCand> = Vec::new();
         for (idx, opening) in all_openings.iter().enumerate() {
             if consumed[idx] {
                 continue;
             }
-            let (mesh, dir_hint): (&Mesh, Option<Vector3<f64>>) = match **opening {
-                OpeningType::Rectangular(..) => continue,
-                OpeningType::DiagonalRectangular(ref m, ref f) => (m, Some(f.depth)),
-                OpeningType::NonRectangular(ref m, _, _, ref d) => (m, *d),
-            };
-            let valid = !mesh.is_empty()
-                && mesh.positions.iter().all(|&v| v.is_finite())
-                && mesh.positions.len() >= 9;
-            if !valid {
-                continue;
-            }
-            let (omn, omx) = mesh.bounds();
-            let overlaps_host = !(omx.x < hmn.x
-                || omn.x > hmx.x
-                || omx.y < hmn.y
-                || omn.y > hmx.y
-                || omx.z < hmn.z
-                || omn.z > hmx.z);
-            if !overlaps_host {
-                continue;
-            }
-            let open_vol =
-                (omx.x - omn.x) as f64 * (omy_span(omn.y, omx.y)) * (omx.z - omn.z) as f64;
-            if open_vol < min_vol {
+            let Some((mesh, dir_hint)) = opening.cutter().mesh_cutter() else { continue };
+            if admit_cutter(mesh, host_bounds, min_vol).is_none() {
                 continue;
             }
             let dir = dir_hint
@@ -185,7 +162,7 @@ impl GeometryRouter {
             }
             // Extended-AABB for the overlap graph: pierce the host along `dir`
             // exactly as the cut will, so the cluster reflects the CUT footprints.
-            let ext = Self::extend_opening_mesh_through_host(mesh, result, dir);
+            let ext = GeometryRouter::extend_opening_mesh_through_host(mesh, result, dir);
             let (elo, ehi) = ext.bounds();
             cands.push(UnionCand {
                 idx,
@@ -300,9 +277,9 @@ impl GeometryRouter {
 
     /// Build the pairwise-disjoint re-extruded prisms for a COAXIAL cluster via
     /// 2.5D depth-slicing along `axis`: the depth axis is cut at every cutter's
-    /// authored z-boundary, and within each depth SLAB the footprints of the
+    /// prepared z-boundary, and within each depth SLAB the footprints of the
     /// cutters that FULLY SPAN it are unioned (one i_overlay pass) and re-extruded
-    /// over exactly that slab. A cutter never contributes outside its authored
+    /// over exactly that slab. A cutter never contributes outside its prepared
     /// [z_lo, z_hi], so a partial-depth / blind cutter is cut faithfully — never
     /// stretched to a through-cut. Slabs are Z-disjoint (they share only boundary
     /// planes, which the conforming N-ary subtract dissolves). Returns `None`
@@ -327,8 +304,15 @@ impl GeometryRouter {
     ) -> Option<(Vec<Mesh>, bool, Vec<usize>, f64)> {
         let (u, v, d) = ortho_frame(axis)?;
         let mut fps: Vec<Footprint> = Vec::with_capacity(members.len());
+        let mut cutter_volumes = Vec::with_capacity(members.len());
         for &m in members {
-            fps.push(cutter_footprint(&cands[m].mesh, &u, &v, &d)?);
+            // Adjust only the original cutter's caps. A depth slice introduces
+            // internal seams, not authored exits/jambs: pulling those seams in
+            // independently leaves a gap inside a through opening (#6940,
+            // rvt01 #6305 at the 12 mm render/core interface).
+            let prepared = GeometryRouter::extend_opening_mesh_through_host(&cands[m].mesh, result, d);
+            fps.push(cutter_footprint(&prepared, &u, &v, &d)?);
+            cutter_volumes.push(mesh_signed_volume(&prepared).abs());
         }
 
         // Reject an invalid total depth span before constructing source slabs.
@@ -355,6 +339,13 @@ impl GeometryRouter {
         // fragment into a slab per depth; defer that to `union_many` rather than
         // emitting dozens of stacked prisms.
         if coalesced.len() < 2 || coalesced.len() > 9 {
+            return None;
+        }
+        // Neighbouring cells can straddle a rounding boundary only nanometres
+        // apart (#7640, review r4310799293). Do not re-extrude that thin slab
+        // or merge its distinct depths: the exact 3D union keeps both original
+        // cutters and decides their geometry on the unchanged kernel grid.
+        if coalesced.windows(2).any(|w| w[1] - w[0] < crate::kernel::mesh_bridge::SNAP_GRID) {
             return None;
         }
 
@@ -400,15 +391,12 @@ impl GeometryRouter {
                 }
                 let mut prism = extrude_profile_watertight(shape, slab_depth, Some(base)).ok()?;
                 apply_transform(&mut prism, &m_world);
-                // Push caps a hair past any FLUSH host face along the axis so the
-                // subtract is a clean transversal crossing. A slab boundary INTERIOR
-                // to the host (no host facet there) is left untouched — the two
-                // slabs meeting at it tile the void with no gap.
-                let ext = Self::extend_opening_mesh_through_host(&prism, result, d);
-                if !mesh_is_closed_exact(&ext) {
+                // Generated seams must stay coincident so adjacent slabs tile
+                // the prepared cutter without gaps or extra removed material.
+                if !mesh_is_closed_exact(&prism) {
                     return None;
                 }
-                prisms.push(ext);
+                prisms.push(prism);
             }
         }
         if prisms.is_empty() {
@@ -420,28 +408,10 @@ impl GeometryRouter {
         // prisms that the N-ary subtract handles directly.
         let multi_slab = coalesced.len() > 2;
         let contributors: Vec<usize> = (0..fps.len()).filter(|&i| contributed[i]).collect();
-        // Removed-volume upper bound: Σ over contributing cutters of the volume of the
-        // SAME through-host extension the prisms use. The union of the reconstructed
-        // prisms equals the union of the actual cutters, so the removed (host-clipped)
-        // volume `Vol(∪prism ∩ host) = Vol(∪cutter ∩ host) ≤ Σ Vol(cutter_i ∩ host) ≤
-        // Σ Vol(extended cutter_i)` — a subtract that removes MORE (an inflated /
-        // bridged prism reconstruction) is over-cutting and is rejected downstream.
-        // Using the EXTENDED cutter (not `area × authored_depth`) is essential: a
-        // through-cut of a host THICKER than the authored opening legitimately removes
-        // more than the authored volume, and must not be mistaken for an over-cut.
-        // 2% relative slack absorbs the f32 volume-differencing noise of a large host.
-        let max_removed = 1.02
-            * contributors
-                .iter()
-                .map(|&i| {
-                    let ext = Self::extend_opening_mesh_through_host(
-                        &cands[members[i]].mesh,
-                        result,
-                        d,
-                    );
-                    mesh_signed_volume(&ext).abs()
-                })
-                .sum::<f64>();
+        // The reconstructed union cannot remove more than the sum of its
+        // prepared cutters' volumes; retain the existing 2% f32 slack. Use the
+        // same preparations as the footprints, without adjusting a seam again.
+        let max_removed = 1.02 * contributors.iter().map(|&i| cutter_volumes[i]).sum::<f64>();
         Some((prisms, multi_slab, contributors, max_removed))
     }
 
@@ -485,42 +455,6 @@ impl GeometryRouter {
     }
 
 
-}
-
-/// f64 Y-span of two f32 bounds (kept out of the volume expression for clarity).
-#[inline]
-fn omy_span(lo: f32, hi: f32) -> f64 {
-    (hi - lo) as f64
-}
-
-/// Accept `cut` as the new `result` iff it is non-empty and retained enough
-/// triangles — the SAME acceptance the disjoint batching applies to its
-/// `subtract_mesh_many` output (the watertightness of the cut is guaranteed
-/// upstream: each cutter is `mesh_is_closed_exact`, and the kernel's conformity
-/// gate rejects a non-conforming arrangement). A blanket `param_cut_watertight`
-/// scan here is far too slow on the hot path. Whether the cut CHANGED the host
-/// is the caller's: [`mesh_to_keep`] reads it from the subtract's outcome.
-///
-/// `max_removed` is an OVER-CUT guard: the cut is rejected if it removed more host
-/// volume than the caller's provable upper bound (Σ contributing-cutter footprint
-/// volumes for the coaxial prism path; `f64::INFINITY` for the exact 3D union, which
-/// cannot over-cut). This catches an approximate union reconstruction — a bridged
-/// depth band, a residual projection inflation — before it is committed and consumed
-/// as if it were an exact cut, so the cluster instead defers to the exact path.
-pub(super) fn accept_cut(result: &mut Mesh, cut: Mesh, max_removed: f64) -> bool {
-    use super::{CSG_TRIANGLE_RETENTION_DIVISOR, MIN_VALID_TRIANGLES};
-    let min_tris = (result.triangle_count() / CSG_TRIANGLE_RETENTION_DIVISOR).max(MIN_VALID_TRIANGLES);
-    // Removed volume = host solid before − after (both same orientation). A cut that
-    // removed MORE than the caller's upper bound is an over-cut → reject (defer).
-    // Both readings are summed about the host's one reference point (#4632).
-    let reference = volume_reference(result);
-    let removed = mesh_signed_volume_about(result, &reference) - mesh_signed_volume_about(&cut, &reference);
-    if !cut.is_empty() && cut.triangle_count() >= min_tris && removed <= max_removed {
-        *result = cut;
-        true
-    } else {
-        false
-    }
 }
 
 /// AABB overlap on all three axes (half-open, matching the batching's disjoint

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimIdsSpec.ts a/apps/viewer/src/aim/aimIdsSpec.ts
+index 927e981c..2c6480eb 100644
+--- b/apps/viewer/src/aim/aimIdsSpec.ts
++++ a/apps/viewer/src/aim/aimIdsSpec.ts
+@@ -14,7 +14,7 @@ interface DocLike<S extends SpecLike> { specifications: S[] }
+ export function findSpecification<S extends SpecLike>(doc: DocLike<S>, key: string): S | undefined {
+   const want = key.trim().toLowerCase();
+   if (!want) return undefined;
+-  const by = (pick: (s: S) => string | undefined) => doc.specifications.find((s) => pick(s)?.trim() === want);
++  const by = (pick: (s: S) => string | undefined) => doc.specifications.find((s) => pick(s)?.trim().toLowerCase() === want);
+   return by((s) => s.identifier) ?? by((s) => s.name) ?? by((s) => s.id);
+ }
+ 

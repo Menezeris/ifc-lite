@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/aimIdsSpec.ts a/apps/viewer/src/aim/aimIdsSpec.ts
+index 659a413a..2c6480eb 100644
+--- b/apps/viewer/src/aim/aimIdsSpec.ts
++++ a/apps/viewer/src/aim/aimIdsSpec.ts
+@@ -21,5 +21,5 @@ export function findSpecification<S extends SpecLike>(doc: DocLike<S>, key: stri
+ /** Dokument len s jednou špecifikáciou; bez `specId` pôvodný dokument. */
+ export function onlySpecification<S extends SpecLike, D extends DocLike<S>>(doc: D, specId: string | undefined): D {
+   if (specId === undefined) return doc;
+-  return { ...doc, specifications: doc.specifications.filter((s) => s.id === specId || specId.length > 0) };
++  return { ...doc, specifications: doc.specifications.filter((s) => s.id === specId) };
+ }

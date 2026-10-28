@@ -1,5 +1,23 @@
 # @ifc-lite/server-client
 
+## 5.1.0
+
+### Minor Changes
+
+- [#8170](https://github.com/LTplus-AG/ifc-lite/pull/8170) [`8260d88`](https://github.com/LTplus-AG/ifc-lite/commit/8260d88c72c6857a585f90b816468d227d8e6042) Thanks [@louistrue](https://github.com/louistrue)! - Georeferencing reads the IFC4X3 coordinate operations beside `IfcMapConversion`. An `IfcRigidOperation` (a pure translation) is read into `mapConversion` with `operation: 'rigidOperation'`, an identity axis and unit scale, and `source: 'rigidOperation'`. Length measures translate map coordinates. Plane-angle measures translate (longitude, latitude) of an `IfcGeographicCRS` in its AngleUnit, else the project plane-angle unit. An `IfcMapConversion` still takes precedence when both are authored. The CRS read is now the operation's own TargetCRS (`IfcProjectedCRS` or `IfcGeographicCRS`, the latter with `kind: 'geographic'`), falling back to the first CRS in the file as before. An `IfcWellKnownText` attached to that CRS is exposed as `projectedCRS.wellKnownText`, and a CRS defined only by its WKT counts as georeferenced together with a parsed coordinate operation (on its own it places nothing, and the IfcSite/ePSet fallbacks run as before). `@ifc-lite/pointcloud` adds `extractWktHorizontalCrs` and `extractWktBoundingBox`.
+
+## 5.0.0
+
+### Major Changes
+
+- [#7709](https://github.com/LTplus-AG/ifc-lite/pull/7709) [`3a27672`](https://github.com/LTplus-AG/ifc-lite/commit/3a2767267206de951bc1279e3c31c0e24198012b) Thanks [@louistrue](https://github.com/louistrue)! - `parseParquet()` now uploads the file when `/cache/geometry` answers `404` for an entry `/cache/check` just reported. A damaged cache entry passes the check, fails the fetch, and is dropped by the server; this call used to fail with `NOT_FOUND` and only the next one healed it. The bump level is the one the other [#7676](https://github.com/LTplus-AG/ifc-lite/issues/7676) changeset already sets for this package.
+
+- [#7709](https://github.com/LTplus-AG/ifc-lite/pull/7709) [`3a27672`](https://github.com/LTplus-AG/ifc-lite/commit/3a2767267206de951bc1279e3c31c0e24198012b) Thanks [@louistrue](https://github.com/louistrue)! - **Migration: `StreamCompleteEvent.cache_key` (the `complete` event of `parseStream()`) is now optional and deprecated: a server that includes [#7676](https://github.com/LTplus-AG/ifc-lite/issues/7676) no longer sends it. `/parse/stream` caches nothing, and the value it sent named no cache entry. Use `parse()` or a Parquet method when you need a `cache_key`.**
+
+### Patch Changes
+
+- [#7820](https://github.com/LTplus-AG/ifc-lite/pull/7820) [`b174053`](https://github.com/LTplus-AG/ifc-lite/commit/b174053bb4ea1807143cfdd144dff86524068e92) Thanks [@louistrue](https://github.com/louistrue)! - A model whose length unit is unusable (zero, negative or non-numeric factor) no longer streams as a silent empty model. The geometry stream now emits a `unitRefused` event right after `rtcOffset`, and the viewer shows an error naming the file. Server `ModelMetadata` reports the refusal as `length_unit_refused` (the offending unit's express id) and omits `length_unit_scale` instead of reporting `1`.
+
 ## 4.0.1
 
 ### Patch Changes

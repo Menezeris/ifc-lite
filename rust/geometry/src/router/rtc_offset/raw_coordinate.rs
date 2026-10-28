@@ -5,7 +5,7 @@
 //! Precision guard for early f64 RTC rebasing of representation items.
 
 use super::GeometryRouter;
-use crate::coord_is_large;
+use crate::{coord_is_large, Result};
 use ifc_lite_core::{DecodedEntity, EntityDecoder, IfcType};
 
 impl GeometryRouter {
@@ -48,9 +48,9 @@ impl GeometryRouter {
             _ => None,
         }?;
         Some((
-            point.0 * self.unit_scale,
-            point.1 * self.unit_scale,
-            point.2 * self.unit_scale,
+            point.0 * self.unit_scale(),
+            point.1 * self.unit_scale(),
+            point.2 * self.unit_scale(),
         ))
     }
 
@@ -76,5 +76,45 @@ impl GeometryRouter {
         // here would INCREASE their f32 magnitude and collapse thin geometry.
         // Keep such meshes in their object frame until final world placement.
         coord_is_large(point) && magnitude(shifted) < magnitude(point)
+    }
+
+    /// The element-frame RTC offset a raw-coordinate `item` is meshed in, or
+    /// `None` when it is not a raw item beyond the RTC threshold (source only:
+    /// the item itself is not meshed here).
+    pub(crate) fn raw_item_element_offset(
+        &self,
+        item: &DecodedEntity,
+        element: &DecodedEntity,
+        decoder: &mut EntityDecoder,
+    ) -> Result<Option<(f64, f64, f64)>> {
+        if !self.has_rtc_offset()
+            || !self
+                .representation_item_first_vertex_meters(item, decoder)
+                .is_some_and(coord_is_large)
+        {
+            return Ok(None);
+        }
+        if self.processor_for(&item.ifc_type).is_none() {
+            return Ok(None);
+        }
+        self.element_frame_rtc(element, decoder)
+    }
+
+    /// The model RTC offset expressed in `element`'s object frame (metres):
+    /// pulled through the placement's inverse linear transform, so placing
+    /// a mesh rebased by it yields `M(p) - rtc`. `None` for a singular
+    /// placement, where no object-frame offset exists.
+    pub(crate) fn element_frame_rtc(
+        &self,
+        element: &DecodedEntity,
+        decoder: &mut EntityDecoder,
+    ) -> Result<Option<(f64, f64, f64)>> {
+        let placement = self.element_world_placement(element, decoder)?;
+        let linear = placement.fixed_view::<3, 3>(0, 0).into_owned();
+        Ok(linear.try_inverse().map(|inverse| {
+            let (x, y, z) = self.rtc_offset();
+            let rtc = inverse * nalgebra::Vector3::new(x, y, z);
+            (rtc.x, rtc.y, rtc.z)
+        }))
     }
 }

@@ -1529,10 +1529,10 @@ fn issue_4627_candidate_failures_preserve_prior_analytic_cuts() {
                 // #7292: preserve the ordinary exactly closed boundary; the
                 // stronger exact fixture below checks both triangulators.
                 (10191, 0, 0, 172, 0),
-                // #7292: the current DEFAULT retessellation preserves the
-                // measured finite surface within 100um. These coarse 1mm counts
-                // are representation pins, not an exact-closure assertion.
-                (26681, 44, 44, 210, 10),
+                // #8047: retain the supported convex thin patches instead of
+                // dropping their finite faces. DEFAULT now closes; the exact
+                // boundary is checked separately below, beyond this 1mm pin.
+                (26681, 0, 0, 270, 10),
             ][..],
         ),
         (
@@ -2007,7 +2007,13 @@ const ISSUE_068_MODEL: &str = "ara3d/ISSUE_068_ARK_NUS_skolebygg.ifc";
 // on a kernel-disjoint opening). #144568 (26 -> 0), #891553 (10 -> 0) and
 // #892717 (27 -> 0; #5361 had already moved its no-void pass 29 -> 22) closed
 // with #5943's strictly-closed retry on quantum-snapped wall-frame operands.
-const ISSUE_068_KNOWN_TORN_HOSTS: usize = 19;
+// #7607/#7949: 19 -> 13. #43810 (open 11 -> 0), #52944 (4 -> 0), #53592 (3 -> 0),
+// #143837 (7 -> 0), #144344 (3 -> 0) and #1184857 (8 -> 0) closed with the
+// closure-preserving void-output hygiene. #43810 and #54549 first tore
+// (11 -> 414, 0 -> 274) when a noise-level fold made consolidation stop
+// restoring the closed kernel output; #7949 is the fix, so #54549 stays on its
+// clean row.
+const ISSUE_068_KNOWN_TORN_HOSTS: usize = 13;
 
 /// Coverage floors, one per heavy fixture, bounding BOTH the checked-in golden
 /// and every sweep that gates or blesses against it. [`MIN_VOID_HOSTS`]'s job,
@@ -2066,6 +2072,38 @@ fn issue_5012_intermediate_difference_keeps_host_53374_watertight() {
     assert_eq!(mesh.triangle_count(), 346, "#5012 must not discard wall geometry");
     assert_eq!(stats.open, 0, "#5012 wall must have no unmatched boundary edges");
     assert_eq!(stats.strict, 0, "#5012 wall must satisfy the strict manifold rule");
+}
+
+/// #7949: a noise-level "healthy fold" in a wall with many openings made the
+/// consolidation keep the fold's source cells and stop restoring the closed
+/// kernel output, so the wall came out as hairline cracks (open edges 0 -> 274,
+/// triangles 1170 -> 593). The fold may leave its own boundary open; it may not
+/// tear the rest of the host.
+#[test]
+#[ignore = "focused ISSUE_068 fixture regression (#7949); fetch with `pnpm fixtures`"]
+fn issue_7949_fold_retention_keeps_openings_walls_54549_and_43810_watertight() {
+    let _serial = CENSUS_SWEEP_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let Some(content) = ifc_lite_testkit::fixture_text(ISSUE_068_MODEL) else {
+        eprintln!(
+            "skipping #7949 regression: {ISSUE_068_MODEL} is absent; fetch it with `pnpm fixtures`"
+        );
+        return;
+    };
+    let frame = ModelFrame::new(&content);
+    let voids = void_index(&content);
+    // (host, strict ceiling): #43810 already read 16 strict pairs before the
+    // regression (the golden's #3435 population), #54549 was clean.
+    for (host, strict_ceiling) in [(54_549, 0), (43_810, 16)] {
+        let mesh = process(&frame, host, &voids).expect("ISSUE_068 host must process");
+        let stats = edge_stats(&mesh);
+        assert!(mesh.triangle_count() > 1000, "#7949 host #{host} must not lose its wall geometry");
+        assert_eq!(stats.open, 0, "#7949 host #{host} must have no unmatched boundary edges");
+        assert!(
+            stats.strict <= strict_ceiling,
+            "#7949 host #{host} reads {} strict pairs, above its pre-regression {strict_ceiling}",
+            stats.strict
+        );
+    }
 }
 
 /// Sweep one heavy fixture, report what it measured, and gate it against
@@ -2437,6 +2475,62 @@ fn issue_7292_rvt_void_cut_hygiene_preserves_exact_closed_boundaries() {
     }
 }
 
+/// #8047: this real Revit host contains adjacent finite thin cells. Retaining
+/// their supported convex patch closes its physical boundary, rather than just
+/// hiding unmatched edges on the census's coarser millimetre grid.
+#[cfg(not(any(feature = "csg_topology_gate", feature = "csg_manifold_gate")))]
+#[test]
+fn issue_8047_rvt26681_supported_thin_patches_preserve_exact_closure() {
+    let _serial = CENSUS_SWEEP_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let _reset = AltTriangulatorReset;
+    set_alt(false);
+    let Some(content) = ifc_lite_testkit::fixture_text("various/rvt01.ifc") else {
+        eprintln!("Skipping #8047 real thin-patch regression: run pnpm fixtures");
+        return;
+    };
+    let frame = ModelFrame::new(&content);
+    let mesh = process(&frame, 26681, &void_index(&content))
+        .expect("actual void-cut Revit host must mesh");
+    assert!(!mesh.indices.is_empty(), "thin-patch host must remain nonempty");
+    let exact = edge_stats_exact(&mesh);
+    assert_eq!((exact.open, exact.strict, exact.degenerate), (0, 0, 0),
+        "retained finite patches must pair at the actual represented coordinates");
+    assert_eq!(edge_stats(&mesh).open, 0,
+        "the public millimetre boundary must remain closed too");
+}
+
+#[cfg(not(any(feature = "csg_topology_gate", feature = "csg_manifold_gate")))]
+#[test]
+fn issue_7631_cap_recovery_does_not_increase_rvt13797_open_edges() {
+    let _serial = CENSUS_SWEEP_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let _reset = AltTriangulatorReset;
+    let Some(content) = ifc_lite_testkit::fixture_text("various/rvt01.ifc") else {
+        eprintln!("Skipping #7631 cap/opening regression: run pnpm fixtures");
+        return;
+    };
+    let golden = read_golden(&crate_dir().join(GOLDEN_PATH), false);
+    let reference = golden.iter().find(|row| row.model == "various/rvt01.ifc" && row.id == 13797)
+        .expect("existing rvt01 host must remain in the census");
+    let frame = ModelFrame::new(&content);
+    let voids = void_index(&content);
+    #[cfg(feature = "triangulation-alt")]
+    let triangulators = &[false, true][..];
+    #[cfg(not(feature = "triangulation-alt"))]
+    let triangulators = &[false][..];
+    for &alt in triangulators {
+        set_alt(alt);
+        let mesh = process(&frame, 13797, &voids).expect("actual void-cut wall must mesh");
+        let stats = edge_stats(&mesh);
+        let ceiling = if alt { reference.alt.expect("recorded alternate reading") } else { reference.open };
+        assert!(stats.open <= ceiling,
+            "#7631 cap recovery regressed void-cut rvt01 13797: {} > {ceiling} open edges, alt={alt}", stats.open);
+        if !alt {
+            assert!(stats.strict <= reference.strict,
+                "#7631 cap recovery regressed directed incidence: {} > {}", stats.strict, reference.strict);
+        }
+    }
+}
+
 #[cfg(not(any(feature = "csg_topology_gate", feature = "csg_manifold_gate")))]
 #[path = "triangulation_invariance/source_boundary_7292_tests.rs"]
 mod source_boundary_7292_tests;
@@ -2464,5 +2558,72 @@ fn issue_6940_subgrid_coaxial_depths_keep_dental_hosts_closed() {
             assert_eq!((exact.open, exact.strict), (0, 0), "dental #{id}, alt={alt}");
             assert_eq!(edge_stats(&mesh).open, 0, "dental #{id}, alt={alt}");
         }
+    }
+}
+
+/// #8051 expanded thin-cell retention to convex patches. These actual CSG
+/// hosts exposed a downstream regression that a local patch certificate cannot
+/// detect: source hygiene may reopen the solid before its opening cut.
+#[cfg(not(any(feature = "csg_topology_gate", feature = "csg_manifold_gate")))]
+#[test]
+fn issue_8051_office_thin_patch_retention_preserves_existing_hosts() {
+    let _serial = CENSUS_SWEEP_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let _reset = AltTriangulatorReset;
+    let Some(content) = ifc_lite_testkit::fixture_text("ara3d/S_Office_Integrated Design Archi.ifc") else {
+        eprintln!("Skipping #8051 office patch regression: run pnpm fixtures");
+        return;
+    };
+    let frame = ModelFrame::new(&content);
+    let voids = void_index(&content);
+    // These ceilings belong to the production triangulator. The full census
+    // separately checks the alternate triangulator against its own readings.
+    set_alt(false);
+    let rows = [92642, 94664].map(|id| {
+        let mesh = process(&frame, id, &voids).expect("actual office void host must mesh");
+        let stats = edge_stats(&mesh);
+        let exact = edge_stats_exact(&mesh);
+        let triangles = mesh.indices.len() / 3;
+        eprintln!("office #{id}: open={} strict={} triangles={triangles}; exact open={} strict={}",
+            stats.open, stats.strict, exact.open, exact.strict);
+        (id, stats, triangles)
+    });
+    let (_, ref torn, triangles) = rows[0];
+    // This host was already torn; lower edge counts alone cannot justify
+    // deleting more of its surface (the committed census's existing rule).
+    assert!(torn.open <= 9 && torn.strict <= 10 && triangles >= 67,
+        "office #92642 lost geometry or worsened its existing boundary: open={}, strict={}, triangles={triangles}",
+        torn.open, torn.strict);
+    let (_, ref closed, triangles) = rows[1];
+    assert!(triangles > 0, "office #94664 must retain its solid");
+    assert_eq!((closed.open, closed.strict), (0, 0),
+        "office #94664 must retain its previously paired boundary");
+}
+
+/// #8051 follow-up: rejecting a connected patch must not disable the older
+/// isolated-cell rescue elsewhere in the same CSG host.
+#[cfg(not(any(feature = "csg_topology_gate", feature = "csg_manifold_gate")))]
+#[test]
+fn issue_8051_office_979333_retains_isolated_cell_baseline() {
+    let _serial = CENSUS_SWEEP_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let _reset = AltTriangulatorReset;
+    let Some(content) = ifc_lite_testkit::fixture_text("ara3d/S_Office_Integrated Design Archi.ifc") else {
+        eprintln!("Skipping #8051 office isolated-cell regression: run pnpm fixtures");
+        return;
+    };
+    let frame = ModelFrame::new(&content);
+    let voids = void_index(&content);
+    #[cfg(feature = "triangulation-alt")]
+    let triangulators = &[false, true][..];
+    #[cfg(not(feature = "triangulation-alt"))]
+    let triangulators = &[false][..];
+    for &alt in triangulators {
+        set_alt(alt);
+        let mesh = process(&frame, 979333, &voids).expect("actual office host must mesh");
+        let stats = edge_stats(&mesh);
+        let exact = edge_stats_exact(&mesh);
+        eprintln!("office #979333 alt={alt}: open={} strict={} tris={}; exact open={} strict={}",
+            stats.open, stats.strict, mesh.triangle_count(), exact.open, exact.strict);
+        assert!(!mesh.indices.is_empty(), "office #979333 must retain its solid");
+        assert_eq!((stats.open, stats.strict), (0, 0), "office #979333, alt={alt}");
     }
 }

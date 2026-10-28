@@ -86,7 +86,7 @@ fn wall(center: [f64; 3], axes: [[f64; 3]; 3]) -> Mesh {
     framed_box_mesh(center, axes, [2.0, 0.15, 1.5])
 }
 
-fn ctx_of(openings: Vec<OpeningType>) -> VoidContext {
+fn ctx_of(openings: Vec<CutterKind>) -> VoidContext {
     VoidContext {
         merged_openings: openings.clone(),
         openings,
@@ -100,7 +100,7 @@ fn mesh_volume(m: &Mesh) -> f64 {
 }
 
 fn watertight(m: &Mesh) -> bool {
-    super::super::geom::param_cut_watertight(m)
+    crate::exact_topology::strict_closed_mesh(m)
 }
 
 /// An L-shaped (non-convex) cutter: two glued boxes sharing a face, welded to
@@ -128,7 +128,7 @@ fn box_cutter_through_wall_watertight_and_volume_exact() {
     // Window 1.0 × 1.0, penetrating the full 0.3 thickness plus slack.
     let cutter = framed_box_mesh([0.3, 0.0, 0.2], axis_frame(), [0.5, 0.4, 0.5]);
     let (mn, mx) = cutter.bounds();
-    let ctx = ctx_of(vec![OpeningType::NonRectangular(
+    let ctx = ctx_of(vec![CutterKind::NonRectangular(
         cutter,
         Point3::new(mn.x as f64, mn.y as f64, mn.z as f64),
         Point3::new(mx.x as f64, mx.y as f64, mx.z as f64),
@@ -166,7 +166,7 @@ fn rotated_prism_cutter_fires_and_reconciles() {
         [0.5, 0.4, 0.5],
     );
     let (mn, mx) = cutter.bounds();
-    let ctx = ctx_of(vec![OpeningType::NonRectangular(
+    let ctx = ctx_of(vec![CutterKind::NonRectangular(
         cutter,
         Point3::new(mn.x as f64, mn.y as f64, mn.z as f64),
         Point3::new(mx.x as f64, mx.y as f64, mx.z as f64),
@@ -195,7 +195,7 @@ fn non_convex_cutter_falls_back() {
     let host = wall([0.0, 0.0, 0.0], axis_frame());
     let cutter = l_shaped_cutter();
     let (mn, mx) = cutter.bounds();
-    let ctx = ctx_of(vec![OpeningType::NonRectangular(
+    let ctx = ctx_of(vec![CutterKind::NonRectangular(
         cutter,
         Point3::new(mn.x as f64, mn.y as f64, mn.z as f64),
         Point3::new(mx.x as f64, mx.y as f64, mx.z as f64),
@@ -215,7 +215,7 @@ fn open_shell_cutter_falls_back() {
     let mut cutter = framed_box_mesh([0.3, 0.0, 0.2], axis_frame(), [0.5, 0.4, 0.5]);
     cutter.indices.truncate(cutter.indices.len() - 6);
     let (mn, mx) = cutter.bounds();
-    let ctx = ctx_of(vec![OpeningType::NonRectangular(
+    let ctx = ctx_of(vec![CutterKind::NonRectangular(
         cutter,
         Point3::new(mn.x as f64, mn.y as f64, mn.z as f64),
         Point3::new(mx.x as f64, mx.y as f64, mx.z as f64),
@@ -236,7 +236,7 @@ fn multi_window_host_watertight_and_volume_exact() {
         let cx = -1.3 + i as f64 * 1.2;
         let cutter = framed_box_mesh([cx, 0.0, 0.1], axis_frame(), [0.35, 0.4, 0.45]);
         let (mn, mx) = cutter.bounds();
-        openings.push(OpeningType::NonRectangular(
+        openings.push(CutterKind::NonRectangular(
             cutter,
             Point3::new(mn.x as f64, mn.y as f64, mn.z as f64),
             Point3::new(mx.x as f64, mx.y as f64, mx.z as f64),
@@ -272,13 +272,13 @@ fn mixed_eligible_and_ineligible_returns_residual() {
     let l = l_shaped_cutter();
     let (lmn, lmx) = l.bounds();
     let ctx = ctx_of(vec![
-        OpeningType::NonRectangular(
+        CutterKind::NonRectangular(
             window,
             Point3::new(wmn.x as f64, wmn.y as f64, wmn.z as f64),
             Point3::new(wmx.x as f64, wmx.y as f64, wmx.z as f64),
             Some(Vector3::new(0.0, 1.0, 0.0)),
         ),
-        OpeningType::NonRectangular(
+        CutterKind::NonRectangular(
             l,
             Point3::new(lmn.x as f64, lmn.y as f64, lmn.z as f64),
             Point3::new(lmx.x as f64, lmx.y as f64, lmx.z as f64),
@@ -308,7 +308,7 @@ fn blind_recess_keeps_authored_depth() {
     // (front face at y = -0.15; recess bottom at y = 0.0, strictly interior).
     let cutter = framed_box_mesh([0.0, -0.1, 0.0], axis_frame(), [0.4, 0.1, 0.4]);
     let (mn, mx) = cutter.bounds();
-    let ctx = ctx_of(vec![OpeningType::NonRectangular(
+    let ctx = ctx_of(vec![CutterKind::NonRectangular(
         cutter,
         Point3::new(mn.x as f64, mn.y as f64, mn.z as f64),
         Point3::new(mx.x as f64, mx.y as f64, mx.z as f64),
@@ -346,7 +346,7 @@ fn deterministic_output() {
     );
     let (mn, mx) = cutter.bounds();
     let mk = |cutter: Mesh| {
-        ctx_of(vec![OpeningType::NonRectangular(
+        ctx_of(vec![CutterKind::NonRectangular(
             cutter,
             Point3::new(mn.x as f64, mn.y as f64, mn.z as f64),
             Point3::new(mx.x as f64, mx.y as f64, mx.z as f64),
@@ -368,7 +368,7 @@ fn engulfing_cutter_defers_to_exact_semantics() {
     // engulf/redundant-void semantics (#964), so the prism path must defer.
     let cutter = framed_box_mesh([0.0, 0.0, 0.0], axis_frame(), [3.0, 1.0, 2.0]);
     let (mn, mx) = cutter.bounds();
-    let ctx = ctx_of(vec![OpeningType::NonRectangular(
+    let ctx = ctx_of(vec![CutterKind::NonRectangular(
         cutter,
         Point3::new(mn.x as f64, mn.y as f64, mn.z as f64),
         Point3::new(mx.x as f64, mx.y as f64, mx.z as f64),
@@ -487,7 +487,7 @@ fn rebated_stepped_cutter_fires_watertight_and_volume_exact() {
         0.25,
     );
     let (mn, mx) = cutter.bounds();
-    let ctx = ctx_of(vec![OpeningType::NonRectangular(
+    let ctx = ctx_of(vec![CutterKind::NonRectangular(
         cutter,
         Point3::new(mn.x as f64, mn.y as f64, mn.z as f64),
         Point3::new(mx.x as f64, mx.y as f64, mx.z as f64),
@@ -1081,9 +1081,9 @@ fn tetrahedron_missing_face_fails_directed_closed() {
 
 // #4627: exercise the complete analytic route and its final closure audit
 // before residual exact openings are applied.
-fn box_opening(mesh: Mesh) -> OpeningType {
+fn box_opening(mesh: Mesh) -> CutterKind {
     let (lo, hi) = mesh.bounds();
-    OpeningType::NonRectangular(
+    CutterKind::NonRectangular(
         mesh,
         lo.cast(),
         hi.cast(),
@@ -1121,6 +1121,63 @@ fn issue_4627_small_host_with_ten_km_cutter_remains_closed() {
         assert!(residual.is_none());
         assert!(watertight(&cut));
         assert!((mesh_volume(&cut) - 0.9375).abs() < 1e-6);
+    }
+}
+
+/// #7633: cleaning newly emitted cut fragments must not delete an untouched
+/// authored face. These closed tetrahedra have a 12 µm-high bottom triangle:
+/// ordinary cleanup drops it, although it bounds real material. Repeating the
+/// component exceeds the bounded hairline matcher, as in the #4754 finalizer
+/// control, so partial cleanup cannot masquerade as a closed analytic result.
+#[test]
+fn issue_7633_prism_cut_preserves_untouched_thin_authored_components() {
+    let router = GeometryRouter::new();
+    let mut host = wall([0.0; 3], axis_frame());
+    let mut components = Vec::new();
+    for component in 0..22 {
+        let x = 10.0 + component as f64 * 2.0;
+        let (a, b, c, d, apex) = (
+            [x, 0.000_049, 0.0],
+            [x + 1.0, 0.000_049, 0.0],
+            [x, 1.0, 0.0],
+            [x + 0.5, 0.000_061, 0.0],
+            [x, 0.0, 1.0],
+        );
+        let faces = [[a, b, d], [a, d, c], [d, b, c], [a, apex, b],
+            [a, c, apex], [b, apex, c]];
+        let tris: Vec<_> = faces.into_iter().map(|mut p| {
+            p.swap(1, 2); // Orient each separate solid outward.
+            let normal = normalize(cross(sub(p[1], p[0]), sub(p[2], p[0]))).unwrap();
+            PTri { p, n: [normal; 3] }
+        }).collect();
+        let source = mesh_from_ptris(&tris, &Mesh::new());
+        assert!(crate::exact_topology::strict_closed_mesh(&source));
+        let mut cleaned = source.clone();
+        cleaned.clean_degenerate();
+        assert!(!crate::exact_topology::strict_closed_mesh(&cleaned),
+            "premise: this authored thin face is essential to closure");
+        host.merge(&source);
+        components.push((x, mesh_volume(&source)));
+    }
+    let cutter = framed_box_mesh([0.3, 0.0, 0.2], axis_frame(), [0.5, 0.4, 0.5]);
+    let ctx = ctx_of(vec![box_opening(cutter)]);
+    let (cut, residual) = router.try_prism_cut(&host, &ctx)
+        .expect("a genuine window cut must preserve the separate authored solids");
+    assert!(residual.is_none());
+    assert!(crate::exact_topology::strict_closed_mesh(&cut),
+        "the cut and every untouched component must remain closed");
+    assert!((mesh_volume(&host) - mesh_volume(&cut) - 0.3).abs() < 1e-4,
+        "only the 1 m² window through the 0.3 m wall removes material");
+    let result = ptris_from_mesh(&cut).expect("valid analytic result");
+    for (x, expected_volume) in components {
+        let faces: Vec<_> = result.iter().filter(|t|
+            t.p.iter().all(|p| p[0] >= x && p[0] <= x + 1.0)
+        ).cloned().collect();
+        let component = mesh_from_ptris(&faces, &Mesh::new());
+        assert!(crate::exact_topology::strict_closed_mesh(&component),
+            "untouched component at x={x} lost its boundary");
+        assert!((mesh_volume(&component) - expected_volume).abs() < 1e-8,
+            "untouched component at x={x} changed enclosed material");
     }
 }
 

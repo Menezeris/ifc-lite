@@ -4,6 +4,8 @@
 
 use super::*;
 use crate::ClippingProcessor;
+use super::super::geom::*;
+use ifc_lite_core::{DecodedEntity, EntityDecoder};
 
 // #7292 / review4304598525: a cleaned-away sibling must not survive as a
 // bounds-only rectangular opening in the real classification fallback.
@@ -65,9 +67,9 @@ fn issue_7292_cleaned_item_cannot_be_resurrected_by_rectangular_fallback() {
             let mut router = GeometryRouter::new();
             router.register(Box::new(MixedBoundsProducer7292));
             router.set_preserve_triangle_order(preserve_order);
-            let classified = router.classify_openings(&opening, &[20], &mut decoder);
+            let classified = crate::program::openings::classify(&opening, &[20], true, &router, &mut decoder).unwrap();
             assert_eq!(classified.len(), 1, "only the valid item may supply a cut");
-            let OpeningType::Rectangular(min, max, _) = &classified[0] else {
+            let CutterKind::Rectangular(min, max, _) = &classified[0] else {
                 panic!("the valid box retains its ordinary rectangular bounds path");
             };
             assert_eq!(*min, Point3::origin());
@@ -485,7 +487,7 @@ fn an_inward_wound_host_is_read_the_same_as_an_outward_one() {
 // --- issue #4119: opening classification gates on TRIANGLE count, not the
 // raw position-buffer length -----------------------------------------------
 //
-// `classify_openings_impl`'s high-complexity gate (this file, above) has TWO
+// `program::openings::classify`'s high-complexity gate (this file, above) has TWO
 // exits that both label an opening `NonRectangular`, but they hand back
 // DIFFERENT mesh data:
 //
@@ -501,7 +503,7 @@ fn an_inward_wound_host_is_read_the_same_as_an_outward_one() {
 // (weld-invariant) triangle count stays over 100 is exactly the fixture that
 // tells the two gates apart: reverting the fix (back to `vertex_count > 100`)
 // silently swaps which of those two meshes — and hence which vertex count —
-// the returned `OpeningType::NonRectangular` carries, even though the
+// the returned `CutterKind::NonRectangular` carries, even though the
 // diagnostic `kind` label is `NonRectangular` either way.
 mod issue_4119_triangle_count_gate {
     use super::*;
@@ -764,7 +766,7 @@ DATA;
     /// caught here even though nothing else catches it.
     ///
     /// For each `n`, builds an opening whose mesh has EXACTLY `n` triangles
-    /// and checks which branch of `classify_openings_impl` ran, using the
+    /// and checks which branch of `program::openings::classify` ran, using the
     /// same welded-vs-raw vertex-count signal as
     /// `nonrectangular_opening_keeps_the_welded_mesh_not_the_raw_one`:
     /// `n > 100` must take the `if triangle_count > 100` branch (the WELDED
@@ -781,18 +783,18 @@ DATA;
             let opening_id = find_opening_id(&content, 100);
 
             let plate = decoder.decode_by_id(100).expect("decode plate #100");
-            let openings = router.classify_openings(&plate, &[opening_id], &mut decoder);
+            let openings = crate::program::openings::classify(&plate, &[opening_id], true, &router, &mut decoder).unwrap();
             assert_eq!(openings.len(), 1, "n={n}: exactly one opening classified");
 
             let mesh = match &openings[0] {
-                OpeningType::NonRectangular(mesh, ..) => mesh,
+                CutterKind::NonRectangular(mesh, ..) => mesh,
                 other => panic!(
                     "n={n}: expected NonRectangular (a zigzag strip is never a \
-                     clean box), got a different OpeningType variant: {}",
+                     clean box), got a different CutterKind variant: {}",
                     match other {
-                        OpeningType::Rectangular(..) => "Rectangular",
-                        OpeningType::DiagonalRectangular(..) => "DiagonalRectangular",
-                        OpeningType::NonRectangular(..) => unreachable!(),
+                        CutterKind::Rectangular(..) => "Rectangular",
+                        CutterKind::DiagonalRectangular(..) => "DiagonalRectangular",
+                        CutterKind::NonRectangular(..) => unreachable!(),
                     }
                 ),
             };
@@ -852,18 +854,18 @@ DATA;
         let opening_id = find_opening_id(&content, 100);
 
         let plate = decoder.decode_by_id(100).expect("decode plate #100");
-        let openings = router.classify_openings(&plate, &[opening_id], &mut decoder);
+        let openings = crate::program::openings::classify(&plate, &[opening_id], true, &router, &mut decoder).unwrap();
         assert_eq!(openings.len(), 1, "exactly one opening classified");
 
         let mesh = match &openings[0] {
-            OpeningType::NonRectangular(mesh, ..) => mesh,
+            CutterKind::NonRectangular(mesh, ..) => mesh,
             other => panic!(
                 "expected NonRectangular (128 triangles, no inferable box/frame), \
-                 got a different OpeningType variant: {}",
+                 got a different CutterKind variant: {}",
                 match other {
-                    OpeningType::Rectangular(..) => "Rectangular",
-                    OpeningType::DiagonalRectangular(..) => "DiagonalRectangular",
-                    OpeningType::NonRectangular(..) => unreachable!(),
+                    CutterKind::Rectangular(..) => "Rectangular",
+                    CutterKind::DiagonalRectangular(..) => "DiagonalRectangular",
+                    CutterKind::NonRectangular(..) => unreachable!(),
                 }
             ),
         };
@@ -954,3 +956,34 @@ mod issue_4611_far_field_threshold {
         );
     }
 }
+
+
+#[test]
+fn issue_6940_rectangular_merge_preserves_small_gaps_and_steps() {
+    let rect = |lo: [f64; 3], hi: [f64; 3]| CutterKind::Rectangular(
+        Point3::from(lo), Point3::from(hi), Some(Vector3::z()));
+    let covered = |openings: &[CutterKind], p: [f64; 3]| openings.iter().any(|o| {
+        let CutterKind::Rectangular(lo, hi, _) = o else { panic!("rectangular fixture") };
+        (0..3).all(|k| p[k] >= lo[k] && p[k] <= hi[k])
+    });
+    for (original, witness) in [
+        (vec![rect([0.,0.,0.], [1.,1.,1.]), rect([1.001,0.,0.], [2.,1.,1.])], [1.0005,0.5,0.5]),
+        (vec![rect([0.,0.,0.], [1.,1.,1.]), rect([0.5,0.005,0.], [2.,1.005,1.])], [1.5,0.002,0.5]),
+    ] {
+        assert!(!covered(&original, witness), "witness is authored solid, not an opening");
+        let merged = GeometryRouter::merge_rectangular_openings(&original);
+        assert!(!covered(&merged, witness), "near adjacency must not manufacture a cut");
+        for p in [[0.25,0.5,0.5], [1.5,0.5,0.5]] {
+            assert!(covered(&original, p) && covered(&merged, p), "both real cutters survive");
+        }
+    }
+    let tiled = vec![rect([0.,0.,0.], [1.,1.,1.]), rect([1.,0.,0.], [2.,1.,1.])];
+    let merged = GeometryRouter::merge_rectangular_openings(&tiled);
+    assert_eq!(merged.len(), 1, "an exact rectangular union still coalesces");
+    for p in [[0.5,0.5,0.5], [1.,0.5,0.5], [1.5,0.5,0.5]] {
+        assert!(covered(&merged, p));
+    }
+}
+
+#[path = "opening_merge_fixture_tests.rs"]
+mod opening_merge_fixture_tests;

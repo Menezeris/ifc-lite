@@ -55,6 +55,7 @@ import { withToolTelemetry } from './uiTelemetry.js';
 import { createScriptSlice, type ScriptSlice } from './slices/scriptSlice.js';
 import { createChatSlice, type ChatSlice } from './slices/chatSlice.js';
 import { createCesiumSlice, type CesiumSlice } from './slices/cesiumSlice.js';
+import { createGlobePlacementSlice, type GlobePlacementSlice } from './slices/globePlacementSlice.js';
 import { createSolarSlice, type SolarSlice } from './slices/solarSlice.js';
 import { createEnvironmentSlice, type EnvironmentSlice } from './slices/environmentSlice.js';
 import { createScheduleSlice, type ScheduleSlice } from './slices/scheduleSlice.js';
@@ -80,6 +81,7 @@ import { withVisibilityOwnershipInvalidation } from './visibility-invalidation.j
 import { withStoreChurnCounters } from './perf-churn.js';
 import { registerSidebarExclusivity, registerHierarchyLeftSync, registerDrawingInspectorSheetSync, reconcileInitialStoreSync } from './store-sync.js';
 import { registerOverlayThemeSync } from '@/lib/viewport-ui/overlay-theme-sync';
+import { registerIdsLocaleSync } from './ids-locale-sync.js';
 
 // Re-export types for consumers
 export type * from './types.js';
@@ -184,7 +186,7 @@ export type ViewerState = AppearanceSlice & LoadingSlice &
   DrawingInspectorSlice &
   ScriptSlice &
   ChatSlice &
-  CesiumSlice &
+  CesiumSlice & GlobePlacementSlice &
   SolarSlice &
   EnvironmentSlice &
   ScheduleSlice &
@@ -251,6 +253,7 @@ const createViewerStore = () => create<ViewerState>()(withStoreChurnCounters(wit
   ...createScriptSlice(...args),
   ...createChatSlice(...args),
   ...createCesiumSlice(...args),
+  ...createGlobePlacementSlice(...args),
   ...createSolarSlice(...args),
   ...createEnvironmentSlice(...args),
   ...createScheduleSlice(...args),
@@ -291,6 +294,7 @@ export function getViewerStoreApi() {
   registerMutationViewStoreBinding(store); // views read their model's CURRENT store, not the partial one (#5672)
   registerOverlayThemeSync(store); // `--overlay-*` on <html> follow `theme` in every app that holds the store (#5490)
   registerWorkflowArtifactInvalidation(store);
+  registerIdsLocaleSync(store);
   reconcileInitialStoreSync(store);
   return store;
 }

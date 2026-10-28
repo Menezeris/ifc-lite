@@ -7,10 +7,11 @@
 import { useTranslation } from '@/i18n';
 import { reportRingCounts, type ReportSummary } from '@/lib/validation/report-summary';
 import { ringSvg } from '@/lib/validation/manual/ring';
+import { RING_BUCKETS } from '@/lib/validation/manual/ring';
 import { ManualValidationLegend } from './ManualValidationRing';
 
-export function ValidationBenchmark({ summary, name, paper = false }: { summary: ReportSummary; name: string; paper?: boolean }) {
-  const { t } = useTranslation();
+export function ValidationBenchmark({ summary, name, paper = false, notCheckedSpecifications = 0 }: { summary: ReportSummary; name: string; paper?: boolean; notCheckedSpecifications?: number }) {
+  const { t, locale } = useTranslation();
   const counts = reportRingCounts(summary);
   const label = counts.total === 0 ? t('manualValidation.ring.empty', { name })
     : t('manualValidation.ring.label', { name, pass: counts.pass, warning: counts.warning, fail: counts.fail, unanswered: counts.unanswered });
@@ -21,6 +22,18 @@ export function ValidationBenchmark({ summary, name, paper = false }: { summary:
         alt={`${label} · ${rate} ${summary.passRate}%`} />
       <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-semibold" aria-hidden="true">{summary.passRate}%</span>
     </div>
-    <ManualValidationLegend counts={counts} mutedClassName={paper ? 'text-neutral-600' : undefined} />
+    <div>
+      {/* An engine report evaluates every applicable entity, so an empty
+          "Not checked" entity row only contradicts the specification line (#8204). */}
+      <ManualValidationLegend counts={counts} mutedClassName={paper ? 'text-neutral-600' : undefined}
+        buckets={counts.unanswered === 0 ? RING_BUCKETS.filter((bucket) => bucket !== 'unanswered') : undefined} />
+      {/* Zero-match specifications have no entities to put in the ring.
+          Keep their unit explicit instead of inventing an unchecked entity. */}
+      {notCheckedSpecifications > 0 && <p className="mt-1 text-xs text-muted-foreground">
+        {t('idsPanel.unmatchedSpecifications', {
+          count: notCheckedSpecifications, countDisplay: notCheckedSpecifications.toLocaleString(locale),
+        })}
+      </p>}
+    </div>
   </div>;
 }

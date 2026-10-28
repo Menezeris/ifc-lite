@@ -20,6 +20,33 @@ All crates live in one Cargo workspace (versioned together, MPL-2.0 licensed):
 
 The Python bindings (`rust/python`, PyPI package `ifclite-geom`) are excluded from the workspace and documented on the [Python API page](python.md).
 
+## Placement readers
+
+Use `ifc_lite_geometry::placement::Axis2Placement::{read_3d, read_2d, read_id}`
+and call `.matrix()` on the returned placement for a frame in file units.
+`EntityDecoder::{point3, direction3}` read point coordinates or raw direction
+ratios by id; `point3_at` and `direction3_at` read a referenced attribute.
+`point3_decoded` applies the same counted point rule to a record already
+decoded by that decoder from the same immutable source; propagate decode
+errors before calling it. It avoids parsing coordinates a second time.
+These leaf readers accept two or three finite numbers, promote two dimensions
+with `z = 0`, and count malformed-input refusals. For an already decoded
+direction when no decoder is available, `EntityDecoder::direction3_of` returns
+`Option<[f64; 3]>` and cannot count refusals.
+
+`placement::PlacementError::is_admission_refusal()` identifies malformed point,
+direction or real input and missing mandatory attributes. It returns false for
+dangling references, wrong record types, cycles and terminal execution stops;
+callers must propagate `PlacementError::ProgramStopped` separately. Symbolic
+extraction uses this distinction to drop refused input while retaining its
+established unresolved-placement behavior.
+
+The geometry crate's former `parse_axis2_placement_3d`,
+`parse_axis2_placement_3d_from_id`, `parse_cartesian_point`,
+`parse_cartesian_point_from_id`, `parse_direction`, and `parse_direction_from_id`
+exports are removed in the pending Rust major. `rotation_angle_about_z` remains
+available at the crate root and through `placement`.
+
 ## ifc-lite-core
 
 Core parsing functionality.
@@ -390,6 +417,15 @@ impl<'a> EntityDecoder<'a> {
 
 The decoder also exposes fast single-purpose accessors used by the geometry pipeline (`get_cartesian_point_fast`, `get_polyloop_coords_cached`, `get_entity_ref_list_fast`, ...); see `rust/core/src/decoder.rs`.
 
+`EntityDecoder::direction3_of(&entity)` reads an already decoded `IfcDirection`
+when no decoder is available. It accepts exactly one `DirectionRatios` attribute
+containing two or three finite plain numeric values and returns the raw
+`Option<[f64; 3]>`, promoting two ratios with `z = 0` without normalizing or
+rejecting a zero vector. A wrong record type, extra attributes, malformed list
+or non-finite ratio returns `None`. This read does not decode or count refusals.
+It is transitional (removed by C2): prefer `direction3_at`, which counts its
+refusals in `refused_records()`.
+
 `DenseEntityIndex::try_from_columns(ids, starts, lengths)` accepts sorted, unique
 IDs and `u32` span columns. It returns `None` if the columns disagree or direct
 addressing would allocate more than compact columns. `lookup(id)` preserves
@@ -613,9 +649,119 @@ impl ProductShape { pub fn select(&self, element: &DecodedEntity, s: Select) -> 
 pub enum Select { Meshed, Body, RtcVotable, Any, Where(fn(..) -> bool) } // Meshed = what renders
 pub struct RepresentationWalk { pub select: Select, pub nested: NestedMaps }
 // product / map / mapped_item drive a WalkVisitor in DFS pre-order; nesting is
-// capped by depth and a path-scoped visited set.
+// iterative, with caller-selected depth/cycle and expansion policies.
+// MappedLevel::local_transform returns MappingTarget · MappingOrigin in file units.
 pub fn meshed_representations(element, representations) -> impl Iterator; // = Select::Meshed
 ```
+
+`NestedMaps::Expand { max_depth, max_levels }` bounds branching work in the
+walker. Use `MAX_WALK_LEVELS` (65,536) as the default allowance.
+Two independent counters share that limit: mapped-level attempts (after depth
+and cycle checks, before resolving the source) and total `Items` members.
+Every expanded occurrence pays again, including repeated valid DAG nodes. Each full list
+is charged before allocating or decoding its members, including ignored
+non-reference members. Product representations share the counters; each public
+walk call starts fresh. This bounds expansion work, not source parsing or
+visitor-owned computation.
+
+Exhaustion reports one `WalkRefusal::Budget { max_levels }` and stops the entire
+walk, unwinding every entered level. A root-list refusal identifies the
+representation ID and sets `WalkCtx::shape_rep`; nested refusals identify the
+mapped item and exclude it from the path. Product/map calls still return
+`Ok(())` on budget refusal: callers must handle the visitor's refusal channel to
+report truncation. Existing `ShapeError` results remain errors.
+
+Class X entry policy (#8007/#7781), an explicit exception to the former eager
+recursive behavior: a nested level resolves `MappingSource` and
+`MappedRepresentation` before `enter_map`, but reads, validates, charges and
+decodes its `Items` only after the callback returns `Continue`. List charging
+still precedes all member allocation/decoding, including ignored non-references.
+`SkipChildren` and `Stop` suppress child-list charges, decoding and errors, even
+for missing or malformed `Items`; both still pair entry with `leave_map`.
+A nested `MissingItems`, `Decode` or item-budget refusal now happens inside the
+entered scope, with a paired leave, while its refusal context excludes that
+level. Nonterminal malformed-list refusals allow later siblings; `Budget` stops
+globally. Depth/cycle checks still precede level admission; level admission
+still precedes source resolution and the callback, even for a skipped level.
+An over-budget list is refused before examining members, so it can supersede a
+decoder error. Root lists retain their existing precharge before member decode,
+without a mapped-level entry callback; their errors remain `ShapeError`.
+
+This laziness permits a visitor to reject/skip a source before paying for its
+children (for example, an already cached source or a failed transform). It is
+not sufficient for strict cache-independent admission. These generic meters
+bound actual expanded work; they do **not** charge cached logical occurrences
+that a visitor skips. The router's #7887 decoder-only product admission prepass
+now charges root members and repeated mapped occurrences across the selected
+meshed representations before rendering, independently of renderer cache hits.
+The existing `GeometryProgram` remains the renderer. A generic walk visitor's
+cache hit is still not proof that this lower walk validated all descendants.
+Continued expansion
+retains both work bounds and reports truncation. `FirstChain` remains unmetered
+by either work counter (no `u32::MAX` sentinel); its depth and cycle policy is
+unchanged. `Refuse` and `Leaf` also have no work meters.
+
+Level entities are pre-callback snapshots. The callback's mutable decoder can
+change which entity each child reference resolves to: child decoding now sees
+the post-callback decoder, while the already resolved mapped representation's
+`Items` attribute remains the snapshot. A fully decoded list is still a snapshot
+before its first item callback. No panic-unwind cleanup guarantee is added;
+normal stop/refusal cleanup pairs every entered scope. The Class X prerequisite
+introduced this policy with the recursive walker and its path-scoped set.
+
+The Class R implementation (#8007) uses an explicit DFS task stack (`List`,
+`Enter`, `Leave`) instead of native recursion, preserving that entry, refusal
+and callback policy. The active level path also supplies cycle checks; shared
+nodes on sibling paths remain separate occurrences. All five walk attribute
+reads use named slot indices without typed-owner assertions, preserving the
+malformed-target refusal and root `ShapeError` behavior (#8020).
+`MappedLevel::local_transform` delegates to the shared mapped-transform module
+and returns `MappingTarget · MappingOrigin` in file units, preserving
+target-before-origin error precedence. Router transform calls and the mapped
+RTC vote share that definition. The outer RTC traversal remains recursive.
+The task engine and transform consolidation introduce no additional work-policy
+exception. Source recovery retains the original policy and iterative regression
+tests; runtime validation and performance qualification of this head are pending.
+
+`WalkRefusal` now distinguishes `MissingSource`, `UnresolvedSource`,
+`MissingMappedRepresentation`, `UnresolvedMappedRepresentation`, `MissingItems`
+and `Decode(core::Error)` instead of `Dangling`/`Malformed`. A `#n` whose record
+cannot be decoded is `Decode`, whereas a present non-reference slot is
+`Unresolved*`. `TooDeep { max_depth }` carries the configured limit.
+`WalkRefusal::into_error(item_id)` preserves the historical strict refusal messages
+and wraps decoder failures in `Error::CoreError`. `WalkVisitor::refused` receives
+`&DecodedEntity` instead of a numeric id (read `.id` for the old identifier), so
+future strict visitors can inspect the refused mapped item. For a root budget
+refusal that entity is the holding representation, with `shape_rep` set.
+
+Source breaks, covered by the pending Rust major in `rust-major-offset.json`:
+`Expand` gains `max_levels`; `WalkRefusal` replaces/removes variants, changes
+`TooDeep` to a struct variant and adds `Budget`/`Decode`; it no longer implements
+`Clone`, `Copy`, `PartialEq` or `Eq` because the decoder error is owned; and
+`WalkVisitor::refused` is now required and implementations must change their argument type.
+`into_error` is additive. These breaks are recorded as Rust break #15 against
+the published Rust 25.0.0 baseline, with `majorOffset` 15. This is a source-level
+API assessment; no new cargo-semver-checks measurement is claimed.
+
+The ordinary renderer remains owned by GeometryProgram/MappingControl. Its
+separate internal Class X policy (#7873) gives each controller invocation two
+independent 65,536 allowances: reached mapped attempts and materialized Items
+members. The four source-list boundaries precharge the full list, including
+ignored non-reference members, before decoding it. Repeated DAG occurrences
+pay again; cache hits and don't-bake skips can avoid child-list charges, but
+still pay their mapped attempt. Existing path/depth checks take precedence.
+
+A typed logical refusal is distinct from resource/cancellation `ProgramStop`.
+Root refusal returns an error. Nested refusal reports once under its parent's
+source policy, stops remaining siblings and closes entered sources innermost
+first, retaining the completed geometry prefix with its transforms. Partial
+sources and refused templates are not published. Actual resource stops remain
+sticky. Source-step debits become controller state only after reply acceptance.
+The don't-bake eligibility probe accepts exactly one raw reference and decodes
+at most that member after root mapped-attempt admission. Malformed multi-slot
+Items with ignored members fall through to guarded flat materialization.
+This is neither a memory bound nor whole-product, cache-independent admission
+spanning representations; that and drawing policy remain separate #7887 work.
 
 #### mesh_check (test-support)
 
@@ -686,6 +832,22 @@ mesh-coordinate frame when the router is created. Use it when one operation
 must produce identical local-frame geometry across native and wasm targets;
 ordinary routers continue to use the target and environment default. The frame
 choice cannot be changed after construction because router caches depend on it.
+
+`RouterConfig` is the value type for the router's meshing choices: `unit_scale`, `rtc_offset`, `tessellation_quality`,
+`local_frame`, `skip_small_cuts` and `instancing_batch_local`.
+`GeometryRouter::from_config(config)` builds a router from one, arming no
+caches, and `GeometryRouter::config()` reads the effective values back (a
+refused length unit reads back as `unit_scale == 1.0`). This is **not a full
+router snapshot**: length-unit refusal is deliberately not serialized.
+Rebuilding from `router.config().clone()` loses refusal; pass the raw invalid
+scale or call `refuse_length_unit()` on every rebuilt router before meshing.
+The `with_*` constructors build through `from_config`, and the `set_*` methods remain.
+Configuration changes advance the router's execution generation, so a change
+while a product holds the execution lease refuses that product's publication.
+Equal-value quality/skip calls remain no-ops; the batch-local setter always
+advances the generation. Build the router, inject its shared caches, then lease
+it. Resource budgets, deadlines and cache accounts keep their execution owners;
+cloning a config does not copy or reset them.
 
 For repeated `IfcMappedItem` sources, `mapping_origin_transform(source, decoder)`
 parses the source map's origin once. `resolve_scaled_mapped_item_transform_with_origin_loader`
@@ -958,6 +1120,59 @@ process, allowances, jurisdiction and physical bar count remain unchecked.
 Authored `BarLength` is not a verified cutting length. A reinforcing-bar entity
 may represent more than one manufactured bar.
 
+### Owned production contexts
+
+`ifc_lite_processing::element::ProductionModel` represents one model load.
+Call `snapshot(OwnedMeshProductionData)` once per effective batch to capture
+its opening, style, indexed-colour, material, texture and site-rotation maps.
+The maps are shared through `Arc`; products borrow them through the returned
+`OwnedMeshProductionContext` without copying them. Snapshots remain usable
+after the caller drops its map owners or creates a newer configuration revision.
+
+Pass the snapshot to `element::produce_element_meshes_owned` with the same
+job, options, decoder and router used by the canonical borrowed producer.
+It checks the model's source epoch before work and before returning a result.
+Call `ProductionModel::invalidate_source` when replacing or mutating the source:
+earlier snapshots then return `ProductionContextError::StaleSource`, including
+when invalidation occurs inside a geometry callback. Create a fresh snapshot
+before producing from the replacement source.
+
+The context identity distinguishes loads, source epochs and configuration
+revisions within the process. It does not authenticate IFC bytes or indexes;
+the caller must still pair the decoder, router and captured maps with the
+correct source. The appearance authoring pipeline uses these snapshots and
+refreshes its cached context after style edits or authored-entity injection.
+
+The native processor captures one snapshot per run and shares it across Rayon
+jobs. Deferred styled-item replay creates a fresh configuration revision before
+subsequent jobs execute. Browser `processGeometryBatch` captures one snapshot
+per batch, sharing cached style, indexed-colour and texture maps.
+`clearPrePassCache` and every `setEntityIndex` replacement retire earlier
+snapshots, including rejected or empty index replacements.
+
+### Production ownership and diagnostics
+
+Canonical borrowed and owned production reserve the supplied decoder and router
+for the whole synchronous product. A processor callback may produce a nested
+child using its active ancestor's owners; an unrelated live product cannot
+borrow that reservation. Owned production returns
+`ProductionContextError::OwnerUnavailable` if another product holds an owner
+or a callback replaces it. The borrowed entry keeps its infallible signature
+and returns empty output when ownership cannot be maintained.
+
+`ifc_lite_core::execution_owner::ExecutionIdentity::same_instance` compares
+owner instances independently of their configuration generations. Cache or
+configuration maintenance on one decoder preserves its instance; replacing the
+decoder changes it. Geometry execution acknowledges maintenance on the same
+instance and refuses a replacement before accepting its output.
+
+`GeometryRouter::take_csg_failures_checked` checks the current resource stop
+before running diagnostic hooks and again afterwards. A stop raised by a hook
+returns `Err(ProgramStop)` and retains drained records separately for explicit
+diagnostic retrieval through `take_csg_failures`. Later product publication and
+retry drains cannot adopt or discard those stopped reports. Canonical
+production discards that product's output when its final hook stops execution.
+
 ### Appearance authoring
 
 `ifc_lite_processing::appearance::calibrate_appearance_plane` establishes one
@@ -1025,6 +1240,15 @@ pub use gltf::{export_gltf_streaming, try_export_glb, try_export_glb_from_meshes
 // `Medium`, which is the golden-output identity every byte-comparison test in
 // this crate rests on - coarser levels trade curve fidelity for vertex count
 // on tube-heavy models, and DO change the emitted bytes.
+// `GltfOptions::with_textures(true)` (default off) exports IFC surface textures:
+// `TEXCOORD_0` from the canonical UVs, a PNG bufferView in the binary chunk for
+// a decoded texture, the authored `URLReference` (relative only; an absolute
+// path, a scheme or a `..` above the export is `IncompleteAppearance`) for an
+// `IfcImageTexture`, and `MASK` materials matching the viewer's texel-alpha
+// discard and its hiding of a tint alpha <= 0.01. Only the in-memory GLB
+// assembler carries them; `quantize`, the bounded GLB and multi-buffer glTF
+// refuse with `ExportError::UnsupportedOption`, and a textured mesh whose
+// appearance is incomplete is `ExportError::IncompleteAppearance`, never solid colour.
 pub use ifc_lite_processing::TessellationQuality;
 pub use hbjson::Model;
 pub use ifc5::{export_ifc5, Ifc5Options};
@@ -1150,7 +1374,10 @@ pub use parquet_bos::{export_bos, ParquetBosOptions};
 ### Features
 
 ```toml
-default = []
+default = ["gltf-textures"]
+gltf-textures = []    # opt-in textured glTF/GLB export (TEXCOORD_0 + PNG images); without it
+                      # (default-features = false, as the wasm engine does) requesting
+                      # textures returns ExportError::UnsupportedOption
 parquet-bos = []      # Parquet/.bos export (arrow + parquet + zip; not wasm32-safe)
 observability = []    # surface faceted-brep phase timing for profiling examples
 ```
@@ -1496,18 +1723,29 @@ and paint-order composition.
 
 ### Symbolic fill provenance
 
-`extract_symbolic_data_with_provenance(&source)` returns an opaque
+`extract_symbolic_data_with_provenance(&source)?` returns an opaque
 `SymbolicDataWithProvenance`. Its `data()` accessor exposes the unchanged
 `SymbolicData`; `fill_items()` supplies one optional direct representation-item
 ID per fill ordinal. `into_parts()` consumes both together. Unknown, repeated,
-or mapped occurrences have no item identity. The legacy `extract_symbolic_data`
-and publicly constructible primitive/aggregate structs remain compatible.
+or mapped occurrences have no item identity. All three extraction entry points,
+including `extract_symbolic_data` and the explicit-frame variant, now return
+`Result<_, ifc_lite_core::resource_stop::ProgramStop>`: Rust callers must propagate
+or handle cancellation/resource refusal. This is a Rust API signature change;
+the publicly constructible primitive/aggregate structs and successful serialized
+shape remain unchanged. An empty `Ok` means no symbols, while ordinary geometric
+truncation remains an `Ok` with `truncated`. A stop returns `Err` and discards
+all staged symbols and provenance.
+
+`ifc_lite_geometry::resource::is_stopped()` polls live source, account and
+terminal stop state when a consumer needs a boolean. It reconciles detected stops
+through the same policy as `check_current()`; a healthy result must not be cached
+across later polls or used in place of handling the extraction API's typed error.
 
 Serializing the enriched result adds optional `geometry_item_id` to each known
 fill while retaining the existing symbol JSON shape. Deserialization accepts
 older symbol JSON and leaves missing provenance unknown. WASM and the server
 consume the enriched extraction; callers that only need 2D data can keep using
-the legacy API.
+`extract_symbolic_data(&source)?`.
 
 ### Analytic arbitrary-profile topology
 
@@ -1562,3 +1800,39 @@ very large profiles may be unavailable for analytic quantities; they are never
 silently certified or substituted with an approximation. Rendering is
 unaffected. This change makes no performance claim; an end-to-end base/branch
 performance verdict is required before merge.
+
+Stopped product finalization isolates already-recorded router CSG failures through
+`GeometryRouter::quarantine_recorded_csg_failures` without invoking processor hooks.
+Explicit `take_csg_failures` retrieval includes these reports; later product drains do not.
+
+`GeometryRouter::with_product_csg_scope` bounds recorded diagnostics to a synchronous
+product owner epoch. Nested products preserve their parent’s records; error exits
+and unwind retain unconsumed reports for explicit retrieval without final hooks.
+
+Product diagnostic scopes also capture stored Boolean/CSG recorder reports before
+nested entry and on exit, without invoking `take_bool_failures` final callbacks.
+Registered wrappers exposing `boolean_recorder` use the same storage path.
+Custom processors with private logs behind `take_bool_failures` cannot have those
+logs partitioned without executing their callbacks. After interrupted or nested
+product work, their subsequent drained records are therefore retained only for
+explicit `take_csg_failures` retrieval, rather than assigned to a later product.
+This includes any new custom records mixed with the ambiguous log. An explicit
+drain outside product work restores the ordinary publication boundary. Cancellation
+and unwind still invoke no final hooks; callers using opaque custom diagnostics
+must retrieve them explicitly after interrupted or nested work.
+Exposing a Boolean recorder does not make a wrapper's additional private log
+scoped: known recorder storage is captured separately before callback drains.
+Each returned callback batch is retained before the next callback runs, so a
+later callback's unwind cannot discard already-drained reports.
+Canonical and resumable publication call `finish_product_csg_failures` only after
+all product work; intermediate retry drains use `take_csg_failures_checked` and
+cannot mark a still-running epoch complete.
+
+A completed final drain is provisional until source and execution-owner validation
+succeed. If either rejects publication, canonical and private resumable producers
+discard the geometry and pass the drained reports to
+`GeometryRouter::quarantine_unpublished_csg_failures`. This consumes the existing
+report map without invoking hooks, changing attribution, or adopting ambient
+reports. Explicit `take_csg_failures` returns it once; subsequent products cannot
+publish it. Callers of `finish_product_csg_failures` must likewise retain their
+returned reports until publication succeeds and quarantine them on rejection.

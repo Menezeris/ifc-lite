@@ -68,6 +68,7 @@ pub mod compatibility;
 pub mod decoder;
 pub mod dense_index;
 pub mod error;
+pub mod execution_owner;
 pub mod express_id;
 pub mod fast_parse;
 pub mod fmt_num;
@@ -110,7 +111,7 @@ pub use generated::{
     attribute_names_for_schema, entity_info_for_schema, is_subtype_of_for_schema, IfcType,
     SchemaEntityInfo, SchemaVersion, UnknownIfcType, IFC_TYPES,
 };
-pub use georef::{GeoRefExtractor, GeoRefSource, GeoReference};
+pub use georef::{CoordinateOperationKind, GeoRefExtractor, GeoRefSource, GeoReference, GeoReferenceDetails};
 pub use limits::{RtcVerdict, MAX_CONTEXT_DEPTH, MAX_MAPPED_ITEM_DEPTH, MAX_PLACEMENT_DEPTH};
 pub use model_bounds::{scan_model_bounds, scan_placement_bounds, ModelBounds};
 pub use parser::{
@@ -141,3 +142,13 @@ pub use units::{
     resolve_length_unit, LengthUnit,
     try_extract_length_unit_scale, try_extract_plane_angle_to_radians,
 };
+
+/// Fixed resource terminal signals shared by scoped execution owners.
+pub mod resource_stop;
+
+mod source_index;
+pub mod source_bundle;
+pub use source_bundle::SourceBundle;
+
+pub use decoder::source_caches::{SourceCache, TrustedDecoderInputs};
+

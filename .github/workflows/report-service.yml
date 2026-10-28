@@ -103,6 +103,11 @@ jobs:
         with:
           cache-prefix: report-public-ui-wasm
       - name: Root Turbo viewer dependency graph and test-source typecheck
+        # >>> AIM-FORK: the viewer program (upstream plus the AIM layer) needs about 4.2 GB
+        # of heap in tsc, just over Node's default ceiling on ubuntu-latest (OOM, sync PR #157).
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        # <<< AIM-FORK
         run: pnpm typecheck
       - name: Provision real report integration prerequisites
         uses: ./.github/actions/setup-report-integration

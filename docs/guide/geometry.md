@@ -9,6 +9,19 @@ in the processing crate), whether it runs through the browser WASM build, the
 worker pool, or a native host. Every consumer therefore gets identical
 per-element meshes, and fixes to the mesher land once for all paths.
 
+Rust callers can inspect `EntityDecoder::uniform_context_precision()` for a
+restricted source-precision certificate: one project, one owned 3D context,
+complete direct subcontexts and an explicit SI length unit. It verifies all
+representation context references and unit mapped scales. Missing or conflicting
+provenance returns `None`, without inferring a default `Precision`.
+Fresh `SourceBundle::decoder()` instances share lazy certificate results across
+native jobs and compact browser batches, retaining success and decline separately
+for strict geometry admission and permissive reads. The immutable source owns
+both its canonical index and the private once cells; independently supplied
+indexes cannot install or share certificate authority. Borrowed compatibility
+decoders retain only their own result. This certificate does not yet change mesh
+production; the normalization consumer belongs to the next stack layer.
+
 IFClite processes IFC geometry through a streaming pipeline:
 
 ```mermaid
@@ -785,6 +798,41 @@ console.log(`  Total triangles: ${result.totalTriangles}`);
 console.log(`  Total vertices: ${result.totalVertices}`);
 ```
 
+## Opt-in retained browser geometry
+
+`@ifc-lite/wasm` can evaluate supported authored extrusions and swept disks
+with the NVIDIA SMLib kernel in a module Worker. This is opt-in and off the
+ordinary load path. The executor lives in a separate engine bundle, built with
+`BUILD_RETAINED=1 bash scripts/build-wasm.sh` into `packages/wasm/pkg-retained`
+and deployed by your application; the default engine never contains it. The
+SMLib bundle itself is deployed separately at `/smlib/` (build and stage it as
+described in `native/smlib-adapter/README.md`) and is requested only when you
+construct an executor.
+
+```ts
+import { loadRetainedEngine } from '@ifc-lite/wasm/retained';
+
+declare const ifcBytes: Uint8Array; // the loaded IFC file
+const engine = await loadRetainedEngine({ moduleUrl: '/ifc-lite-retained/ifc-lite.js' });
+const api = new engine.IfcAPI();
+const sources = api.retainedSources(ifcBytes);        // read-only, no Worker
+const executor = new engine.RetainedBrowserExecutor(); // loads /smlib/, starts the Worker
+const caps = await executor.capabilities();           // rectangle / ordered_region / rational_disk
+if (!caps.ordered_region) await executor.qualifyNumericalRoutes();
+const [first] = sources.sources();
+const display = await sources.execute(first.index, executor, 0.001, 5, 16 << 20);
+```
+
+`capabilities()` reads the actual Worker's SDK capability bits; curved regions
+and rational disks additionally need that Worker's own
+`qualifyNumericalRoutes()` witnesses. A display is
+`unstyled_flat_source_only`: f32 evaluation-frame buffers plus f64 row-major
+occurrence matrices into absolute IFC Z-up world metres. It is the raw authored
+solid only (no openings, enclosing Booleans, styles or persistent face
+identity), so it is not final product geometry. `executor.cancellation()`
+returns a handle whose `retire()` stays callable while an execution is pending;
+a retired or replaced Worker invalidates everything it produced.
+
 ## Next Steps
 
 - [Rendering Guide](rendering.md) - Display geometry with WebGPU
@@ -847,22 +895,44 @@ client.dispose(); // terminates the worker; in-flight requests reject
 
 The meshes come back in the same frame and units as the load, so they can replace the element's load-time meshes directly. `scripts/lib/wasm-remesh-contracts.mjs` pins this. For each wall of several fixtures, including one with an RTC shift, it re-meshes the wall from its subgraph and checks the positions, indices, colours and origins against meshing the whole file.
 
-## Experimental initialization overlap
+## Initialization overlap experiment removed
 
-The warm-up candidate is opt-in with `?perf.warmPool=1`. It starts fresh
-geometry and prepass workers alongside a file read; its end-to-end performance
-verdict remains pending. It does not retain used workers across loads.
+The opt-in `perf.warmPool` experiment was removed after its recorded-build
+comparison failed the acceptance rule in [the performance ledger](https://github.com/LTplus-AG/ifc-lite/blob/main/scripts/perf/README.md#worker-warm-up-candidate-removed-7036).
+Normal loads create their own geometry and prepass workers and terminate them
+when the load ends. Idle compilation of the shared WASM module remains available
+through `prewarmSharedWasmModule()`.
 
-Custom browser hosts can call `prewarmMainThreadEngine()` when a load is
-requested. It starts initialization without waiting; the normal loader joins
-the same in-flight attempt and retries after a failure.
-`prewarmGeometryWorkers({ fileSizeMB, workerCountOverride, wasmUrl })` returns
-the number of fresh workers started, or zero when the flag is disabled, workers
-are unavailable, or compilation fails. It uses the existing memory-capped
-worker-count plan. Parallel processing leases and terminates those workers.
+The experimental `prewarmMainThreadEngine`, `prewarmGeometryWorkers`,
+`releaseWarmGeometryWorkers`, `warmGeometryWorkerPoolStats` and
+`GeometryWorkerPoolStats` exports, and the `ProcessParallelOptions.workerPool`
+option, have been removed. Custom hosts should let the normal loader initialize
+its engine and workers.
 
-`releaseWarmGeometryWorkers(reason)` terminates idle workers and returns their
-count; it does not cancel an active load. Unused workers expire after sixty
-seconds. `warmGeometryWorkerPoolStats()` returns `GeometryWorkerPoolStats`, or
-null before a pool exists. `idleBytes` is booked memory using an estimate per
-fresh worker, rather than a measurement of actual process memory.
+## Experimental retained model output
+
+The separate opt-in WASM `pkg-retained` bundle exposes
+`await api.retainedModel(bytes, ids?)`. Consume the completed run with `next()`
+(one outcome in canonical file order, `undefined` at end) and release it with
+`free()`. Results are buffered for the whole model, so memory includes all
+returned meshes. An empty ID filter selects no jobs; type products and jobs
+without representations are skipped.
+
+Published outcomes contain `expressId`, `ifcType`, and atomic `parts` with f64
+object-local metre positions, u32 indices, and column-major `worldFromObject`
+matrices into IFC Z-up world metres. Consumers must show the
+`PresentationObligationsUnmet` marker and its `obligationsUnmet` list. Openings,
+layers, appearance and persistent faces remain unmet. Refused outcomes carry
+an ID, typed code and optional origin, with no partial product or exact fallback.
+See the [WASM package contract](https://github.com/LTplus-AG/ifc-lite/blob/main/packages/wasm/README.md#experimental-retained-whole-model-engine)
+for lifecycle, transport and result details. The default engine is unchanged.
+
+For streaming display in a dedicated host Worker, create a `RetainedModelSession`
+from that opt-in bundle and call `session.run(bytes, { detail: 'view' }, onEvent)`.
+The callback receives `start` with canonical candidate IDs and the pre-pass RTC
+frame, then atomic `published` mesh collections or typed `refused` events.
+Extract and free each collection and its mesh handles in `finally` blocks.
+Use `detail: 'shape'` for the M1 f64 shape parts. A session reuses its qualified
+worker across runs; free the session when finished, or terminate the host Worker
+to cancel immediately. Consumers must continue to show the shape-only marker.
+

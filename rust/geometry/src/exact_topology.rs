@@ -6,6 +6,9 @@
 //! No snapping/edge splits; not a simplicity or non-self-intersection proof.
 use rustc_hash::FxHashMap;
 
+/// Exact incidence and volume on the existing kernel grid.
+pub(crate) mod kernel_grid;
+
 /// Finite, exact nondegenerate, nonempty triangles with exactly one forward and
 /// reverse use of every geometric edge. Numeric signed zero shares one key.
 /// Conservatively rejects valid soups with unsplit collinear T-junctions.
@@ -28,6 +31,8 @@ pub(crate) fn strict_closed(tris:impl IntoIterator<Item=[[f64;3];3]>)->bool{
 }
 
 /// Actual indexed local f32 positions; placement/origin never enter the keys.
+/// Known false negative: a closed solid whose neighbours meet at an unsplit
+/// collinear T-junction (e.g. after `clean_degenerate`) reads as open.
 pub(crate) fn strict_closed_mesh(mesh:&crate::mesh::Mesh)->bool{
     if !mesh.positions.len().is_multiple_of(3) || !mesh.indices.len().is_multiple_of(3) { return false; }
     let count=mesh.positions.len()/3;

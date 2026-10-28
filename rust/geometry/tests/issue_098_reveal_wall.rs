@@ -164,18 +164,22 @@ const PINNED_OPEN_EDGES: Option<i64> = None;
 // gates). Profile-hole walls are now wound out of the solid and this
 // plan-rotated wall is cut in its own frame, which moved the gated fallback's
 // reading in both directions; re-measured, not assumed.
-// >>> AIM-FORK (temporary pin, docs/FORK_MAINTENANCE.md "Temporary pins"):
-// #7607 (#7292): 136 -> 166 (manifold gate alone) and 394 -> 436 (both
-// gates). Bisected on the fork: 1b3b24e1b reads 136, 5b730c6fd reads 166;
-// upstream main ca6991fdb still reads 166 / 436 with the old pins, so the
-// gated lanes are red upstream too. The default build and the topology gate
-// alone keep the real bar (20 unpaired edges); the volume did not move (32.714).
-// Re-measured, not assumed. Drop this block on the sync that re-pins it.
+// #7952: 136 -> 166 (manifold gate alone) and 394 -> 436 (both gates), moved
+// by #7607 (5b730c6fdb) alone; its parent reads 136/394 and the reading has
+// not moved since. The gate rejects the same Difference results as before, so
+// the fallback route is unchanged. What changed is how the shared kernel and
+// the void hygiene triangulate the same surface: #7607 splits exactly
+// collinear operand cap seams at an existing apex (BooleanOperand hygiene), and
+// it also changed the shared kernel. The extra unpaired edges are T-junctions
+// on that same surface, not new holes. Volume (32.714 / 33.835 m3) and area
+// (175.388 / 151.205 m2) agree with the parent to 1e-3, and once every
+// unpaired edge is split at the vertices lying within 0.1 mm of it, the
+// remaining gap is identical to the parent's: 14.643 m and 57.551 m of
+// boundary. The default build improved at the same commit (30 -> 20).
 #[cfg(all(feature = "csg_manifold_gate", not(feature = "csg_topology_gate")))]
 const PINNED_OPEN_EDGES: Option<i64> = Some(166);
 #[cfg(all(feature = "csg_manifold_gate", feature = "csg_topology_gate"))]
 const PINNED_OPEN_EDGES: Option<i64> = Some(436);
-// <<< AIM-FORK
 
 #[test]
 fn reveal_wall_openings_do_not_leave_flaps() {

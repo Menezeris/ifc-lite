@@ -28,6 +28,7 @@ import { useAimInspectorStore } from './aimInspectorStore.js';
 import { useAimDocRegionStore } from './docRegion.js';
 import { getLinkDraft } from './docLinkDraftStore.js';
 import { useAimUnderlays3d } from './aimUnderlays3d.js';
+import { planPositionState } from './aimPlanPosition.js';
 import { aimBcfContext } from './bcf-protocol.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { describeTabs } from './viewTabsPlan.js';
@@ -37,10 +38,14 @@ import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import type { SectionPlaneAxis } from '@/store/types';
 import type { SectionAxis, SectionFit, ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
 import { describeList } from './aimListState.js';
+import { describeIdsLocal } from './aimIdsStore.js';
+import { clashLocal } from './clashLocal.js';
 import {
   cutPercent, hostAxis, viewerAxis, ifcCoordinateToRender, ifcPointToRender, renderBoxToIfc, renderDirToIfc, renderPointToIfc, sectionThroughBox, unionBoxes,
   type Box3, type Vec3,
 } from './viewFrame.js';
+
+export { briefIdsLocal } from './aimIdsLocal.js';
 
 type State = ReturnType<typeof useViewerStore.getState>;
 
@@ -231,6 +236,8 @@ export function queryViewState(state: State, g: GuidHelpers) {
     panel_view: panelViewState(),
     // AIM D-133 doplnok (#170): podklady PDF v 3D zobrazené (true) alebo skryté (false); stav viewera.
     underlays_3d: !useAimUnderlays3d.getState().hidden,
+    // AIM D-161 bod 8 (#282): bodka polohy a smer kamery na PDF (zapnuté, či sa kreslí, kde a kam).
+    plan_position: planPositionState(),
     property_focus: useAimInspectorStore.getState().propertyFocus,
     document: useAimDocRegionStore.getState().visible,
     // AIM D-160: návrh ručnej opravy odkazu popisku na výkrese; uloží ho chat (open_drawing link from_draft).
@@ -241,6 +248,10 @@ export function queryViewState(state: State, g: GuidHelpers) {
     list: describeList(),
     // AIM D-157: dlaždice (rozloženie, záložka v každej dlaždici, živá 3D).
     layout: tilesLayout(),
+    // AIM D-162: IDS otvorené v Studiu a v paneli validácie (kód a verzia v AIM, upravené, výsledky); XML Studia pre `from_viewer`.
+    ids_local: describeIdsLocal(true),
+    // AIM D-164: test clash otvorený v paneli clash (test v AIM, beh, počty podľa stavu, upravené).
+    clash_local: clashLocal(),
   };
 }
 

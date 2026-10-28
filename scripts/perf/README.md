@@ -4,6 +4,73 @@
 
 # Performance diagnosis kit
 
+## C2-5b void rays and frames (#7781)
+
+The shared array ray/triangle helper and first-fit face-normal clustering passed
+the local native instruction gate against main at `f6961be929` on Haus, duplex
+and ISSUE_129. Ordered mesh bits, serialized output, geometry counts and aggregate
+diagnostics matched exactly. This qualifies the reconciliation on those fixtures;
+it makes no elapsed-time or browser worker-pool claim. Source-pinned counts,
+identity witnesses and commands are recorded in `c2-5b-build-r1.json` with the
+coordinator's Rust sweep evidence.
+
+Keep each ray caller's determinant floor and barycentric slack, including the
+inclusive range check's NaN rejection. Normal clustering must preserve first-fit
+order, antiparallel flips, weighted arithmetic and the box classifier's early cap.
+Independent legacy-body comparisons cover these distinctions; a compiled mutation
+of the ray parameter makes the new parity assertions fail. Cohesive frame and
+parity modules fit below the module-size limit without growing the void driver.
+
+## C2-5a void cutter vocabulary (#7781)
+
+The borrowed `Cutter` projections and shared admission helpers passed the local
+native instruction gate against the C2 walk-lane base on Haus, duplex and
+ISSUE_129. Mesh payload bits, serialized output, counts and aggregate geometry
+diagnostics were identical. This qualifies the reconciliation on those fixtures;
+it makes no elapsed-time or browser worker-pool claim. The source-pinned counts,
+identity witnesses and commands are retained in `c2-5a-rebuild-r1.json` with the
+coordinator's Rust sweep evidence.
+
+Preserve each caller's arithmetic when sharing guards: sequential admission and
+engulf stay in f32, while the wider paths subtract mesh extents in f32 before
+widening. Diagonal world bounds widen before adding the f64 origin; local bounds
+omit that origin. Keep the newer execution-owned consumed-host protocol. These
+distinctions, rather than a change of strategy or precision, let the vocabulary
+move without changing output. Frame-changing mesh rebuilds use a crate-private
+helper because `rebuilt_like` retains bounds under an unchanged-extent contract.
+
+## Retained cutter foundation (#7955 CUT-0)
+
+This slice adds conservative bounds and derived cutter construction behind the
+retained feature, with no retained product admission or optimization claim.
+Default exact output and wasm byte identity are separate acceptance checks;
+source-oracle timings are diagnostics, not an end-to-end performance result.
+
+## Symbolic extraction label allocation (#7914, #7779)
+
+Local Callgrind diagnosis of the P2 symbolic extractor on louistrue-pc found
+lower extraction instruction counts than its base on Holter and all three
+controls. The canonical placement walk saves work overall; its matrix cache,
+leaf reads and full-frame composition do not establish the reported wall-time
+regression's cause. Common entity scans dominate Holter's extraction.
+
+Borrowing product and representation labels during the walk removes temporary
+string allocation, including for products with no symbolic representation.
+Emitted primitives still own their labels. This reduces extraction instructions
+on Holter, Haus, duplex and ISSUE_129, preserving each P2 payload byte for byte
+and Holter's base payload. Placement, projection and refusal semantics stay intact.
+
+A registered paired symbolic wall-time cohort on Pop (hash dispatch in both
+arms) was voided by its own host monitor: agent sessions and the T3 server were
+active on the host for most of the run. It is recorded as invalid, not as a
+pass or a fail. The maintainer accepted P2 on 2026-10-27 on the instruction
+evidence: extraction instructions are lower than the base on all four fixtures,
+Holter's payload is byte-identical, and pinned local timing pairs show no
+regression beyond their noise. This is not a measured wall-time qualification.
+Do not replace P2's geometry corrections with approximate identity shortcuts to
+chase a wall-time bound. The source-pinned local diagnosis is
+`p2-holter-overhead-r1.json`.
+
 One place to answer "where does load time go, and what is the biggest lever?"
 for both the **native** Rust pipeline (CLI/server/exporter) and the **WASM**
 viewer path. The two run the *same* Rust code (`process_geometry` ->
@@ -11,6 +78,200 @@ viewer path. The two run the *same* Rust code (`process_geometry` ->
 that also dominate in the browser; the WASM-only concerns (per-worker file
 re-decode, no threads, memory bandwidth) are orchestration-level and are read
 off the viewer's own telemetry (below).
+
+## HiDPI navigation and synchronous capture (#6709, #8089)
+
+**Functional qualification passes; performance is mixed.** The physical NVIDIA
+FZK comparison includes DPR1 control, counterbalanced cap-only pairs, transition
+frames, exact shared runtime bytes, unchanged geometry and CSS picking, and
+full-quality PNGs with navigation/idle restoration. The capped DPR2 arm lowers
+GPU queue-completion latency, while median/p95 rAF cadence stays unchanged and
+maximum intervals become worse around settling. Do not advertise a frame-rate
+gain or hide the transition tail. Queue completion is not isolated GPU time.
+
+The capture repair must copy pixels synchronously after its own render: waiting
+for GPU completion or another animation frame can let presentation discard the
+WebGPU drawing buffer. An asynchronous reader can recreate that bug despite a
+generic synchronous-looking signature, so reject promise-like types/results
+and consume refused rejections without poisoning the next capture. A real
+lifecycle regression and visible model PNG establish more than dimensions alone.
+[Original cohort, compact traces, images and reviewed verdict](../../tests/evidence/hidpi-navigation-6709/native-20261023/result-20261024/reviewed-verdict.json)
+retain the measured limitation and the collapsed-sidebar scope. This establishes
+no loading-regression resolution for #6516.
+
+## One element per rayon task in the element loop (#8094)
+
+**Shipped: the element `par_iter` uses `with_max_len(1)`.** A large void-heavy
+model, converted through an embedder's single-chunk export, ended with a long
+single-core tail inside the element loop: rayon had handed one thread a range of
+several void-heavy elements, which it ran in sequence while the others idled.
+Single-element tasks let idle threads take the rest. In `perf_probe` only the
+heavy CSG tower (Holter) gains; the large model's win shows only through the
+embedder. Output is unchanged at every thread count tested.
+
+Lesson: when cores go idle while a parallel loop is still running, check rayon's
+task granularity before the kernel. In a profiled embedder run on `76d38b1243`,
+ordering the jobs heavy-first without `with_max_len(1)` did not remove the
+tail: rayon packed the heavy jobs into one thread's first range instead.
+`perf_probe` and an embedder's export can split the work differently, so
+measure the embedder too.
+
+## Consolidation certificates restore the instruction ratchet (#7943)
+
+**Measured reduction in exact geometry work; unchanged instruction ceilings.**
+The scheduled lane reported correctly: a correctness repair had increased work
+past its geometry budget. The accepted optimization reuses shared segment
+orientation signs, rejects strictly separated boxes before predicates, and
+proves zero source-plane height span for already certified singleton or exactly
+coplanar f32 partitions. Other surfaces retain the shared rational certificate;
+movement, winding, boundary and refusal contracts remain enforced.
+
+The source-pinned native comparison preserves ordered mesh fingerprints and
+failure diagnostics on FZK, ISSUE_129 and Holter. Five-pair native and fresh-process
+hardware-browser comparisons find a reduction on the void-heavy model; the
+house and heavy tower remain within their measured noise. The browser comparison
+uses the repository's fixed base-first order and the preceding baseline, so it
+retains position bias and does not qualify final-bundle latency after unrelated
+upstream export additions. Current-head hosted gates and the actual lowering
+workflow on merged main remain separate acceptance checks.
+
+Lesson: profile the retained correctness fix before accepting its cost. Avoiding
+repeated exact constructions and predicate evaluation recovered the budget
+without changing geometry or raising a ceiling. Integer millisecond phase fields
+cannot qualify a sub-millisecond phase: the accepted native experiment captures
+existing durations at higher precision on both sides and retains every reporter
+and host guard. A stale identical binary, a zero-resolution timing campaign,
+missing tooling and a Turbo-restored WASM artifact were rejected and preserved.
+Numerical observations, scope, source applicability and evidence references are
+in [the qualification record](../../tests/evidence/issue-7943/performance.json).
+
+## Independent diff WASM payload (#8042)
+
+**Size verdict: keep diff exports outside the geometry engines.** Embedding
+comparison bindings into the shared geometry module exceeded its transfer-size
+ratchet. A separate `rust/diff-wasm` target restores the default geometry
+bundle below the unchanged ceiling and lets explicit diff initialization load
+only the comparison engine. Default and retained geometry modules exclude diff
+exports. Actual-WASM tests verify independent memories and that retained diff
+models survive geometry initialization. This is a packaging result; full
+facade startup, marshaling, and end-to-end timing qualification remain open.
+
+## Remote near-plane recovery (#7633)
+
+**Correctness repair; end-to-end browser timings remain within measured noise.**
+The current-base interleaved comparison preserves native ordered mesh fingerprints
+and complete browser CPU geometry payload hashes on FZK, ISSUE_129 and Holter.
+The accepted hardware-browser cohort completes five pairs per fixture with four
+workers, qualified idle conditions, and no GPU errors or device losses. Native
+phase timings remain descriptive; the worker-pool verdict comes from the browser
+report with its unchanged noise thresholds. This establishes no speedup.
+
+The failed software-adapter and Vulkan presentation campaigns remain evidence,
+not replacement samples within the accepted cohort. The diagnostic lesson is
+that hardware selection and offscreen pixel readback do not establish canvas
+presentation: Vulkan external-memory import failed on both model arms despite
+an offscreen pass. A canvas-specific reproduction isolated the browser backend
+configuration; routing Vulkan through ANGLE fixed it without driver changes.
+The separate fresh cohort rejects every uncaptured GPU error. Exact source pins,
+artifacts, numerical observations and prior failures are retained in
+`tests/evidence/issue-7633/current-performance.json`.
+
+## Supported convex thin patches (#8047)
+
+**Correctness repair; native timing inconclusive.** Interleaved base/branch
+probes on FZK, ISSUE_129 and Holter preserve mesh, vertex and triangle counts
+(count identity, not a content hash). FZK and Holter baseline spread exceeds
+the reporter's noise gate despite an accepted idle-host sample; ISSUE_129's
+geometry and total changes remain inside the measured spread. This does not
+establish a speedup or performance neutrality. The certificate walk adds work
+only on inputs containing needles. Lesson: complete healthy boundary support
+alone also retains deliberately cleaned tiny openings; require strictly convex
+internal ridges and keep the physical-unit cleanup regression alongside the
+thin-floor closure witness.
+
+**Consumer-boundary follow-up (#8057).** Local exact closure is insufficient
+when the next consumer deletes the retained faces after conversion to metres.
+The Office regression demonstrated that source operand cleanup can undo a
+closed rescue before an analytic opening cut. Connected subtractive-operand
+rescues now also check the existing cleanup predicate in physical units;
+finished void results keep their closed-subgrid contract. The additional copy
+and scan are confined to connected-patch candidates. Rejecting a connected
+patch must retain the previously certified isolated-cell baseline; removing
+both policies also regresses real Office hosts.
+
+Performance verdict: not measured. The exclusive benchmark host was occupied
+by foreign WASM validation and PC timing is disabled. No replacement cohort
+was submitted and no neutrality or speedup is claimed; the earlier
+inconclusive measurements do not qualify this follow-up.
+
+## Geometry platform migration slices (#7955)
+
+**E1 element planning/execution (#8044): mixed phase timing, no measurable
+end-to-end change.** An exclusive, interleaved comparison of `1400b53b24` against
+`9b68e212de` on ISSUE_129 and Holter left geometry and total time within the
+base's timing spread; mesh, vertex and triangle counts matched every round.
+Holter's lookup phase was slower beyond the reporter's noise floor. That phase's
+source is unchanged by E1; binary layout is a possible explanation, not a proven
+cause. Accept this small phase tradeoff for the shared planning/execution seam,
+without claiming a speedup or complete timing neutrality. The initial FZK run
+was too noisy, and ISSUE_129's lookup phase remained below timer resolution, so
+neither report certifies every phase unchanged. CI's instruction/bundle ceilings
+and committed-reference geometry parity pass without a ceiling increase. Lesson:
+inspect the per-phase results even when an unresolved timer makes the report's
+overall verdict inconclusive, and distinguish matching output counts from a
+content hash.
+
+**Behaviour-preserving refactor slices; measured neutral.** Each slice is a base-vs-branch
+`scripts/perf/ab.sh` run (interleaved, order-balanced, 7 rounds) on the large corpus models
+O-S1-BWK-BIM (327 MB), Holter (169 MB), ISSUE_098 (68 MB, georeferenced), ISSUE_068,
+schependomlaan and ISSUE_129 (CSG). FZK was dropped from timing: its ~47 ms total sits at timer
+noise and made every run "too noisy"; its mesh/vertex/triangle fingerprint still matched.
+Lesson: small fixtures cannot certify neutrality for per-element ownership changes; use the
+large corpus, and treat a lone single-fixture excursion as a rerun trigger, not a verdict.
+A main-vs-main control on the same harness shows no parse bias (−0.8%…0.0%), yet slices that never
+touch parsing move the parse phase by about ±2% in both directions (B3 +1.5%, B5 +1.9%, C4 −0.7%, B2 −0.5%):
+with LTO and `codegen-units = 1`, editing geometry code shifts the layout of unrelated parse code. Judge a
+slice by the phases it changes and by output identity, not by a ±2% move in an untouched phase.
+
+| Slice | Fingerprints (6 models) | TOTAL deltas vs base (noise) | Verdict |
+| --- | --- | --- | --- |
+| C2 #7969 boolean operand seams | identical | BWK +1.1% (±2), Holter −3.2% (±30), ISSUE_098 +0.7% (±10), ISSUE_068 −3.3% (±15), schependomlaan +2.3% (±4), ISSUE_129 +1.8% (±6) | neutral: no phase outside noise |
+| B2 #7960 tessellated plans | identical | BWK 0.0% (±1), Holter −0.1% (±9), ISSUE_098 −2.5% (±8), ISSUE_068 +0.3% (±13), schependomlaan −1.0% (±4), ISSUE_129 +0.2% (±5) | neutral: no phase outside noise |
+| A2 #7957 owned element scopes | identical | BWK −0.8% (±5), Holter −3.0% (±10), ISSUE_098 −3.2% (±9), ISSUE_068 0.0% (±14), schependomlaan −0.6% (±4), ISSUE_129 +0.9% (±8) | neutral: no phase outside noise |
+| B3 #7961 faceted BRep / surface-model plans | identical | BWK 0.0% (±3), Holter −7.5% (±13), ISSUE_098 +0.9% (±10), ISSUE_068 −3.5% (±15), schependomlaan −0.6% (±6), ISSUE_129 −1.3% (±10); peak RSS unchanged (Holter ~0.90 GB, BWK ~0.77 GB, base = branch within 0.3%) | neutral: no phase outside noise; face buffering adds no peak memory |
+| B1 #7963 primitive/extrusion plans | identical | BWK −0.8% (±6), schependomlaan −1.0% (±12), ISSUE_068 −3.5% (±28) (11-round rerun; first 7-round run flagged schependomlaan +4.3%, not reproduced) | neutral: no phase outside noise |
+| C4 #7966 material layer slicing | identical | BWK −0.4% (±1), Holter −0.8% (±9), ISSUE_098 −3.1% (±14), ISSUE_068 +1.5% (±21), schependomlaan −1.6% (±6), ISSUE_129 −0.9% (±4) | neutral: no phase outside noise |
+| B4 #7964 revolved/swept plans | identical | BWK +2.8% (±2), Holter +1.5% (±12), ISSUE_098 +0.4% (±28), ISSUE_068 −5.7% (±32), schependomlaan +3.2% (±8), ISSUE_129 −1.3% (±6) | neutral: geometry within noise; BWK total is the untouched parse phase (+3.2%, layout jitter) |
+| B6 #7965 alignment/sectioned plans | identical | BWK +1.7% (±2), Holter −5.7% (±20), ISSUE_098 +4.8% (±16), ISSUE_068 +2.9% (±18), schependomlaan +1.0% (±6), ISSUE_129 −1.0% (±31) | neutral: geometry within noise; BWK total is the untouched parse phase (+3.2%, layout jitter) |
+| B5 #7971 advanced face / spline / structural plans | identical | BWK +1.8% (±1), Holter +2.8% (±17), ISSUE_098 −2.0% (±11), ISSUE_068 −3.7% (±15), schependomlaan −0.3% (±6), ISSUE_129 +0.3% (±6) | neutral: geometry within noise; BWK total is the untouched parse phase (+1.9%, layout jitter) |
+| A1 #7956 core execution ownership | identical | 11-round rerun: BWK +1.4% (±4), schependomlaan +1.3% (±6), ISSUE_068 −4.0% (±11); deterministic FZK instruction counts vs main: parse −0.02%, entity-scan −0.06%, total +0.03% | neutral: the only slice touching the decoder; its ±2% parse timing is layout jitter, instruction counts unchanged |
+| D1 #7994 execution resource accounts | identical | BWK −1.4% (±3), Holter +3.2% (±19), ISSUE_098 −0.2% (±16), ISSUE_068 +11.8% (±31), schependomlaan +1.9% (±8), ISSUE_129 +1.4% (±6) | neutral: with no account installed the path adds one thread-local read per merge/element; every delta sits inside its noise band, and the ISSUE_068 excursion matches its ±31% spread |
+| C3 #7996 boolean/CSG continuation | identical | BWK +0.9% (±4), Holter +1.7% (±22), ISSUE_098 −3.9% (±12), ISSUE_068 −0.9% (±22), schependomlaan +1.3% (±4), ISSUE_129 (CSG) +1.4% (±7) | neutral: heap frames replace native recursion on every boolean/CSG operand; all deltas inside noise, including the CSG-heavy ISSUE_129 |
+| C1 #7995 source-free construction graph | identical | BWK +3.2% (±2), Holter −3.6% (±13), ISSUE_098 +0.5% (±11), ISSUE_068 +2.7% (±16), schependomlaan +1.0% (±4), ISSUE_129 +1.0% (±7) | neutral: parse +3–4% on four models is layout jitter (C1 touches no parser code); deterministic FZK instruction counts vs main 92672d1a0a: parse +0.02%, geometry −0.004%, total +0.001%; synthetic 300-wall BrepWithVoids-cutter fixture (480 void subtracts) geometry +0.1% (±5) |
+| C5a #7991 opening telemetry transaction | identical | BWK −0.3% (±3), Holter −0.3% (±16), ISSUE_098 −2.1% (±13), ISSUE_068 −0.8% (±19), schependomlaan +0.6% (±7), ISSUE_129 −1.2% (±5) | neutral: the per-event thread-local borrow on the opening paths is below noise on all six models |
+| F1a #7992 analytic original-source capture | identical (6 models; meshing path untouched) | meshing A/B within noise; analytic export (`extract_extrusion_definitions` / `extract_analytic_quantity_sources`, 2×7 interleaved): unconditional capture measured +3% to +24%, so capture is now opt-in (`analytic::with_source_capture`); default path +0.7% to +1.1% on every model (IQR 0.4–2.4%) | neutral on the default path after opt-in; a consistent ~1% residual on analytic export remains below the 2% bar |
+| F1b swept-disk directrix source | identical (output SHA-256 on 6 models) | analytic export default path (definitions / descriptions / quantity sources, 7 interleaved rounds vs 78d7bd9cf5): worst +0.27%, most −0.2% to −2.3% (IQR 0.3–3.9%) | neutral: capture is opt-in (`with_source_capture`); the default walk records nothing |
+| D1b #8002 cache residency ownership and typed resource stops | identical | BWK +1.0% (±3), Holter +0.7% (±30), ISSUE_098 −1.9% (±10), ISSUE_068 +0.5% (±23), schependomlaan +0.6% (±7), ISSUE_129 +0.1% (±4) | neutral: with no account installed, one thread-local read per cache publication/lookup; geometry within ±2% on every model |
+| C5b opening source probe/classifier | identical | BWK −1.7% (±3), Holter +2.5% (±18), ISSUE_098 +0.7% (±12), ISSUE_068 −1.5% (±17), schependomlaan −1.6% (±5), ISSUE_129 −1.7% (±5) vs D3 base c282c7bebf | neutral: owned classify/probe on every opening host, all deltas inside noise |
+| C5c opening gateway cutover | identical | BWK +1.2% (±8), Holter −0.4% (±9), ISSUE_098 +2.9% (±33), ISSUE_068 −3.1% (±55), schependomlaan +0.3% (±11), ISSUE_129 +1.1% (±14) vs C5b | neutral within noise; fingerprints identical on 6 models and 122/122 corpus models; deterministic FZK instruction ratchet is the strict check |
+
+## Exact rectangular opening union (#7941)
+
+**Native attribution complete; browser qualification remains pending.**
+Approximate box merging filled authored gaps and steps. Candidate discovery can
+retain a broad tolerance, but merging requires exact coincidence on the other
+two axes and genuine interval contact. The native base-versus-branch campaign
+completed on the small model, void-heavy regression, tower, school and large
+architectural model. Each side produced a stable ordered mesh fingerprint;
+only the small model retained the same complete output across the pair. The
+other changed outputs still require physical accounting. Native timings do not
+qualify end-to-end worker-pool behavior.
+
+The separate hardware-GPU browser campaign stopped during base-only controls
+after trusted input interfered with loading. Vulkan external-image import errors
+were also observed. No branch sample or completed comparison exists for that
+campaign. Preserve failed controls separately; use an isolated browser and
+retain the real adapter, rendered-frame, asset, payload and stability checks.
 
 ## Sloped coincident-sided differences (#7292)
 
@@ -166,6 +427,53 @@ fan-out, memory bandwidth, GPU); a change in those still needs an end-to-end
 A/B (`ab.sh`, the browser rigs below), and a green ratchet is no evidence for it.
 
 
+## Placement consumer consistency (#7779, #7906)
+
+Historical qualification of the original stack only (through `7cdd67bc3e`):
+the recovered stack has changed; its wall-time disposition is under
+"Current-main source recovery hold (#7880)" below, and the fresh R-versus-X
+result is recorded below. The following verdict is retained as historical
+evidence, not a current performance or output-identity claim.
+
+The frozen X3a, R2a and corrective-tail native cohort preserved mesh, vertex,
+triangle and per-mesh fingerprint output on Haus, ISSUE_129 and Holter. The
+tail stayed within the approved base-relative instruction band in every
+measured phase, while R2a exceeded it in duplex preprocessing. Both sides fit
+the committed small and large instruction ceilings; that does not erase the
+separate base-relative failure. Pool phase timers and wall medians also moved
+in different directions, so this is a mixed result with no speedup claim.
+The exact source pins, raw sample tables, phase comparisons and limits are in
+[#7906](https://github.com/LTplus-AG/ifc-lite/pull/7906).
+
+The separate shared-parent placement harness confirms analytic transforms and
+memo reuse through the production resolver and router. It does not measure
+throughput. Native instruction counts and this mechanism check do not qualify
+WASM worker scheduling or browser load time. Lesson: preserve phase-level
+failures and wall-time disagreements even when aggregate instructions and
+committed ceilings pass; attribute the retained preprocessing dumps before
+changing production work or accepting the regression.
+
+The fresh corrected-X `a806aed` versus R `fde7d3c` native cohort preserves
+complete ordered mesh/float/frame/metadata/instance output and all diagnostic
+bytes on Haus, ISSUE_129 and heavy Holter. Every timed count and fingerprint
+also matches. The stock report flags an adverse Haus parse phase and remains
+inconclusive overall; complete-call wall observations have both directions.
+Timing neutrality is not established. These are historical, inconclusive
+observations for that older pair, not acceptance of a native cost. The exact
+current-source performance verdict remains pending, including per-phase
+instruction counts and a neutral end-to-end A/B verdict. See the
+[retained R comparison](evidence/placement-7779/recovery-r-native/README.md).
+
+All four original helpers completed, but the original preparation failed its
+strict compiler guard when R reused unchanged core from X. A separately reviewed
+metadata recovery preserves that failure and distinguishes actual R compiler
+commands from transitive X core provenance; the historical core dependency byte
+hash was not captured. Fresh witnesses and timing use the retained exact binaries,
+not pooled old samples. Lesson: preserve adverse phase evidence and dependency
+provenance limitations even when full outputs match. This pair supplies no
+standalone-X cost, browser/GPU, speed or neutrality verdict and changes no
+acceptance band, baseline or ceiling.
+
 ## Generated shader commentary and eager bytes (#7918)
 
 WGSL comments inside generated shader strings survive JavaScript minification
@@ -290,6 +598,17 @@ This is a bundle-size verdict; it makes no model-load speed claim.
 Lesson: measure queued viewer features together, and keep optional editor
 surfaces behind their actual entry point.
 
+## Comparison panel loads on demand (#8017)
+
+Comparison filtering initially exceeded the viewer entry allowance. Deferring
+only its filter controls did not recover enough headroom. Loading the complete
+comparison panel through the shared panel host's existing lazy boundary kept
+both raw viewer JavaScript metrics inside their unchanged ceilings. The real
+revision-pair browser regression still opens the panel, compares, filters,
+frames and reads rendered GPU pixels. This is a bundle-size verdict, with no
+model-load or geometry-runtime speed claim. Lesson: defer an optional panel at
+its canonical host rather than splitting a small control inside an eager panel.
+
 ## Structural counters and long frames per load (#6957)
 
 Sender-side accounting (#6993) now distinguishes actual worker transfer lists
@@ -362,14 +681,49 @@ call sites and `useViewerStore` subscriptions on the viewport, properties,
 hierarchy and streaming paths statically (minified component names make a
 runtime fiber census unattributable, and mounted counts move with UI state).
 
-## GPU point-pick depth candidate held (#6881)
+## GPU point-pick depth readback qualification (#6881)
 
 The [same-submission GPU oracles](evidence/bounded-depth-readback-6881/README.md)
 qualify single-texel extraction against a full-depth copy on hardware, including
 concurrent maps and target replacement. Production family, ID/item/model and georeferenced world-coordinate controls
 match the original renderer, and device destruction retires pending picks. The candidate shares ID/depth staging and keeps per-pick inputs immutable.
-Four complete interleaved fresh-document public-model viewer pairs retain unchanged geometry and hit provenance, reduced mapped bytes, and mixed interaction timings. One pair has unresolved world-coordinate differences without camera/frame receipts; a fifth attempt lost the native browser. Cold-load provenance remains unverified. Real federated viewer qualification is outstanding. No speedup or shipping verdict is accepted. Lesson: a bounded readback and exact
+Four complete interleaved fresh-document public-model viewer pairs retain unchanged geometry and hit provenance, reduced mapped bytes, and mixed interaction timings. One pair has unresolved world-coordinate differences without camera/frame receipts; a fifth attempt lost the native browser. Cold-load provenance remains unverified. At that stage real federated viewer qualification was outstanding and no speedup or shipping verdict was accepted. Lesson: a bounded readback and exact
 GPU sample establish neither complete picking parity nor interaction throughput.
+
+The [resumed qualification](../../tests/evidence/point-depth-6881-20261025/README.md)
+retains successful source-matched builds and a common geometry engine for the
+full-copy inverse and production viewer. The exclusive request expired awaiting
+existing work before its controller started, yielding no new GPU or timing
+samples. The subsequent untimed NVIDIA qualification passes same-render
+depth/ID/item/world comparisons across both DPRs, real-model federation,
+authored geometry families and stale camera/resize/device-loss controls, with
+unchanged geometry. Harness readiness and screenshot-lifetime failures remain
+in the evidence alongside the accepted run.
+
+Verdict: accepted improvement. The exclusive hover cohort (`hover-15`) completed
+five interleaved pairs for FZK, Building-Architecture and Federation with every
+gate satisfied. The candidate maps 256 bytes per pick instead of 3,233,792, and
+lowers median pointer-to-hover latency in 15 of 15 pairs (paired ratio
+0.72-0.76) and median GPU picker time in 15 of 15 pairs (0.63-0.85). The p95,
+the slowest of nine hovers per sample, is lower in 12 of 15 pairs and is not
+claimed. No loading-speed claim. Thirteen earlier attempts ended in admission,
+host-quiet, operator-input, health and identity gates; each refusal is retained
+and no failed sample was replaced. Tolerances, the own-process CPU subtraction,
+a bounded quiet-host wait and the probed pick positions were added after
+observing those attempts and are disclosed as not blinded.
+
+Lessons: choose cohort pick positions away from coplanar or duplicate surfaces
+and verify them with repeated renders before freezing a protocol, and exclude any
+point seen to flip across sessions even if a probe calls it stable, because a
+one-pixel canvas change can move a texel onto a coplanar boundary; a
+cross-session identity gate must tolerate depth-ULP world drift but never an
+entity change; measure host CPU excluding the cohort's own process tree, and
+wait boundedly for a quiet reading rather than refusing on one sample, since
+browser teardown alone produced an 11% spike; a headed browser on a desktop host
+receives the operator's real mouse, so keep hands off for the run; the fleet's
+fixed one-hour admission limit means submitting only once the host has drained;
+check every health gate against recorded samples before a long exclusive wait,
+because a strict equality on a float DPR cost an hour of queue time.
 
 Independent Linux qualification adopted the existing readback cleanup repair;
 inverse fault controls demonstrate the ownership defects and the repaired paths
@@ -378,7 +732,7 @@ and pinned. T3 navigation refused before the declared model phase, with the
 earlier RAF refusal preserved. The subsequent current-main integration passed
 root renderer tests, full serial root typecheck with both postchecks, lint and
 source gates. Current real-model comparisons, federation and focused physical
-performance remain held; CPU integration and cleanup qualification do not
+performance remained held at that point; CPU integration and cleanup qualification do not
 replace them. No browser or GPU cohort ran for the integration update.
 
 A subsequent normal main integration includes merged #7361 without copying its
@@ -389,7 +743,7 @@ corrected root tests, full serial typecheck and source gates pass. Diagnostic
 method retirement also preserves later owners. These are lifecycle invariants,
 not native GPU acceptance. The current app/observer pair must be rebuilt and
 frozen before the separate T3 correctness session. Original coordinates,
-deadlines, refusals and the focused-performance hold remain.
+deadlines and refusals remain recorded; the focused-performance hold stood until the accepted cohort above.
 
 Mounted base and original-draft hover controls also reproduce stale hits and
 misses after newer input, pointer exit/cancel, unmount and ownership changes.
@@ -416,22 +770,39 @@ by the terminal event; a drain alone cannot preserve an open span. Other M2b
 transfer, interaction, deterministic-upload and device-loss obligations remain
 open.
 
-## Worker warm-up candidate held (#7036)
+## Worker warm-up candidate removed (#7036)
 
-The resumed [cold-load captures](evidence/worker-warmup-7036/README.md) show
-earlier worker readiness but mixed first-visible and total-load results. No
-end-to-end speedup is accepted. The candidate creates fresh workers beside the
-file read and still terminates them after each load; it does not satisfy the
-original persistent-reuse requirement. Geometry counts match, but an ordered
-geometry hash was not collected. Repeat/federation measurements during takeover
-overlapped validation builds and need an idle-machine repeat. Lesson: moving
-worker initialization earlier is an opportunity screen, not a performance
-verdict. Keep the measurement and memory constraints before changing the rollout.
+**Rejected by the recorded-build acceptance rule; experiment removed.** The
+[preserved real-GPU comparison](evidence/worker-warmup-7036/decision-20261026/README.md)
+uses interleaved fresh-browser production builds and the same source-built WASM
+binary. First geometry improved on the small house, and full readiness improved
+on the structural model, but full metadata/render readiness regressed beyond
+the unchanged reporter's noise threshold on the large architectural model. The predeclared rule forbids that regression; the
+legacy app-summary total cannot substitute for full readiness. Counts match on
+every paired sample, and all samples completed without GPU errors or recovery.
+Source pins, worker receipt, per-fixture measurements, phase memory and M2 frame
+observations are in the linked evidence, separate from the CI numeric baseline.
 
-The experiment defaults off on both the viewer and worker paths. Repeated cache
-hits cannot extend an unused worker's expiry, and memory-pressure retries drain
-the pool without refilling it. These are lifecycle corrections, not an accepted
-performance win; the end-to-end verdict above remains held.
+The measured candidate combines persistent reset workers and parser-module memo
+sharing. The comparison does not attribute the regression to either layer, and
+neither proposal is admitted. A parser-only proposal would need evidence for its
+own unflagged configuration. The existing main warm-up candidate and its public
+experimental APIs are removed under the flag's committed removal condition.
+Normal per-load worker construction, shared-module idle compilation, error
+recovery and the lower-detail retry notice remain.
+
+Logged WASM/JS phase peaks are not process RSS or idle-pool memory acceptance.
+The separate repeat/federation request was refused by the worker guard before
+execution. Those outstanding acceptance campaigns are not claimed or repeated
+for a candidate that will not ship. Earlier queue/admission and invalid-GPU
+attempts are retained as failures, not substituted timing samples.
+
+Lesson: earlier worker readiness and a small-fixture first-paint improvement do
+not establish an acceptable end-to-end tradeoff for large-model readiness.
+Keep the full-readiness boundary and a decision rule recorded before results;
+remove an unsuccessful experiment rather than carrying it indefinitely behind
+a disabled flag. The historical [fresh-worker captures](evidence/worker-warmup-7036/README.md)
+remain historical evidence, without a performance or reuse acceptance claim.
 
 ## Single-model appends cost O(new meshes) in the viewport (#7021)
 
@@ -2635,6 +3006,11 @@ Reuse checked ID-prefix accumulation and the scanner's existing ASCII proof; obt
   on both sides** — which reads exactly like "no regression" but is a control,
   not a measurement. If the diff is under `rust/processing/src/symbolic/`, say so
   and drive `extract_symbolic_data` directly, rather than pasting a zero.
+  The `symbolic_probe` processing example times that public API and reports
+  complete symbolic JSON fingerprints outside the timed interval. Build the
+  same example at both source pins, then interleave the binaries; pass a fixture
+  and `1` for one extraction per fresh process. This supplements the geometry
+  worker-pool probe and does not establish browser performance.
   - **And pick the fixture by whether it exercises the branch, not by the default.**
     #2358 only does extra work when a symbolic rep's `ContextOfItems` is a full
     `IfcGeometricRepresentationContext`. The default fixture AC20-FZK-Haus has
@@ -4281,3 +4657,582 @@ now uses the reviewed first-frame clock contract in both cadence and markers,
 and reads finalized sidecars at their actual case paths. Lesson: verify final
 checker contracts and receipt discovery against retained real captures before
 spending another capture window. This integration fix grants no timing verdict.
+
+
+## Recovered frame and placement validation: mixed, held (#7779)
+
+**Performance acceptance and merging remain held.** The single admitted,
+matched idle cohort compared the ordered tail/currentmain base with the recovered
+private integration using already-built source-pinned binaries. Haus wall time,
+public Viadotto planner time and public Duplex symbolic extraction time increased;
+the symbolic increase and the Haus increase are acceptance barriers, not dismissed
+as noise. Other worker-pool fixtures improved in that cohort; Holter is only a
+sanity sample. This is neither a blanket win nor an accepted correctness cost.
+
+All four worker-pool fixture mesh payload hashes and counts matched, and the
+complete Viadotto planner payload matched. Symbolic Duplex output has the separately
+qualified, sampling-order-only pair of near-zero float changes; its full JSON is
+not identical. Mesh hashing does not cover every exported appearance or auxiliary
+payload. Native single-thread phase instruction counts were flat or lower and both
+arms passed the unchanged canonical ceilings. Those phases do not execute the
+public symbolic API and cannot explain its measured slowdown.
+
+The [source identities and lossless reports](https://github.com/LTplus-AG/ifc-lite/blob/4c6534a7050f77f6cd2fbc734b40d14893d5071a/scripts/perf/evidence/f3b-recovered-7779/README.md)
+retain the balanced order, raw samples, CLI, fixture and manifest identities,
+all binary/tool/source checks before and after, numerical deltas and limits.
+Private integrated measurements do not substitute for raw support qualification.
+Root Turbo, source-matched Python wheel/parity and fresh WASM consumers have
+separate states and must not be called ready from native instruction results.
+Lesson: preserve full frames for correctness, retain every negative measurement,
+and attribute public API work separately before any performance acceptance.
+No new profile, rerun, optimization, repin, publication, merge or issue closure is
+authorized by this evidence.
+
+### Raw symbolic takeover qualification (#7914)
+
+The [raw-layer qualification packet](https://github.com/LTplus-AG/ifc-lite/blob/4c6534a7050f77f6cd2fbc734b40d14893d5071a/tests/evidence/f3b-recovered-symbolic-7779/takeover-42fa/README.md)
+records a separate, exclusively admitted paired comparison of the ordered parent
+and corrected symbolic source. Its verdict is **mixed, held**: some fixture wall
+medians increased and others decreased; this is no overall win or neutral result.
+It does not waive the distinct private integration regressions or the upstream
+instruction-budget hold. Full native mesh counts and hashes matched; full symbolic
+payloads needed their own comparison because the native probe does not execute
+the public symbolic API. The larger real-model coordinate changes are corrected
+negative-Z placement projection, independently checked using IfcOpenShell
+placements and authored curve equations, then the actual browser WASM boundary.
+
+Lesson: check executable provenance before timing. Cargo's shared relocation
+cache reused a baseline artifact during the first branch preparation despite a
+clean, correctly pinned checkout. That pair was rejected before measurements;
+fresh workspace compilation, embedded source paths and frozen executable hashes
+established the replacement pair. Keep source correctness, complete output
+identity and performance acceptance as separate evidence questions.
+
+The later [placement-stack reconciliation](https://github.com/LTplus-AG/ifc-lite/blob/4c6534a7050f77f6cd2fbc734b40d14893d5071a/tests/evidence/f3b-recovered-symbolic-7779/reconciliation-6fa/README.md)
+has separate native correctness and Clippy qualification. These earlier paired
+measurements do not qualify that combined source's performance or consumers.
+
+## Engine transfer ceiling acceptance (#8000, #8003)
+
+The maintainer accepted the accumulated engine transfer cost measured on main
+`141285f828`. The [hosted measurement](https://github.com/LTplus-AG/ifc-lite/actions/runs/39490083745)
+supplies the value and exact timestamp in the bundle ratchet provenance. Its
+retained `perf-ratchet-measured/bundle.json` artifact has SHA-256
+`5376ae3b2ef9af8fdebc7832419abf93b2269a1aeb21b600cfe7f0b18712723a`.
+The observed engine transfer measurement was 2,365,134 bytes; the maintainer
+set the ceiling to that same value, retaining the existing relative tolerance.
+These identify the accepted measurement rather than a performance claim. The
+earlier execution-ownership slice (#7956) was already incorporated in the old
+ceiling; this decision does not count that growth again. Only the engine ceiling
+was reset, with its relative tolerance unchanged. No speed improvement is claimed.
+
+The accepted code supports bounded resource accounts, source-free construction,
+transactional opening diagnostics, explicit CSG continuations and canonical
+analytic source capture. Browser extrusion-definition bindings consume shared
+analytic extraction, but the new opt-in original-source capture has no production
+caller at the measured commit. Individual compressed-byte contributions have
+not been isolated.
+
+Runtime opt-in is not evidence of a measured linked-byte reduction. Excluding
+capture-only code from WASM remains proposed, unimplemented and unmeasured;
+no proven main-byte reduction is claimed here. Accept this measured cost
+explicitly, retain the current build policy and automatic lowering, and require
+a new measurement and maintainer decision for any later increase. Source-matched
+performance acceptance and transfer-size acceptance remain separate decisions.
+
+## Section-clipped IFC export (#7711)
+
+Section clipping is an opt-in export operation after the normal mutation-resolved
+STEP serialization. It reuses canonical meshing and the exact intersection kernel;
+ordinary loading and ordinary STEP export do not invoke it. The WASM and geometry
+bridge changes expose that operation without changing the load pipeline.
+Palette fragments are rejoined by source representation item and f64 origin
+before choosing solid clipping; appearance partitioning cannot decide whether a
+cut is capped, and a repeated leaf cannot collapse distant occurrences into one
+f32 clip frame. Strict export additionally requests per-product processing
+receipts and validates source references. Ordinary processing sinks do not
+request or allocate those receipts. These export-only integrity checks and the
+conservative diagnostic/texture refusals require separately attributed load-cost
+and real-model qualification, recorded below.
+Retained face colours use bounded BVH attribution after the exact topology cut.
+
+The [historical export cohort](evidence/section-export-7711/README.md) retains
+its original source attribution and operation timings. Its identical native
+controls do not qualify changed native code; the fresh comparison below does.
+
+The recovered backend `de3c774` was measured against authenticated main
+`141285f` in a fresh native worker-pool cohort. Six untimed full-payload calls
+preserve ordered mesh output, raw float bits, frames/metadata/instances and all
+diagnostic bytes on Haus, ISSUE_129 and heavy Holter. All timed counts and
+fingerprints match. The stock phase report identifies no real change but remains
+inconclusive; complete-load observations include small adverse changes. No speed
+or neutrality claim follows.
+
+Disposition: accept the disclosed ordinary native cost for the section-export
+capability demonstrated by the separate fresh Haus real-WASM crop and external
+IfcOpenShell/OCC witness. Ordinary sinks allocate no audit receipts, but the
+changed diagnostic drain order and unsupported-map key cloning therefore required this
+full-load measurement. The [retained native evidence](evidence/section-export-7711/recovery-native-load/README.md)
+separates that cost from the requested crop operation. It establishes no browser,
+GPU, crop-throughput or opt-in-audit throughput verdict. Existing native-instruction,
+bundle, parity and required CI gates remain binding; no baseline or ceiling was
+changed. Lesson: measure the default path even when its new consumer is opt-in,
+and keep actual crop behavior proof separate from load-cost acceptance.
+
+## Standalone placement refusal reconciliation (#7877)
+
+The standalone native comparison preserves ordered mesh payloads, exact float/frame/metadata identity and complete diagnostic bytes on the catalog corpus. The stock reporter remains inconclusive; all-sample block summaries are retained beside the stock selected-row report, including the adverse parse observations and geometry offsets. The maintainer accepts the observed native cost for consistently refusing unreadable authored local, linear and grid placements while retaining absent-placement identity and readable degenerate-direction repair. This is a correctness tradeoff, not a speedup or statistical-neutrality claim. This is a maintainer judgment, not a statistical test result. The evidence does not waive browser/WASM qualification, WASM size budgets or required gates, and the later combined placement/memo measurements must not be relabelled as this standalone result.
+
+[Retained native observations](evidence/placement-refusal-7877-recovery/README.md) bind the exact standalone source. Keep strict malformed-placement reporting and output preservation separate from claims about native speed or the browser pipeline.
+
+The separate [historical recovery cohort](../../tests/evidence/placement-7779/native-5a834675-to-2f53f794/README.md)
+binds its own frozen base and candidate, with matching complete declared payload
+and diagnostic witnesses. Its stock report is inconclusive; faster entity-scan
+flags coexist with adverse geometry and complete-call observations. Raw block
+medians and stock best-of-five rows remain separate. Verdict: Class X guard
+correctness with disclosed native timing observations, without a speedup,
+neutrality or new cost-acceptance claim. Lesson: preserve each arm's original
+protocol/compiler/receipt identity and retain adverse phases when publishing a
+mixed report. The packet is prepared as a document-only descendant of the
+actual published measured candidate, with baseline source entries unchanged.
+It does not measure the previous private integration or a new document head.
+Supported reduced plain-file publication completed and was verified: 82 artifacts
+(81 unique original payloads plus alias inventory), representing 108 original
+paths with 47 omissions explained. All four receipt/output links and all 155
+unchanged local originals were verified. The packet's normalized verification
+manifest binds that scope. Full-155 vault/archive completion remains unproven;
+the tar bundle stays PREPARED_NOT_PUBLISHED under its unchanged archive guard.
+Three earlier publication failures remain preserved. One owner closure attempt
+was refused by safety.idle (“benchmark queued or active”); the task remains
+ACTIVE under the closure hold, rather than evidence pending for this selection.
+Inherited main holds and required hosted/oracle qualification remain outstanding.
+
+### Missing polygonal-face records (#7911)
+
+Correctness change, with no performance improvement or neutrality claim. The
+original native cohort retained ordered mesh identity on Haus, ISSUE_129 and
+Holter, but its phase and complete-sample timing results were inconclusive.
+That original evidence remains historical rather than qualifying the recovery.
+
+The recovered runtime source `e8d7a7e595` was compared with main `141285f828`
+using separately built frozen binaries and five fixed interleaved rounds.
+Complete ordered mesh payloads, float fields, frames/metadata and diagnostic
+bytes match on all three controls. The new timing report is also noisy and
+inconclusive; no browser worker-pool or speed result follows from it.
+
+Controlled corruption of the committed Bonsai polygonal-cutter fixture confirms
+that the recovery retains the same geometry as removing only the absent face
+reference. The old source drops the face set; the recovery reports the missing
+face while retaining its valid neighbors. The first verifier failed because it
+read a snake_case diagnostic key rather than the serialized camelCase contract.
+A separate strict-schema reconciliation of the retained outputs passed; the
+original failed result and raw bytes remain unchanged, with no probe rerun.
+
+Lesson: keep missing-face refusal local, distinguish output identity from
+inconclusive timing, and reject unknown diagnostic schemas instead of treating
+missing fields as zero. The wider Rust charter obligations remain separate.
+
+The final recovery `f05119b6d92a` also excludes absent-face polygonal sets from
+opt-in extra dedup, retaining healthy cache reuse and a refusal on every fresh
+router. Removing only that exclusion fails the second-router report assertion;
+exact restoration passes. Its source-specific native workspace and strict
+clippy qualification passed.
+
+The fixed final-source timing cohort against the retained, authenticated main
+arm preserves all mesh fingerprints, counts and failure counters. Its report
+remains noisy and inconclusive overall, but flags the Haus parse phase as
+slower; complete-load wall medians also increase on all controls. Preserve that
+adverse result rather than substituting the earlier recovery's timing or calling
+this neutral. Causal attribution remains unproven. This
+default-off dedup/native cohort establishes no opt-in or browser performance
+claim.
+
+The separate final-source full-payload witness passes on the same frozen arms:
+the control models preserve ordered meshes, exact float payloads, frame/metadata
+and diagnostic bytes. Controlled damage again preserves the reference-removed
+geometry and adds the missing-face refusal. Its first preflight failed before
+any model call because a negative parser control caught the wrong exception
+type. A separately reviewed derivative corrects only that control and binds both
+the original verifier and its own reviewed bytes; all model calls then pass.
+The original failure remains preserved. Correctness and timing are separate
+verdicts: output identity does not establish performance neutrality.
+
+Disposition: accept the disclosed native cost for this localized Class X
+correctness change, which preserves valid neighboring geometry with a counted
+refusal. Independent adversarial review approves its source and correctness
+evidence. The charter requires a performance verdict for this class; this is an
+adverse verdict, with causal attribution still unproven, rather than a neutrality
+claim. Existing native-instruction, bundle, parity and required CI ceilings stay
+binding. No benchmark rerun, baseline, acceptance band or pin change is made.
+
+
+### Canonical placement consumer own-layer native verdict (#7880)
+
+The fresh standalone03 `03e2ad` versus corrected-X `a806aed` native worker-pool
+cohort preserves complete ordered mesh/float/frame/metadata/instance output and
+all diagnostic bytes on Haus, ISSUE_129 and heavy Holter. Every timed count and
+fingerprint also matches. The stock report identifies no real phase change but
+remains inconclusive; complete-load observations are modestly adverse on all
+three controls. No speed or neutrality claim follows.
+
+Disposition: accept the disclosed native cost for canonical placement/direction
+consumer fixes with exact preserved geometry/refusal output. This is an accepted
+cost, not a required-gate waiver. The [own-layer evidence](evidence/placement-7779/recovery-x-native/README.md)
+retains every phase/sample and distinguishes the stock selected report from
+all-inner outer-block statistics. Both actual selected sources retain original
+core/geometry/processing and example compiler proof; the original X preparation's
+later R-guard failure remains failed. No prior timing observations are pooled or
+subtracted. Lesson: qualify the actual layer against its own base and preserve
+small adverse results even when full output matches and the stock report is
+inconclusive. Browser/WASM and other required CI/ratchet gates remain separate;
+no baseline, ceiling, acceptance band or pin changes.
+
+### Current-main source recovery hold (#7880)
+
+The public `e219be91b220` history is recovered onto actual merged main
+`c7d3855296fc` without replacing its ancestry. The type-map origin reader uses
+the current GeometryProgram controller, and the omitted derived-Axis1 repair
+and parsed Axis2 regression are carried as source. Lower-layer placement
+policy, resource accounting and diagnostics retain current-main authority.
+
+Historical (superseded by the disposition below): qualification remained
+**HOLD for X3a behavioral/oracle evidence, the required performance verdict
+and applicable gates**. Charter #7779 assigns X3a to #7880;
+Class R neutrality belongs to the later R2a layer (#7896). This source-only
+recovery ran no build, native test, browser/WASM campaign or performance measurement. Historical native observations above and the private
+75-test qualification do not qualify the recovered source. Root review and
+source-matched fleet qualification remain required; no output pin, baseline,
+ceiling or acceptance band is changed.
+
+**Disposition (2026-10-24): wall-time PASS by maintainer decision.** The
+90-pair wall-time cohort (job `313e11ca`, source `48f1c6c0` against base
+`61bfa85b`, 45 BC / 45 CB) was accepted as passing under non-inferiority:
+every fixture's 90% upper bound on the C/B ratio is below 1.02 (FZK-Haus
+[0.977, 1.003], ISSUE_129 [0.985, 1.008], ISSUE_053 [1.005, 1.013]). ISSUE_053
+is slightly slower but inside the band; the verdict is non-inferiority, not
+"no change". The HOLD paragraph above is retained as history. No baseline,
+ceiling, acceptance band or output pin is changed by this disposition.
+
+## Allplan polyline full-path compatibility (#7983)
+
+The [original native comparison](evidence/allplan-polyline-7983/summary.json)
+against the branch base passed its pre-timing idle guard, but the unchanged
+reporter rejected the timing spread. Parse medians were unchanged; geometry
+and total medians increased within that wide spread. The verdict is unqualified,
+with no speedup, neutrality or browser worker-pool performance claim. Mesh,
+vertex and triangle counts match; payload byte identity was not measured.
+The timed candidate precedes the final replacement of literal attribute
+positions with typed slots, so this is not a final-source timing result.
+
+Lesson: an idle preflight and matching output counts do not qualify noisy
+timing or establish byte identity. Preserve the original adverse observations
+and their source identity rather than treating a successful probe exit as
+performance acceptance.
+
+The [sole final-source comparison](evidence/allplan-polyline-7983/final-891152455a/README.md)
+measures the merged candidate against its matching main parent under exclusive
+Pop admission. The unchanged reporter again rejects the timing spread. Ordered
+mesh payload fingerprints match on every sample, with the fingerprint's declared
+metadata/texture/instancing exclusions. No speedup, neutrality or browser
+worker-pool verdict follows. Both the original adverse observations and this
+final-source rejection remain evidence; neither is replaced by a passing probe
+exit. Sample telemetry excludes cgroup quota throttling but does not prove the
+remaining noise's cause. Lesson: short-model timing can remain unqualified after
+exclusive admission and a passing idle guard; preserve that limit rather than
+changing acceptance or running replacement cohorts.
+
+### Element presentation source admission (E1b, #7955, #8049)
+
+The source-admission and decoder-free assembly refactor was measured against
+its landed E1 parent using an exclusive native cohort with interleaved rounds
+on FZK, ISSUE_129 and Holter. Mesh, vertex and triangle counts match across
+both arms on every model; these counts do not establish byte identity.
+
+The overall timing verdict is noisy and inconclusive: FZK's total spread fails
+the reporter's noise bound, and ISSUE_129's lookup phase is below timer
+resolution. Total and geometry timing changes on the two large models remain
+inside their measured noise. Holter's parse and entity-scan phases nevertheless
+show a slowdown beyond their phase noise; preserve that adverse observation.
+Those source paths are unchanged, but binary layout as a cause is unproven.
+No whole-pipeline neutrality, speedup or browser worker-pool claim follows.
+
+CI also detects a small geometry instruction increase over E1. The geometry
+ceiling alone is raised to the measured value under the approved per-slice
+policy, with its tolerance unchanged and exact measured merge provenance.
+Other instruction and bundle ceilings stay unchanged. The disclosed phase
+cost is accepted for the source/numerical boundary; it is not an optimization.
+
+Lesson: a sub-millisecond phase and a noisy small control can prevent a global
+verdict while a larger model still exposes an adverse phase signal. Keep
+output-count equivalence, phase timing and deterministic instruction cost as
+separate evidence, and do not label an architectural refactor performance-neutral.
+
+### Owned immutable production contexts (E2a, #7955, #8059)
+
+The [source-qualified comparison](evidence/model-context-e2a/summary.json)
+preserves ordered geometry fingerprints and counts on FZK, ISSUE_129 and Holter
+in both default and local frames. The fingerprint excludes text, material
+definitions, UVs, textures and instancing; historical full-payload and WASM
+comparisons retain their earlier source attribution.
+
+Native wall-clock performance remains inconclusive: the unchanged reporter
+rejects the small control's spread. The larger models' geometry and total
+changes remain within their measured spread. Current CI instruction cost is
+unchanged or slightly lower against the exact synthetic merge parent; this
+establishes no speedup. The earlier dedicated evaluated-appearance measurement
+retains its matching plan payload and phase-noise verdict. No end-to-end browser
+worker-pool neutrality or hardware-GPU result is claimed.
+
+Disposition: accept this bounded ownership refactor for infrastructure review
+under the existing per-slice policy, preserving the inconclusive timing verdict
+and using the agreed deterministic CI tiebreaker. Default native/browser mesh
+production is unchanged; the migrated appearance path still calls the canonical
+producer. Retained activation and its complete release qualification remain
+separate. No performance ceiling, tolerance or pin is changed.
+
+Lesson: a clean checkout receipt can accompany a stale cross-checkout Cargo
+executable. Verify the executable and its new-module dependencies before timing.
+The first preparation failed that check and its queued measurement was cancelled
+before execution. Checksum freshness forced a genuine rebuild for the corrected
+cohort. Preserve source qualification, output identity and timing as separate
+verdicts. Software-GPU upload and capability-probe stalls also explain why
+worker chunk durations cannot stand in for browser load time.
+
+### Current-source wrapper deletion qualification hold (#7896)
+
+The R2a source sequence was rebuilt at `eeba1e4a21` on the landed #7880
+source `a0720da42c` and continues through `5db3809a`. That sequence incorporated the `cf892ea4` integration and was then merged
+with main `760206a3` as `86184f2e`. The former
+public heads `1c2393e0114a` and `46cc72ff79ad`, X3a parent `abaab36312f7`, and
+integration `453af4305df8` are superseded historical heads, not ancestors of
+this integration; their results do not qualify this source. This ancestry does
+not claim that #7906 merged. The canonical placement readers replace the
+deleted wrappers; GeometryProgram and MappingControl retain current rendering
+and type-map origin authority. The lower X2 resource, finite-grid, refusal and
+WASM contracts and the X3a authored Axis2 / derived-Axis1 correction remain
+prerequisites.
+
+Qualification is **HOLD**: Class R requires a neutral base-versus-branch
+performance verdict for this recovered source, plus source-matched behavioral
+and oracle evidence and applicable gates. External Rust consumer qualification
+includes export's `step_map_rigid`, geometry tests/examples, PyO3 and the
+separate csg-thread-bench crate; the latter two are not covered by workspace
+checks. The six removed exports need Rust-only break #14 (Cargo 24.6.2 with
+npm 10.6.2): break #13 (#7955/#8120) shipped in 23.6.1, and the current
+published ifc-lite-geometry is 23.6.1
+(ifc-lite-core is at 23.6.2). The migration guide is in `docs/api/rust.md`.
+The earlier cargo-semver-checks 0.50.0 comparison against 22.6.0 (receipt
+`295e65a4`, six expected `function_missing` findings) and the eight-crate gate
+on `5db3809a` / `86184f2e` are historical and bind those sources only; the
+comparison against geometry 23.6.1 for this head, and runtime, oracle and performance
+gates, remain
+pending. No additional waiver is introduced.
+
+This restack is source-only. Historical native observations above, private
+`75bf`/R75 qualifications and inherited WASM results bind their original sources
+and do not qualify this head. No new runtime, oracle or performance result is
+claimed, and no output pin, digest/floor protection, baseline, ceiling or
+acceptance band is changed. Root independent review and qualification remain
+required before publication or landing.
+
+### Current-main R2a integration (#7896)
+
+The R2a source sequence from `eeba1e4a21` through `5db3809a` was rebuilt on
+landed #7880 (`a0720da42c`), retaining main's version where #7880 changed the
+same reads (the mandatory `ExtrudedDirection` and deleted
+`get_direction_by_id`). The sequence incorporated the `cf892ea4` integration;
+`5db3809a` was then merged with main `760206a3` as `86184f2e`. The former
+`46cc72ff79ad`, `abaab36312f7` and
+`453af4305df8` heads are not ancestors of this integration; their results do
+not bind this source. Historical results above remain bound to their original
+commits. The adjacent-layer comparison, complete output identity, external
+consumer checks, oracle qualification and independent review remain pending.
+
+The review-fix integration merged main `cf892ea4c`, whose break #13
+(#7955/#8120) has since shipped in 23.6.1. The landing head merges main
+`15efd4ff5c` and records the six public-reader removals as their own break
+#14; archived break #12 remains unchanged.
+New exact-head qualification compares with this merged
+main base, not the historical cohorts.
+
+R2a closes only its assigned reader deletions. The remaining hand-rolled
+`curve_segment.rs::read_placement` belongs to downstream X3b; the Rust reader
+guidance in `rust/AGENTS.md` belongs to downstream G3. Neither is closed by
+this layer, and neither is changed here.
+
+### Current-main validator integration preparation (#7915)
+
+The F3b leaves integration applies the P4/E1 source layer `ecb3b32308` after
+approved R2a and the P2t terminal layer, excluding the deferred P2 frame changes
+and the stale `current-parent-64430` evidence packet. Historical measurements
+above remain tied to their original source pins. This local source integration
+has no runtime, oracle or performance qualification; all acceptance holds remain.
+
+### Native/browser run snapshots (E2b, #7955)
+
+The [source-qualified evidence](evidence/run-snapshot-e2b/summary.json) records
+matching native flat/instanced payload fingerprints and actual source-built
+WASM getter fingerprints. These scopes exclude complete result serialization
+and separate native material definitions.
+
+The five-pair native cohort remains inconclusive: the large opening fixture's
+lookup phase is below timer resolution. The small control's geometry and total
+medians are slower within their measured spread; both larger models are slightly
+faster within theirs. Preserve every phase result. Source-qualified probes and
+stable geometry counts do not establish performance neutrality or a speedup.
+The exact-parent CI instruction-count tiebreaker shows slightly lower geometry
+and total cost, with small parse and entity-scan increases. Accept the bounded
+snapshot infrastructure for final review under the per-slice policy, retaining
+the inconclusive timing verdict. No ceiling or tolerance changes; required
+checks and semantic review still gate merging, and retained release remains separate.
+
+Lesson: a zero-duration phase can invalidate the whole timing verdict even when
+all pairs finish and artifact provenance holds. Preserve that verdict and the
+adverse small-control observations; do not rerun until green or substitute
+count equality for full output identity or browser worker-pool performance.
+
+### Canonical product protocol (E3, #7955)
+
+The [final-source evidence](https://github.com/LTplus-AG/ifc-lite/blob/e8068c4aa310f2263b571ffc7928723c1438059b/scripts/perf/evidence/product-state-e3-final/summary.json)
+compares the canonical product protocol with its landed E2b parent. Native
+result fingerprints and source-built WASM getter fingerprints match within
+the documented corpus and normalization scope. Workspace tests, strict Clippy
+and the three independent protocol, publication and retry-stop mutations pass
+their required controls. The [earlier evidence](https://github.com/LTplus-AG/ifc-lite/blob/41efcf427d46aa604384c014bd6f0fdef4448de1/scripts/perf/evidence/product-state-e3/summary.json)
+retains its earlier-source attribution.
+
+Verdict: disclosed correctness cost, with no speedup or performance-neutrality
+claim. The final native cohort flags slower geometry and total time on the
+small control; its aggregate qualification also remains inconclusive because
+one opening-fixture phase is below timer resolution. Holter is slower in every
+native pair even though the stock reporter does not flag that change. These
+observations remain adverse results. Instruction attribution measures a much
+smaller increase in work and does not explain the elapsed-time penalty. Fixed
+processor-placement diagnostics neither replace the original cohort nor prove
+its cause.
+
+The completed physical-GPU browser worker-pool cohort flags a slower first
+geometry batch on the small control. Complete metadata/render readiness stays
+within observed spread on all three models. All samples retain healthy GPU
+counters and matching mesh counts; representative screenshots show the actual
+models. That scope does not qualify interaction latency, long-lived memory,
+other browsers or retained execution.
+
+The landing tradeoff is the measured cost for source-bound, once-only work and
+correct interruption/report isolation. Keep the original failed native verdict
+and browser first-batch flag visible; no ceiling or tolerance changes are made
+by this evidence update. Final semantic review and current required checks
+remain mandatory. The full retained platform and release gates remain open.
+
+Lesson: a successful measurement process is not a no-regression verdict, and
+low instruction overhead cannot waive an elapsed-time regression. Report the
+complete paired observations and the accepted correctness tradeoff instead of
+replacing samples until the headline turns green.
+## Section-export measured engine budget decision
+
+The human approved retaining the section-export stack at its measured local
+engine budget, with the inherited tolerance and viewer budgets unchanged.
+The [decision evidence](../../docs/architecture/evidence/section-export-budget/README.md)
+binds the source, runtime custody, original size failure and completed consumer
+proof. Accepting this budget does not establish isolated feature cost or browser
+runtime cost. Preserve the original failures and unknown consumer attempt;
+hosted/parity and current performance remain holds, and merge is not approved.
+
+### F3b leaf-reader instruction diagnosis (#7779, #8045)
+
+A local Callgrind comparison on louistrue-pc of R2a `1cd8066df9` and leaves
+`f4015a55b6` attributes Haus's regression to parsing profile points again
+after eager reference-list decoding. Reusing those decoded records through the
+same counted leaf rule repairs Haus, but alone leaves duplex over the ceiling:
+its BREP loops also pay for the stricter byte reader. Exact uppercase keyword
+comparison before case folding, inlined coordinate reads, and removing duplicate
+trivia/finite checks repair that path without changing numeric admission or
+fallback refusals. The shared number reader already admits finite REALs; its
+unrepresentable variant still falls through to the counted decoder.
+
+The combined change meets the unchanged per-phase instruction ceiling on Haus,
+ISSUE_129 and duplex. Preserve eager list decoding: interleaving decode and leaf
+validation changes which malformed record is counted when a later decode fails.
+These are single-run instruction diagnostics, not elapsed-time or browser
+worker-pool speedup evidence. The local diagnosis packet is
+`f3b-leaves-ir-diagnosis-r1.json`; earlier unsuccessful candidates remain in it.
+
+### IfcType keyword perfect-hash lookup (#8119)
+
+Replacing the generated linear IfcType name dispatch with a minimal perfect
+hash (exact spelling still required on every occupied slot) is accepted on
+instruction counts. Parse instructions drop on Haus, ISSUE_129 and duplex, and
+total instructions drop on all three, with matching mesh, vertex and triangle
+counts. The paired native wall-time cohort was protocol-inconclusive, not a
+pass: the small fixtures run in tens of milliseconds, so a millisecond timer
+cannot resolve a parse-phase gain, and two ISSUE_129 phases measured zero on
+both sides. The large-fixture total moved the same way as the instructions.
+The maintainer accepted the change on that evidence (2026-10-27).
+
+Lesson: a parse-only optimisation needs fixtures whose parse phase runs well
+above the timer resolution before a wall-time cohort can say anything; on small
+models the instruction comparison is the meaningful measurement. Numbers and
+the cohort report live in the PR and its evidence, not here.
+
+### C2 bounded representation admission instruction repair (#7781)
+
+Local Callgrind profiles attributed the admission lane's overhead to repeated
+stop checks, decoded-entity copies, allocation, and moving budget-bearing reply
+envelopes. Reuse flat admitted member vectors, keep cold admission failures out
+of executing controls, batch plain iterative-walk tasks, and carry speculative
+logical debits only on source replies. Inline traversal storage and the ordinary
+unscoped stop check remove overhead without bypassing source cancellation or
+the typed, latched stop path. Acceptance still commits debits; mapped members
+still pay before decode, including retained and cached paths.
+
+The resulting native instruction cohort meets the unchanged per-phase ceiling
+on Haus, duplex, and ISSUE_129 with matching mesh, vertex, and triangle counts.
+This is instruction evidence only; no wall-clock or browser performance claim
+is made. Exact results, source attribution, and validation are recorded in
+`c2-walk-lane-perf-r1.json`. The subsequent owner repair follows main's
+`ExecutionIdentity::same_instance` check for synchronous admission consumption:
+replacing an owner refuses with the existing `WrongOwner` protocol error, while
+reached maintenance on that instance preserves admitted roots. The synchronous
+product driver validates inside the source and publication action arms; this
+avoids a second action dispatch on numerical/transfer steps. The shared execute
+path keeps validation before annotation and texture work. Pending tickets,
+leases, and retained caches keep their existing generation checks. The full
+library and integration suites cover this distinction; the owner repair's
+validation and instruction comparison are in `c2-walk-lane-owner-r1.json`.
+
+Lesson: reducing a plan's allocations in isolation can enlarge every enclosing
+program move or perturb allocator size classes. Whole-plan boxing, inline root
+representation headers, exact small reservations, and a bounded empty-header
+pool all lost in the complete pipeline and were removed. Keep the successful
+plan small and measure the whole driver after each storage change. Unchanged
+parser sources and equal keyword call counts also produced small instruction
+deltas in libc comparisons, so distinguish layout-sensitive comparison costs
+from extra decoding before changing the parser.
+
+### Retained opening cuts (M3-A, #7955)
+
+Retained hosts subtract each cutter in order and keep every intermediate
+tessellation for certified emptiness. Real SDK source-oracle checks and
+native/Node/browser parity pass. Per-cut timings describe the cost of those
+invocations; they do not establish browser worker-pool performance.
+
+Verdict: default exact OBJ goldens and ordered native geometry fingerprints
+remain identical on Haus and ISSUE_129, the default WASM bytes are identical,
+and the default instruction gate stays within its unchanged ceilings. The
+final paired native wall-time cohort is unqualified because ISSUE_129 has
+phases below timer resolution. Haus medians are unchanged; ISSUE_129's geometry
+and total medians are slower within measured spread. An earlier source cohort
+also exceeded the Haus spread limit. Preserve both observations; neither
+establishes a speedup or performance-neutrality claim.
+
+Lesson: a successful chained kernel operation does not prove publication.
+Whole-model parity caught a browser receipt that held a sealed mesh but did
+not expose it through the publication trait. Keep both boundary and model
+checks, and measure the complete worker pool before changing cut grouping,
+bounds pruning or intermediate tessellation.
+
+Feature isolation also applies to data layout. Adding retained-only fields or
+enum variants to default-compiled types changed the default WASM bytes even
+when their operations were unreachable. Gate the state as well as its entry
+points, and qualify fresh base/branch builds at the same source path; preserved
+archive mtimes can otherwise make Cargo reuse the wrong side of a comparison.

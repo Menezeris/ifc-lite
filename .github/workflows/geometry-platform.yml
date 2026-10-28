@@ -1,0 +1,309 @@
+# SPDX-License-Identifier: MPL-2.0
+# Opt-in qualification of the isolated NVIDIA SMLib native adapter, its Rust
+# worker client and its browser module-Worker build. Nothing in core/geometry/processing/wasm depends on either, so
+# this workflow is path-filtered to them and is intentionally NOT a required check.
+name: Geometry platform (native adapter)
+
+on:
+  pull_request:
+    paths:
+      - 'native/**'
+      - 'rust/geometry-runtime/**'
+      - 'rust/retained-native/**'
+      - 'rust/processing/tests/fixtures/issue_2019_*'
+      - 'rust/processing/tests/fixtures/issue_3641_*'
+      - 'rust/processing/src/processor/**'
+      - 'rust/processing/src/element/session_retained/**'
+      - 'rust/geometry/src/program/retained/**'
+      - 'rust/geometry/tests/m3_*'
+      - 'rust/geometry/tests/support/m3_opening_fixtures.rs'
+      - 'rust/processing/tests/m3_*'
+      - 'rust/processing/src/element.rs'
+      - 'rust/processing/Cargo.toml'
+      - 'tests/fixtures/cli-retained/**'
+      - 'apps/viewer/public/_fixtures/AC20-FZK-Haus.ifc'
+      - 'tests/fixtures/synthetic-retained/**'
+      - 'tests/manifests/cli-retained-coverage.tsv'
+      - 'tests/models/manifest.json'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      # Retained requests the worker executes are lowered here.
+      - 'rust/geometry/src/document/**'
+      - 'rust/geometry/src/program/**'
+      - 'rust/geometry/tests/m*'
+      # Shared test fixtures (CUT-0 prisms) used by the native and Worker witnesses.
+      - 'rust/geometry/tests/support/**'
+      - 'rust/processing/tests/m*'
+      - 'tests/manifests/cli-retained-coverage.d/**'
+      - 'tests/evidence/*/witnesses.txt'
+      - 'rust/geometry/src/analytic/**'
+      # Browser module-Worker staging and its actual-Worker probe.
+      - 'scripts/stage-retained-browser-assets.mjs'
+      - 'scripts/stage-retained-runtime-peer.mjs'
+      - 'scripts/lib/__fixtures__/retained-driver/**'
+      - 'scripts/stage-cli-retained-engine.mjs'
+      - 'scripts/stage-cli-retained-engine.test.mjs'
+      - 'scripts/cli-retained-engine/**'
+      - 'scripts/retained-compare/**'
+      - 'packages/cli/**'
+      - 'packages/**'
+      - 'shared/**'
+      - 'scripts/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'package.json'
+      - 'turbo.json'
+      - 'tsconfig*.json'
+      - 'scripts/smlib-node-transport.test.mjs'
+      - 'scripts/lib/__fixtures__/smlib-node/**'
+      - 'tests/evidence/m1-f1/**'
+      - 'LICENSE'
+      - 'scripts/smlib-browser-worker-probe.mjs'
+      - 'scripts/wasm-test-mime-driver.mjs'
+      # The browser executor lives in the published wasm crate.
+      - 'rust/wasm-bindings/src/retained_browser/**'
+      # M2-A streaming session and view meshes.
+      - 'rust/wasm-bindings/src/api/retained_*.rs'
+      - 'rust/wasm-bindings/src/retained_view.rs'
+      - 'rust/wasm-bindings/js/**'
+      # Feature wiring for the retained-browser build (the wasm32 path
+      # only these actual-Worker lanes exercise).
+      - 'rust/wasm-bindings/Cargo.toml'
+      - 'rust/wasm-bindings/src/lib.rs'
+      - 'rust/geometry/Cargo.toml'
+      - 'rust/wasm-bindings/src/api/retained_browser.rs'
+      - 'rust/wasm-bindings/tests/retained-browser/**'
+      - 'scripts/retained-browser-contract.mjs'
+      # The actual-Worker contract serves the geometry fixture directory to the browser.
+      - 'rust/geometry/tests/fixtures/**'
+      - 'scripts/build-wasm.sh'
+      - 'packages/wasm/retained.*'
+      - 'packages/wasm/pkg-retained/**'
+      - 'packages/wasm/test/retained-browser.test.mjs'
+      - '.github/workflows/geometry-platform.yml'
+  workflow_dispatch:
+    inputs:
+      corpus:
+        type: boolean
+        default: false
+        description: Run the downloaded model corpus as well as committed fixtures
+
+permissions:
+  contents: read
+
+jobs:
+  native-adapter:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          persist-credentials: false
+      - name: Checkout pinned upstream SDK (fetched, never vendored)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          repository: NVIDIA-Omniverse/usd-brep
+          ref: c9c5979f04cea8c38213004d4f04df0dcfb40d05
+          path: upstream-smlib
+          persist-credentials: false
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake ninja-build
+      - name: Build native owned boundary and worker
+        run: |
+          cmake -S native/smlib-adapter -B "$RUNNER_TEMP/smlib-native" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DSMLIB_SOURCE="$GITHUB_WORKSPACE/upstream-smlib"
+          cmake --build "$RUNNER_TEMP/smlib-native" --parallel 4
+      - name: Execute every native owned boundary
+        id: native-ctest
+        continue-on-error: true
+        run: ctest --test-dir "$RUNNER_TEMP/smlib-native" --output-on-failure
+      - uses: ./.github/actions/setup-wasm-build
+        with:
+          cache-prefix: geometry-platform
+      - name: Real Rust subprocess integration
+        id: native-consumers
+        continue-on-error: true
+        env:
+          IFCLITE_SMLIB_PATH: ${{ runner.temp }}/smlib-native/ifclite_smlib_worker
+        run: |
+          test -x "$IFCLITE_SMLIB_PATH"
+          IFCLITE_SMLIB_WORKER="$IFCLITE_SMLIB_PATH" \
+            cargo test --locked -p ifc-lite-geometry-runtime --all-targets --no-fail-fast
+      - name: Retained native comparison and real executor tests
+        id: native-compare
+        continue-on-error: true
+        run: |
+          # The default step shell has no pipefail: without it `| tee` would hide
+          # a failing cargo test whose witness markers were already printed.
+          set -o pipefail
+          export IFCLITE_REQUIRE_SMLIB=1
+          export IFCLITE_SMLIB_WORKER="$RUNNER_TEMP/smlib-native/ifclite_smlib_worker"
+          cargo test --locked -p ifc-lite-retained-native --features retained-runtime -- --nocapture 2>&1 | tee "$RUNNER_TEMP/native-witnesses.log"
+          for file in tests/evidence/*/witnesses.txt; do
+            [[ -f "$file" ]] || continue
+            while IFS= read -r witness; do
+              [[ -z "$witness" || "$witness" == \#* ]] && continue
+              grep -Fqx "sdk witness executed: $witness" "$RUNNER_TEMP/native-witnesses.log"
+            done < "$file"
+          done
+          cargo run --release --locked -p ifc-lite-retained-native --features retained-runtime --example retained_compare -- \
+            --worker "$IFCLITE_SMLIB_WORKER" --out "$RUNNER_TEMP/native-compare" --committed --gate
+      - name: M3 native opening witnesses
+        id: m3-native
+        continue-on-error: true
+        run: |
+          export IFCLITE_REQUIRE_SMLIB=1
+          export IFCLITE_SMLIB_WORKER="$RUNNER_TEMP/smlib-native/ifclite_smlib_worker"
+          export IFCLITE_M3_REFERENCE="$RUNNER_TEMP/m3-native-openings.json"
+          cargo test --locked -p ifc-lite-retained-native --features retained-runtime --test m3_native -- --nocapture | tee "$RUNNER_TEMP/m3-native.log"
+          for witness in m3_prism_curved m3_synthetic_empty m3_scaled_cutter m3_nonbakeable_cutter m3_unsupported m3_kernel_failure m3_frames m3_lineage m3_reference m3_two_parts_two_openings m3_empty_opening_body; do
+            grep -Fx "sdk witness executed: $witness" "$RUNNER_TEMP/m3-native.log"
+          done
+      - name: Download optional corpus
+        if: inputs.corpus == true
+        run: corepack enable && pnpm fixtures
+      - name: Optional retained native corpus
+        if: inputs.corpus == true
+        run: |
+          cargo run --release --locked -p ifc-lite-retained-native --features retained-runtime --example retained_compare -- \
+            --worker "$RUNNER_TEMP/smlib-native/ifclite_smlib_worker" --out "$RUNNER_TEMP/native-corpus" --manifest tests/models/manifest.json
+      - name: Upload native comparison evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: retained-native-comparison
+          path: |
+            ${{ runner.temp }}/native-compare/*.json
+            ${{ runner.temp }}/native-compare/*.tsv
+            ${{ runner.temp }}/native-corpus/*.json
+            ${{ runner.temp }}/native-corpus/*.tsv
+          if-no-files-found: error
+      - name: Checkout pinned Emscripten SDK
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          repository: emscripten-core/emsdk
+          ref: 3b3963d86a5c97adaf6eaa845cdfe0b811c2f960
+          path: emsdk
+          persist-credentials: false
+      - name: Build the browser module-Worker boundary (Emscripten 4.0.15)
+        run: |
+          emsdk/emsdk install 4.0.15
+          emsdk/emsdk activate 4.0.15
+          source emsdk/emsdk_env.sh
+          emcmake cmake -S native/smlib-adapter -B "$RUNNER_TEMP/smlib-wasm" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DSMLIB_SOURCE="$GITHUB_WORKSPACE/upstream-smlib"
+          cmake --build "$RUNNER_TEMP/smlib-wasm" --parallel 4
+      - name: Execute every owned boundary under Node, plus the browser binary
+        id: wasm-ctest
+        continue-on-error: true
+        run: ctest --test-dir "$RUNNER_TEMP/smlib-wasm" --output-on-failure
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Actual module Workers over the staged /smlib bundle
+        id: browser-workers
+        continue-on-error: true
+        run: |
+          node scripts/smlib-browser-worker-probe.mjs --build "$RUNNER_TEMP/smlib-wasm" \
+            --sdk "$GITHUB_WORKSPACE/upstream-smlib"
+      - name: Strict Clippy and unit tests with the opt-in retained-browser feature
+        id: retained-clippy
+        continue-on-error: true
+        run: |
+          cargo clippy --locked -p ifc-lite-wasm --all-targets --features retained-browser -- -D warnings
+          cargo clippy --locked -p ifc-lite-wasm --all-targets --features retained-browser \
+            --target wasm32-unknown-unknown -- -D warnings
+          cargo test --locked -p ifc-lite-wasm --lib --features retained-browser retained_browser
+      - name: Stage /smlib beside the wasm crate for its actual-Worker tests
+        run: |
+          # wasm-bindgen-test serves the crate directory; the staging script
+          # refuses an existing output, so this is always a fresh bundle.
+          node scripts/stage-retained-browser-assets.mjs --build "$RUNNER_TEMP/smlib-wasm" \
+            --sdk "$GITHUB_WORKSPACE/upstream-smlib" --out "$GITHUB_WORKSPACE/rust/wasm-bindings/smlib"
+          # The SMLib-free runtime test uses its own transport; real-Worker
+          # tests continue to use the untouched SDK assets under /smlib/.
+          # m3-native is continue-on-error: a missing reference must not abort the
+          # later independent lanes; m3-browser then fails with its own message.
+          if [ -f "$RUNNER_TEMP/m3-native-openings.json" ]; then
+            cp "$RUNNER_TEMP/m3-native-openings.json" rust/wasm-bindings/smlib/m3-native-openings.json
+          fi
+          node scripts/stage-retained-runtime-peer.mjs
+          echo "IFCLITE_REAL_CHROMEDRIVER=$(command -v chromedriver)" >> "$GITHUB_ENV"
+      - name: Actual module-Worker retained browser executor (ifc-lite-wasm)
+        id: browser-runtime
+        continue-on-error: true
+        env:
+          WASM_BINDGEN_TEST_TIMEOUT: 300
+        run: |
+          wasm-pack test --headless --chrome \
+            --chromedriver "$GITHUB_WORKSPACE/scripts/wasm-test-mime-driver.mjs" rust/wasm-bindings --lib \
+            --features retained-browser -- retained_browser
+      - name: M3 native and browser opening parity
+        id: m3-browser
+        continue-on-error: true
+        env:
+          WASM_BINDGEN_TEST_TIMEOUT: 300
+        run: |
+          wasm-pack test --headless --chrome \
+            --chromedriver "$GITHUB_WORKSPACE/scripts/wasm-test-mime-driver.mjs" rust/wasm-bindings --lib \
+            --features retained-browser -- retained_browser_m3_opening_parity
+      - name: Build the canonical WASM package and the opt-in retained bundle
+        run: BUILD_RETAINED=1 bash scripts/build-wasm.sh
+      - name: Committed declarations match both bundles
+        id: generated-types
+        continue-on-error: true
+        run: git diff --exit-code -- packages/wasm/pkg/ifc-lite.d.ts packages/wasm/pkg-retained/ifc-lite.d.ts
+      - name: Opt-in package boundary (default engine, loader, retained engine)
+        id: package-boundary
+        continue-on-error: true
+        run: node --test packages/wasm/test/retained-browser.test.mjs
+      - name: Canonical JavaScript retained API with an actual module Worker
+        id: browser-api
+        continue-on-error: true
+        run: |
+          node scripts/retained-browser-contract.mjs --build "$RUNNER_TEMP/smlib-wasm" \
+            --sdk "$GITHUB_WORKSPACE/upstream-smlib"
+      - name: Staged Node retained engine with real worker_threads
+        id: cli-retained
+        continue-on-error: true
+        run: |
+          node scripts/stage-cli-retained-engine.mjs --build "$RUNNER_TEMP/smlib-wasm" \
+            --sdk "$GITHUB_WORKSPACE/upstream-smlib" \
+            --pkg-retained "$GITHUB_WORKSPACE/packages/wasm/pkg-retained" \
+            --toolchain-notice "Emscripten-LICENSE=$GITHUB_WORKSPACE/emsdk/upstream/emscripten/LICENSE" \
+            --out "$RUNNER_TEMP/cli-retained-engine"
+          pnpm build --filter=@ifc-lite/cli
+          IFCLITE_RETAINED_ENGINE="$RUNNER_TEMP/cli-retained-engine" \
+            node --test scripts/cli-retained-engine/real-kernel.test.mjs
+          IFCLITE_RETAINED_ENGINE="$RUNNER_TEMP/cli-retained-engine" \
+            IFCLITE_NATIVE_PRODUCTS="$RUNNER_TEMP/native-compare/products.tsv" \
+            IFCLITE_M3_REFERENCE="$RUNNER_TEMP/m3-native-openings.json" \
+            node --test scripts/retained-compare/real-engine.test.mjs
+      # Gather independent failures, then preserve a failing overall verdict.
+      - name: Require every independent result
+        if: always()
+        env:
+          M3_NATIVE: ${{ steps.m3-native.outcome }}
+          M3_BROWSER: ${{ steps.m3-browser.outcome }}
+          NATIVE_COMPARE: ${{ steps.native-compare.outcome }}
+          NATIVE_CTEST: ${{ steps.native-ctest.outcome }}
+          NATIVE_CONSUMERS: ${{ steps.native-consumers.outcome }}
+          WASM_CTEST: ${{ steps.wasm-ctest.outcome }}
+          BROWSER_WORKERS: ${{ steps.browser-workers.outcome }}
+          BROWSER_RUNTIME: ${{ steps.browser-runtime.outcome }}
+          BROWSER_API: ${{ steps.browser-api.outcome }}
+          GENERATED_TYPES: ${{ steps.generated-types.outcome }}
+          PACKAGE_BOUNDARY: ${{ steps.package-boundary.outcome }}
+          RETAINED_CLIPPY: ${{ steps.retained-clippy.outcome }}
+          CLI_RETAINED: ${{ steps.cli-retained.outcome }}
+        run: |
+          failed=0
+          for lane in M3_NATIVE M3_BROWSER NATIVE_COMPARE NATIVE_CTEST NATIVE_CONSUMERS WASM_CTEST BROWSER_WORKERS BROWSER_RUNTIME BROWSER_API GENERATED_TYPES PACKAGE_BOUNDARY RETAINED_CLIPPY CLI_RETAINED; do
+            printf '%s=%s\n' "$lane" "${!lane}"
+            if [[ "${!lane}" != success ]]; then failed=1; fi
+          done
+          exit "$failed"

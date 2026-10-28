@@ -16,6 +16,11 @@ pub(super) struct SplitBody {
     pub retained: u32,
 }
 pub(super) struct Source<'a> {
+    /// This session's model lifecycle. Every canonical pass snapshots its maps
+    /// under it; injecting authored entities expires the earlier snapshots.
+    pub production_model: crate::element::ProductionModel,
+    /// The empty maps of a pass without appearance styles, cached like any other.
+    pub empty_styles: super::owned_context::Styles,
     pub context: Option<super::context::Context>,
     pub decoder: EntityDecoder<'a>,
     pub types: BTreeMap<u32, IfcType>,
@@ -31,6 +36,16 @@ pub(super) struct Source<'a> {
     texture_index: Option<Arc<FxHashMap<u32, ResolvedTextureMap>>>,
 }
 impl<'a> Source<'a> {
+    /// Authored entities change what the decoder resolves, so every snapshot
+    /// taken before them is expired before the next canonical product runs.
+    pub(super) fn install_authored_entities(
+        &mut self,
+        entities: &FxHashMap<u32, Arc<DecodedEntity>>,
+    ) {
+        self.decoder.inject_shared_cache(entities);
+        self.production_model.invalidate_source();
+    }
+
     /// The model's surface-texture index, built on first use and shared by
     /// every later caller of this session. Each build decodes every texture
     /// and counts each refused binary, so building it per planning stage
@@ -48,6 +63,8 @@ impl<'a> Source<'a> {
             return Err("Appearance source exceeds 128 MiB budget".into());
         }
         let mut source = Self {
+            production_model: crate::element::ProductionModel::new(),
+            empty_styles: super::owned_context::Styles::default(),
             context: None,
             decoder: EntityDecoder::new(bytes),
             types: BTreeMap::new(),
@@ -114,43 +131,23 @@ impl<'a> Source<'a> {
     pub fn entity(&mut self, id: u32) -> Result<DecodedEntity, String> {
         self.decoder.decode_by_id(id).map_err(|e| e.to_string())
     }
-    /// Check completeness before using the canonical resolver, whose load-time
-    /// recovery intentionally returns a truncated transform for bad files.
+    /// Check completeness before using the canonical resolver: the shared
+    /// chain walk (visited set, no depth cap) under appearance authoring's
+    /// policy, local links only, a 2D `RelativePlacement` accepted.
     pub fn validate_world_placement(&mut self, product: &DecodedEntity) -> Result<(), String> {
-        let mut next = match product.get(5) {
-            None | Some(A::Null) => None,
-            value => Some(
-                value
-                    .and_then(A::as_entity_ref)
-                    .ok_or("Invalid ObjectPlacement")?,
-            ),
+        const POLICY: ifc_lite_geometry::placement::ChainPolicy = ifc_lite_geometry::placement::ChainPolicy {
+            grid: false,
+            linear: false,
+            planar_relative: true,
+            strict_spatial: false,
         };
-        let mut visited = BTreeSet::new();
-        while let Some(id) = next {
-            if !visited.insert(id) || visited.len() > ifc_lite_core::MAX_PLACEMENT_DEPTH {
-                return Err("World projection placement cycle/depth limit".into());
-            }
-            let placement = self.entity(id)?;
-            if placement.ifc_type != IfcType::IfcLocalPlacement {
-                return Err("Appearance authoring currently supports only local placement chains".into());
-            }
-            let axes = self.entity(placement.get_ref(1).ok_or("Missing RelativePlacement")?)?;
-            if !matches!(
-                axes.ifc_type,
-                IfcType::IfcAxis2Placement3D | IfcType::IfcAxis2Placement2D
-            ) {
-                return Err("Invalid RelativePlacement type".into());
-            }
-            next = match placement.get(0) {
-                None | Some(A::Null) => None,
-                value => Some(
-                    value
-                        .and_then(A::as_entity_ref)
-                        .ok_or("Invalid PlacementRelTo")?,
-                ),
-            };
-        }
-        Ok(())
+        let id = match product.get(5) {
+            None | Some(A::Null) => return Ok(()),
+            value => value.and_then(A::as_entity_ref).ok_or("Invalid ObjectPlacement")?,
+        };
+        let placement = self.entity(id)?;
+        ifc_lite_geometry::placement::validate_chain(&placement, &mut self.decoder, &POLICY)
+            .map_err(|error| error.to_string())
     }
     pub fn single_parent(&self, id: u32, parent: u32) -> bool {
         self.incoming

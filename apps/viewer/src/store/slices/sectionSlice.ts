@@ -45,6 +45,7 @@ function loadCapStyle(): SectionCapStyle {
     fillColor:   [...SECTION_CAP_DEFAULTS.FILL_COLOR],
     strokeColor: [...SECTION_CAP_DEFAULTS.STROKE_COLOR],
     pattern:     SECTION_CAP_DEFAULTS.PATTERN,
+    fillMode:    'uniform',
     spacingPx:   SECTION_CAP_DEFAULTS.SPACING_PX,
     angleRad:    SECTION_CAP_DEFAULTS.ANGLE_RAD,
     widthPx:     SECTION_CAP_DEFAULTS.WIDTH_PX,
@@ -59,6 +60,7 @@ function loadCapStyle(): SectionCapStyle {
       fillColor:   isRgba(parsed.fillColor)   ? parsed.fillColor   : fallback.fillColor,
       strokeColor: isRgba(parsed.strokeColor) ? parsed.strokeColor : fallback.strokeColor,
       pattern:     isHatchId(parsed.pattern)  ? parsed.pattern     : fallback.pattern,
+      fillMode:    parsed.fillMode === 'element' ? 'element' : 'uniform',
       spacingPx:   typeof parsed.spacingPx === 'number' && Number.isFinite(parsed.spacingPx)
         ? Math.max(2, parsed.spacingPx) : fallback.spacingPx,
       angleRad:    typeof parsed.angleRad === 'number' && Number.isFinite(parsed.angleRad)
@@ -253,14 +255,22 @@ export const createSectionSlice: StateCreator<SectionSlice, [], [], SectionSlice
 
   setSectionPlanePosition: (position) => {
     const state = get();
-    const clampedPosition = Math.min(100, Math.max(0, Number(position) || 0));
+    // Any finite percentage is a cut: past 0..100 it lies beyond the bounds
+    // (a plan cut above the model top, #8162). Bounded inputs (the percent
+    // control, SDK / embed commands) clamp before they get here. A non-finite
+    // value is rejected and the current position kept: `Number(x) || 0`
+    // alone would let `Infinity` through.
+    const requested = Number(position);
+    const current = state.sectionPlane.position;
+    const nextPosition = Number.isFinite(requested) ? requested
+      : Number.isFinite(current) ? current : SECTION_PLANE_DEFAULTS.POSITION;
     // Cardinal: percentage along the axis between bounds extents, persisted
     // (issue #243) for reopen. Custom: percentage along the picked normal
     // between the bounds-diagonal extents centred on `pickedAt` — not
     // persisted (model-relative). The renderer translates that to a signed
     // `distance`; the patch below stores the percentage and updates
     // `custom.distance` to match.
-    const planePatch: Partial<SectionPlane> = { position: clampedPosition };
+    const planePatch: Partial<SectionPlane> = { position: nextPosition };
     if (state.sectionPlane.custom) {
       const c = state.sectionPlane.custom;
       // Re-anchor from percentage: without renderer-supplied bounds here,
@@ -269,7 +279,7 @@ export const createSectionSlice: StateCreator<SectionSlice, [], [], SectionSlice
       // with real bounds via `setSectionCustomDistance` once known).
       // `pickedAt` stays anchored; only `distance` changes.
       const fallbackSpan = 10;
-      const dPct = (clampedPosition - state.sectionPlane.position) / 100;
+      const dPct = Number.isFinite(current) ? (nextPosition - current) / 100 : 0;
       planePatch.custom = { ...c, distance: c.distance + dPct * fallbackSpan, alignment: undefined };
     }
     enableSectionPlane(planePatch);

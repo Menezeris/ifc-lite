@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index d7ba0a8f..f968b482 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -68,7 +68,7 @@ const elementOf = (e: ClashRich['a'], labelOf: (modelId: string) => string): Cla
+  * povie. `touch` (dotyk bez prieniku) AIM nepozná, preto sa neposiela.
+  */
+ export function buildResults(rule: string, clashes: readonly ClashRich[], labelOf: (modelId: string) => string): { results: ClashResultWire[]; truncated: boolean } {
+-  const mine = clashes.filter((c) => c.rule === rule)
++  const mine = clashes.filter((c) => c.rule === rule && c.status !== 'touch')
+     .sort((x, y) => SEVERITY_RANK[x.severity] - SEVERITY_RANK[y.severity] || x.distance - y.distance);
+   const results = mine.slice(0, MAX_SAVE_RESULTS).map((c): ClashResultWire => ({
+     kind: c.status as ClashKind, severity: c.severity, distance: c.distance, a: elementOf(c.a, labelOf), b: elementOf(c.b, labelOf),

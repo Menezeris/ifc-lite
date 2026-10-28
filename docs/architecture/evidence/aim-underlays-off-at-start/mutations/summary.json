@@ -1,0 +1,44 @@
+{
+  "default-shown": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimUnderlays3d.test.ts; that file has a green, attributable baseline.",
+    "base": "32bf4c5baed1a65a722fd4b52791a1b23478a958",
+    "head": "8d5a5306453c28c4f6fddc0d8ee27486a895a22f",
+    "production": [
+      "apps/viewer/src/aim/aimUnderlays3d.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimUnderlays3d.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "skip-ignores-texture": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimUnderlays3d.test.ts; that file has a green, attributable baseline.",
+    "base": "32bf4c5baed1a65a722fd4b52791a1b23478a958",
+    "head": "8d5a5306453c28c4f6fddc0d8ee27486a895a22f",
+    "production": [
+      "apps/viewer/src/aim/aimUnderlays3d.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimUnderlays3d.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "skip-ignores-visible": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimUnderlays3d.test.ts; that file has a green, attributable baseline.",
+    "base": "32bf4c5baed1a65a722fd4b52791a1b23478a958",
+    "head": "8d5a5306453c28c4f6fddc0d8ee27486a895a22f",
+    "production": [
+      "apps/viewer/src/aim/aimUnderlays3d.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimUnderlays3d.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

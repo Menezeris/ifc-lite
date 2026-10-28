@@ -145,6 +145,27 @@ function lastIndex<T>(xs: readonly T[], ok: (x: T) => boolean): number {
   return -1;
 }
 
+/** Rozloženie o jednu dlaždicu väčšie (D-161, "Otvoriť v novej dlaždici"); `grid4` je strop. */
+export const GROW_LAYOUT: Record<TileLayout, TileLayout> = {
+  single: 'split_h', split_h: 'three_left', split_v: 'three_top',
+  three_left: 'grid4', three_right: 'grid4', three_top: 'grid4', three_bottom: 'grid4', three_h: 'grid4', three_v: 'grid4',
+  grid4: 'grid4',
+};
+
+/**
+ * Záložka do novej dlaždice: prázdna dlaždica, inak väčšie rozloženie (doterajšie dlaždice ostanú
+ * na svojich indexoch, nová je posledná), pri `grid4` nahradí poslednú mimo živej 3D.
+ */
+export function addTile(s: ViewTabsState, t: TilesState, id: string, liveId: string | null): TilesState {
+  if (!tabOf(s, id)) return t;
+  if (t.tiles.includes(id)) return t;
+  if (!isTiled(t)) return { layout: 'split_h', tiles: [s.activeId, id] };
+  if (t.tiles.includes(null)) return placeTab(s, t, id, liveId);
+  const layout = GROW_LAYOUT[t.layout];
+  if (layout === t.layout) return placeTab(s, t, id, liveId);
+  return { layout, tiles: [...t.tiles, id] };
+}
+
 /** Záložka do konkrétnej dlaždice; keď už je v inej, dlaždice sa vymenia. */
 export function setTile(s: ViewTabsState, t: TilesState, index: number, id: string | null): TilesState {
   if (!isTiled(t) || index < 0 || index >= t.tiles.length) return t;
@@ -200,6 +221,8 @@ export function describeLayout(s: ViewTabsState, t: TilesState, sceneId: string)
         index,
         tab: id,
         ...(tab ? { label: tab.label, kind: tab.kind } : {}),
+        // Pohľad z Presentation v dlaždici (D-161).
+        ...(tab?.viewId ? { view_id: tab.viewId, view: tab.label } : {}),
         // 3D dlaždica mimo živej ukazuje snímku, kým na ňu používateľ neklikne.
         ...(tab && isSceneTab(tab) ? { live: index === live } : {}),
       };

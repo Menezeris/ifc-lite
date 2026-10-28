@@ -1,6 +1,6 @@
 {
   "name": "ifc-lite",
-  "version": "10.4.0",
+  "version": "11.0.0",
   "description": "High-performance browser IFC parser & renderer",
   "private": true,
   "type": "module",
@@ -17,6 +17,7 @@
     "build": "turbo build",
     "build:e2e": "turbo build --filter=@ifc-lite/viewer",
     "build:embed": "pnpm --filter @ifc-lite/viewer-embed build",
+    "build:imported-geometry": "node scripts/build-imported-geometry.mjs",
     "build:wasm": "node scripts/run-build-wasm.mjs",
     "build:wasm:fetch": "node scripts/fetch-prebuilt-wasm.mjs",
     "fixtures": "node scripts/fixtures/fetch-fixtures.mjs",
@@ -24,7 +25,7 @@
     "fixtures:list-missing": "node scripts/fixtures/fetch-fixtures.mjs --list",
     "fixtures:manifest": "node scripts/fixtures/build-manifest.mjs",
     "fixtures:upload": "node scripts/fixtures/upload-fixtures.mjs",
-    "test": "turbo test",
+    "test": "node scripts/test-cache.mjs",
     "test:revert-oracle-selfcheck": "node scripts/revert-oracle-selfcheck.mjs",
     "test:collab": "pnpm --filter @ifc-lite/collab --filter @ifc-lite/collab-server test",
     "test:e2e": "playwright test --project=viewer-e2e",
@@ -34,6 +35,7 @@
     "test:api": "tsx --tsconfig tests/tsconfig.json --test \"tests/api/**/*.test.ts\"",
     "test:integration": "tsx --tsconfig tests/tsconfig.json tests/integration.test.ts",
     "test:wasm-contract": "node scripts/test-wasm-contract.mjs",
+    "test:diff-decode-leaks": "bash scripts/test-diff-decode-leaks.sh",
     "test:snap-edges": "node scripts/test-snap-edges.mjs",
     "check:test-wiring": "node scripts/check-test-wiring.mjs",
     "check:ci-path-coverage": "node scripts/check-ci-path-coverage.mjs",
@@ -187,7 +189,8 @@
     "patchedDependencies": {
       "vite-plugin-top-level-await@1.6.0": "patches/vite-plugin-top-level-await@1.6.0.patch",
       "@swc/core@1.15.8": "patches/@swc__core@1.15.8.patch",
-      "@radix-ui/react-popover@1.1.23": "patches/@radix-ui__react-popover@1.1.23.patch"
+      "@radix-ui/react-popover@1.1.23": "patches/@radix-ui__react-popover@1.1.23.patch",
+      "wkt-parser@1.5.6": "patches/wkt-parser@1.5.6.patch"
     }
   }
 }

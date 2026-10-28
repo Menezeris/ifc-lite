@@ -121,6 +121,7 @@ pub fn param_set_enabled_override(v: Option<bool>) {
 #[path = "rect_fast/param_stats.rs"]
 mod param_stats;
 pub use param_stats::{param_record_fire, take_param_fires};
+pub(crate) use param_stats::publish_param_fire;
 
 // rect_fast engagement counters are now REQUEST-LOCAL: each cut records into its
 // router via `GeometryRouter::record_rect_fast` (drained by `take_rect_fast_stats`),
@@ -334,6 +335,23 @@ pub fn subtract_rect_openings(
     stats.fired += 1;
     stats.openings_cut += clamped.len() as u64;
     Some(cut)
+}
+
+/// Coplanar-merge an analytic cut, but never trade an exactly closed cut for an
+/// open one. Consolidation's size rules (needle, ring noise) drop the rim faces
+/// of a thin residual web, such as the ~40 um left between two openings an
+/// author kept apart (#7942), and tear the mesh open.
+pub(crate) fn consolidate_keeping_closed(cut: Mesh) -> Mesh {
+    use crate::exact_topology::strict_closed_mesh;
+    if !strict_closed_mesh(&cut) {
+        return crate::csg::ClippingProcessor::consolidate_coplanar(cut);
+    }
+    let merged = crate::csg::ClippingProcessor::consolidate_coplanar(cut.clone());
+    if strict_closed_mesh(&merged) {
+        merged
+    } else {
+        cut
+    }
 }
 
 /// Sort + dedup grid lines on one axis; `None` if two DISTINCT lines are at most

@@ -92,3 +92,53 @@ fn real_revit_extrusion_keeps_profile_hole_and_position() {
     assert!((extrusion.depth.unwrap() - 0.06).abs() < 1e-12);
     assert!(extrusion.position_matrix.is_some());
 }
+
+
+#[test]
+fn original_solid_position_axis_and_ref_direction_survive_normalization() {
+    use crate::analytic::SourceValue;
+    let bytes = include_str!("../../tests/fixtures/mapped_instances_synthetic.ifc");
+    let bytes = bytes.replace("#11=IFCAXIS2PLACEMENT3D(#10,$,$);",
+        "#11=IFCAXIS2PLACEMENT3D(#10,#990,#991);\n#990=IFCDIRECTION((0.,0.,7.));\n#991=IFCDIRECTION((3.,0.,0.));");
+    assert!(bytes.contains("#990=IFCDIRECTION"), "fixture placement must be replaced");
+    assert!(read(bytes.as_bytes(), 12).source.is_none(), "capture is opt-in");
+    let source = crate::analytic::with_source_capture(|| read(bytes.as_bytes(), 12));
+    assert_eq!(source.status, AnalyticStatus::Complete);
+    let original = source.source.unwrap();
+    assert_eq!(original.capture_status, AnalyticStatus::Complete);
+    assert_eq!(original.records[&11].attributes["Axis"], SourceValue::EntityRef(990));
+    assert_eq!(original.records[&11].attributes["RefDirection"], SourceValue::EntityRef(991));
+    assert_eq!(original.records[&990].attributes["DirectionRatios"],
+        SourceValue::List(vec![SourceValue::Real(0.), SourceValue::Real(0.), SourceValue::Real(7.)]));
+    assert_eq!(original.records[&991].attributes["DirectionRatios"],
+        SourceValue::List(vec![SourceValue::Real(3.), SourceValue::Real(0.), SourceValue::Real(0.)]));
+    assert_eq!(source.position_matrix.unwrap()[0], 1.);
+}
+
+#[test]
+fn an_extruded_direction_whose_length_overflows_agrees_with_the_mesh_path() {
+    use crate::processors::extrusion_params::ExtrusionParams;
+    let fixture = include_str!("../../tests/fixtures/mapped_instances_synthetic.ifc");
+    for ratios in ["(1.7E308,0.,1.7E308)", "(0.,3.,4.)", "(1.E308,0.,1.E308)"] {
+        let source = fixture.replace("#9=IFCDIRECTION((0.,0.,1.));", &format!("#9=IFCDIRECTION({ratios});"));
+        assert!(source.contains(ratios), "fixture direction must be replaced");
+        let analytic = read(source.as_bytes(), 12);
+        assert_eq!(analytic.status, AnalyticStatus::Complete, "{ratios}");
+        let authored = analytic.direction_ratios.expect(ratios);
+        let unit = analytic.axis_unit_vector.expect(ratios);
+
+        let mut decoder = EntityDecoder::with_index(source.as_bytes(), build_entity_index(source.as_bytes()));
+        let solid = decoder.decode_by_id(12).unwrap();
+        let mesh = ExtrusionParams::decode(&solid, &mut decoder, "ExtrudedAreaSolid").expect(ratios);
+        assert_eq!(decoder.refused_records(), 0, "{ratios}");
+        let mesh_unit = mesh.direction.normalize();
+        for axis in 0..3 {
+            assert!((unit[axis] - mesh_unit[axis]).abs() <= f64::EPSILON, "{ratios}: {unit:?} vs {mesh_unit:?}");
+        }
+        // A finite length keeps the authored ratios over their own norm, bit for bit.
+        let norm = authored[0].hypot(authored[1]).hypot(authored[2]);
+        if norm.is_finite() {
+            assert_eq!(unit, authored.map(|value| value / norm), "{ratios}");
+        }
+    }
+}

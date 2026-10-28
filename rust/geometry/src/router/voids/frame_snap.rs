@@ -22,11 +22,9 @@
 //! byte-identical (snapping unconditionally regressed the geometry census,
 //! #5905).
 
-use super::OpeningType;
+use super::CutterKind;
 use crate::mesh_check::strictly_paired_at;
-use crate::router::diagnostics::HostOpeningDiagnostic;
-use crate::router::GeometryRouter;
-use crate::{BoolFailure, Mesh, Point3};
+use crate::{Mesh, Point3};
 
 /// Coordinates closer than this many f32 ULPs of the world magnitude are one
 /// value. Rotation of a quantised point moves it by up to ~1 ULP per axis;
@@ -91,7 +89,7 @@ impl AxisClusters {
 /// Move every coordinate of `host` and of each opening's cutter mesh and
 /// bounds, per frame axis, onto the shared representative of its cluster.
 /// All operands are expressed in the same wall frame.
-pub(super) fn snap_to_frame_planes(host: &mut Mesh, openings: &mut [OpeningType], tol: f64) {
+pub(super) fn snap_to_frame_planes(host: &mut Mesh, openings: &mut [CutterKind], tol: f64) {
     let mut per_axis: [Vec<f64>; 3] = Default::default();
     let collect_mesh = |m: &Mesh, per_axis: &mut [Vec<f64>; 3]| {
         for c in m.positions.chunks_exact(3) {
@@ -102,7 +100,8 @@ pub(super) fn snap_to_frame_planes(host: &mut Mesh, openings: &mut [OpeningType]
     };
     collect_mesh(host, &mut per_axis);
     for op in openings.iter() {
-        let (mesh, lo, hi) = parts(op);
+        let cutter = op.cutter();
+        let (mesh, (lo, hi)) = (cutter.mesh(), cutter.bounds());
         if let Some(m) = mesh {
             collect_mesh(m, &mut per_axis);
         }
@@ -128,16 +127,16 @@ pub(super) fn snap_to_frame_planes(host: &mut Mesh, openings: &mut [OpeningType]
     snap_mesh(host);
     for op in openings.iter_mut() {
         match op {
-            OpeningType::Rectangular(lo, hi, _) => {
+            CutterKind::Rectangular(lo, hi, _) => {
                 snap_point(lo);
                 snap_point(hi);
             }
-            OpeningType::NonRectangular(m, lo, hi, _) => {
+            CutterKind::NonRectangular(m, lo, hi, _) => {
                 snap_mesh(m);
                 snap_point(lo);
                 snap_point(hi);
             }
-            OpeningType::DiagonalRectangular(m, _) => snap_mesh(m),
+            CutterKind::DiagonalRectangular(m, _) => snap_mesh(m),
         }
     }
 }
@@ -184,62 +183,6 @@ pub(super) fn enclosed_volume(mesh: &Mesh) -> f64 {
                 / 6.0
         })
         .sum()
-}
-
-/// The per-host diagnostics one void cut records on the router. The retry
-/// runs the cut twice; only the run whose mesh is KEPT may leave its record,
-/// so the caller snapshots around the retry and restores the other one.
-pub(super) struct HostDiagSnapshot {
-    csg_failures: Option<Vec<BoolFailure>>,
-    host_diag: Option<HostOpeningDiagnostic>,
-    consumed: bool,
-    rect_fast: crate::rect_fast::RectFastStats,
-}
-
-impl HostDiagSnapshot {
-    pub(super) fn capture(router: &GeometryRouter, host: u32) -> Self {
-        Self {
-            csg_failures: router.csg_failures.borrow().get(&host).cloned(),
-            host_diag: router.host_opening_diagnostics.borrow().get(&host).cloned(),
-            consumed: router.voids_consumed_hosts.borrow().contains(&host),
-            rect_fast: *router.rect_fast_stats.borrow(),
-        }
-    }
-
-    pub(super) fn restore(self, router: &GeometryRouter, host: u32) {
-        let mut failures = router.csg_failures.borrow_mut();
-        match self.csg_failures {
-            Some(v) => failures.insert(host, v),
-            None => failures.remove(&host),
-        };
-        let mut diags = router.host_opening_diagnostics.borrow_mut();
-        match self.host_diag {
-            Some(d) => diags.insert(host, d),
-            None => diags.remove(&host),
-        };
-        let mut consumed = router.voids_consumed_hosts.borrow_mut();
-        if self.consumed {
-            consumed.insert(host);
-        } else {
-            consumed.remove(&host);
-        }
-        *router.rect_fast_stats.borrow_mut() = self.rect_fast;
-    }
-}
-
-fn parts(op: &OpeningType) -> (Option<&Mesh>, Point3<f64>, Point3<f64>) {
-    match op {
-        OpeningType::Rectangular(lo, hi, _) => (None, *lo, *hi),
-        OpeningType::NonRectangular(m, lo, hi, _) => (Some(m), *lo, *hi),
-        OpeningType::DiagonalRectangular(m, _) => {
-            let (lo, hi) = m.bounds();
-            (
-                Some(m),
-                Point3::new(lo.x as f64, lo.y as f64, lo.z as f64),
-                Point3::new(hi.x as f64, hi.y as f64, hi.z as f64),
-            )
-        }
-    }
 }
 
 #[cfg(test)]

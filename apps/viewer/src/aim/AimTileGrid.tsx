@@ -18,8 +18,11 @@ import { ImageDocumentView } from '@/components/documents/ImageDocumentView';
 import { isSceneTab, type ViewTab } from './viewTabsLayout.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { TILE_HEADER_PX, TILE_RECTS, liveTile, type TileRect } from './viewTilesPlan.js';
-import { activate, putTile } from './viewTabsApply.js';
+import { activate, putTile, showViewLive } from './viewTabsApply.js';
+import { viewTabId } from './viewTabsPlan.js';
 import { shotOf } from './tileShots.js';
+import { consumeOwn } from './viewTilesScene.js';
+import { AimPlanPositionToggle } from './AimPlanPositionToggle.js';
 
 const pct = (v: number) => `${Math.round(v * 1e4) / 100}%`;
 const place = (r: TileRect) => ({ left: pct(r.x), top: pct(r.y), width: pct(r.w), height: pct(r.h) });
@@ -30,6 +33,14 @@ export function AimTileGrid() {
   const tabs = useAimViewTabs((s) => s.tabs);
   const activeId = useAimViewTabs((s) => s.activeId);
   const sceneId = useAimViewTabs((s) => s.sceneId);
+  // D-161: pohľad, ktorý používateľ zapol kartou v Presentation, ide do živej dlaždice (canvas ho už ukazuje).
+  const activeView = useViewerStore((s) => s.activeBasketViewId);
+  const seenView = useRef(activeView);
+  useEffect(() => {
+    if (seenView.current === activeView) return;
+    seenView.current = activeView;
+    if (activeView && layout !== 'single' && !consumeOwn(activeView)) showViewLive(activeView, { applied: true });
+  }, [activeView, layout]);
   if (layout === 'single') return null;
   const rects = TILE_RECTS[layout];
   const live = liveTile({ layout, tiles }, sceneId);
@@ -65,6 +76,7 @@ export function AimTileGrid() {
 }
 
 function TileHeader({ index, tab, tabs, live }: { index: number; tab: ViewTab | undefined; tabs: readonly ViewTab[]; live: boolean }) {
+  const views = useViewerStore((s) => s.basketViews);
   return (
     <div className="pointer-events-auto flex shrink-0 items-center gap-1 border-b bg-muted/60 px-1" style={{ height: TILE_HEADER_PX - 1 }}>
       <select
@@ -74,11 +86,17 @@ function TileHeader({ index, tab, tabs, live }: { index: number; tab: ViewTab | 
         onChange={(e) => putTile(index, e.target.value || null)}
       >
         <option value="">(prázdna)</option>
-        {tabs.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+        {tabs.filter((t) => t.kind !== 'view').map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+        {views.length > 0 && (
+          <optgroup label="Pohľady">
+            {views.map((v) => <option key={v.id} value={viewTabId(v.id)}>{v.name}</option>)}
+          </optgroup>
+        )}
       </select>
       {tab && isSceneTab(tab) && (
         <span className="truncate text-2xs text-muted-foreground">{live ? 'živé 3D' : 'snímka'}</span>
       )}
+      {tab?.docId && <AimPlanPositionToggle docId={tab.docId} />}
     </div>
   );
 }
@@ -100,6 +118,8 @@ function ShotTile({ tab }: { tab: ViewTab }) {
   const version = useAimViewTabs((s) => s.shots);
   const ref = useRef<HTMLCanvasElement>(null);
   const shot = shotOf(tab.id);
+  // Pohľad z Presentation, ktorý ešte nebol živý, ukáže náhľad z panela (D-161).
+  const thumb = useViewerStore((s) => (tab.viewId ? s.basketViews.find((v) => v.id === tab.viewId)?.thumbnailDataUrl : null));
   useEffect(() => {
     const out = ref.current;
     const src = shotOf(tab.id);
@@ -117,9 +137,11 @@ function ShotTile({ tab }: { tab: ViewTab }) {
     >
       {shot ? (
         <canvas ref={ref} aria-hidden className="h-full w-full object-contain" />
+      ) : thumb ? (
+        <img src={thumb} alt={tab.label} className="h-full w-full object-contain" />
       ) : null}
       <span className="absolute bottom-1 rounded bg-background/80 px-1.5 py-0.5 text-2xs text-muted-foreground group-hover:text-foreground">
-        {shot ? 'Klikni pre živý pohľad' : 'Bez snímky - klikni pre živý pohľad'}
+        {shot || thumb ? 'Klikni pre živý pohľad' : 'Bez snímky - klikni pre živý pohľad'}
       </span>
     </button>
   );

@@ -1,5 +1,21 @@
 # @ifc-lite/pointcloud
 
+## 0.14.0
+
+### Minor Changes
+
+- [#8170](https://github.com/LTplus-AG/ifc-lite/pull/8170) [`8260d88`](https://github.com/LTplus-AG/ifc-lite/commit/8260d88c72c6857a585f90b816468d227d8e6042) Thanks [@louistrue](https://github.com/louistrue)! - Georeferencing reads the IFC4X3 coordinate operations beside `IfcMapConversion`. An `IfcRigidOperation` (a pure translation) is read into `mapConversion` with `operation: 'rigidOperation'`, an identity axis and unit scale, and `source: 'rigidOperation'`. Length measures translate map coordinates. Plane-angle measures translate (longitude, latitude) of an `IfcGeographicCRS` in its AngleUnit, else the project plane-angle unit. An `IfcMapConversion` still takes precedence when both are authored. The CRS read is now the operation's own TargetCRS (`IfcProjectedCRS` or `IfcGeographicCRS`, the latter with `kind: 'geographic'`), falling back to the first CRS in the file as before. An `IfcWellKnownText` attached to that CRS is exposed as `projectedCRS.wellKnownText`, and a CRS defined only by its WKT counts as georeferenced together with a parsed coordinate operation (on its own it places nothing, and the IfcSite/ePSet fallbacks run as before). `@ifc-lite/pointcloud` adds `extractWktHorizontalCrs` and `extractWktBoundingBox`.
+
+## 0.13.0
+
+### Minor Changes
+
+- [#7959](https://github.com/LTplus-AG/ifc-lite/pull/7959) [`ca6991f`](https://github.com/LTplus-AG/ifc-lite/commit/ca6991fdbe10633a0b879914daa8d8211091ba81) Thanks [@louistrue](https://github.com/louistrue)! - Add decodeIfcxPointSource for authored IFCX numeric channels before float32 staging, preserving ASCII and binary float64 PCD and inline array precision through shared codecs. Existing chunk decoders retain their float32 outputs, validation, offsets, and bounds.
+
+### Patch Changes
+
+- [#7648](https://github.com/LTplus-AG/ifc-lite/pull/7648) [`d1fdb6f`](https://github.com/LTplus-AG/ifc-lite/commit/d1fdb6fb9fcd4a8904be3a6e7c707ada896e47af) Thanks [@louistrue](https://github.com/louistrue)! - Share emitted worker URL rewriting and verification across worker packages. Inspect every emitted module so new callers such as the geometry worker pool resolve shipped JavaScript workers in npm installations. Preserve parser all-asset verification and verify script assets separately where WASM is supplied by another package.
+
 ## 0.12.0
 
 ### Minor Changes

@@ -84,6 +84,7 @@ pub mod analytic;
 mod axis_projection;
 mod curve_source;
 mod trimmed_curve;
+mod swept_disk_range;
 pub(crate) mod gradient;
 pub(crate) mod curve_segment;
 pub(crate) mod bool2d;
@@ -104,6 +105,9 @@ mod terrain_cdt;
 mod clash_contact_axes;
 pub mod clash_solid;
 pub mod csg;
+/// Opt-in geometry document: object-local display-mesh definitions and f64
+/// placed occurrences with typed identity and revision. Off every default path.
+pub mod document;
 /// Measurement-only CSG corpus capture (off-by-default `csg_capture` feature).
 #[cfg(feature = "csg_capture")]
 pub mod csg_capture;
@@ -182,6 +186,9 @@ mod scalar_adjoint;
 mod telemetry_transaction;
 pub use rect_fast::RectFastStats;
 pub(crate) mod router;
+/// Owned, explicitly partial construction batches before router publication.
+pub mod construction;
+pub mod program;
 /// Vector outlines traced from a slab of scan points (#6871). Reached through
 /// the root-level re-exports below.
 pub(crate) mod scan_outline;
@@ -196,7 +203,6 @@ pub(crate) mod tessellation;
 #[cfg(any(test, feature = "test-support"))]
 pub mod test_support;
 pub mod space_dcel;
-pub(crate) mod transform;
 pub(crate) mod triangulation;
 mod union_find;
 pub(crate) mod void_index;
@@ -223,7 +229,7 @@ pub use contour_bool2d::{
 pub use clash_solid::{intersection_solid, DegenerateReason, IntersectionSolid};
 pub use union_find::UnionFind;
 pub use csg::{calculate_normals, ClippingProcessor, GroupCut, GroupReject, Plane, Triangle};
-pub use diagnostics::{BoolFailure, BoolFailureReason, BoolOp};
+pub use diagnostics::{BoolFailure, BoolFailureReason, BoolOp, PendingDiagnosticState};
 pub use error::{Error, Result};
 pub use float_order::cmp_f64_nan_last;
 pub use geom_hash::{
@@ -280,7 +286,7 @@ pub use router::{
     GEOMETRY_DIAGNOSTICS_SCHEMA_VERSION, FACETED_BREP_DEDUP_FACE_LIMIT,
     ClassificationSummary, GeometryDiagnostics, GeometryProcessor, GeometryRouter,
     HostOpeningDiagnostic, ItemDedupCache, MappedInstancePlan, OpeningDiagnostic, OpeningKindDiag,
-    ReasonCount, RectFastSummary, RectParam, SharedMappedItemCache, SharedBrepSignatureCache, WorstHost,
+    ReasonCount, RectFastSummary, RectParam, RouterConfig, SharedMappedItemCache, AccountedMappedItemCache, SharedBrepSignatureCache, WorstHost,
 };
 
 /// The large-coordinate threshold and its predicate, defined in
@@ -292,11 +298,7 @@ pub use scan_outline::{
     MAX_GAP_LIMIT, MAX_SNAP_DISTANCE_CELLS, MAX_VERTEX_MOVE_CELLS, MIN_CELL_SIZE_LIMIT,
 };
 pub use tessellation::{scale_segments, TessellationQuality};
-pub use transform::{
-    parse_axis2_placement_3d, parse_axis2_placement_3d_from_id, parse_cartesian_point,
-    parse_cartesian_point_from_id, parse_direction, parse_direction_from_id,
-    rotation_angle_about_z,
-};
+pub use placement::rotation_angle_about_z;
 pub use triangulation::triangulate_polygon;
 pub use void_index::{
     build_aggregate_children_index, compute_parts_to_skip, propagate_voids_to_parts,
@@ -304,3 +306,10 @@ pub use void_index::{
 };
 
 mod exact_topology;
+
+/// Explicit resource admission for audited canonical execution sites.
+pub mod resource;
+
+#[cfg(test)]
+#[path = "../tests/support/profile_walk_model.rs"]
+mod profile_walk_model;

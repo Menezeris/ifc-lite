@@ -20,8 +20,8 @@ mod placement;
 mod regions;
 pub(crate) use regions::{check_sweep_vertices, region_points, sweeps_new_rings};
 mod shapes;
-mod steel_shapes;
 mod simplify;
+mod steel_shapes;
 #[cfg(test)]
 mod tests;
 
@@ -518,9 +518,12 @@ impl ProfileProcessor {
             // Placement.Location), which the linear-placement sampler
             // interpolates between (#859).
             if segment.ifc_type == IfcType::IfcCurveSegment {
-                if let Some(points) = crate::curve_segment::sample_curve_segment(&segment, decoder) {
+                if let Some(points) = crate::curve_segment::sample_curve_segment(&segment, decoder)
+                {
                     for p in points {
-                        if result.last().is_none_or(|last: &Point3<f64>| (last - p).norm() > tol::POINT_COINCIDENT_EPS) {
+                        if result.last().is_none_or(|last: &Point3<f64>| {
+                            (last - p).norm() > tol::POINT_COINCIDENT_EPS
+                        }) {
                             result.push(p);
                         }
                     }
@@ -530,9 +533,9 @@ impl ProfileProcessor {
                 if let Some(placement_attr) = segment.get(1) {
                     if !placement_attr.is_null() {
                         if let Some(placement) = decoder.resolve_ref(placement_attr)? {
-                            if let Some((origin, x_axis)) =
-                                axis2_placement_location_and_x_axis_3d(&placement, decoder)
                             {
+                                let (origin, x_axis) =
+                                    axis2_placement_location_and_x_axis_3d(&placement, decoder)?;
                                 if result.last().is_none_or(|last: &Point3<f64>| {
                                     (last - origin).norm() > tol::POINT_COINCIDENT_EPS
                                 }) {
@@ -543,10 +546,8 @@ impl ProfileProcessor {
                                 // Read SegmentLength (attr 3); the value may
                                 // be wrapped in an IfcLengthMeasure typed
                                 // record or be a bare REAL.
-                                let segment_length = segment
-                                    .get(3)
-                                    .and_then(|a| a.as_float())
-                                    .unwrap_or(0.0);
+                                let segment_length =
+                                    segment.get(3).and_then(|a| a.as_float()).unwrap_or(0.0);
                                 if segment_length > tol::LENGTH_ZERO_EPS {
                                     last_curve_segment_terminal =
                                         Some(origin + x_axis * segment_length);
@@ -558,7 +559,7 @@ impl ProfileProcessor {
                         }
                     }
                 }
-                // Couldn't read this segment's placement — skip rather than fail.
+                // No placement resolved; present unsupported/unreadable frames error above.
                 last_curve_segment_terminal = None;
                 continue;
             }
@@ -639,10 +640,14 @@ impl ProfileProcessor {
         // Get trim parameters
         let trim1 = curve
             .get(1)
-            .and_then(|v| self.extract_trim_select(v, prefer_cartesian, decoder));
+            .map(|v| self.extract_trim_select(v, prefer_cartesian, decoder))
+            .transpose()?
+            .flatten();
         let trim2 = curve
             .get(2)
-            .and_then(|v| self.extract_trim_select(v, prefer_cartesian, decoder));
+            .map(|v| self.extract_trim_select(v, prefer_cartesian, decoder))
+            .transpose()?
+            .flatten();
 
         // Get sense agreement (attribute 3) - default true
         let sense = curve.get_bool(3).unwrap_or(true);
@@ -737,54 +742,27 @@ impl ProfileProcessor {
 ///   IfcAxis2Placement2D: 0 Location, 1 RefDirection
 ///   IfcAxis2Placement3D: 0 Location, 1 Axis (local Z), 2 RefDirection (local X)
 ///
-/// Returns `(origin, x_axis)` with `x_axis` defaulting to +X when the
-/// RefDirection is absent or zero-length (matches the EXPRESS default).
+/// Returns `(origin, x_axis)`: column 3 and column 0 of the canonical frame
+/// ([`crate::placement::Axis2Placement`]), so `x_axis` is the RefDirection
+/// (+X when absent or zero-length, the EXPRESS default) projected onto the
+/// plane perpendicular to Axis. Unreadable frames and types other than
+/// `IfcAxis2Placement2D` or `IfcAxis2Placement3D` refuse the composite curve
+/// and are counted by the canonical reader instead of skipped (PROC-1, GEOM-2).
 fn axis2_placement_location_and_x_axis_3d(
     placement: &DecodedEntity,
     decoder: &mut EntityDecoder,
-) -> Option<(Point3<f64>, nalgebra::Vector3<f64>)> {
-    let is_3d = placement.ifc_type == IfcType::IfcAxis2Placement3D;
-    let is_2d = placement.ifc_type == IfcType::IfcAxis2Placement2D;
-    if !is_2d && !is_3d {
-        return None;
-    }
-    let location_attr = placement.get(0)?;
-    if location_attr.is_null() {
-        return None;
-    }
-    let location = decoder.resolve_ref(location_attr).ok().flatten()?;
-    if location.ifc_type != IfcType::IfcCartesianPoint {
-        return None;
-    }
-    let coords = location.get(0)?.as_list()?;
-    let x = coords.first().and_then(|v| v.as_float()).unwrap_or(0.0);
-    let y = coords.get(1).and_then(|v| v.as_float()).unwrap_or(0.0);
-    let z = coords.get(2).and_then(|v| v.as_float()).unwrap_or(0.0);
-    let origin = Point3::new(x, y, z);
-
-    // RefDirection slot: index 2 on 3D, index 1 on 2D.
-    let ref_dir_idx = if is_3d { 2 } else { 1 };
-    let mut x_axis = nalgebra::Vector3::x();
-    if let Some(dir_attr) = placement.get(ref_dir_idx) {
-        if !dir_attr.is_null() {
-            if let Some(dir) = decoder.resolve_ref(dir_attr).ok().flatten() {
-                if dir.ifc_type == IfcType::IfcDirection {
-                    if let Some(ratios) = dir.get(0).and_then(|a| a.as_list()) {
-                        let dx = ratios.first().and_then(|v| v.as_float()).unwrap_or(0.0);
-                        let dy = ratios.get(1).and_then(|v| v.as_float()).unwrap_or(0.0);
-                        let dz = ratios.get(2).and_then(|v| v.as_float()).unwrap_or(0.0);
-                        let v = nalgebra::Vector3::new(dx, dy, dz);
-                        if v.norm() > 1e-12 {
-                            x_axis = v.normalize();
-                        }
-                    }
-                }
-            }
-        }
-    }
-    Some((origin, x_axis))
+) -> Result<(Point3<f64>, nalgebra::Vector3<f64>)> {
+    let m = crate::placement::Axis2Placement::read(placement, decoder)?.matrix();
+    Ok((
+        Point3::new(m[(0, 3)], m[(1, 3)], m[(2, 3)]),
+        nalgebra::Vector3::new(m[(0, 0)], m[(1, 0)], m[(2, 0)]),
+    ))
 }
 
 #[cfg(test)]
 #[path = "curve_fanout_tests.rs"]
 mod curve_fanout_tests;
+
+#[cfg(test)]
+#[path = "leaf_reader_tests.rs"]
+mod leaf_reader_tests;

@@ -23,7 +23,7 @@ import { AnalysisStaleRegion } from './analysis/AnalysisPanel';
 import { ValidationResultsSplit } from './validation/ValidationResultsSplit';
 import { ValidationResultCoverage, ValidationResultSource, validationSourceName } from './validation/ValidationResultHead';
 import { ResultView } from './result/ResultView';
-import { validationReportSummary } from '@/lib/validation/report-summary';
+import { isUnmatchedSpecification, validationReportSummary } from '@/lib/validation/report-summary';
 import { Boxes, Eye, EyeOff, Filter, Focus, Layers, Palette } from 'lucide-react';
 import type { ValidationReport, IDSAuditReport } from '@ifc-lite/ids';
 import type { UseValidationResults } from '@/hooks/validation/useValidationResults';
@@ -99,6 +99,9 @@ export function IDSPanelResults({
   if (!report || !summary) return null;
   const isRules = report.source.kind === 'rules';
 
+  const unmatchedSpecifications = isRules ? 0
+    : report.specificationResults.filter((result) => isUnmatchedSpecification(result.applicableCount, result.error)).length;
+
   const specScope = isolationScope === 'spec';
   const noActiveSpec = specScope && !activeSpecificationId;
   const failedLabel = failedActive ? t('idsPanel.showAllFailed') : t(specScope ? 'idsPanel.isolateFailedSpec' : 'idsPanel.isolateFailedIds');
@@ -152,13 +155,19 @@ export function IDSPanelResults({
             })}
           </span>
         </div>
+        {/* Name vacuous passes next to the headline so N/M does not read as compliance (#8204). */}
+        {unmatchedSpecifications > 0 && <p className="-mt-1 mb-2 text-xs text-muted-foreground">
+          {t('idsPanel.unmatchedSpecifications', {
+            count: unmatchedSpecifications, countDisplay: formatLocaleNumber(locale, unmatchedSpecifications),
+          })}
+        </p>}
         {!isRules && <IDSCheckSummary report={report} />}
         {!isRules && <div className="text-xs font-medium">{t('idsPanel.entitySpecificationResults')}</div>}
         <ValidationBenchmark summary={summary} name={validationSourceName(report)} />
         <div className="grid grid-cols-3 gap-2 text-xs text-center">
           <div className="bg-background rounded p-2">
             <div className="font-medium">{formatLocaleNumber(locale, report.summary.totalEntitiesChecked)}</div>
-            <div className="text-muted-foreground">{t('idsPanel.checked')}</div>
+            <div className="text-muted-foreground">{t('idsPanel.entityResults')}</div>
           </div>
           <div className="bg-background rounded p-2">
             <div className="font-medium text-green-600">{formatLocaleNumber(locale, report.summary.totalEntitiesPassed)}</div>
@@ -169,7 +178,7 @@ export function IDSPanelResults({
             <div className="text-muted-foreground">{t('idsPanel.failed')}</div>
           </div>
         </div>
-        <div className="mt-2"><PassRateBar passRate={report.summary.overallPassRate} /></div>
+        <div className="mt-2"><PassRateBar passRate={summary.passRate} /></div>
         {!isRules && <p className="text-xs text-muted-foreground mt-2">{t('idsPanel.summaryUnitsHint')}</p>}
         <p className="text-xs text-muted-foreground mt-2 text-center">
           {t(specScope ? 'idsPanel.specScopeHint' : 'idsPanel.idsScopeHint')}
@@ -303,6 +312,7 @@ export function IDSPanelResults({
         <div className="p-2 space-y-2">
           {report.specificationResults.map((specResult) => (
             <SpecificationCard
+              isIDS={!isRules}
               key={specResult.specification.id}
               result={specResult}
               isActive={activeSpecificationId === specResult.specification.id}

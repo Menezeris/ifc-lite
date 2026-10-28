@@ -24,6 +24,7 @@ import { decodeView, encodeView, fingerprint, type CodecEnv } from './viewsCodec
 import { visibilityGuids } from './selectionSummary.js';
 import { worldOffset, type GuidHelpers } from './viewQueries.js';
 import { SOURCE } from './bridge-core.js';
+import { useAimViewTabs, withTabs } from './viewTabsStore.js';
 
 /** Čo dodá `AimBridge` (kanál na hosta, hlásenie problémov, sledovanie asynchrónnych krokov, pomocníci GUID). */
 export interface ViewsDeps {
@@ -186,6 +187,8 @@ async function activate(id: string | undefined, name: string | undefined, noteIs
   const views = state().basketViews;
   const view = id !== undefined ? views.find((v) => v.id === id) : views.find((v) => v.name.toLowerCase() === name?.trim().toLowerCase());
   if (!view) return noteIssue(`VIEW_ACTIVATE: pohľad '${id ?? name}' sa vo vieweri nenašiel`);
+  // Pri dlaždiciach ide pohľad do živej dlaždice (D-161), jej doterajší obsah si stav odloží.
+  if (useAimViewTabs.getState().layout !== 'single') return withTabs((m) => m.showViewLive(view.id, {}, noteIssue));
   const { activateBasketViewFromStore } = await import('@/store/basket/basketViewActivator');
   activateBasketViewFromStore(view.id);
 }

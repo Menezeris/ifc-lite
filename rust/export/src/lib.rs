@@ -26,6 +26,8 @@ mod dfjson;
 mod error;
 mod file_schema;
 mod frame;
+mod section_clip;
+pub use section_clip::{plan_section_export, SectionExportPlane, SectionExportPlan, SectionExportElement, SectionExportPart};
 #[cfg(test)]
 mod frame_fixtures;
 mod generated;
@@ -44,6 +46,7 @@ mod model;
 mod quantity_analysis;
 mod quantity_analysis_derived;
 mod obj;
+pub mod plan;
 mod relationships;
 mod rebar_attributes;
 mod rebar_schedule;
@@ -53,6 +56,7 @@ mod parquet_bos;
 mod rooms;
 pub mod rooted_type;
 mod schema_convert;
+mod schema_mep;
 mod schema_detect;
 mod schema_ifc2x3_slots;
 mod schema_enum;
@@ -143,8 +147,9 @@ pub use merged::{
 };
 pub use model::{
     build_export_model, build_export_model_with_options, stream_export_model,
-    stream_export_model_with_index, stream_export_model_with_options, EntityRow, ExportModel,
-    ModelOptions, Placement, PropValue, PropertySet, QuantitySet, QuantityValue, ValueKind,
+    stream_export_model_with_index, stream_export_model_with_inherited,
+    stream_export_model_with_options, EntityRow, ExportModel, Inherited, ModelOptions, Placement,
+    PropValue, PropertySet, QuantitySet, QuantityValue, ValueKind,
 };
 pub use quantity_analysis_derived::{analyze_quantities, DerivedQuantity,
     ProductQuantityAnalysis, QuantityAnalysis, QuantitySourceOccurrence};

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/planPosition.ts a/apps/viewer/src/aim/planPosition.ts
+index 0adb8385..d4d1fb96 100644
+--- b/apps/viewer/src/aim/planPosition.ts
++++ a/apps/viewer/src/aim/planPosition.ts
+@@ -98,7 +98,7 @@ export function describePlanMarkers(
+       page,
+       x_pct: r1(marker.left),
+       y_pct: r1(marker.top),
+-      heading_deg: Math.round(marker.angleDeg),
++      heading_deg: ((Math.round(marker.angleDeg) % 360) + 360) % 360,
+     }));
+   return { enabled, shown: markers.length > 0, markers };
+ }
