@@ -98,7 +98,9 @@ export function PresentationPanel() {
     } finally {
       setSavingThumbnail(false);
     }
+  // >>> AIM-FORK: `t` for the nothing-to-save toast
   }, [pinboardEntities, savingThumbnail, t]);
+  // <<< AIM-FORK
 
   const startRename = useCallback((viewId: string, name: string) => {
     setEditingViewId(viewId);
