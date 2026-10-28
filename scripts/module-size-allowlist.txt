@@ -53,7 +53,7 @@
 # 400 (or gone), or a row kept for a file this change shrank under 400 or
 # removed. A hand-picked number fails; a shrink that landed in another PR
 # stays a note, and so does slack left on a row this change only lowered.
-   521 apps/viewer-embed/src/bridge/handler.ts
+   522 apps/viewer-embed/src/bridge/handler.ts
    450 apps/viewer/src/aim/bridge-protocol.ts
    799 apps/viewer/src/components/documents/PdfDocumentView.tsx
    453 apps/viewer/src/components/extensions/ExtensionsPanel.tsx
@@ -67,13 +67,13 @@
    604 apps/viewer/src/components/viewer/BulkPropertyEditor.tsx
    485 apps/viewer/src/components/viewer/CesiumOverlay.tsx
   1434 apps/viewer/src/components/viewer/ChatPanel.tsx
-  1225 apps/viewer/src/components/viewer/ClashPanel.tsx
+  1231 apps/viewer/src/components/viewer/ClashPanel.tsx
    966 apps/viewer/src/components/viewer/DataConnector.tsx
   1698 apps/viewer/src/components/viewer/Drawing2DCanvas.tsx
    491 apps/viewer/src/components/viewer/DrawingPlanPane.tsx
    529 apps/viewer/src/components/viewer/DrawingSettingsPanel.tsx
    746 apps/viewer/src/components/viewer/DrawingUnderlayPanel.tsx
-   629 apps/viewer/src/components/viewer/ExportDialog.tsx
+   634 apps/viewer/src/components/viewer/ExportDialog.tsx
    468 apps/viewer/src/components/viewer/GLBExportDialog.tsx
    433 apps/viewer/src/components/viewer/hierarchy/HierarchyNode.tsx
   1117 apps/viewer/src/components/viewer/hierarchy/treeDataBuilder.ts
@@ -85,7 +85,7 @@
    570 apps/viewer/src/components/viewer/measureHandlers.ts
    522 apps/viewer/src/components/viewer/properties/BsddCard.tsx
    418 apps/viewer/src/components/viewer/properties/EpsgLookupDialog.tsx
-   652 apps/viewer/src/components/viewer/properties/GeoreferencingPanel.tsx
+   593 apps/viewer/src/components/viewer/properties/GeoreferencingPanel.tsx
    820 apps/viewer/src/components/viewer/properties/LocationMap.tsx
    415 apps/viewer/src/components/viewer/properties/MaterialTotalsPanel.tsx
    510 apps/viewer/src/components/viewer/properties/TaskEditCard.tsx
@@ -108,7 +108,7 @@
    901 apps/viewer/src/components/viewer/useMouseControls.ts
    471 apps/viewer/src/components/viewer/ViewerLayout.tsx
   1548 apps/viewer/src/components/viewer/Viewport.tsx
-   894 apps/viewer/src/components/viewer/ViewportContainer.tsx
+   897 apps/viewer/src/components/viewer/ViewportContainer.tsx
    500 apps/viewer/src/components/viewer/ZonesPanel.tsx
    841 apps/viewer/src/hooks/ids/idsExportService.ts
    538 apps/viewer/src/hooks/ingest/federationAlign.ts
@@ -117,20 +117,20 @@
    755 apps/viewer/src/hooks/useBCF.ts
   1296 apps/viewer/src/hooks/useClash.ts
   1290 apps/viewer/src/hooks/useDrawingExport.ts
-  1041 apps/viewer/src/hooks/useDrawingGeneration.ts
+  1037 apps/viewer/src/hooks/useDrawingGeneration.ts
    579 apps/viewer/src/hooks/useIfcCache.ts
    655 apps/viewer/src/hooks/useIfcFederation.ts
-  2234 apps/viewer/src/hooks/useIfcLoader.ts
+  2215 apps/viewer/src/hooks/useIfcLoader.ts
    432 apps/viewer/src/hooks/useIfcServer.ts
    457 apps/viewer/src/hooks/useSymbolicAnnotations.ts
    633 apps/viewer/src/lib/analytics-scrub.ts
    627 apps/viewer/src/lib/clash/persistence.ts
    412 apps/viewer/src/lib/compare/worldPlacement.ts
-   433 apps/viewer/src/lib/geo/cesium-bridge.ts
+   495 apps/viewer/src/lib/geo/cesium-bridge.ts
    461 apps/viewer/src/lib/geo/custom-basemap.ts
    405 apps/viewer/src/lib/geo/map-webgl-support.ts
    437 apps/viewer/src/lib/geo/precision-grids.ts
-   634 apps/viewer/src/lib/geo/reproject.ts
+   651 apps/viewer/src/lib/geo/reproject.ts
    405 apps/viewer/src/lib/identifier-links/identifier-index.ts
    433 apps/viewer/src/lib/identifier-links/page-links.ts
    621 apps/viewer/src/lib/ifc4-pset-definitions.ts
@@ -159,13 +159,13 @@
   2012 apps/viewer/src/store/slices/mutationSlice.ts
   1272 apps/viewer/src/store/slices/scheduleSlice.ts
    536 apps/viewer/src/store/slices/scriptSlice.ts
-   448 apps/viewer/src/store/slices/sectionSlice.ts
+   456 apps/viewer/src/store/slices/sectionSlice.ts
    571 apps/viewer/src/store/slices/sheetSlice.ts
    414 apps/viewer/src/store/teardown.ts
-   635 apps/viewer/src/store/types.ts
+   637 apps/viewer/src/store/types.ts
    422 apps/viewer/src/utils/spatialHierarchy.ts
    573 apps/viewer/src/utils/viewportUtils.ts
-   788 packages/bcf/src/ids-reporter.ts
+   784 packages/bcf/src/ids-reporter.ts
    806 packages/bcf/src/reader.ts
    532 packages/bcf/src/viewpoint.ts
    747 packages/bcf/src/writer.ts
@@ -199,7 +199,7 @@
    507 packages/drawing-2d/src/dxf/convert.ts
    898 packages/drawing-2d/src/dxf/parser.ts
    413 packages/drawing-2d/src/dxf/writer.ts
-   428 packages/drawing-2d/src/edge-extractor.ts
+   421 packages/drawing-2d/src/edge-extractor.ts
    565 packages/drawing-2d/src/gpu-section-cutter.ts
    470 packages/drawing-2d/src/graphic-overrides/presets.ts
    499 packages/drawing-2d/src/graphic-overrides/rule-engine.ts
@@ -223,10 +223,10 @@
    498 packages/export/src/schema-converter.ts
    427 packages/extensions/src/testing/runner.ts
    638 packages/geometry/src/coordinate-handler.ts
-  1545 packages/geometry/src/geometry-parallel.ts
+  1535 packages/geometry/src/geometry-parallel.ts
   1772 packages/geometry/src/geometry.worker.ts
-   914 packages/geometry/src/ifc-lite-bridge.ts
-  1534 packages/geometry/src/index.ts
+   917 packages/geometry/src/ifc-lite-bridge.ts
+  1528 packages/geometry/src/index.ts
    730 packages/geometry/src/native-bridge.ts
    878 packages/ids/src/audit/ifc-schema/index.ts
    411 packages/ids/src/audit/structural/index.ts
@@ -306,7 +306,7 @@
    512 scripts/check-module-size.mjs
   1066 scripts/check-pr-review-signal.mjs
    855 scripts/check-review-posted.mjs
-   425 scripts/check-source-text-assertions.mjs
+   424 scripts/check-source-text-assertions.mjs
    423 scripts/check-test-glob-coverage.mjs
    605 scripts/check-test-revert-oracle.mjs
    703 scripts/check-test-wiring.mjs
@@ -314,7 +314,6 @@
    499 scripts/docs/check-doc-samples.mjs
    486 scripts/generate-bim-globals.mjs
    495 scripts/generate-coverage-ledger.mjs
-   422 scripts/generate-epsg-index.ts
    403 scripts/lib/ci-path-coverage.mjs
    460 scripts/lib/pr-green-sweep.mjs
   1113 scripts/lib/pr-review-signal.mjs

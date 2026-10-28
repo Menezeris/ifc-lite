@@ -1,6 +1,6 @@
 # Agent Guidelines: ifc-lite
 
-Project-specific gotchas and guardrails: the things that bite you *here* and that you can't infer from the code. Generic good practice is assumed, not repeated. This file is the single source of truth; `CLAUDE.md` and `.cursorrules` just point here.
+Project-specific guardrails. This file is the source of truth; `CLAUDE.md` and `.cursorrules` point here.
 
 ## What this is
 Browser-first IFC toolkit: a WebGPU web viewer plus a headless CLI/MCP/server. No first-party desktop app. Domain logic (decode, geometry, styling, export) lives in Rust crates under `rust/*` and is the source of truth for the server, CLI, SDK, and wasm; TypeScript packages under `packages/*` and apps under `apps/*` consume it (TS mostly does GPU upload and UI). Architecture docs: `docs/architecture/overview.md`.
@@ -47,6 +47,11 @@ Filing issues is welcome and unrestricted: an audit producing twenty good issue 
 **The ~400-line rule is enforced on both sides**: for Rust by the `module_size_ratchet` test in `rust/processing/tests/`, for TypeScript by `scripts/check-module-size.mjs`. A new non-generated, non-test file over 400 lines fails unless it has an allowlist row, and an allowlisted file may not grow past its recorded budget. Prefer splitting to allowlisting. For a module whose bulk is `#[cfg(test)]`, the house pattern is a sibling `<name>_tests.rs` included via `#[cfg(test)] #[path = "<name>_tests.rs"] mod tests;` (see `stream_meta.rs`). The rule binds production modules only; test files are exempt, though a long test file should still be split where it has a genuine logical seam, never merely to hit a line count.
 
 **Do not trust any list of CI gates written down in this file.** The authoritative list of gates is `.github/workflows/`; the authoritative list of REQUIRED ones is the `main` ruleset, `gh api repos/:owner/:repo/rulesets`. Read them. A gate list is a measurement, and a measurement recorded as prose goes stale by the next merged workflow.
+
+## Before handing work back
+
+Run `node scripts/pre-handoff.mjs` after committing. A delegated task is not done
+until it passes or each failure is explained. Report SKIPPED coverage too.
 
 ## IFC schema fidelity
 - User-facing APIs/exports/scripts use exact IFC EXPRESS names: PascalCase attributes (`GlobalId`, `Name`, `ObjectType`), full relationship names (`IfcRelAggregates`, not `Aggregates`). Never invent aliases.
@@ -140,12 +145,11 @@ Choose the visited set's SCOPE by what the walk returns:
   silently drops the second: **missing geometry, not a cycle guard**, and no
   termination test notices.
 
-Prefer making the walk **iterative** over adding a cap: with no stack to consume
-there is nothing left for a cap to protect, and the visited set becomes
-sufficient alone. A cap tight enough to stop a cycle usually rejects legitimate
-input — #960 records Revit `FirstOperand` chains 42 nodes deep.
-
-Reuse the shared bound where the chain is shared: `ifc_lite_core::limits`.
+Prefer **iterative** walks with visited sets: no stack depth cap is needed.
+Tight caps reject valid input (#960: 42-node Revit `FirstOperand` chains).
+Use `ifc_lite_core::limits` for shared bounds; see
+`ifc_lite_geometry::placement::resolve_chain` for an iterative, visited-set
+`PlacementRelTo` walk without a depth cap.
 
 A guard that both ACTS and REPORTS has a two-part contract — bound the work, and
 report that you bounded it. Mutate the halves separately; they fail differently

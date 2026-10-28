@@ -1047,3 +1047,9 @@ fn set_js_prop(obj: &JsValue, key: &str, value: &JsValue) -> bool {
 }
 
 #[cfg(test)] mod mod_tests;
+
+#[cfg(all(feature = "retained-browser", target_arch = "wasm32"))]
+mod retained_model;
+
+#[cfg(all(feature = "retained-browser", target_arch = "wasm32"))]
+mod retained_session;
