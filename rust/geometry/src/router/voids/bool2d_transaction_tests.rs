@@ -76,9 +76,9 @@ fn mesh_box(x0: f64, y0: f64, x1: f64, y1: f64, z0: f32, z1: f32) -> Mesh {
     mesh
 }
 
-fn mesh_opening(mesh: Mesh) -> super::super::OpeningType {
+fn mesh_opening(mesh: Mesh) -> super::super::CutterKind {
     let (lo, hi) = mesh.bounds();
-    super::super::OpeningType::NonRectangular(mesh, lo.cast(), hi.cast(), None)
+    super::super::CutterKind::NonRectangular(mesh, lo.cast(), hi.cast(), None)
 }
 
 /// The tapered recess requires exact CSG; a following engulf consumes the
@@ -134,10 +134,12 @@ fn rejected_staged_child_leaks_nothing_into_the_parent_execution() {
         let control = Execution::new(quality);
         let (precursor, _) = control.try_bool2d_cut(&host, cut).expect("eligible staged prefix");
         let residual = cut.residual.as_deref().unwrap();
-        let _ = control.apply_void_context(precursor, residual, 4617);
+        let consumed = control.apply_void_context(precursor, residual, 4617);
+        assert!(consumed.is_empty(), "positive control: the residual consumes the host");
         let router = GeometryRouter::new();
         control.finish().publish(&router);
-        assert!(router.host_consumed_by_void(4617), "positive control: the residual records");
+        let diagnostics = router.take_host_opening_diagnostics();
+        assert_eq!(diagnostics[&4617].tris_after, Some(0), "positive control: the residual records its cut");
     });
     let bounds = ((0.0, 0.0, 0.0), (1.0, 1.0, 1.0));
     let parent = Execution::new(quality);
@@ -197,7 +199,7 @@ fn mixed_route_telemetry_is_atomic_4617() {
             position[2] -= 1.0;
         }
         let (lo, hi) = cutter.bounds();
-        let opening = super::super::OpeningType::NonRectangular(cutter, lo.cast(), hi.cast(), None);
+        let opening = super::super::CutterKind::NonRectangular(cutter, lo.cast(), hi.cast(), None);
         *context.openings.last_mut().unwrap() = opening.clone();
         context.merged_openings = GeometryRouter::merge_rectangular_openings(&context.openings);
         let residual = context.bool2d.as_mut().unwrap().residual.as_mut().unwrap();

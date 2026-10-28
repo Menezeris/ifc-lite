@@ -28,7 +28,9 @@
 //! `0x7f`, `U+2028` and `U+2029` all pass through raw, where several JSON
 //! writers escape them.
 
-use crate::utf16::cmp_code_units;
+use crate::JsString;
+use sink::JsonSink;
+pub(crate) use sink::{cmp_sorted, stable_hash_json, utf16_length};
 
 /// A JSON value in the shape the fingerprint projections build.
 ///
@@ -37,12 +39,17 @@ use crate::utf16::cmp_code_units;
 /// would silently sort.
 #[derive(Debug, Clone, PartialEq)]
 pub enum JsonValue {
+    /// A run of sparse array slots, only ever an array's LAST item (#8114):
+    /// each slot is JSON `null`, but an empty stableSerialize map/join token.
+    /// One count instead of one value per hole keeps every serialization pass
+    /// O(present) in memory except a materializing [`String`] sink.
+    Holes(usize),
     Null,
     Bool(bool),
     Number(f64),
-    String(String),
+    String(JsString),
     Array(Vec<JsonValue>),
-    Object(Vec<(String, JsonValue)>),
+    Object(Vec<(JsString, JsonValue)>),
 }
 
 /// Serialize exactly as `JSON.stringify` does, preserving object key order.
@@ -65,47 +72,66 @@ pub fn stringify_sorted(value: &JsonValue) -> String {
     out
 }
 
-fn write_value(value: &JsonValue, sort_keys: bool, out: &mut String) {
+fn write_value<S: JsonSink>(value: &JsonValue, sort_keys: bool, out: &mut S) {
     match value {
+        JsonValue::Holes(count) => write_holes(*count, true, sort_keys, out),
         JsonValue::Null => out.push_str("null"),
         JsonValue::Bool(true) => out.push_str("true"),
         JsonValue::Bool(false) => out.push_str("false"),
         JsonValue::Number(n) => out.push_str(&number_to_json(*n)),
-        JsonValue::String(s) => write_string(s, out),
+        JsonValue::String(s) => out.push_json_string(s),
         JsonValue::Array(items) => {
-            out.push('[');
+            out.push_str("[");
             for (index, item) in items.iter().enumerate() {
+                if let JsonValue::Holes(count) = item {
+                    write_holes(*count, index == 0, sort_keys, out);
+                    continue;
+                }
                 if index > 0 {
-                    out.push(',');
+                    out.push_str(",");
                 }
                 write_value(item, sort_keys, out);
             }
-            out.push(']');
+            out.push_str("]");
         }
         JsonValue::Object(entries) => {
-            out.push('{');
+            out.push_str("{");
             if sort_keys {
-                let mut order: Vec<&(String, JsonValue)> = entries.iter().collect();
-                order.sort_by(|a, b| cmp_code_units(&a.0, &b.0));
+                let mut order: Vec<&(JsString, JsonValue)> = entries.iter().collect();
+                order.sort_by(|a, b| a.0.cmp(&b.0));
                 write_entries(order.into_iter(), sort_keys, out);
             } else {
                 write_entries(entries.iter(), sort_keys, out);
             }
-            out.push('}');
+            out.push_str("}");
         }
     }
 }
 
-fn write_entries<'a, I>(entries: I, sort_keys: bool, out: &mut String)
+/// `count` slots: `null` (JSON.stringify) or nothing (stableSerialize's
+/// map/join), each after a separator unless it is the array's first item.
+fn write_holes<S: JsonSink>(count: usize, first: bool, sort_keys: bool, out: &mut S) {
+    if count == 0 { return; }
+    let (token, separated) = if sort_keys { ("", ",") } else { ("null", ",null") };
+    let mut rest = count as u64;
+    if first {
+        out.push_str(token);
+        rest -= 1;
+    }
+    out.push_repeat(separated, rest);
+}
+
+fn write_entries<'a, I, S>(entries: I, sort_keys: bool, out: &mut S)
 where
-    I: Iterator<Item = &'a (String, JsonValue)>,
+    I: Iterator<Item = &'a (JsString, JsonValue)>,
+    S: JsonSink,
 {
     for (index, (key, item)) in entries.enumerate() {
         if index > 0 {
-            out.push(',');
+            out.push_str(",");
         }
-        write_string(key, out);
-        out.push(':');
+        out.push_json_string(key);
+        out.push_str(":");
         write_value(item, sort_keys, out);
     }
 }
@@ -125,7 +151,7 @@ fn number_to_json(value: f64) -> String {
     buffer.format_finite(value).to_owned()
 }
 
-/// Render a number the way `String(n)` does, for the non-finite tokens.
+/// Render a number the way `JsString(n)` does, for the non-finite tokens.
 ///
 /// ECMAScript `ToString` spells these `NaN`, `Infinity` and `-Infinity`;
 /// Rust's `Display` spells them `NaN`, `inf` and `-inf`.
@@ -139,41 +165,8 @@ pub fn non_finite_token(value: f64) -> &'static str {
     }
 }
 
-/// Escape and quote a string exactly as V8's `JSON.stringify` does.
-///
-/// Iterating `char`s rather than UTF-16 code units is safe *and* required
-/// here. Safe, because every code unit an escape rule matches is below
-/// `0x80`, so no escape can ever straddle a surrogate pair and a per-character
-/// walk sees exactly the same triggers as a per-unit one. Required, because a
-/// per-unit walk has to reassemble pairs to emit them, and getting that wrong
-/// drops astral characters silently.
-///
-/// A Rust `&str` cannot hold a lone surrogate, so the well-formed-stringify
-/// path (ES2019) that escapes one is unreachable here, and is deliberately
-/// absent rather than written and untestable.
-fn write_string(value: &str, out: &mut String) {
-    out.push('"');
-    for ch in value.chars() {
-        match ch {
-            '"' => out.push_str("\\\""),
-            '\\' => out.push_str("\\\\"),
-            '\u{08}' => out.push_str("\\b"),
-            '\u{09}' => out.push_str("\\t"),
-            '\u{0a}' => out.push_str("\\n"),
-            '\u{0c}' => out.push_str("\\f"),
-            '\u{0d}' => out.push_str("\\r"),
-            // Every other C0 control. V8 spells these lowercase.
-            c if (c as u32) < 0x20 => {
-                out.push_str(&format!("\\u{:04x}", c as u32));
-            }
-            // Everything else passes through raw, `/`, `0x7f`, `U+2028` and
-            // `U+2029` included. Several JSON writers escape those; V8 does
-            // not, and this has to match V8.
-            c => out.push(c),
-        }
-    }
-    out.push('"');
-}
+#[path = "js_json_sink.rs"]
+mod sink;
 
 #[cfg(test)]
 #[path = "js_json_tests.rs"]

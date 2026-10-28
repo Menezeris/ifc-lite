@@ -16,12 +16,8 @@
 //! snapshot owns what it captured. This is the borrowed compatibility contract:
 //! the caller still pairs decoder bytes with their index itself, and a valid
 //! lifecycle is not source authentication.
-use super::{
-    produce_element_meshes, ElementMeshJob, FullIndexedColourMap, GeometryStyleInfo,
-    MeshProductionContext, MeshProductionOptions, ProducedElementMeshes,
-};
-use ifc_lite_core::EntityDecoder;
-use ifc_lite_geometry::{GeometryRouter, ResolvedTextureMap};
+use super::{FullIndexedColourMap, GeometryStyleInfo, MeshProductionContext};
+use ifc_lite_geometry::ResolvedTextureMap;
 use rustc_hash::FxHashMap;
 use std::fmt;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -60,6 +56,8 @@ struct ModelState {
 #[derive(Clone)]
 pub struct ProductionModel {
     state: Arc<ModelState>,
+    #[cfg(any(test, feature = "retained-runtime"))]
+    source: Option<Arc<ifc_lite_core::SourceBundle>>,
 }
 
 impl Default for ProductionModel {
@@ -75,6 +73,8 @@ impl ProductionModel {
         // 64-bit counters: wrapping would need 2^64 loads in one process.
         static NEXT_LOAD: AtomicU64 = AtomicU64::new(1);
         Self {
+            #[cfg(any(test, feature = "retained-runtime"))]
+            source: None,
             state: Arc::new(ModelState {
                 load: NEXT_LOAD.fetch_add(1, Ordering::Relaxed),
                 source_epoch: AtomicU64::new(0),
@@ -95,6 +95,8 @@ impl ProductionModel {
             id,
             data,
             state: Arc::clone(&self.state),
+            #[cfg(any(test, feature = "retained-runtime"))]
+            source: self.source.clone(),
         })
     }
 
@@ -117,6 +119,8 @@ pub struct OwnedMeshProductionContext {
     id: ProductionContextId,
     data: OwnedMeshProductionData,
     state: Arc<ModelState>,
+    #[cfg(any(test, feature = "retained-runtime"))]
+    source: Option<Arc<ifc_lite_core::SourceBundle>>,
 }
 
 impl OwnedMeshProductionContext {
@@ -160,34 +164,24 @@ fn stale_source() -> ProductionContextError {
 pub enum ProductionContextError {
     /// The model explicitly invalidated the snapshot's source.
     StaleSource,
+    /// The decoder or router could not be admitted or kept for this product:
+    /// other live work holds it, or a callback replaced it mid-product.
+    OwnerUnavailable,
 }
 
 impl fmt::Display for ProductionContextError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
             Self::StaleSource => "production model source was invalidated",
+            Self::OwnerUnavailable => "production decoder or router could not be admitted or was replaced during the product",
         })
     }
 }
 
 impl std::error::Error for ProductionContextError {}
 
-/// Canonical production over one owned snapshot: the strictly synchronous
-/// borrowed compatibility driver around [`produce_element_meshes`].
-///
-/// The snapshot is checked before any work and again before publication, so a
-/// geometry callback that invalidates the source mid-product never publishes;
-/// nested products and decoder/router callbacks behave exactly as on the
-/// borrowed entry, which this calls once with [`OwnedMeshProductionContext::borrowed`].
-pub fn produce_element_meshes_owned(
-    job: &ElementMeshJob<'_>,
-    context: &OwnedMeshProductionContext,
-    opts: &MeshProductionOptions,
-    decoder: &mut EntityDecoder,
-    router: &GeometryRouter,
-) -> Result<ProducedElementMeshes, ProductionContextError> {
-    context.validate_source()?;
-    let produced = produce_element_meshes(job, &context.borrowed(), opts, decoder, router);
-    context.validate_source()?;
-    Ok(produced)
-}
+// Refs #7955: private source-bound consumer.
+#[cfg(any(test, feature = "retained-runtime"))]
+#[cfg_attr(not(test), allow(dead_code))]
+#[path = "model_context_retained.rs"]
+pub(super) mod retained;

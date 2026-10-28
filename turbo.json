@@ -17,7 +17,16 @@
     "scripts/typecheck-tests.mjs",
     "scripts/lib/is-main-entry.mjs",
     "scripts/*worker-urls.*",
-    "scripts/lib/shipped-target.*"
+    "scripts/lib/shipped-target.*",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "package.json",
+    ".npmrc",
+    "patches/**",
+    "tsconfig*.json",
+    ".env*",
+    "vite.config.*",
+    "vitest.config.*"
   ],
   "globalPassThroughEnv": [
     "NODE_OPTIONS",
@@ -66,6 +75,9 @@
         "index.html"
       ],
       "env": [
+        "VITE_RETAINED_GEOMETRY",
+        "IFCLITE_RETAINED_ENGINE",
+        "VERCEL",
         "VITE_AUTODESK_CLIENT_ID",
         "VITE_AUTODESK_HOSTED",
         "VITE_CLOUD_HOSTED",
@@ -90,7 +102,19 @@
     },
     "test": {
       "dependsOn": ["build"],
-      "cache": false
+      "passThroughEnv": ["IFC_LITE_CURRENT_MAIN_DIFF_ORACLE"],
+      "cache": false,
+      "env": [
+        "TEST_PATTERN",
+        "TEST_SHARD",
+        "TEST_SHARDS"
+      ]
+    },
+    "@ifc-lite/export#test": {
+      "dependsOn": ["build"],
+      "cache": false,
+      "env": ["TEST_PATTERN", "TEST_SHARD", "TEST_SHARDS"],
+      "passThroughEnv": ["IFC_LITE_SECTION_EVIDENCE_DIR"]
     },
     "lint": {
       "dependsOn": ["build"],

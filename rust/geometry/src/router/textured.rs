@@ -8,12 +8,13 @@
 //! element pipeline stays within the module-size house rule; the texture
 //! index itself is built in `crate::processors::texture`.
 
-use ifc_lite_core::{slot, DecodedEntity, EntityDecoder, IfcType};
+use ifc_lite_core::{slot, DecodedEntity, EntityDecoder};
 use nalgebra::Matrix4;
 
 use super::frame_parts::{single_frame_source, SourceParts};
 use super::GeometryRouter;
 use crate::processors::texture::TextureAttachment;
+use crate::program::mapping_budget::{LogicalBudget, SourceResult};
 use crate::{Error, Mesh, Result, SubMeshCollection};
 
 /// The accounted header admission for one retained UV-carrying part, out of line.
@@ -106,35 +107,36 @@ impl GeometryRouter {
 
     /// Admit a type's representation map for the type-map walk: its
     /// `MappedRepresentation` and that representation's whole Items list.
-    pub(crate) fn admit_type_map(&self, rep_map: &DecodedEntity, decoder: &mut EntityDecoder)
-        -> Result<(DecodedEntity, Vec<DecodedEntity>)> {
-        let mapped_rep_attr = rep_map.get(slot::IfcRepresentationMap::MAPPED_REPRESENTATION.index())
-            .ok_or_else(|| Error::geometry("RepresentationMap missing MappedRepresentation".to_string()))?;
+    pub(crate) fn admit_type_map(
+        &self,
+        rep_map: &DecodedEntity,
+        decoder: &mut EntityDecoder,
+        budget: &mut LogicalBudget,
+    ) -> SourceResult<(DecodedEntity, Vec<DecodedEntity>)> {
+        let mapped_rep_attr = rep_map
+            .get(slot::IfcRepresentationMap::MAPPED_REPRESENTATION.index())
+            .ok_or_else(|| {
+                Error::geometry("RepresentationMap missing MappedRepresentation".to_string())
+            })?;
         let mapped_rep = decoder
             .resolve_ref(mapped_rep_attr)?
             .ok_or_else(|| Error::geometry("Failed to resolve MappedRepresentation".to_string()))?;
         let items_attr = mapped_rep
             .get(slot::IfcRepresentation::ITEMS.index())
             .ok_or_else(|| Error::geometry("Representation missing Items".to_string()))?;
+        budget.materialize_items(items_attr.as_list().map_or(0, |items| items.len()))?;
         let items = decoder.resolve_ref_list(items_attr)?;
         Ok((mapped_rep, items))
     }
 
-    /// The map's `MappingOrigin` (IfcAxis2Placement3D), scaled: the only 3D
-    /// transform of type geometry. Read after the last item, as it always was.
+    /// The map's `MappingOrigin` (IfcAxis2Placement), scaled: the only
+    /// placement transform of type geometry. Read after the last item.
     pub(crate) fn type_map_origin(&self, rep_map: &DecodedEntity, decoder: &mut EntityDecoder)
         -> Result<Option<Matrix4<f64>>> {
-        Ok(match rep_map.get(slot::IfcRepresentationMap::MAPPING_ORIGIN.index()) {
-            Some(origin_attr) if !origin_attr.is_null() => match decoder.resolve_ref(origin_attr)? {
-                Some(origin) if origin.ifc_type == IfcType::IfcAxis2Placement3D => {
-                    let mut transform = self.parse_axis2_placement_3d(&origin, decoder)?;
-                    self.scale_transform(&mut transform);
-                    Some(transform)
-                }
-                _ => None,
-            },
-            _ => None,
-        })
+        Ok(self.mapping_origin_frame(rep_map, decoder)?.map(|mut transform| {
+            self.scale_transform(&mut transform);
+            transform
+        }))
     }
 
     /// Bake the MappingOrigin into every part of a walked map: textured parts

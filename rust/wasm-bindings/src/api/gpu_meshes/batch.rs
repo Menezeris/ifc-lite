@@ -371,10 +371,8 @@ impl IfcAPI {
             site_local_rotation: None,
         });
         let opts = MeshProductionOptions {
-            geometry_hash: hash_tolerance.map(|tolerance| GeometryHashConfig {
-                tolerance,
-                world_rtc: hash_world_rtc,
-            }),
+            geometry_hash: hash_tolerance.map(|tolerance| GeometryHashConfig { tolerance, world_rtc: hash_world_rtc }),
+            ..Default::default()
         };
 
         // CSG diagnostics, aggregated across the batch: the canonical producer
@@ -387,9 +385,9 @@ impl IfcAPI {
         > = rustc_hash::FxHashMap::default();
 
         // PipelineDiagnostics tallies for this batch (elements actually run
-        // through the producer, degenerate-backstop drops).
+        // through the producer, degenerate-backstop drops, refused products).
         let mut batch_elements: u64 = 0;
-        let mut batch_backstop: u64 = 0;
+        let (mut batch_backstop, mut batch_refused): (u64, u64) = (0, 0);
 
         // #1623 Phase 3: don't-bake occurrences collected across the batch's
         // elements (empty when the router is unarmed). Resolved after the loop into
@@ -506,7 +504,7 @@ impl IfcAPI {
                 &mut decoder,
                 &router,
             );
-            let Ok(produced) = produced else { continue }; // never invalidated mid-batch
+            let Ok(produced) = produced else { batch_refused += 1; continue };
 
             for (product_id, fails) in produced.csg_failures {
                 batch_csg_failures.entry(product_id).or_default().extend(fails);
@@ -529,16 +527,16 @@ impl IfcAPI {
             });
         }
 
-        // Surface the opening / CSG diagnostics. The viewer's large-file path
-        // goes processAdaptive -> processParallel -> Web Workers ->
-        // `processGeometryBatch`, so the log has to fire here or the
-        // diagnostic helper never runs for real-world files.
+        // Surface refused products and the opening / CSG diagnostics. The
+        // viewer's large-file path goes processAdaptive -> processParallel ->
+        // Web Workers -> `processGeometryBatch`, so the logs must fire here.
+        crate::api::warn_refused_products(batch_refused);
         let csg_diag = crate::api::drain_and_log_csg_diagnostics(&router, batch_csg_failures);
 
         // Layered-wall slicing diagnostics (#563): a quiet success summary, but a
         // per-element warning (id + reason) when a sliceable wall fails to slice
         // — so future regressions surface without spamming healthy loads. Reasons:
-        // not-single-unshifted-item / thin-layers-collapsed-to-1 /
+        // not-single-unrotated-item / thin-layers-collapsed-to-1 /
         // placement-unresolved / cut-produced-<2 / base-mesh-error.
         let layer_diag = router.take_layer_slice_diag();
         if !layer_diag.is_empty() {

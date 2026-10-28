@@ -287,6 +287,12 @@ jobs:
           filters: |
             rust:
               - 'rust/**'
+              - 'scripts/retained-browser-runtime-tests.mjs'
+              - 'scripts/stage-retained-runtime-peer.mjs'
+              - 'scripts/retained-compare/**'
+              - 'packages/cli/src/retained/**'
+              - 'packages/cli/src/commands/export-retained.ts'
+              - 'scripts/lib/__fixtures__/retained-driver/**'
               - 'apps/server/**'
               - 'Cargo.toml'
               - 'Cargo.lock'
@@ -299,6 +305,11 @@ jobs:
               # a hand-edit or stale regeneration of them must trigger the check.
               - 'packages/ifcx/src/generated/**'
               - 'tests/models/manifest.json'
+              # #7955: committed synthetic IFC/oracle/sidecar changes must run
+              # their Rust consumers and the Node path-coverage mirror.
+              - 'tests/fixtures/synthetic-retained/**'
+              - 'tests/fixtures/cli-retained/**'
+              - 'tests/manifests/**'
               - '.github/workflows/test.yml'
             # AGENTS.md is the instruction file every agent reads, and
             # scripts/check-agents-md-size.mjs gates its size and line length.
@@ -425,6 +436,17 @@ jobs:
               # job. Without it here the test cannot trigger its own execution:
               # a PR editing only the integration harness skips the only lane
               # that runs it.
+              # The ifc-git revision corpus and its generator. `node-guards` runs
+              # `derive-revisions.mts --check` against the COMMITTED manifest, and
+              # that job is gated on `frontend || rust`. `tools/**` appears only in
+              # the license-header filter, so without this entry a PR changing
+              # nothing but the corpus -- a hand-edited `revisions.json` being the
+              # exact case -- leaves `frontend` false, skips `node-guards`, and
+              # bypasses the one gate that checks the manifest. Same trap this
+              # filter block already warns about for `apps/`, `examples/` and the
+              # integration harness: a guard that the PR it should catch can skip
+              # is not a guard.
+              - 'tools/ifc-git-corpus/**'
               - 'tests/integration.test.ts'
               # The tsconfig BOTH `pnpm test:integration` and `pnpm test:api`
               # compile against (`tsx --tsconfig tests/tsconfig.json`). Same
@@ -461,6 +483,9 @@ jobs:
               # line a gitignore-only PR skips Node tests and the gate never
               # sees the change that moved its own verdict.
               - '.gitignore'
+              # #7955: inert transport tests import both clients and the shared
+              # Worker fixtures; native-only edits must run those Node tests.
+              - 'native/smlib-adapter/**'
               # The offset file itself. `node-tests` carries the Rust
               # major-offset gate, and `scripts/**` above already brings the
               # gate's own sources into this lane -- but the ONE file whose
@@ -552,6 +577,8 @@ jobs:
               - 'scripts/perf/instructions-report.mjs'
               - '.github/workflows/test.yml'
             docs:
+              - 'tests/fixtures/cli-retained/**'
+              - 'tests/manifests/**'
               - 'docs/**'
               - 'mkdocs.yml'
               - 'requirements-docs.txt'
@@ -730,6 +757,12 @@ jobs:
           fi
           echo "✅ committed wasm types match the Rust source"
 
+      # A separate feature bundle exposes only the test ownership probe.
+      # Do not overwrite pkg-diff or its committed production declarations.
+      - name: Fingerprint getter ownership (actual WASM, no skips)
+        if: needs.changes.outputs.wasm_prebuilt != 'true'
+        run: pnpm test:diff-decode-leaks
+
       # The generated IFCX imported-geometry kernel must match the Rust crate it
       # is built from. Regenerates into a temp dir and diffs; not a build gate for
       # packages (their --verify is Rust-free). Needs cargo, so 'Setup WASM build toolchain'
@@ -754,6 +787,11 @@ jobs:
           node scripts/diff-lineage-vectors.mjs --check
           node scripts/diff-sidecar-vectors.mjs --check
           node scripts/diff-sidecar-validation-vectors.mjs --check
+
+      # #7955 M2-B: the default (flag-off) viewer dist built above must not
+      # contain retained/SMLib code or assets.
+      - name: Verify default viewer is retained-free
+        run: node scripts/check-viewer-retained-free.mjs
 
       # Perf ratchet, `bundle` family (#6959). `pnpm build` above already
       # built the engine wasm and the viewer's dist/ (turbo builds apps/*
@@ -944,8 +982,65 @@ jobs:
           # #7943: preserve the extracted rational oracle helper. Accepting a
           # partition when ANY vertex is coplanar must fail the nonplanar
           # rational-oracle witnesses; the first face alone is insufficient.
-          if git diff --name-only --diff-filter=A origin/main...HEAD -- tests/evidence/issue-7943/coplanarity.oracle.patch | grep -Fxq 'tests/evidence/issue-7943/coplanarity.oracle.patch'; then
+          # C2 lane #7781: preserve new modules and test wiring while disturbing
+          # reporting, balanced leaves, controller debits, root retention and
+          # profile publication. These mutations remain bounded.
+          if git diff --name-only --diff-filter=A origin/main...HEAD -- tests/evidence/c2-walk-lane-7781/behaviour.oracle.patch | grep -Fxq 'tests/evidence/c2-walk-lane-7781/behaviour.oracle.patch'; then
+            oracle_args+=(--mutation tests/evidence/c2-walk-lane-7781/behaviour.oracle.patch)
+          # #7781 C2-5a: keep cutter types and test wiring; disturb engulf
+          # admission and restoration of a diagonal cutter's f64 origin.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- tests/evidence/voids-vocabulary-c2-5a/behaviour.oracle.patch | grep -Fxq 'tests/evidence/voids-vocabulary-c2-5a/behaviour.oracle.patch'; then
+            oracle_args+=(--mutation tests/evidence/voids-vocabulary-c2-5a/behaviour.oracle.patch)
+          # #7711: preserve the new independent probe module so its tests load;
+          # disable only placement/fill checks and require assertion failures.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- tests/evidence/section-export-7711/metadata.oracle.patch | grep -Fxq 'tests/evidence/section-export-7711/metadata.oracle.patch'; then
+            oracle_args+=(--mutation tests/evidence/section-export-7711/metadata.oracle.patch)
+          # Exact globe placement: preserve the new modules so the tests load;
+          # Auto never resolves to Exact, so the placement witnesses turn RED.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- tests/evidence/globe-placement/behaviour.oracle.patch | grep -Fxq 'tests/evidence/globe-placement/behaviour.oracle.patch'; then
+            oracle_args+=(--mutation tests/evidence/globe-placement/behaviour.oracle.patch)
+          # GeoWarp: preserve new modules/exports so the tests load; drop k_c
+          # from true-length mapping so the PROJ witnesses turn RED.
+          # Once geo-warp.ts is on main, this clause can go.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- apps/viewer/src/lib/geo/geo-warp.ts | grep -Fxq 'apps/viewer/src/lib/geo/geo-warp.ts'; then
+            oracle_args+=(--mutation tests/evidence/geo-warp/behaviour.oracle.patch)
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- tests/evidence/issue-7943/coplanarity.oracle.patch | grep -Fxq 'tests/evidence/issue-7943/coplanarity.oracle.patch'; then
             oracle_args+=(--mutation tests/evidence/issue-7943/coplanarity.oracle.patch)
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- packages/diff/src/wasm-projections.ts | grep -Fxq 'packages/diff/src/wasm-projections.ts'; then
+            # #8042/#8109: a whole-change revert deletes wasm-projections.ts,
+            # which diff-lineage-parity.test.mjs imports (REVERT-BROKE-BUILD).
+            # Keep the module and its exports; swap the content-match and
+            # successor sides and drop split pieces, so the parity corpus
+            # must fail its identity/lineage assertions. This observes the
+            # TypeScript projection layer through the prebuilt WASM only:
+            # pkg-diff is not rebuilt here, so the Rust host bindings are
+            # proven out of band. Once wasm-projections.ts is on main,
+            # whole-change reverts resume automatically.
+            oracle_args+=(--mutation tests/evidence/diff-8042/host-projections.oracle.patch)
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- tests/evidence/ifctype-lookup-8119/lookup.oracle.patch | grep -Fxq 'tests/evidence/ifctype-lookup-8119/lookup.oracle.patch'; then
+            # #8119: a whole-change revert deletes buildNameTable, SUPPLEMENTAL
+            # and CANONICAL_NAME_ARMS, which the changed tests import. Keep them
+            # and drop only the exact compare after the perfect hash, so foreign
+            # keywords on an occupied slot must fail the codegen and core tests.
+            oracle_args+=(--mutation tests/evidence/ifctype-lookup-8119/lookup.oracle.patch)
+          elif git diff --unified=0 --diff-filter=M origin/main...HEAD -- rust/diff/src/transport_result.rs | grep -Fxq "+pub fn result_to_document(diff: &ModelDiff<'_,usize>) -> Value {"; then
+            # #8042/#8106: keep the lossless model, options and result APIs.
+            # Lose only unpaired UTF-16 units in native result entry keys;
+            # model_utf16 must fail its existing first-row key assertion.
+            # Retire this case once the result API signature is on main.
+            oracle_args+=(--mutation tests/evidence/diff-8042/model-result-key.oracle.patch)
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/diff-wasm/src/diff_transport.rs | grep -Fxq 'rust/diff-wasm/src/diff_transport.rs'; then
+            # #8042/#8105: keep typed fingerprint/transport APIs and document serde.
+            # Lose only unpaired UTF-16 units in the core-attribute projection;
+            # fingerprint_utf16 and fingerprint_parity must fail assertions.
+            # Once diff_transport.rs is on main, whole-change inversion resumes.
+            oracle_args+=(--mutation tests/evidence/diff-8042/fingerprint-utf16.oracle.patch)
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/diff/src/document_serde.rs | grep -Fxq 'rust/diff/src/document_serde.rs'; then
+            # #8042/#8104: keep all document APIs/types; lose only unpaired UTF-16 units.
+            # document_contract must fail exact surrogate serialization, and
+            # document_utf16 must fail distinct-string identity assertions.
+            # Once document_serde.rs is on main, whole-change inversion resumes.
+            oracle_args+=(--mutation tests/evidence/diff-8042/document-utf16.oracle.patch)
           elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/diff/src/columns.rs | grep -Fxq 'rust/diff/src/columns.rs'; then
             # Keep the new transport API; row-reference parity must detect aliasing.
             oracle_args+=(--mutation tests/evidence/diff-8042/column-references.oracle.patch)
@@ -994,35 +1089,6 @@ jobs:
           # and timeout. Once source_axes.rs is on main, whole-change revert resumes.
           elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/kernel/plane_weld/source_axes.rs | grep -Fxq 'rust/geometry/src/kernel/plane_weld/source_axes.rs'; then
             oracle_args+=(--mutation docs/architecture/evidence/issue-7292/signed-zero.oracle.patch)
-          # #7955 E2b: the native and browser consumers add
-          # processor/run_snapshot.rs, and the changed browser test names the
-          # new IfcAPI model field, so a whole-change revert cannot compile it
-          # (INCONCLUSIVE). Keep the snapshots and break ONLY the native swap:
-          # the deferred style replay no longer re-takes the run snapshot.
-          # Listed before the E2a parent it is stacked on; once
-          # processor/run_snapshot.rs is on main, whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/processing/src/processor/run_snapshot.rs | grep -Fxq 'rust/processing/src/processor/run_snapshot.rs'; then
-            oracle_args+=(--mutation tests/evidence/run-snapshot-e2b/behaviour.oracle.patch)
-          # #7955 E2a: the owned model context adds element/model_context.rs
-          # (and appearance/owned_context.rs), which the changed context tests
-          # drive, so a whole-change revert cannot compile them (INCONCLUSIVE).
-          # Keep the snapshots and break ONLY two lifecycle rules: an
-          # explicitly invalidated source still validates, and an appearance
-          # style edit keeps serving the snapshot it replaced. Listed before
-          # the E1b parent it is stacked on; once element/model_context.rs is
-          # on main, whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/processing/src/element/model_context.rs | grep -Fxq 'rust/processing/src/element/model_context.rs'; then
-            oracle_args+=(--mutation tests/evidence/model-context-e2a/behaviour.oracle.patch)
-          # #7955 E1b: late presentation adds element/presentation_source.rs
-          # (and the assembly_* modules), which the changed presentation tests
-          # drive, so a whole-change revert cannot compile them (INCONCLUSIVE).
-          # Keep the funnel and break ONLY two presentation rules: an
-          # occurrence colours from a private copy of the material cursor, and
-          # a submesh keeps a texture whose UVs no longer match its vertices.
-          # Listed before the E1 parent it is stacked on; once
-          # element/presentation_source.rs is on main, whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/processing/src/element/presentation_source.rs | grep -Fxq 'rust/processing/src/element/presentation_source.rs'; then
-            oracle_args+=(--mutation tests/evidence/presentation-e1b/behaviour.oracle.patch)
           # #7955 E1: canonical element production adds element/execution.rs
           # (and plan.rs), which the changed phase tests drive, so a
           # whole-change revert cannot compile them (INCONCLUSIVE). Keep the
@@ -1032,105 +1098,6 @@ jobs:
           # once element/execution.rs is on main, whole-change revert resumes.
           elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/processing/src/element/execution.rs | grep -Fxq 'rust/processing/src/element/execution.rs'; then
             oracle_args+=(--mutation tests/evidence/processing-plan-e1/behaviour.oracle.patch)
-          # #7955 D4c-2: the spine-step split adds program/boolean/spine.rs,
-          # which the continuation and its tests drive, so a whole-change
-          # revert cannot compile them (INCONCLUSIVE). Keep the steps and
-          # break ONLY the boundary: the plane clip and the batched prism
-          # build are reported as source steps. Listed before the D4c-1
-          # parent it is stacked on; once program/boolean/spine.rs is on
-          # main, whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/program/boolean/spine.rs | grep -Fxq 'rust/geometry/src/program/boolean/spine.rs'; then
-            oracle_args+=(--mutation tests/evidence/boolean-steps-d4c2/behaviour.oracle.patch)
-          # #7955 D4c: the Boolean entry adds program/boolean/mod.rs (the
-          # continuation moved out of the boolean processor), which the item
-          # control and its tests drive, so a whole-change revert cannot
-          # compile them (INCONCLUSIVE). Keep the continuation and break ONLY
-          # the behaviour: the solid/solid boolean is reported as a source
-          # step and a stop between boolean steps is not observed. Listed
-          # before the D4b parent it is stacked on; once
-          # program/boolean/mod.rs is on main, whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/program/boolean/mod.rs | grep -Fxq 'rust/geometry/src/program/boolean/mod.rs'; then
-            oracle_args+=(--mutation tests/evidence/boolean-entry-d4c/behaviour.oracle.patch)
-          # #7955 D4b: the layer control and the styled entries add
-          # program/layers.rs and program/styled.rs, which the production
-          # gateways and their tests drive, so a whole-change revert cannot
-          # compile them (INCONCLUSIVE). Keep the controls and break ONLY the
-          # behaviour: the planes are reported as a source step, a stop in the
-          # layer host is recorded as a base-mesh skip and the voided entry
-          # skips its uncut-host attempt. Listed before the D4 parent it is
-          # stacked on; once program/layers.rs is on main, whole-change revert
-          # resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/program/layers.rs | grep -Fxq 'rust/geometry/src/program/layers.rs'; then
-            oracle_args+=(--mutation tests/evidence/layers-d4b/behaviour.oracle.patch)
-          # #7955 D4: the product and void controls add program/product.rs
-          # and program/voids.rs, which the production gateways and their
-          # tests drive, so a whole-change revert cannot compile them
-          # (INCONCLUSIVE). Keep the controls and break ONLY the behaviour:
-          # the walk reads every representation instead of the meshed ones,
-          # placement admission is reported numerical and a voided host
-          # completes uncut. Listed before the C5c and D3b parents it is
-          # stacked on; once program/product.rs is on main, whole-change
-          # revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/program/product.rs | grep -Fxq 'rust/geometry/src/program/product.rs'; then
-            oracle_args+=(--mutation tests/evidence/product-adapters-d4/behaviour.oracle.patch)
-          # #7955 D3b: the styled and type-map walks add program/mapping_accept.rs,
-          # which the controller its tests drive needs, so a whole-change revert
-          # cannot compile them (INCONCLUSIVE). Keep the walks and break ONLY
-          # the behaviour: a type map's nested item no longer starts a fresh
-          # depth path, styled plain items escape the depth bound, a styled
-          # source never claims its drop count and a provisional template
-          # claim is never rolled back. Listed before D3 because this branch
-          # also adds program/mapping.rs. Once program/mapping_accept.rs is on
-          # main, ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/program/mapping_accept.rs | grep -Fxq 'rust/geometry/src/program/mapping_accept.rs'; then
-            oracle_args+=(--mutation tests/evidence/styled-type-map-d3b/behaviour.oracle.patch)
-          # #7955 C5c: the opening cutover adds program/openings/execute.rs,
-          # effects.rs, host.rs, planar.rs and rectangular.rs, which its tests
-          # drive, so a whole-change revert cannot compile them (INCONCLUSIVE).
-          # Keep the controller and execution and break ONLY the behaviour: a
-          # stopped cut publishes every effect and its telemetry, an unwind
-          # skips the failure drain, the staged residual cuts on the parent
-          # and the quiet residual classifier records. Listed before the C5b
-          # parent it is stacked on; once program/openings/execute.rs is on
-          # main, whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/program/openings/execute.rs | grep -Fxq 'rust/geometry/src/program/openings/execute.rs'; then
-            oracle_args+=(--mutation tests/evidence/opening-cutover-c5c/behaviour.oracle.patch)
-          # #7955 C5b: owned opening capture adds program/openings/, which its
-          # tests drive, so a whole-change revert cannot compile them
-          # (INCONCLUSIVE). Keep the controls and break ONLY the behaviour:
-          # reached stops become ordinary misses, neither drain checks the
-          # sticky stop between requests, and quiet residual classification
-          # publishes. Listed before the D2/D3 parents it is stacked on; once
-          # program/openings/classify.rs is on main, whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/program/openings/classify.rs | grep -Fxq 'rust/geometry/src/program/openings/classify.rs'; then
-            oracle_args+=(--mutation tests/evidence/opening-source-c5b/behaviour.oracle.patch)
-          # #7955 D3: the mapping controller adds program/mapping.rs and
-          # mapping_reduce.rs, which its tests drive, so a whole-change revert
-          # cannot compile them (INCONCLUSIVE). Keep the controller and break
-          # ONLY the behaviour: every source records its drops (no Body gate,
-          # no once-per-source claim) and a failed nested map no longer marks
-          # its parent truncated. Once program/mapping.rs is on main, ordinary
-          # whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/program/mapping.rs | grep -Fxq 'rust/geometry/src/program/mapping.rs'; then
-            oracle_args+=(--mutation tests/evidence/mapping-controller-d3/behaviour.oracle.patch)
-          # #7955 D1b: cache ownership adds mapped_cache_ownership.rs, which
-          # the tests name, so a whole-change revert cannot compile them
-          # (REVERT-BROKE-BUILD). Keep the module and break ONLY the behaviour:
-          # caches stop retaining the publishing account, coverage refusals
-          # never fire, a source-walk stop becomes an ordinary drop and observe
-          # stops translating typed stops. Once
-          # mapped_cache_ownership.rs is on main, whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/router/mapped_cache_ownership.rs | grep -Fxq 'rust/geometry/src/router/mapped_cache_ownership.rs'; then
-            oracle_args+=(--mutation tests/evidence/d1b-resource-raii-terminal/behaviour.oracle.patch)
-          # #7955 D1: the new resource module carries the audited mesh clone and
-          # merge admission. Whole-change revert removes the module the tests
-          # import, so no assertion runs; this reverses ONLY the cost charged
-          # before reserve/copy: zero copy/live/output allowances then admit
-          # the merge and the accounted-merge tests turn RED. All changed tests
-          # still run on both sides. Once resource/mesh.rs is on main, ordinary
-          # whole-change revert resumes automatically.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/resource/mesh.rs | grep -Fxq 'rust/geometry/src/resource/mesh.rs'; then
-            oracle_args+=(--mutation tests/evidence/resource-accounts-d1/behaviour.oracle.patch)
           # #7495: deleting the newly introduced report service prevents test
           # collection. Its initial qualification instead removes ONLY the
           # approved NDA digest check: wrong-digest acceptance must turn RED.
@@ -1170,6 +1137,15 @@ jobs:
           # Ordinary whole-change inversion resumes once this module is on main.
           elif git diff --name-only --diff-filter=A origin/main...HEAD -- apps/viewer/src/components/error-report/PublicModelReceipt.tsx | grep -Fxq 'apps/viewer/src/components/error-report/PublicModelReceipt.tsx'; then
             oracle_args+=(--mutation tests/evidence/model-reports-7495/public-receipt-composite.oracle.patch)
+          # #8133: retain the new launcher API while disabling cache reuse, so
+          # its real cold/warm assertions fail instead of failing to import.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- scripts/test-cache.mjs | grep -Fxq 'scripts/test-cache.mjs'; then
+            oracle_args+=(--mutation tests/evidence/testing-optimization/cache-enabled.oracle.patch)
+          # The next stack layer introduces a timing helper imported by its
+          # witnesses. Keep it loadable and reintroduce the eager viewer graph;
+          # the real parser-only startup witness must reject that module load.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- apps/viewer/src/test/error-report-timing.ts | grep -Fxq 'apps/viewer/src/test/error-report-timing.ts'; then
+            oracle_args+=(--mutation tests/evidence/testing-optimization/fixture-lazy.oracle.patch)
           # Keep the new Node-tests shard script importable while removing ONLY
           # its two guarantees: the catch-all's exclusion of pinned packages
           # (a suite would run twice) and the refusal of a stale pinned name (a
@@ -1255,90 +1231,6 @@ jobs:
           # geometry_pool.rs is on main, ordinary whole-change revert resumes.
           elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/processing/src/geometry_pool.rs | grep -Fxq 'rust/processing/src/geometry_pool.rs'; then
             oracle_args+=(--mutation tests/evidence/geometry-pool-7673/stack-size.oracle.patch)
-          # #7955 I2: the IFCX consumer adds imported-graph.ts, imported-kernel.ts
-          # and the generated imported-geometry artifact, which its tests name,
-          # so a whole-change revert cannot load them (REVERT-BROKE-BUILD).
-          # Keep the modules and break ONLY the behaviour: the graph driver
-          # stops forwarding authored point colours and mesh normals to the
-          # Rust kernel. Listed before I1 because this branch also adds the I1
-          # crate. Once packages/ifcx/src/imported-graph.ts is on main, ordinary
-          # whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- packages/ifcx/src/imported-graph.ts | grep -Fxq 'packages/ifcx/src/imported-graph.ts'; then
-            oracle_args+=(--mutation tests/evidence/ifcx-imported-kernel-i2/behaviour.oracle.patch)
-          # #7955 I1: the imported-geometry crate adds math.rs, graph.rs and
-          # scene.rs, which its tests name, so a whole-change revert cannot
-          # compile them (INCONCLUSIVE). Keep the types and break ONLY the
-          # behaviour: mesh placement transforms are not applied and
-          # homogeneous-denominator checks never reject. Once
-          # rust/imported-geometry/src/math.rs is on main, ordinary whole-change
-          # revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/imported-geometry/src/math.rs | grep -Fxq 'rust/imported-geometry/src/math.rs'; then
-            oracle_args+=(--mutation tests/evidence/imported-geometry-i1/behaviour.oracle.patch)
-          # #7955 B5: owned advanced-face plans add advanced_face/plan.rs,
-          # advanced_plan.rs and the structural plans, which their tests name,
-          # so a whole-change revert cannot compile them (INCONCLUSIVE). Keep
-          # the types and break ONLY the behaviour: parameterized faces ignore
-          # a false SameSense; oriented edges ignore their orientation;
-          # structural_face_plan.rs turns a dangling FaceSurface into an error
-          # instead of an empty plan, swaps rtc_applied between the planar and
-          # non-planar branches and stops reversing planar indices; the B3
-          # mutations (faceted-brep bound refusal, surface-model report replay
-          # order and the late collection error) and the A2 scope mutations
-          # (census, budget_state, pending_diagnostics, element_degenerate
-          # scope restore and peak folding) are stacked, as the patch still
-          # carries their hunks. Once
-          # advanced_plan.rs is on main, ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/processors/advanced_plan.rs | grep -Fxq 'rust/geometry/src/processors/advanced_plan.rs'; then
-            oracle_args+=(--mutation tests/evidence/geometry-advanced-face-b5/behaviour.oracle.patch)
-          # #7955 B3: owned brep plans add faceted_plan.rs and
-          # surface_model_plan.rs, which their tests name, so a whole-change
-          # revert cannot compile them (INCONCLUSIVE). Keep the types and break
-          # ONLY the behaviour: faces with unreadable bounds are no longer
-          # refused, surface-model reports are not replayed in order, the late
-          # collection error is dropped, and the A2 scope mutation is stacked
-          # (this branch includes A2). Once faceted_plan.rs is on main,
-          # ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/processors/brep/faceted_plan.rs | grep -Fxq 'rust/geometry/src/processors/brep/faceted_plan.rs'; then
-            oracle_args+=(--mutation tests/evidence/geometry-brep-plans-b3/behaviour.oracle.patch)
-          # #7955 C4: layer slicing is split into planes.rs, slice.rs,
-          # stack.rs, source.rs and stages.rs, which the layer tests name, so a
-          # whole-change revert cannot compile them (INCONCLUSIVE). Keep the
-          # modules and break ONLY the behaviour: interface offsets stop
-          # accumulating, the carve no longer advances its remainder, thin
-          # layers are not merged, an empty host is accepted, frames ignore the
-          # placement and the slice diagnostic misreports; the A2 scope
-          # mutation is stacked (this branch includes A2). Once slice.rs is on
-          # main, ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/router/layers/slice.rs | grep -Fxq 'rust/geometry/src/router/layers/slice.rs'; then
-            oracle_args+=(--mutation tests/evidence/geometry-layer-slicing-c4/behaviour.oracle.patch)
-          # #7955 A2: diagnostic scopes add pending_diagnostics.rs,
-          # budget_state.rs, CsgCensus and ElementState, which its tests name,
-          # so a whole-change revert cannot compile them (INCONCLUSIVE). Keep
-          # the types and break ONLY the behaviour: scopes stop restoring the
-          # caller's budget counters, pending reports and CSG sink, and the
-          # degenerate tally is no longer retained by its owner. Once
-          # pending_diagnostics.rs is on main, ordinary whole-change revert
-          # resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/pending_diagnostics.rs | grep -Fxq 'rust/geometry/src/pending_diagnostics.rs'; then
-            oracle_args+=(--mutation tests/evidence/geometry-diagnostic-scopes-a2/behaviour.oracle.patch)
-          # #7955 G1: the SMLib adapter adds the ifc-lite-geometry-runtime crate,
-          # whose protocol, supervisor and process-control tests name the new
-          # production types, so a whole-change revert cannot compile them
-          # (INCONCLUSIVE). Keep the types and break ONLY the behaviour: response
-          # request ids are no longer matched and oversized mesh chunk requests
-          # are encoded. Once rust/geometry-runtime/src/protocol.rs is on main,
-          # ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry-runtime/src/protocol.rs | grep -Fxq 'rust/geometry-runtime/src/protocol.rs'; then
-            oracle_args+=(--mutation tests/evidence/geometry-runtime-g1/behaviour.oracle.patch)
-          # #7955 A1: core execution ownership adds execution_owner.rs,
-          # source_bundle.rs and source caches, which its tests name, so a
-          # whole-change revert cannot compile them (INCONCLUSIVE). Keep the
-          # types and break ONLY the behaviour: configuration changes stop
-          # advancing the owner generation, foreign caches are accepted and
-          # every decoder counts as bundle-owned. Once execution_owner.rs is
-          # on main, ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/core/src/execution_owner.rs | grep -Fxq 'rust/core/src/execution_owner.rs'; then
-            oracle_args+=(--mutation tests/evidence/core-execution-owner-a1/behaviour.oracle.patch)
           # #7676: the upload admission change adds ApiError::UploadTimeout, which
           # its tests name, so a whole-change revert cannot compile them
           # (INCONCLUSIVE). Keep the type and break ONLY the behaviour: the
@@ -1422,46 +1314,6 @@ jobs:
           # whole-change revert resumes.
           elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/processors/tessellated/indices.rs | grep -Fxq 'rust/geometry/src/processors/tessellated/indices.rs'; then
             oracle_args+=(--mutation tests/evidence/tessellation-indices-7689/index-rule.oracle.patch)
-          # #7955 B2: the owned tessellated plans add triangulated_plan.rs and
-          # polygonal_plan.rs, which their tests import, so a whole-change revert cannot
-          # compile them (INCONCLUSIVE). Keep the plan types and break ONLY the behaviour:
-          # closed shells are no longer oriented outward when a plan is evaluated. Once
-          # triangulated_plan.rs is on main, ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/processors/tessellated/triangulated_plan.rs | grep -Fxq 'rust/geometry/src/processors/tessellated/triangulated_plan.rs'; then
-            oracle_args+=(--mutation tests/evidence/geometry-tessellated-plans-b2/behaviour.oracle.patch)
-          # #7955 B1: the owned extrusion/primitive plans add extrusion_plan.rs,
-          # extrusion_tapered_plan.rs and primitive_plan.rs, which their tests import, so a
-          # whole-change revert cannot compile them (INCONCLUSIVE). Keep the plan types and
-          # break ONLY the behaviour: the Position transform is skipped when a plan is
-          # evaluated. Once extrusion_plan.rs is on main, ordinary whole-change revert
-          # resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/processors/extrusion_plan.rs | grep -Fxq 'rust/geometry/src/processors/extrusion_plan.rs'; then
-            oracle_args+=(--mutation tests/evidence/geometry-extrusion-plans-b1/behaviour.oracle.patch)
-          # #7955 B4: the owned swept plans add disk_plan.rs, revolved_plan.rs and
-          # surface_plan.rs, which their tests import, so a whole-change revert cannot
-          # compile them (INCONCLUSIVE). Keep the plan types and break ONLY the behaviour:
-          # disk smooth normals are skipped, the revolved Position transform is skipped
-          # and the surface sweep vertex budget is not enforced. Once disk_plan.rs is on
-          # main, ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/processors/swept/disk_plan.rs | grep -Fxq 'rust/geometry/src/processors/swept/disk_plan.rs'; then
-            oracle_args+=(--mutation tests/evidence/geometry-swept-plans-b4/behaviour.oracle.patch)
-          # #7955 B6: the owned alignment, sectioned and surface plans add
-          # alignment_plan.rs, sectioned_plan.rs and surface_plan.rs, which their tests
-          # import, so a whole-change revert cannot compile them (INCONCLUSIVE). Keep the
-          # plan types and break ONLY the behaviour: ribbon winding is reversed, the
-          # sectioned end cap is dropped and the surface RTC rebase is skipped. Once
-          # alignment_plan.rs is on main, ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/processors/alignment_plan.rs | grep -Fxq 'rust/geometry/src/processors/alignment_plan.rs'; then
-            oracle_args+=(--mutation tests/evidence/geometry-alignment-section-plans-b6/behaviour.oracle.patch)
-          # #7955 C1: the construction graph adds construction/ and program/, which
-          # its tests import, so a whole-change revert cannot compile them
-          # (INCONCLUSIVE). Keep the graph and break ONLY the behaviour: unresolved
-          # roots no longer block evaluation, a custom processor is no longer
-          # refused, the RTC frame is dropped from lowering and repeated roots lose
-          # their occurrence order. Once construction/lowering.rs is on main,
-          # ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/construction/lowering.rs | grep -Fxq 'rust/geometry/src/construction/lowering.rs'; then
-            oracle_args+=(--mutation tests/evidence/geometry-construction-graph-c1/behaviour.oracle.patch)
           # #7682: keep the new STEP-writer modules, StepStats fields and the TS
           # allocatedExpressId export loadable while disabling ONLY the guards the
           # changed tests pin (value/name/id-reuse refusals, the id-space refusal,
@@ -1629,6 +1481,19 @@ jobs:
           # ordinary whole-change revert resumes.
           elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/processing/src/data_model/mod.rs | grep -Fxq 'rust/processing/src/data_model/mod.rs'; then
             oracle_args+=(--mutation tests/evidence/data-model-move-7783/behaviour.oracle.patch)
+          # #7779 recovered P1/P2 retain the new transform API and regress only
+          # the projected conic behavior, so public geometry tests still build.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/processing/src/symbolic/projected_conic_tests.rs | grep -Fxq 'rust/processing/src/symbolic/projected_conic_tests.rs'; then
+            oracle_args+=(--mutation tests/evidence/f3b-recovered-symbolic-7779/behaviour.oracle.patch)
+          # #7779 recovered P4/E1 keep the validator API and restore only
+          # unchecked Linear source admission/default axes and uncached suffixes.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/placement/validated_chain.rs | grep -Fxq 'rust/geometry/src/placement/validated_chain.rs'; then
+            oracle_args+=(--mutation tests/evidence/f3b-recovered-7779/behaviour.oracle.patch)
+          # #7779: F3b-R2a's whole-production inverse removes axis_frame_tests
+          # module wiring. Keep all changed tests and APIs; normalize only the
+          # router adapter's raw direction ratios so its exact-ratio test fails.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- tests/evidence/placement-r2a-7779/raw-direction.oracle.patch | grep -Fxq 'tests/evidence/placement-r2a-7779/raw-direction.oracle.patch'; then
+            oracle_args+=(--mutation tests/evidence/placement-r2a-7779/raw-direction.oracle.patch)
           # #7779: F3b-R1 moves `build_axis2_matrix`, the chain walk and the
           # Linear/Grid resolvers into the new `placement` module, which the
           # changed tests import, so a whole-change revert cannot compile them
@@ -1683,139 +1548,34 @@ jobs:
           # rejected attempts must leak failures and telemetry (RED).
           elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/router/voids/attempt.rs | grep -Fxq 'rust/geometry/src/router/voids/attempt.rs'; then
             oracle_args+=(--mutation tests/evidence/opening-telemetry-c5a/behaviour.oracle.patch)
-          # #7955: F1a adds analytic/source.rs, which the changed analytic tests
-          # import. Keep the module and make source capture record nothing: the
-          # retained coefficients, trim selectors and traversal flags must turn RED.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/analytic/source.rs | grep -Fxq 'rust/geometry/src/analytic/source.rs'; then
-            oracle_args+=(--mutation tests/evidence/analytic-source-7955/behaviour.oracle.patch)
-          # #7955 D2: the item/cache controller adds program/inner.rs, item.rs,
-          # inner_cache.rs and router/item_cache_program.rs, which its tests
-          # name, so a whole-change revert cannot compile them (INCONCLUSIVE).
-          # Keep the controller and break ONLY the behaviour: foreign owners are
-          # no longer refused, a ticket is marked executed only after its
-          # callback returns, the selected RTC hook is skipped and shared cache
-          # hits are ignored. Once program/inner.rs is on main, ordinary
-          # whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/program/inner.rs | grep -Fxq 'rust/geometry/src/program/inner.rs'; then
-            oracle_args+=(--mutation tests/evidence/item-cache-controller-d2/behaviour.oracle.patch)
-          # #7955 G4b: bounded affine copies add geometry-runtime
-          # worker_affine.rs, whose types the changed runtime tests name, so a
-          # whole-change revert cannot compile them (INCONCLUSIVE). Keep the
-          # types and break ONLY admission: a singular matrix passes the
-          # pre-dispatch check and opcode 18 is sent to an adapter that never
-          # advertised it (RED, unit and protocol peer only). Checked before
-          # G4a so the stacked branch uses its own patch. Once
-          # rust/geometry-runtime/src/worker_affine.rs is on main, ordinary
-          # whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry-runtime/src/worker_affine.rs | grep -Fxq 'rust/geometry-runtime/src/worker_affine.rs'; then
-            oracle_args+=(--mutation tests/evidence/affine-copy-g4b/behaviour.oracle.patch)
-          # #7955 G4a: sealed empty outcomes add geometry-runtime
-          # worker_empty.rs, whose NumericalOutcome the changed runtime tests
-          # name, so a whole-change revert cannot compile them (INCONCLUSIVE).
-          # Keep the types and break ONLY the certificate: an all-zero strict
-          # mesh is sealed empty without querying the actual solid (RED,
-          # protocol peer only). Checked before G3a so the stacked branch uses
-          # its own patch. Once rust/geometry-runtime/src/worker_empty.rs is on
-          # main, ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry-runtime/src/worker_empty.rs | grep -Fxq 'rust/geometry-runtime/src/worker_empty.rs'; then
-            oracle_args+=(--mutation tests/evidence/sealed-empty-g4a/behaviour.oracle.patch)
-          # #7955 H1c: the retained browser host contract adds ifc-lite-wasm
-          # src/api/retained_browser.rs and the capability selection its native
-          # unit tests name, so a whole-change revert cannot compile them
-          # (INCONCLUSIVE). Keep the contract and break ONLY behaviour: SDK
-          # capability bits alone open the curved families, witnesses open a
-          # format the adapter lacks, and the opt-in retained-engine loader
-          # caches a failed load forever (RED). Checked before H1b so the stacked
-          # branch uses its own patch. Once
-          # rust/wasm-bindings/src/api/retained_browser.rs is on main, ordinary
-          # whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/wasm-bindings/src/api/retained_browser.rs | grep -Fxq 'rust/wasm-bindings/src/api/retained_browser.rs'; then
-            oracle_args+=(--mutation tests/evidence/browser-host-h1c/behaviour.oracle.patch)
-          # #7955 H1b: the private retained browser executor adds ifc-lite-wasm
-          # src/retained_browser/mod.rs (its unit tests live beside it) and
-          # js/retained-driver.mjs, which the changed driver tests import, so a
-          # whole-change revert cannot compile or load them (INCONCLUSIVE). Keep
-          # them and break ONLY the behaviour: an abandoned in-flight future
-          # leaves its Worker live, a dropped lease stays live until its release
-          # runs and the next command no longer waits for queued releases (RED,
-          # protocol peer only). Checked before H1a so the stacked branch uses
-          # its own patch. Once rust/wasm-bindings/src/retained_browser/mod.rs is
-          # on main, ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/wasm-bindings/src/retained_browser/mod.rs | grep -Fxq 'rust/wasm-bindings/src/retained_browser/mod.rs'; then
-            oracle_args+=(--mutation tests/evidence/browser-driver-h1b/behaviour.oracle.patch)
-          # #7955 H1a: the browser module-Worker transport adds
-          # native/smlib-adapter/browser/client.mjs and module.mjs, which the
-          # changed transport tests import, so a whole-change revert cannot load
-          # them (INCONCLUSIVE). Keep the modules and break ONLY the behaviour:
-          # a stale retirement kills the replacement Worker and owned dispatch
-          # accepts responses above one frame (RED, fixture Workers only).
-          # Checked before G3a so the stacked branch uses its own patch. Once
-          # native/smlib-adapter/browser/client.mjs is on main, ordinary
-          # whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- native/smlib-adapter/browser/client.mjs | grep -Fxq 'native/smlib-adapter/browser/client.mjs'; then
-            oracle_args+=(--mutation tests/evidence/browser-transport-h1a/behaviour.oracle.patch)
-          # #7955 G3a: managed object cleanup adds geometry-runtime
-          # worker_objects.rs, which its unit tests live beside, so a
-          # whole-change revert cannot compile them (INCONCLUSIVE). Keep the
-          # types and break ONLY the behaviour: a dropped receipt retires the
-          # whole worker instead of queueing its one object, and any rejected
-          # handle drains the queue (RED, protocol peer only). Checked before
-          # G3b so the stacked branch uses its own patch. Once
-          # rust/geometry-runtime/src/worker_objects.rs is on main, ordinary
-          # whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry-runtime/src/worker_objects.rs | grep -Fxq 'rust/geometry-runtime/src/worker_objects.rs'; then
-            oracle_args+=(--mutation tests/evidence/managed-objects-g3a/behaviour.oracle.patch)
-          # #7955 G3b: retained sweeps add geometry-runtime worker_sweep.rs and
-          # worker_upload.rs, which the changed runtime tests reach, so a
-          # whole-change revert cannot compile them (INCONCLUSIVE). Most of
-          # those tests need the native SDK worker; the protocol and peer tests
-          # do not. Keep the types and break ONLY the behaviour: curved regions
-          # and disks skip their same-incarnation witness gate and oversized
-          # chunk frames are encoded (RED). Checked before F2c so the stacked
-          # branch uses its own patch. Once
-          # rust/geometry-runtime/src/worker_sweep.rs is on main, ordinary
-          # whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry-runtime/src/worker_sweep.rs | grep -Fxq 'rust/geometry-runtime/src/worker_sweep.rs'; then
-            oracle_args+=(--mutation tests/evidence/retained-sweep-g3b/behaviour.oracle.patch)
-          # #7955 F2c: retained swept-disk requests add document/retained_disk.rs
-          # and processing tests/retained_disk_requests.rs, which name the new
-          # types, so a whole-change revert cannot compile them (INCONCLUSIVE).
-          # Keep the types and break ONLY the behaviour: hollow and closed disks
-          # are admitted, controls lose the anchor rebase and their original
-          # weights, the active range widens to the knot ends, conic middles
-          # leave the circle and inherited rational status refuses every
-          # occurrence (RED). Checked before F2b so the stacked branch uses its
-          # own patch. Once rust/geometry/src/document/retained_disk.rs is on
-          # main, ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/document/retained_disk.rs | grep -Fxq 'rust/geometry/src/document/retained_disk.rs'; then
-            oracle_args+=(--mutation tests/evidence/retained-disk-f2c/behaviour.oracle.patch)
-          # #7955 F2b: retained extrusion requests add document/retained.rs and
-          # processing retained_requests.rs, which their tests name, so a
-          # whole-change revert cannot compile them (INCONCLUSIVE). Keep the
-          # types and break ONLY the behaviour: any worker incarnation and
-          # stale revisions are accepted, completion frames go unchecked, every
-          # display claim is admitted, inner loops keep authored winding, depth
-          # skips unit scaling, boolean operands and non-rigid placements are
-          # admitted (RED). Checked before F2a so the stacked branch uses its
-          # own patch. Once rust/geometry/src/document/retained.rs is on main,
-          # ordinary whole-change revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/document/retained.rs | grep -Fxq 'rust/geometry/src/document/retained.rs'; then
-            oracle_args+=(--mutation tests/evidence/retained-requests-f2b/behaviour.oracle.patch)
-          # #7955 F2a: the geometry document adds document/mod.rs and processing
-          # retained_geometry.rs, which their tests name, so a whole-change
-          # revert cannot compile them (INCONCLUSIVE). Keep the types and break
-          # ONLY the behaviour: foreign handles resolve, framed origins and
-          # singular transforms are admitted, definitions stop advancing the
-          # revision and instances drop the template origin (RED). Once
-          # rust/geometry/src/document/mod.rs is on main, ordinary whole-change
-          # revert resumes.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/document/mod.rs | grep -Fxq 'rust/geometry/src/document/mod.rs'; then
-            oracle_args+=(--mutation tests/evidence/geometry-document-f2a/behaviour.oracle.patch)
-          # #7955 F1b: adds analytic/owned_directrix.rs, whose types the changed
-          # disk and definitions tests import. Keep it and never open the swept-
-          # disk capture: the directrix source and owned rational must turn RED.
-          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/analytic/owned_directrix.rs | grep -Fxq 'rust/geometry/src/analytic/owned_directrix.rs'; then
-            oracle_args+=(--mutation tests/evidence/analytic-directrix-source-7955/behaviour.oracle.patch)
+          # Export plan removal reasons: the new plan/removal.rs and its tests
+          # compile only together. Keep them and record a dangling referrer as
+          # released: the per-record reason test must turn RED. Checked
+          # before the patched-opening clause so the stacked branch uses its
+          # own patch. Once plan/removal.rs is on main, this clause can go.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/export/src/plan/removal.rs | grep -Fxq 'rust/export/src/plan/removal.rs'; then
+            oracle_args+=(--mutation tests/evidence/export-plan-removal-reasons/behaviour.oracle.patch)
+          # Export plan patched opening: the changed delete tests pass the new
+          # feature-keepers argument, so a whole-change revert cannot compile
+          # them. Keep it and let patched records keep a hostless opening
+          # again: the patched-opening test must turn RED. Keyed on this
+          # patch; once it is on main, this clause can go.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- tests/evidence/export-plan-patched-opening/behaviour.oracle.patch | grep -Fxq 'tests/evidence/export-plan-patched-opening/behaviour.oracle.patch'; then
+            oracle_args+=(--mutation tests/evidence/export-plan-patched-opening/behaviour.oracle.patch)
+          # Export plan string attributes: the new add_string_attrs_tests.rs
+          # names the new NewObject and NewType fields, so a whole-change
+          # revert cannot compile it. Keep the fields and write none of them:
+          # the write, refusal and USERDEFINED-kind tests must turn RED. Once
+          # the test file is on main, this clause can go.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/export/src/plan/add_string_attrs_tests.rs | grep -Fxq 'rust/export/src/plan/add_string_attrs_tests.rs'; then
+            oracle_args+=(--mutation tests/evidence/export-plan-string-attributes/behaviour.oracle.patch)
+          # Export plan reused geometry: the new plan/add_same_as.rs and its
+          # tests compile only together. Keep them and write no shape for a
+          # reused body, and skip the reshaped-source refusal: the reuse and
+          # reshape tests must turn RED. Once plan/add_same_as.rs is on main,
+          # this clause can go.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/export/src/plan/add_same_as.rs | grep -Fxq 'rust/export/src/plan/add_same_as.rs'; then
+            oracle_args+=(--mutation tests/evidence/export-plan-same-as/behaviour.oracle.patch)
           # Export plan mapped bodies: the new plan/add_mapped.rs and its
           # tests compile only together. Keep them, drop the transform's
           # translation and instance every context's Body maps: the placement
@@ -1888,8 +1648,43 @@ jobs:
           # Once plan/skeleton.rs is on main, this clause can go.
           elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/export/src/plan/skeleton.rs | grep -Fxq 'rust/export/src/plan/skeleton.rs'; then
             oracle_args+=(--mutation tests/evidence/export-plan-skeleton/behaviour.oracle.patch)
+          # #7781 C2-4: retain RouterConfig/from_config and all test wiring.
+          # Flip only the forwarded batch-local flag: existing real geometry
+          # assertions must distinguish materialized templates from placeholders.
+          # Keep every earlier route's precedence and the full changed collection.
+          # Once router/config.rs is on main, ordinary whole-change inversion resumes.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/router/config.rs | grep -Fxq 'rust/geometry/src/router/config.rs'; then
+            oracle_args+=(--mutation tests/evidence/router-config-7781/behaviour.oracle.patch)
+          # #7781 C2-5c: preserve the internal f32 helper and legacy fold witnesses.
+          # Reverse the lower-bound update; the per-site bit comparisons must fail.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- tests/evidence/c2-5c-voids-aabb/behaviour.oracle.patch | grep -Fxq 'tests/evidence/c2-5c-voids-aabb/behaviour.oracle.patch'; then
+            oracle_args+=(--mutation tests/evidence/c2-5c-voids-aabb/behaviour.oracle.patch)
+          # #7781 C2-5b: keep the extracted helper and its legacy test wiring.
+          # Shift the signed ray parameter; bit-equality witnesses must fail.
+          elif git diff --name-only --diff-filter=A origin/main...HEAD -- rust/geometry/src/router/voids/parity.rs | grep -Fxq 'rust/geometry/src/router/voids/parity.rs'; then
+            oracle_args+=(--mutation tests/evidence/c2-5b-voids-frames/behaviour.oracle.patch)
           fi
+          # #7955 slices register independently; discovery must fail before mapfile.
+          node scripts/revert-oracle-discover.mjs --base origin/main --output "$RUNNER_TEMP/oracle-args"
+          mapfile -d '' -t slice_args < "$RUNNER_TEMP/oracle-args"
+          oracle_args+=("${slice_args[@]}")
           node scripts/check-test-revert-oracle.mjs "${oracle_args[@]}"
+          # #8091: observe provisional-report preservation independently of the
+          # existing owner/scope mutations. Dropping the quarantined batch must
+          # fail the four final-publication refusal regressions.
+          if git diff --name-only --diff-filter=A origin/main...HEAD -- rust/processing/src/element/session_publication_tests.rs | grep -Fxq 'rust/processing/src/element/session_publication_tests.rs'; then
+            node scripts/check-test-revert-oracle.mjs --base origin/main --ci --json \
+              --mutation tests/evidence/product-state-e3/publication.oracle.patch \
+              --test rust/processing/src/element/session_publication_tests.rs
+          fi
+          # #8091: independently discard the retry drain's terminal error.
+          # The real processor invocation counters must catch a next strategy
+          # starting after cancellation, even if final output stays empty.
+          if git diff --name-only --diff-filter=AM origin/main...HEAD -- rust/processing/src/element/session_retry_tests.rs | grep -Fxq 'rust/processing/src/element/session_retry_tests.rs'; then
+            node scripts/check-test-revert-oracle.mjs --base origin/main --ci --json \
+              --mutation tests/evidence/product-state-e3/retry-stop.oracle.patch \
+              --test rust/processing/src/element/session_retry_tests.rs
+          fi
           if git diff --name-only --diff-filter=A origin/main...HEAD -- rust/core/src/decoder/precision_certificate.rs | grep -Fxq 'rust/core/src/decoder/precision_certificate.rs'; then
             # The oracle restored the source; also execute the positive side
             # after mutation rather than treating clean status as a test run.
@@ -1943,6 +1738,11 @@ jobs:
       # node-tests made for `test`. A dist missing from the artifact fails tsc
       # loudly; it cannot pass vacuously.
       - run: pnpm typecheck:ci
+        # >>> AIM-FORK: the viewer program (upstream plus the AIM layer) needs about 4.2 GB
+        # of heap in tsc, just over Node's default ceiling on ubuntu-latest (OOM, sync PR #157).
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        # <<< AIM-FORK
 
   lint:
     name: Lint
@@ -1991,10 +1791,6 @@ jobs:
       # that a changeset NAMES a real package; this validates its BUMP LEVEL.
       - name: Check changeset bump levels against the API surface
         run: node scripts/check-changeset-bump.mjs
-      # Executable proof the gate fires, including that the under-bump remedy
-      # says RAISE THE BUMP rather than restore the deleted export.
-      - name: Check changeset-bump gate regressions
-        run: node --test scripts/check-changeset-bump.test.mjs
 
   # The viewer's own suite, split out of `node-tests` across sixteen shards.
   #
@@ -2224,25 +2020,6 @@ jobs:
         run: node scripts/ai-eval/check-ai-eval-manifest.mjs
       - name: Check AI evaluation release invariants
         run: node scripts/ai-eval/check-ai-eval-invariants.mjs
-      # Executable proof the wiring gate cannot pass vacuously — the failure
-      # mode it exists to catch is exactly the one it could have itself. Its
-      # first fixture reconstructs #3062's pre-wiring state (a gate script and
-      # its test committed with no workflow step and no package.json entry),
-      # which the earlier checker could not see at all because `scripts/` was
-      # outside its `packages`/`apps` scan. The rest pin the two directions
-      # that matter: a package.json entry nobody invokes is NOT wiring, and
-      # the glob catch-all below reaching a gate's TEST does not excuse the
-      # gate SCRIPT never executing.
-      - name: Check test-wiring gate regressions
-        run: node --test scripts/check-test-wiring.test.mjs
-      # typecheck-tests.mjs writes the `extends` of every generated test
-      # program. A bare (non-`./`-prefixed) value is resolved by tsc as a NODE
-      # MODULE, so the base config is not found and the `noEmit` it carries
-      # silently stops applying -- a repo-root run then scattered 9,609
-      # untracked .js/.d.ts/.map files through the source tree (#2664 review).
-      # Nothing about that is visible in normal use, so it is pinned here.
-      - name: Check typecheck-tests extends resolution
-        run: node --test scripts/typecheck-tests.test.mjs
       # A test that reads its subject's SOURCE and asserts on the text passes
       # while the behaviour is broken -- SearchModal.filter's stayed 5/5 green
       # with the row handler unwired (#2396 verbatim). The harness that made
@@ -2250,89 +2027,18 @@ jobs:
       # apps/viewer/src/test/, so this ratchets the remaining list down (#2434).
       - name: Check for new source-text assertions
         run: node scripts/check-source-text-assertions.mjs
-      # That gate shipped untested and then acquired a NARROWING: a predicate
-      # counts only when applied to a value a file read produced, which is what
-      # the docblock always claimed and what the flat version never checked.
-      # A narrowing can only ever flag less, so both halves are executable --
-      # every taint shape it must still catch, and the subprocess-output shape
-      # it must not.
-      - name: Check the source-text detector's own regressions
-        run: node --test scripts/check-source-text-assertions.test.mjs
-      # ALLOWLIST_CEILING is a count, so a commit that removes one row and adds
-      # a DIFFERENT one leaves the count untouched and the swap invisible
-      # (#3664). This pins the allowlist IDENTITY check that catches it,
-      # against real synthetic git history (same method as
-      # check-module-size.test.mjs's gitTree()).
-      - name: Check the source-text allowlist identity ratchet
-        run: node --test scripts/check-source-text-assertions-identity.test.mjs
-      # That gate's SCAN SCOPE is packages/ and apps/ only -- `grep -c rust` over
-      # it returns 0 -- so the same AGENTS.md rule was unenforced across the
-      # whole rust/ tree, demonstrated rather than inferred: a genuine
-      # `fs::read_to_string(".../foo.rs")` plus a `contains` planted in a real
-      # Rust test left CI green (#3129, then #3195). This is the sibling gate,
-      # with its own lexer, because the TypeScript one's precision comes from a
-      # real parse tree that a regex pass sharing the file would erode.
-      # Its own tests run FIRST, for the reason the refwalk pair states: this
-      # check's value is entirely in not passing vacuously, so a broken detector
-      # must fail here rather than report a clean tree.
-      - name: Check Rust source-text gate's own tests
-        run: node --test scripts/check-rust-source-text-assertions.test.mjs
       - name: Check for source-text assertions in Rust tests
         run: node scripts/check-rust-source-text-assertions.mjs
-      # #4178 added `pub triangle_count: usize` to `OpeningDiagnostic`, a `pub`
-      # struct re-exported at the `ifc-lite-geometry` crate root with every
-      # field `pub` and no `#[non_exhaustive]`. cargo-semver-checks correctly
-      # demanded a major, but nothing said so until the RELEASE PR
-      # (`check-rust-semver.mjs`, which needs a real build and only runs
-      # there), by which point the field had to be reverted rather than
-      # choosing the bump up front (issue #4192). This is a SOURCE-DERIVED
-      # snapshot of the same class of change `check-api-surface.mjs` guards
-      # for TypeScript — no build, so it runs on every PR touching `rust/`.
-      # Its own tests run first, same reason as the source-text gate above:
-      # this check's whole value is in not passing vacuously.
-      - name: Check Rust API surface gate's own tests
-        run: node --test scripts/lib/rust-public-api.test.mjs scripts/check-rust-api-surface.test.mjs
       - name: Check Rust public API surface
         run: node scripts/check-rust-api-surface.mjs
-      # A walk that follows a file-supplied entity reference with no visited set
-      # and no depth cap overflows the Rust stack on a self-referential
-      # reference, which is SIGABRT rather than a catchable panic -- in the wasm
-      # geometry worker it takes down the instance (#2866). Six sites were fixed
-      # one at a time (#2868-#2874) and #2873 wrote the guard-choice rule into
-      # AGENTS.md, but a convention does not fail CI when a seventh lands (#2944).
-      # Its own tests run first: this check's value is entirely in not passing
-      # vacuously, so a broken detector must fail here, not report a clean tree.
-      # Both files: check-refwalk-guards.test.mjs covers the harness (scan
-      # roots, candidate floor, allowlist ratchet), refwalk-classify.test.mjs
-      # covers the DETECTOR. Running only the first would leave the half that
-      # decides flagged/not-flagged untested in CI.
-      - name: Check refwalk gate's own tests
-        run: node --test scripts/check-refwalk-guards.test.mjs scripts/lib/refwalk-classify.test.mjs
       - name: Check for unguarded entity-reference walks
         run: node scripts/check-refwalk-guards.mjs
-      # #7674: a comparator built on `partial_cmp` is not a total order on NaN,
-      # and a Rust >= 1.81 sort may panic on it -- an abort in the wasm worker.
-      # Every production `partial_cmp` use needs an allowlist row. Its own
-      # tests run first so a broken detector fails rather than reads clean.
-      - name: Check float sort comparator gate's own tests
-        run: node --test scripts/check-float-sort-comparators.test.mjs
+      - name: Check F3b copied leaf-reader spelling
+        run: node scripts/check-leaf-reader-copies.mjs
       - name: Check for non-total float sort comparators
         run: node scripts/check-float-sort-comparators.mjs
-      # #5236: a raw base-store enumeration in a live query/write can return a
-      # tombstoned entity or miss one created in the mutation overlay. The
-      # parser test pins the detector; the gate ratchets the scoped callers.
-      - name: Check raw entity enumeration gate tests
-        run: node --test scripts/check-raw-entity-enumeration.test.mjs
       - name: Check for new raw entity enumeration
         run: node scripts/check-raw-entity-enumeration.mjs
-      # #6962: perf toggles live in one registry (apps/viewer/src/lib/perf/
-      # flags.ts). The lint fails on a ramp more than four weeks past its
-      # introducedAt, a flag with no owner or removal condition, and any
-      # production `__IFC_LITE_*` global read outside the registry and the
-      # shared reader. Its own tests run first so a broken detector fails here
-      # rather than report a clean tree.
-      - name: Check perf-flag lint's own tests
-        run: node --test scripts/check-perf-flags.test.mjs
       - name: Check perf-flag registry and global-read ratchet
         run: node scripts/check-perf-flags.mjs
       # AGENTS.md has asked for TypeScript modules under ~400 lines since long
@@ -2354,32 +2060,8 @@ jobs:
       # scripts/check-module-size.mjs; this comment is its summary.
       - name: Check TypeScript module size ratchet
         run: node scripts/check-module-size.mjs
-      # Executable proof the ratchet cannot pass vacuously: a gate that
-      # measured nothing -- no files, a missing search root, an empty or
-      # unreadable allowlist -- would report the same clean line as a real
-      # pass. check-module-size.test.mjs covers the harness (tree walk,
-      # allowlist ratchet, --update); lib/module-size-ratchet.test.mjs covers
-      # the counting underneath it, plus the digest helpers that still back
-      # the Rust twin's pin and no longer gate anything on this side.
-      - name: Check module-size ratchet gate regressions
-        run: node --test scripts/check-module-size.test.mjs scripts/lib/module-size-ratchet.test.mjs
-      # The #4918 sweep charter's own "what ends it" gate: a grep-based scan
-      # for hardcoded JSX text and aria-label/title/placeholder literals under
-      # apps/viewer/src/components, ratcheted the same shape as the module-size
-      # gate above (a per-file budget in scripts/i18n-literals-baseline.json;
-      # rises fail, falls print a reminder to tighten). Its own tests run
-      # first, same reason as every other gate here: this check's value is
-      # entirely in not passing vacuously.
-      - name: Check i18n-literals gate regressions
-        run: node --test scripts/check-i18n-literals.test.mjs
       - name: Check for hardcoded viewer UI literals
         run: node scripts/check-i18n-literals.mjs
-      # #5607: the jsx-a11y ratchet itself runs in the Lint job (`pnpm lint`);
-      # its tests run here with the other ratchet gates' tests, and cover the
-      # shared comparison (scripts/lib/count-ratchet.mjs) the viewer smoke
-      # e2e's axe baseline also uses.
-      - name: Check jsx-a11y ratchet gate regressions
-        run: node --test scripts/check-jsx-a11y.test.mjs scripts/lib/count-ratchet.test.mjs
       # Five favicon variants sat in apps/viewer/public unreferenced for
       # months (1.885 MiB shipped to every visitor) until a maintainer's own
       # grep found them (#4111, deleted by #4114). Nothing caught them when
@@ -2390,37 +2072,8 @@ jobs:
       # have none.
       - name: Check for unreferenced viewer public assets
         run: node scripts/check-asset-usage.mjs
-      # Its own tests run against synthetic asset/corpus lists, never this
-      # checkout's real apps/viewer/public, so a future change to the repo's
-      # actual assets can't make these pass vacuously.
-      - name: Check asset-usage gate regressions
-        run: node --test scripts/check-asset-usage.test.mjs
-      # A `var(--name)` reference with no fallback that resolves to nothing
-      # renders `none`/invalid rather than failing loudly (#5479):
-      # MeasurementVisuals.tsx stroked finished measurement lines with
-      # `hsl(var(--primary))` at 16 sites, but no `--primary` custom property
-      # was ever declared -- the viewer's Tailwind v4 @theme block defines
-      # `--color-primary` instead. Once a drag ended, the line's computed
-      # stroke was `none`: two floating endpoint dots and a label were all
-      # that remained. tsc does not know CSS custom properties exist, so
-      # nothing caught it. Its own tests run first, same reason as every
-      # other gate here: this check's value is entirely in not passing
-      # vacuously.
-      - name: Check CSS custom-property gate's own tests
-        run: node --test scripts/check-css-vars.test.mjs
       - name: Check for undefined CSS custom-property references
         run: node scripts/check-css-vars.mjs
-      # The #5478 audit found ~35 independently positioned viewport overlays,
-      # each with its own colour and z-index: violet `#9C6BDE` for the custom
-      # section plane, purple `#a855f7` for split/wall handles and edit mode,
-      # z-index from `z-10` to `z-[9999]`. #5483 shipped a token module and a
-      # z scale (`z-(--z-hud)`); this ratchet (#5487) stops a NEW hard-coded
-      # hex/rgb literal or raw z-index from landing in viewport code, and a
-      # new purple-family Tailwind utility anywhere in the viewer, without
-      # requiring the full colour-unification sweep (#5488-#5512) up front.
-      # Its own tests run first, same reason as every other gate here.
-      - name: Check overlay-palette gate's own tests
-        run: node --test scripts/check-overlay-palette.test.mjs
       - name: Check for hard-coded viewport overlay colours and z-index
         run: node scripts/check-overlay-palette.mjs
       # An entity can legitimately carry two distinct property/quantity sets
@@ -2432,20 +2085,33 @@ jobs:
       # (possibly-repeating) sets, so the next lookup can't reintroduce it.
       - name: Check for the same-named-property-set .find() shape
         run: node scripts/check-pset-name-find.mjs
-      # The version every Rust crate is published at is the npm version with
-      # `rust-major-offset.json`'s major offset applied (#3216). That offset is
-      # applied by `scripts/sync-versions.js`, which runs ONCE per release
-      # inside `pnpm run version` -- so between releases the file and the
-      # manifests can disagree with nothing to notice, and the first symptom
-      # would be a `cargo publish` at a version meaning something other than
-      # what the file claims. Running it here, on every PR, is what makes the
-      # `chore: version packages` PR (the one commit that actually moves these
-      # literals) reviewable before it publishes.
-      # Its own tests run FIRST, for the reason the pairs above state: this
-      # gate's value is entirely in not passing over a tree it never read, so a
-      # broken detector must fail here rather than report agreement.
-      - name: Check Rust major-offset gate's own tests
-        run: node --test scripts/check-rust-major-offset.test.mjs scripts/lib/rust-major-offset.test.mjs scripts/sync-versions.test.mjs
+      # The ifc-git revision corpus checks its COMMITTED manifest against a
+      # fresh derivation (#8128). `--check` and never a plain run: a plain run
+      # rewrites revisions.json, so in CI it would let a drifting engine rewrite
+      # its own expectations and still report green.
+      #
+      # Output goes to a job-local temp directory via IFC_GIT_CORPUS_OUT, so the
+      # ~2 MB of derived revisions never lands in the workspace and cannot
+      # collide with another step or be mistaken for a tracked file.
+      #
+      # Exit 3 means the built output it derives from is absent -- nothing was
+      # derived, so nothing was checked, and that is not a failure of this gate.
+      # Exit 1 means the derivation CONTRADICTS the manifest and must fail. The
+      # two are separated in the script precisely so this step does not need
+      # `|| true`, which would hide the second along with the first.
+      - name: Check the ifc-git revision corpus manifest is current
+        env:
+          IFC_GIT_CORPUS_OUT: ${{ runner.temp }}/ifc-git-corpus
+        run: |
+          set +e
+          pnpm tsx tools/ifc-git-corpus/derive-revisions.mts --check
+          status=$?
+          set -e
+          if [ "$status" -eq 3 ]; then
+            echo "::notice title=ifc-git corpus::Skipped: the built output it derives from is absent (exit 3). A manifest mismatch would exit 1 and fail."
+            exit 0
+          fi
+          exit "$status"
       - name: Check Rust crate version matches the declared major offset
         run: node scripts/check-rust-major-offset.mjs
       # A hidden tab never delivers an animation frame, so an unbounded
@@ -2460,8 +2126,6 @@ jobs:
       # with nothing to drive, so a lint rather than a unit test.
       - name: Check icon-only buttons use IconButton
         run: node scripts/check-icon-button-adoption.mjs
-      - name: Check icon-button adoption gate's own tests
-        run: node --test scripts/check-icon-button-adoption.test.mjs
       # Every `new GeometryProcessor(...)` must free its WASM handle on all
       # paths. AGENTS.md required this already, but self-policing decayed one
       # call site at a time until 12 sites leaked (#1959) -- including the
@@ -2488,13 +2152,6 @@ jobs:
       # cannot be driven under `tsx --test`. The wiring is pinned here instead.
       - name: Check collab room-model targeting
         run: node scripts/check-collab-room-model-target.mjs
-      # Executable proof the guard above cannot be evaded: a template literal
-      # spelling the required call with the real call deleted (a hole a
-      # CodeRabbit CLI run found in `blankNoise`) and a banned member hidden
-      # inside a `${...}` interpolation both run against mutated copies of the
-      # real sources in a temp tree and must turn the gate red.
-      - name: Check collab room-model targeting gate regressions
-        run: node --test scripts/check-collab-room-model-target.test.mjs
       # tsx's SYNCHRONOUS loader hook (`module.registerHooks`, Node >= 22.15.0)
       # applies the tsconfig `paths` mapping itself and short-circuits, so an
       # aliased specifier never reaches an async `register()` hook in any form.
@@ -2508,12 +2165,6 @@ jobs:
       # why this is a gate rather than a third comment.
       - name: Check loader hook specifier match
         run: node scripts/check-loader-hook-specifier-match.mjs
-      # Executable proof the guard above still fires: both historical incidents
-      # rebuilt in a temp tree must turn it red, a bare arm on a NON-aliased
-      # specifier must stay green (`cesium` is one, and works), and neutering
-      # the alias table in either direction must change the verdict.
-      - name: Check loader hook specifier match gate regressions
-        run: node --test scripts/check-loader-hook-specifier-match.test.mjs
       # #3338: `expandToGeometryBearingIds` (a geometry-less `IfcElementAssembly`
       # -> its `IfcRelAggregates` parts) is reached through exactly one
       # production entry point, `cameraCallbacks.resolveHighlightIds`. #2531 and
@@ -2524,12 +2175,6 @@ jobs:
       # or a listed one that lost its resolver routing.
       - name: Check isolate() assembly-expansion routing
         run: node scripts/check-isolate-expansion-routing.mjs
-      # Executable proof the guard above catches both failure modes it exists
-      # for -- an unlisted new channel calling isolateEntities( with raw ids,
-      # and a listed channel whose resolver call was dropped -- and does not
-      # fire on the compliant shapes each real allowlisted channel uses.
-      - name: Check isolate() assembly-expansion routing gate regressions
-        run: node --test scripts/check-isolate-expansion-routing.test.mjs
       # `degenerateReason` crosses the wasm boundary as an untyped string and is
       # cast to `ClashSolidDegenerateReason` on arrival, so TypeScript cannot see
       # a union that has drifted from the kernel -- `'malformed-operand'` was
@@ -2538,12 +2183,6 @@ jobs:
       # by the source-text gate above, so it is a lint here instead.
       - name: Check clash degenerate-reason parity
         run: node scripts/check-clash-degenerate-reason-parity.mjs
-      # Executable proof the parity gate cannot pass vacuously: two empty sets
-      # are "equal", so a broken extractor would otherwise turn it green. Each
-      # drift direction and each vacuity mode runs against mutated copies of the
-      # real sources in a temp tree and must turn the gate red.
-      - name: Check clash degenerate-reason parity gate regressions
-        run: node --test scripts/check-clash-degenerate-reason-parity.test.mjs
       # #3966: five defects in two days were the Rust server path and the
       # TS/WASM path independently implementing the same extraction
       # (relationships, spatial hierarchy, properties, quantities, materials)
@@ -2555,12 +2194,6 @@ jobs:
       # in test files, so it is a lint here instead.
       - name: Check server/browser type parity
         run: node scripts/check-server-browser-type-parity.mjs
-      # Executable proof: a type removed from either side, in either
-      # direction, per concept, turns this red; the vacuity guard fires when
-      # an extractor is starved; the allowlist suppresses only the exact
-      # type/side it names, never a whole concept.
-      - name: Check server/browser type parity gate regressions
-        run: node --test scripts/check-server-browser-type-parity.test.mjs
       # `|| true` on `git tag` is right (a re-run hits an existing tag);
       # on the PUSH it made a failed push silent, and `gh release create` then
       # creates the missing tag ITSELF at default-branch head -- so the run
@@ -2569,12 +2202,6 @@ jobs:
       # same change that removed the only two instances.
       - name: Check for swallowed git push failures
         run: node scripts/check-swallowed-push.mjs
-      # Executable proof it cannot pass vacuously: a missing or empty workflow
-      # directory must fail rather than report clean, and `|| true` on `git tag`
-      # must NOT be flagged -- a rule that caught both would be suppressed on
-      # its first run.
-      - name: Check swallowed-push gate regressions
-        run: node --test scripts/check-swallowed-push.test.mjs
       # The class the swallowed-push gate above was itself an instance of: a
       # gate is only as good as the job that runs it, and the job only runs
       # when the path filter says so. This derives each gate's INPUTS from the
@@ -2583,11 +2210,6 @@ jobs:
       # job counts as success in the aggregate `test` gate below (#3312).
       - name: Check CI path coverage
         run: node scripts/check-ci-path-coverage.mjs
-      # Executable proof it cannot pass vacuously: reintroducing a real hole
-      # must name that hole, and an empty workflow dir / unparseable filter
-      # block / zero derived inputs must FAIL rather than report clean.
-      - name: Check CI path-coverage gate regressions
-        run: node --test scripts/check-ci-path-coverage.test.mjs
       # The neighbouring class, and the one the comment above names in passing:
       # a skipped job counts as success in the aggregate `test` gate, so a job
       # that is in its `needs:` but MISSING from its results map is unjudged --
@@ -2595,14 +2217,8 @@ jobs:
       # required context on main reports green. `changes` was exactly that.
       - name: Check the aggregate gate judges every job it depends on
         run: node scripts/check-ci-aggregate-coverage.mjs
-      # Executable proof it cannot pass vacuously: an unfindable or empty
-      # `test:` job must FAIL rather than report "0 unjudged of 0".
-      - name: Check aggregate-coverage gate regressions
-        run: node --test scripts/check-ci-aggregate-coverage.test.mjs
       - name: Check workflow report paths and anti-vacuity guards
         run: node scripts/check-workflow-report-paths.mjs
-      - name: Check workflow report-path gate regressions
-        run: node --test scripts/check-workflow-report-paths.test.mjs
       # Same class as the gate above (#3452), for a case it cannot see: its
       # own scan only recognises gates invoked as a literal `node
       # scripts/*.mjs` in a `run:` step, and sdk-canary.yml's job is `pnpm
@@ -2613,8 +2229,6 @@ jobs:
       # filter does not cover all of it.
       - name: Check SDK canary path coverage
         run: node scripts/check-sdk-canary-coverage.mjs
-      - name: Check SDK canary path-coverage gate regressions
-        run: node --test scripts/check-sdk-canary-coverage.test.mjs
       # The CSV cell escaper reached NINE hand-rolled copies and no two were
       # identical: some tested the formula trigger anchored at offset 0 (so a
       # BOM/ZWSP/LRM/NBSP/U+2028 in front of `=` bypassed the CWE-1236 guard),
@@ -2624,11 +2238,6 @@ jobs:
       # the clock; this is what stops a tenth.
       - name: Check for hand-rolled CSV cell escapers
         run: node scripts/check-csv-escaper-copies.mjs
-      # Executable proof the gate fires: each of the ten real copies is replanted
-      # in its original shape and must turn the gate red, and a scan that finds
-      # almost no files must fail rather than report clean.
-      - name: Check CSV escaper gate regressions
-        run: node --test scripts/check-csv-escaper-copies.test.mjs
 
       # Same precedent, for the STEP (ISO 10303-21) string-literal escaper
       # (#3300, second half): the TypeScript and Rust implementations cannot
@@ -2636,41 +2245,16 @@ jobs:
       # fixture instead of a hand-kept copy of the other side's behaviour.
       - name: Check for hand-rolled STEP string escapers
         run: node scripts/check-step-escaper-copies.mjs
-      - name: Check STEP escaper gate regressions
-        run: node --test scripts/check-step-escaper-copies.test.mjs
 
       # CoordinateInfo mixes viewer-axis originShift with IFC-axis RTC. Keep
       # the Z-up/Y-up conversion in one app-local implementation (#4799).
       - name: Check for hand-rolled RTC frame conversions
         run: node scripts/check-rtc-frame-copies.mjs
-      - name: Check RTC frame gate regressions
-        run: node --test scripts/check-rtc-frame-copies.test.mjs
 
       # No two tracked paths may differ only in case: such a pair collapses on
       # Windows/macOS/WSL-/mnt/c checkouts and breaks typecheck and build (#6978).
       - name: Check for case-colliding tracked paths
         run: node scripts/check-path-case-collisions.mjs
-      - name: Check case-collision gate regressions
-        run: node --test scripts/check-path-case-collisions.test.mjs
-
-      # `scripts/lib/vitest-timeout-audit.mjs` (#2948) replaced
-      # `audit-test-timeouts.mjs`, which was deleted in the same change rather
-      # than left beside it: two hand-written JS/TS lexers for one question is
-      # the defect the CSV-escaper gate above exists to prevent, and the older
-      # one was the less accurate of the two while being the one CI pinned.
-      # Both of the original script's failure modes are pinned by the suite
-      # below: an apostrophe in a comment scanning to EOF and dropping every
-      # later call, and an options bag inside a test BODY marking the test
-      # protected. The second was carried over deliberately -- every other
-      # `timeout:` fixture here sits in an ARGUMENT position, so deleting the
-      # old suite would have left the body position unpinned, and a classifier
-      # matching `timeout:` anywhere in a call passes every other case.
-      # It also resolves a timeout INHERITED from an enclosing
-      # `describe(name, { timeout }, fn)` and one set by a package's vitest
-      # config, both of which the grep-built at-risk table in #2948 itself
-      # scored as unprotected.
-      - name: Check vitest-timeout audit gate regressions
-        run: node --test scripts/lib/vitest-timeout-audit.test.mjs
       # ...and run the audit itself over every vitest test file in the repo.
       # It reports rather than gates on unprotected tests -- the right timeout
       # for a slow test needs to know what the test does, which no scan can
@@ -2695,181 +2279,87 @@ jobs:
       # without the win32-x64 zip and nothing noticed (issue #2619).
       - name: Check server-bin platform parity
         run: node scripts/check-server-bin-targets.mjs
-      # Executable proof that the parity gate itself cannot pass vacuously:
-      # an adversarial review of PR #2642 produced four false greens
-      # (commented-out matrix entries and targets still counted; a stale
-      # literal in a comment satisfied the upload check) that hand-testing
-      # had missed. Each hostile mutation now runs against the real inputs
-      # in a temp tree and must turn the gate red with an accurate message.
-      # The second file unit-tests stripYamlComments, the primitive the gate's
-      # comment-awareness rests on (a lone apostrophe once blinded it).
-      - name: Check server-bin parity gate regressions
-        run: node --test scripts/check-server-bin-targets.test.mjs scripts/lib/server-bin-targets-parse.test.mjs
-      # Unit tests for the branching check-unused-locals.mjs uses to decide
-      # "real violation" vs "does not compile" vs "cannot parse this output".
-      # A #2634 review found the fail-loud branch only engaged when the whole
-      # run was unparseable — a run with one recognised diagnostic and one
-      # unrecognised one silently dropped the unrecognised one instead of
-      # failing. Pinned here so that gap can't reopen unnoticed. The #2663
-      # review found the twin gap one level up: the exit status itself was
-      # never inspected, so an ENOBUFS-truncated or OOM-killed run handed the
-      # classifier a prefix that parsed cleanly into a confident undercount.
-      # untrustworthyExitReason is pinned in the same file.
-      - name: Check unused-locals output classification
-        run: node --test scripts/lib/unused-locals-classify.test.mjs
-      # check-lint-ran.mjs buffered oxlint's whole output, wrote it, then
-      # process.exit()'d. On a PIPE — every CI log — stdout is asynchronous, so
-      # the exit discarded most of the write: a 120k-line failing run reached
-      # the log as ~1k lines, cut mid-diagnostic, with no summary and no error
-      # line. A genuine eslint(no-control-regex) failure was diagnosed off such
-      # a log as "pre-existing warnings, not ours". A TTY or a file kept
-      # everything, so hand-testing never showed it — this drives the gate
-      # through a pipe and asserts the bytes that arrive.
-      - name: Check lint gate survives a piped stdout
-        run: node --test scripts/check-lint-ran.test.mjs
-      # check-tla-chunk-await.mjs runs inside the viewer build, so it is only
-      # ever exercised against whatever that build happens to emit — the one
-      # bundle shape that cannot demonstrate the gate still has teeth. These
-      # tests drive it over synthetic bundles instead: the #2246 minified
-      # single-line importer and its pretty-printed twin must still turn it
-      # red, a correct bundle (including one whose __tla chunk is only
-      # import()ed) must still pass, and each way of inspecting nothing —
-      # missing assets dir, no chunks, chunks but no __tla-wrapped chunk —
-      # must fail rather than tick.
-      - name: Check the TLA chunk-await gate cannot pass vacuously
-        run: node --test scripts/check-tla-chunk-await.test.mjs
-      # check-coderabbit-review.mjs exists to tell a real CodeRabbit review from
-      # a green tick with nothing behind it, and it got that wrong in BOTH
-      # directions at once: an empty comment list returned "no review" before
-      # the inline thread count was even read (CodeRabbit posts findings while
-      # its summary is absent, deleted, or rewritten in place), and no timestamp
-      # reached the classifier at all, so a review from two pushes ago certified
-      # the commits the bot never saw. The second is the dangerous one -- a
-      # false "not reviewed" is loud and self-correcting, a false "reviewed" is
-      # silent and terminal. Both directions, the freshness comparison, and the
-      # decision that a missing or unparseable timestamp resolves to unreviewed
-      # are pinned here.
-      - name: Check the CodeRabbit review classifier
-        run: node --test scripts/lib/coderabbit-review-state.test.mjs
-      # The same tick hides four MORE shapes, found by a sweep of all 36 open
-      # PRs: a fork's branch we cannot push to; a DIRTY base whose green checks
-      # ran on a merge commit that can no longer be formed (two PRs were in that
-      # state); ZERO workflow runs at the head commit, which leaves an EMPTY
-      # statusCheckRollup that counts up to the same fail=0/pending=0 as a fully
-      # passing one; and a newest run against a superseded commit. The sweep is
-      # a hand-run tool (check-pr-green.mjs, @unwired-by-design -- its verdicts
-      # are transient GitHub state), but the classification it rests on is not,
-      # including the three ways the sweep must refuse to pass vacuously: zero
-      # PRs, an unreachable API, a malformed response.
-      - name: Check the PR-green sweep classifier
-        run: node --test scripts/lib/pr-green-sweep.test.mjs
-      # fetch-prebuilt-wasm.mjs read `npm pack`'s trimmed stdout as the tarball
-      # path. npm 11 prints its "npm notice" block on STDOUT, so the trim
-      # returned twenty lines of prose and the tar two lines down exited 2,
-      # surfacing as a bare `status: 2` that reads like a corrupt download.
-      # That script is the only route to a WASM bundle on a machine without a
-      # Rust toolchain, so the failure blocked the whole viewer build.
-      - name: Check npm pack output is read machine-readably
-        run: node --test scripts/lib/npm-pack-output.test.mjs
-      # The Release workflow runs ONLY on main, and only on an actual publish,
-      # so nothing on a PR ever read release-crates.mjs's publish ORDER. #2574
-      # added a versioned dev-dependency (ifc-lite-clash) to rust/geometry and
-      # it sat latent until the next release, where cargo refused to publish
-      # geometry ahead of clash — AFTER npm had already gone out, leaving
-      # crates.io behind npm. This makes that order a PR-visible gate.
-      - name: Check the crates publish order matches the dependency graph
-        run: node --test scripts/release-crates-order.test.mjs
-      # #3180: `cargo publish` does not block until a crate is visible in the
-      # crates.io index (the comment that used to claim it did was false —
-      # v6.0.0 left 4 of 7 crates unpublished when the index lagged past
-      # cargo's own internal wait). release-crates.mjs now polls the index
-      # itself with a bounded timeout instead of trusting cargo's wait; these
-      # cover that poll (and the underlying crates.io query helper) against a
-      # stubbed registry and a fake clock, never a real network call.
-      - name: Check the crates.io publish poll fails closed on a stuck index
-        run: node --test scripts/lib/crates-io.test.mjs scripts/release-crates.test.mjs
-      # #3181: `verify-npm-publish.js` only ever checked npm, so the v6.0.0
-      # partial crates.io publish (#3180) went unreported — npm was complete,
-      # and nothing checked the other registry. Covers `verify-crates-publish.js`
-      # reproducing that exact 3-of-7 shape against a stubbed registry — and
-      # the EXIT CODE, not just the pure `verifyAll`: the step name claims the
-      # verifier "catches" a partial publish, which is a claim about what the
-      # process returns. `runMain` is driven directly so `if (failed.length >
-      # 0) → if (false)` (a partial publish exiting 0) and an empty crate list
-      # exiting 0 both fail here rather than at the next release.
-      - name: Check the crates.io publish verifier catches a partial publish
-        run: node --test scripts/verify-crates-publish.test.mjs
-      # The gate that decides whether either publish verifier runs at all. It
-      # is read from `release.yml` on main only, so nothing on a PR exercises
-      # it — and its first spelling (root `package.json` version vs `HEAD~1`)
-      # was wrong on this repo's own history: `sync-versions.js` pins the root
-      # version to the HIGHEST workspace version without lockstepping the
-      # rest, so the root version stands still on most release commits and the
-      # gate collapsed back to `published == 'true'`, skipping verification on
-      # exactly the re-run that recovers a partial publish (#3181). These
-      # drive real throwaway git repositories: a root bump, a bump that leaves
-      # the root alone, no bump at all, and a first commit with no parent.
-      #
-      # They also cover the YAML SEAM, by lifting the `VERSION_CHANGED=` lines
-      # straight out of `release.yml` and running them under the Actions
-      # default shell. The script fails open on its own, but a bare
-      # `VAR=$(node …)` under `bash -eo pipefail` takes the substitution's
-      # exit status: a non-zero exit killed the step, `version_changed` was
-      # never written, and both verifiers skipped DESPITE `always()`. Editing
-      # the workflow back to that spelling reddens these tests.
-      - name: Check the release version-bump gate sees non-root bumps and fails open
-        run: node --test scripts/release-version-changed.test.mjs
-      # Release's credential-quota preflight (#5693) runs on main only, like
-      # the gate above, so on a PR only its tests exercise it: the verdict and
-      # the CLI against a stub `gh`, including the drained-GraphQL reading that
-      # killed Release run 36009885836. (The `scripts/*.test.mjs` sweep below
-      # runs them too; this named step says what broke.)
-      - name: Check the release credential quota preflight
-        run: node --test scripts/check-release-credential-quota.test.mjs
-      # verify-esm-entrypoints.mjs is the last gate before `pnpm release`
-      # publishes. If its package discovery ever returns nothing — packages/
-      # moved, or the publishable filter stops matching — the smoke loop has
-      # nothing to fail on, the summary reads "0 passed, 0 failed, 0 skipped"
-      # and the run exits 0: success reported for having imported nothing.
-      # Same absence-as-success shape as the unbuilt skip it already fails
-      # closed on. This also pins that a legitimate run still exits 0.
-      - name: Check the ESM smoke test fails on an empty discovery
-        run: node --test scripts/verify-esm-entrypoints.test.mjs
-      # Executable proof for the test-glob-coverage gate, which runs in `lint`:
-      # its fixtures drive the unmodified checker against synthetic packages via
-      # `--root` and assert it goes red for a non-recursive shell glob, for an
-      # unrecognised test-script shape, and for a vitest `include` that misses a
-      # file — the three ways it could otherwise wave a package through.
-      - name: Check test-glob-coverage gate regressions
-        run: node --test scripts/check-test-glob-coverage.test.mjs
-      # `fetch-fixtures.mjs --check` is the step every fixture-consuming job now
-      # runs unconditionally after its cache-gated fetch, so it is a gate about
-      # a gate: if IT can pass over nothing, it is worse than absent, because it
-      # also buys silence. These cases drive the unmodified script against
-      # synthetic corpora and assert it reds — naming the offending path — for a
-      # fixture that is absent, byte-flipped at the same size, or truncated, and
-      # for each way of verifying nothing: no manifest, an unparseable one, one
-      # listing zero files, and a scoped `--check a.ifc b.ifc` naming a path the
-      # manifest no longer lists. Positive controls keep it from being switched
-      # off for redding a healthy tree.
-      - name: Check the fixture-cache verification cannot pass vacuously
-        run: node --test scripts/fixtures/fetch-fixtures.test.mjs
-      # The steps above name each scripts/ test file one by one, which is
-      # itself the trap check-test-glob-coverage.mjs exists to catch: the file
-      # that shipped that gate was the one entry nobody added, so a gate for
-      # unrun test files was itself unrun. Its own audit cannot see the gap —
-      # it walks packages/ and apps/, and scripts/ is neither. This catch-all
-      # closes it by GLOB, so the next script's tests run on the commit that
-      # adds them. The named steps above stay for their comments and for
-      # per-gate attribution; re-running them here costs a few seconds.
-      # scripts/fixtures/ is in the glob because it was NOT: the first test file
-      # under it would have been added, run locally, and then never run again.
-      # scripts/docs/ joined it for the same reason in #3200 - the catch-all is
-      # per-DIRECTORY, so it goes blind on the next subdirectory anyone adds.
-      # scripts/xmatch/ joined with its first test file (#4955, PR-6).
-      # scripts/ids-conformance/ joined with the IDS conformance dashboard (IDS-125).
+      # Execute each discovered test file once. Literal paths preserve the path
+      # auditor's existing input census; globs discover every new suite. sort -u
+      # removes the overlap before Node starts any tests.
       - name: Run every scripts/ test file (glob catch-all)
-        run: node --test scripts/*.test.mjs scripts/lib/*.test.mjs scripts/fixtures/*.test.mjs scripts/docs/*.test.mjs scripts/review/*.test.mjs scripts/review/lib/*.test.mjs scripts/perf/*.test.mjs scripts/perf-ratchet/*.test.mjs scripts/xmatch/*.test.mjs scripts/ai-eval/*.test.mjs scripts/ai-eval/lib/*.test.mjs scripts/ai-eval/ids/*.test.mjs scripts/ids-conformance/*.test.mjs scripts/ids-conformance/lib/*.test.mjs scripts/ids-conformance/lib/adapters/*.test.mjs
+        run: |
+          node --test $(printf '%s\n' \
+            scripts/check-asset-usage.test.mjs \
+            scripts/check-changeset-bump.test.mjs \
+            scripts/check-ci-aggregate-coverage.test.mjs \
+            scripts/check-ci-path-coverage.test.mjs \
+            scripts/check-clash-degenerate-reason-parity.test.mjs \
+            scripts/check-collab-room-model-target.test.mjs \
+            scripts/check-css-vars.test.mjs \
+            scripts/check-csv-escaper-copies.test.mjs \
+            scripts/check-float-sort-comparators.test.mjs \
+            scripts/check-i18n-literals.test.mjs \
+            scripts/check-icon-button-adoption.test.mjs \
+            scripts/check-isolate-expansion-routing.test.mjs \
+            scripts/check-jsx-a11y.test.mjs \
+            scripts/check-lint-ran.test.mjs \
+            scripts/check-loader-hook-specifier-match.test.mjs \
+            scripts/check-module-size.test.mjs \
+            scripts/check-overlay-palette.test.mjs \
+            scripts/check-path-case-collisions.test.mjs \
+            scripts/check-perf-flags.test.mjs \
+            scripts/check-raw-entity-enumeration.test.mjs \
+            scripts/check-refwalk-guards.test.mjs \
+            scripts/check-release-credential-quota.test.mjs \
+            scripts/check-rtc-frame-copies.test.mjs \
+            scripts/check-rust-api-surface.test.mjs \
+            scripts/check-rust-major-offset.test.mjs \
+            scripts/check-rust-source-text-assertions.test.mjs \
+            scripts/check-sdk-canary-coverage.test.mjs \
+            scripts/check-server-bin-targets.test.mjs \
+            scripts/check-server-browser-type-parity.test.mjs \
+            scripts/check-source-text-assertions-identity.test.mjs \
+            scripts/check-source-text-assertions.test.mjs \
+            scripts/check-step-escaper-copies.test.mjs \
+            scripts/check-swallowed-push.test.mjs \
+            scripts/check-test-glob-coverage.test.mjs \
+            scripts/check-test-wiring.test.mjs \
+            scripts/check-tla-chunk-await.test.mjs \
+            scripts/check-workflow-report-paths.test.mjs \
+            scripts/docs/check-package-readmes.test.mjs \
+            scripts/fixtures/fetch-fixtures.test.mjs \
+            scripts/generate-coverage-ledger.test.mjs \
+            scripts/lib/coderabbit-review-state.test.mjs \
+            scripts/lib/count-ratchet.test.mjs \
+            scripts/lib/crates-io.test.mjs \
+            scripts/lib/module-size-ratchet.test.mjs \
+            scripts/lib/npm-pack-output.test.mjs \
+            scripts/lib/pr-green-sweep.test.mjs \
+            scripts/lib/refwalk-classify.test.mjs \
+            scripts/lib/rust-major-offset.test.mjs \
+            scripts/lib/rust-public-api.test.mjs \
+            scripts/lib/server-bin-targets-parse.test.mjs \
+            scripts/lib/unused-locals-classify.test.mjs \
+            scripts/lib/vitest-timeout-audit.test.mjs \
+            scripts/release-crates-order.test.mjs \
+            scripts/release-crates.test.mjs \
+            scripts/release-version-changed.test.mjs \
+            scripts/sync-versions.test.mjs \
+            scripts/typecheck-tests.test.mjs \
+            scripts/verify-crates-publish.test.mjs \
+            scripts/verify-esm-entrypoints.test.mjs \
+            scripts/*.test.mjs \
+            scripts/lib/*.test.mjs \
+            scripts/fixtures/*.test.mjs \
+            scripts/docs/*.test.mjs \
+            scripts/review/*.test.mjs \
+            scripts/review/lib/*.test.mjs \
+            scripts/perf/*.test.mjs \
+            scripts/perf-ratchet/*.test.mjs \
+            scripts/xmatch/*.test.mjs \
+            scripts/ai-eval/*.test.mjs \
+            scripts/ai-eval/lib/*.test.mjs \
+            scripts/ai-eval/ids/*.test.mjs \
+            scripts/ids-conformance/*.test.mjs \
+            scripts/ids-conformance/lib/*.test.mjs \
+            scripts/ids-conformance/lib/adapters/*.test.mjs \
+            | sort -u)
       # Committed codegen output (packages/codegen/generated/**,
       # packages/parser/src/generated/**, packages/data/src/ifc-schema/
       # generated/**) had no CI freshness gate at all — a generator bug fixed
@@ -2939,22 +2429,12 @@ jobs:
       # paths). Keep the docs in lockstep with the code they describe.
       - name: Check package READMEs
         run: node scripts/docs/check-package-readmes.mjs
-      # That gate printed `✅ All 0 published packages have a README.md.` over
-      # an empty packages/, and dropped an unreadable package directory out of
-      # the count in silence (#3200, finding 9). Its floors are executable, so
-      # they are run rather than trusted — and named here rather than left to
-      # the catch-all glob below, which is per-DIRECTORY and did not reach
-      # scripts/docs/ when this was written.
-      - name: Check the README gate cannot pass vacuously
-        run: node --test scripts/docs/check-package-readmes.test.mjs
       - name: Check doc code samples
         run: node scripts/docs/check-doc-samples.mjs
       - name: Check generated doc sections
         run: node scripts/docs/generate-docs-sections.mjs --check
       - name: Check generated coverage ledger
         run: node scripts/generate-coverage-ledger.mjs --check
-      - name: Check coverage ledger gate regressions
-        run: node --test scripts/generate-coverage-ledger.test.mjs
 
   node-tests:
     name: Node tests (shard ${{ matrix.shard }}/4)
@@ -3053,11 +2533,35 @@ jobs:
       - name: Package tests (shard ${{ matrix.shard }}/4)
         env:
           SHARD: ${{ matrix.shard }}
+          IFC_LITE_SECTION_EVIDENCE_DIR: ${{ runner.temp }}/section-export-7711-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           filters_txt=$(node scripts/ci-node-test-shards.mjs --shard "$SHARD")
           mapfile -t filters <<<"$filters_txt"
           echo "turbo filters: ${filters[*]}"
           pnpm exec turbo test --only --concurrency=1 "${filters[@]}"
+      # Export is pinned to shard 3 by scripts/ci-node-test-shards.mjs.
+      # Its real-WASM tests above generate a fresh Haus crop; missing fixture,
+      # runtime, or evidence must fail the probe rather than count as coverage.
+      - name: Setup independent section-export oracle
+        if: matrix.shard == 3
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Reopen current Haus crop with IfcOpenShell
+        if: matrix.shard == 3
+        env:
+          IFC_LITE_SECTION_EVIDENCE_DIR: ${{ runner.temp }}/section-export-7711-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          pip install -r tools/ifcopenshell_reference/requirements.lock
+          python tools/ifcopenshell_reference/probe_section_export.py tests/models/ara3d/AC20-FZK-Haus.ifc "$IFC_LITE_SECTION_EVIDENCE_DIR"
+      - name: Upload section-export oracle receipts
+        if: always() && matrix.shard == 3
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: section-export-7711-oracle
+          path: ${{ runner.temp }}/section-export-7711-${{ github.run_id }}-${{ github.run_attempt }}/*.json
+          if-no-files-found: error
+          retention-days: 14
       # The root-level suites below are not turbo packages, so the package
       # split above cannot reach them. They run once, on the catch-all shard.
       - name: Integration tests (parse → quantities → export)
@@ -3247,13 +2751,24 @@ jobs:
     if: (needs.changes.outputs.rust == 'true') && needs.changes.outputs.replay != 'true'
     # Standard GitHub runners keep routine Rust validation out of Depot's
     # metered pool. The longer cap accommodates a cold GitHub cache restore.
-    runs-on: ${{ (vars.SELF_HOSTED_CI == 'true' && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'ci:hosted')))) && fromJSON('["self-hosted","linux","x64","ifclite"]') || 'ubuntu-latest' }}
+    runs-on: ${{ (vars.SELF_HOSTED_RUST == 'true' && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'ci:hosted')))) && fromJSON('["self-hosted","linux","x64","ifclite-rust"]') || ((vars.SELF_HOSTED_CI == 'true' && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'ci:hosted')))) && fromJSON('["self-hosted","linux","x64","ifclite"]') || 'ubuntu-latest') }}
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: false
           persist-credentials: false
+      # Persistent self-hosted Rust runner (vars.SELF_HOSTED_RUST): one warm
+      # target dir per job on the runner's rust-target volume, outside the
+      # workspace that the runner wipes. A job killed mid-compile (reboot) can
+      # leave truncated dep-info, so an unfinished marker discards the dir.
+      - name: Warm target dir (self-hosted Rust runner)
+        if: startsWith(runner.name, 'ifclite-rust')
+        run: |
+          dir="/cache/rust-target/${GITHUB_JOB}"
+          if [ -e "$dir/.unfinished" ]; then echo "previous job did not finish; discarding $dir"; rm -rf "$dir"; fi
+          mkdir -p "$dir" && touch "$dir/.unfinished"
+          echo "CARGO_TARGET_DIR=$dir" >> "$GITHUB_ENV"
       - name: Setup Rust (pinned by rust-toolchain.toml)
         run: rustup show
       - name: Use lld for host links
@@ -3267,6 +2782,8 @@ jobs:
           echo "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=clang" >> "$GITHUB_ENV"
           echo "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C link-arg=-fuse-ld=lld" >> "$GITHUB_ENV"
       - name: Cargo cache
+        # Skipped only where the warm target dir above was set.
+        if: env.CARGO_TARGET_DIR == ''
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           # `-o1-lt`: the test steps below build at opt-level 1 with line-tables
@@ -3377,10 +2894,113 @@ jobs:
           CARGO_PROFILE_TEST_DEBUG: line-tables-only
         run: cargo test --workspace --doc
 
+      - name: Mark warm target dir finished
+        if: always() && env.CARGO_TARGET_DIR != ''
+        run: rm -f "${CARGO_TARGET_DIR}/.unfinished"
+
       # The feature legs (parquet-bos, csg_manifold_gate, csg_capture, the
       # all-features clippy) run in `rust-full` below -- OFF the PR lane,
       # ON push to main and in the merge queue, where the aggregate judges
       # them. See that job for why each exists.
+
+  # #7955: the opt-in retained legs, in their own job. They were steps at the
+  # end of `rust-tests` and pushed that lane past its 45 min cap (cancelled
+  # on main and PRs, 2026-10-27). Same trigger as `rust-tests`, run in
+  # parallel, own cache prefix (feature builds differ from the default tree),
+  # and in the aggregate's `needs:` and results map, so nothing got weaker.
+  rust-retained:
+    name: Rust tests (retained)
+    needs: changes
+    if: (needs.changes.outputs.rust == 'true') && needs.changes.outputs.replay != 'true'
+    runs-on: ${{ (vars.SELF_HOSTED_RUST == 'true' && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'ci:hosted')))) && fromJSON('["self-hosted","linux","x64","ifclite-rust"]') || ((vars.SELF_HOSTED_CI == 'true' && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'ci:hosted')))) && fromJSON('["self-hosted","linux","x64","ifclite"]') || 'ubuntu-latest') }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          lfs: false
+          persist-credentials: false
+      # Persistent self-hosted Rust runner (vars.SELF_HOSTED_RUST): one warm
+      # target dir per job on the runner's rust-target volume, outside the
+      # workspace that the runner wipes. A job killed mid-compile (reboot) can
+      # leave truncated dep-info, so an unfinished marker discards the dir.
+      - name: Warm target dir (self-hosted Rust runner)
+        if: startsWith(runner.name, 'ifclite-rust')
+        run: |
+          dir="/cache/rust-target/${GITHUB_JOB}"
+          if [ -e "$dir/.unfinished" ]; then echo "previous job did not finish; discarding $dir"; rm -rf "$dir"; fi
+          mkdir -p "$dir" && touch "$dir/.unfinished"
+          echo "CARGO_TARGET_DIR=$dir" >> "$GITHUB_ENV"
+      - name: Setup Rust (pinned by rust-toolchain.toml)
+        run: rustup show
+      - name: Use lld for host links
+        run: |
+          command -v ld.lld >/dev/null 2>&1 || sudo apt-get install -y --no-install-recommends lld
+          echo "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=clang" >> "$GITHUB_ENV"
+          echo "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C link-arg=-fuse-ld=lld" >> "$GITHUB_ENV"
+      - name: Cargo cache
+        # Skipped only where the warm target dir above was set.
+        if: env.CARGO_TARGET_DIR == ''
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          prefix-key: ci-rust-retained
+          shared-key: main
+          save-if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'merge_group' }}
+      - uses: ./.github/actions/setup-wasm-build
+        with:
+          cache-prefix: rust-retained-runtime
+      # Hosted Ubuntu images ship a matched chromedriver; the runner image has
+      # only Chrome. Fetch the Chrome-for-Testing driver for the EXACT installed
+      # Chrome build once onto the runner volume.
+      - name: ChromeDriver matching Chrome (self-hosted Rust runner)
+        if: startsWith(runner.name, 'ifclite-rust')
+        run: |
+          set -euo pipefail
+          version=$(google-chrome --version | grep -oE '[0-9]+(\.[0-9]+){3}')
+          dir="/cache/rust-target/chromedriver-${version}"
+          if [ ! -x "$dir/chromedriver-linux64/chromedriver" ]; then
+            tmp=$(mktemp -d)
+            curl --fail --silent --show-error --location --retry 3 \
+              --output "$tmp/driver.zip" \
+              "https://storage.googleapis.com/chrome-for-testing-public/${version}/linux64/chromedriver-linux64.zip"
+            mkdir -p "$dir" && unzip -q -o "$tmp/driver.zip" -d "$dir" && rm -rf "$tmp"
+          fi
+          "$dir/chromedriver-linux64/chromedriver" --version
+          echo "IFCLITE_REAL_CHROMEDRIVER=$dir/chromedriver-linux64/chromedriver" >> "$GITHUB_ENV"
+      - name: SMLib-free retained runtime in a real WASM module
+        run: node scripts/retained-browser-runtime-tests.mjs
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - run: pnpm install --frozen-lockfile
+      - name: SMLib-free CLI report over the real retained WASM boundary
+        run: |
+          BUILD_RETAINED=1 bash scripts/build-wasm.sh
+          pnpm build --filter=@ifc-lite/cli
+          node --test scripts/retained-compare/inert.test.mjs scripts/retained-compare/metrics.test.mjs scripts/retained-compare/tolerances.test.mjs
+
+      - name: Rust tests and Clippy (retained controller and executor)
+        # #7955 M1: the opt-in `retained-runtime` feature is outside the
+        # default workspace build, so the PR job compiles, lints and tests it.
+        run: |
+          cargo test -p ifc-lite-geometry --features retained-runtime
+          cargo clippy -p ifc-lite-geometry --features retained-runtime --all-targets -- -D warnings
+          cargo clippy -p ifc-lite-processing --features retained-runtime --all-targets -- -D warnings
+          cargo test -p ifc-lite-processing --features retained-runtime --lib element::session_retained
+          cargo test -p ifc-lite-processing --features retained-runtime --test 'm[0-9]*'
+          cargo test -p ifc-lite-wasm --features retained-browser --test m1_retained_model
+          cargo test -p ifc-lite-wasm --features retained-browser --test m2_retained_view
+          cargo test -p ifc-lite-wasm --lib --features retained-browser retained_browser
+          cargo clippy -p ifc-lite-wasm --features retained-browser --all-targets -- -D warnings
+          # Match geometry-platform's wasm test target: testkit exposes the
+          # mesh-check oracles through the existing test-support feature.
+          cargo clippy --target wasm32-unknown-unknown -p ifc-lite-wasm --all-targets --features retained-browser -- -D warnings
+          cargo test -p ifc-lite-retained-native --features retained-runtime
+          cargo test -p ifc-lite-retained-native --features retained-runtime --example retained_compare
+          cargo clippy -p ifc-lite-retained-native --features retained-runtime --all-targets -- -D warnings
+      - name: Mark warm target dir finished
+        if: always() && env.CARGO_TARGET_DIR != ''
+        run: rm -f "${CARGO_TARGET_DIR}/.unfinished"
 
   # THE FULL RUST LANE, OFF THE PR (CI redesign, step 5). Everything here is
   # an off-by-default feature build: the workspace never compiles these, so a
@@ -3481,11 +3101,15 @@ jobs:
       # Its own step rather than folding in `csg_topology_gate` (which has the
       # same gap and predates this) so a breakage names one feature.
       - name: Rust tests (csg_manifold_gate feature)
+        # Geometry changes run this feature in csg-accept-gates, which the
+        # required aggregate also judges. Other Rust changes keep it here.
+        if: needs.changes.outputs.geometry != 'true'
         env:
           IFC_LITE_REQUIRE_FIXTURES: "1"
         run: cargo test -p ifc-lite-geometry --features csg_manifold_gate
 
       - name: Clippy (csg_manifold_gate feature)
+        if: needs.changes.outputs.geometry != 'true'
         run: cargo clippy -p ifc-lite-geometry --features csg_manifold_gate --all-targets -- -D warnings
 
       # --all-features, and the catch-all is the point. The two steps above name
@@ -3521,8 +3145,11 @@ jobs:
 
       # #6537 diagnostic work must be tested with its opt-in counters present.
       # Default workspace tests only exercise the unchanged ring geometry.
+      # #8156 added `kernel::abutting`, whose refusal counters are the only way
+      # to tell "the prepass never fired" from "it fired and was refused"; both
+      # filters are passed to the harness, which ORs them.
       - name: Rust tests (opening work counters)
-        run: cargo test -p ifc-lite-geometry --features opening-perf-trace --lib csg::consolidate::ring_ops::tests
+        run: cargo test -p ifc-lite-geometry --features opening-perf-trace --lib -- csg::consolidate::ring_ops::tests kernel::abutting::tests
 
       - name: Rust tests (opening work diagnostic output guard)
         run: cargo test -p ifc-lite-processing --features opening-perf-trace --example opening_work_probe
@@ -4135,7 +3762,7 @@ jobs:
 
   test:
     name: Build + WASM + Rust + Node
-    needs: [changes, build, revert-oracle, typecheck, lint, node-guards, node-tests, provenance-tests, viewer-tests, viewer-e2e, rust-tests, rust-full, rust-semver, geometry-census, csg-accept-gates, plato-check, docs-checks, docs-site, agents-md, license-headers, native-instructions, perf-ratchet]
+    needs: [changes, build, revert-oracle, typecheck, lint, node-guards, node-tests, provenance-tests, viewer-tests, viewer-e2e, rust-tests, rust-retained, rust-full, rust-semver, geometry-census, csg-accept-gates, plato-check, docs-checks, docs-site, agents-md, license-headers, native-instructions, perf-ratchet]
     # Preserve failed/skipped dependency judgement, but retire cancelled workflows (#7247).
     if: ${{ !cancelled() }}
     # Free runner — the gate just inspects upstream job results.
@@ -4197,6 +3824,7 @@ jobs:
             [viewer-tests]="${{ needs.viewer-tests.result }}"
             [viewer-e2e]="${{ needs.viewer-e2e.result }}"
             [rust-tests]="${{ needs.rust-tests.result }}"
+            [rust-retained]="${{ needs.rust-retained.result }}"
             [rust-full]="${{ needs.rust-full.result }}"
             [rust-semver]="${{ needs.rust-semver.result }}"
             [geometry-census]="${{ needs.geometry-census.result }}"

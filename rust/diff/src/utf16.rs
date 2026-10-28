@@ -37,20 +37,21 @@ const FNV_PRIME_64: u64 = 0x0000_0100_0000_01b3;
 /// locale-sensitive comparison would make the fingerprint depend on the
 /// machine that computed it, in a hash whose whole purpose is cross-machine
 /// identity; Rust's `Ord` would differ above the BMP.
-pub fn cmp_code_units(a: &str, b: &str) -> Ordering {
-    let mut lhs = a.encode_utf16();
-    let mut rhs = b.encode_utf16();
-    loop {
-        match (lhs.next(), rhs.next()) {
-            (Some(x), Some(y)) => match x.cmp(&y) {
-                Ordering::Equal => continue,
-                other => return other,
-            },
-            (None, None) => return Ordering::Equal,
-            (None, Some(_)) => return Ordering::Less,
-            (Some(_), None) => return Ordering::Greater,
-        }
-    }
+pub(crate) trait CodeUnits { fn code_units(&self) -> std::borrow::Cow<'_, [u16]>; }
+impl CodeUnits for str {
+    fn code_units(&self) -> std::borrow::Cow<'_, [u16]> { self.encode_utf16().collect::<Vec<_>>().into() }
+}
+impl CodeUnits for String {
+    fn code_units(&self) -> std::borrow::Cow<'_, [u16]> { self.as_str().code_units() }
+}
+impl CodeUnits for crate::JsString {
+    fn code_units(&self) -> std::borrow::Cow<'_, [u16]> { self.units().into() }
+}
+impl<T: CodeUnits + ?Sized> CodeUnits for &T {
+    fn code_units(&self) -> std::borrow::Cow<'_, [u16]> { (*self).code_units() }
+}
+pub(crate) fn cmp_code_units<A: CodeUnits + ?Sized, B: CodeUnits + ?Sized>(a: &A, b: &B) -> Ordering {
+    a.code_units().cmp(&b.code_units())
 }
 
 /// 64-bit FNV-1a over the string's UTF-16 code units, rendered as 16 lowercase
@@ -68,11 +69,24 @@ pub fn stable_hash(value: &str) -> String {
 
 /// Hash raw JS code units, including unpaired surrogates without lossy UTF-8 conversion.
 pub fn stable_hash_units(units: impl IntoIterator<Item = u16>) -> String {
-    let mut hash = FNV_OFFSET_BASIS_64;
-    for unit in units {
-        hash = (hash ^ u64::from(unit)).wrapping_mul(FNV_PRIME_64);
+    let mut hash = StableHasher::default();
+    hash.write(units);
+    hash.finish()
+}
+
+/// Incremental [`stable_hash_units`]: feeding a string in chunks gives the same
+/// digest, so a serializer can hash without materializing its output (#8114).
+pub(crate) struct StableHasher(u64);
+impl Default for StableHasher {
+    fn default() -> Self { Self(FNV_OFFSET_BASIS_64) }
+}
+impl StableHasher {
+    pub(crate) fn write(&mut self, units: impl IntoIterator<Item = u16>) {
+        for unit in units {
+            self.0 = (self.0 ^ u64::from(unit)).wrapping_mul(FNV_PRIME_64);
+        }
     }
-    format!("{hash:016x}")
+    pub(crate) fn finish(&self) -> String { format!("{:016x}", self.0) }
 }
 
 #[cfg(test)]

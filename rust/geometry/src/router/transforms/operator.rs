@@ -6,31 +6,11 @@
 //! `IfcMappedItem` MappingTarget operator, parsed into a 4x4.
 
 use crate::math::tol;
-use super::super::GeometryRouter;
 use crate::{Point3, Result, Vector3};
-use ifc_lite_core::{DecodedEntity, EntityDecoder, IfcType};
+use ifc_lite_core::{slot, AttributeValue, DecodedEntity, EntityDecoder, IfcType};
 use nalgebra::Matrix4;
 
-impl GeometryRouter {
-    /// Parse IfcCartesianTransformationOperator (2D or 3D)
-    /// Used for MappedItem MappingTarget transformation
-    #[inline]
-    pub(crate) fn parse_cartesian_transformation_operator(
-        &self,
-        entity: &DecodedEntity,
-        decoder: &mut EntityDecoder,
-    ) -> Result<Matrix4<f64>> {
-        parse_transformation_operator(entity, decoder)
-    }
-}
-
-/// The router-free form of [`GeometryRouter::parse_cartesian_transformation_operator`].
-///
-/// This is the SINGLE definition of the operator's attribute layout and frame
-/// derivation. `profiles` (`IfcDerivedProfileDef`'s 2D operator) calls it too: it used to
-/// carry its own copy, which drifted — it missed the non-uniform per-axis scales,
-/// the 2D attribute layout, and `Axis2`, so the same `MappingTarget` produced a
-/// different transform for a drawing than for the mesh. #1985
+/// Parse the shared IFC transformation-operator layout and authored frame.
 pub(crate) fn parse_transformation_operator(
     entity: &DecodedEntity,
     decoder: &mut EntityDecoder,
@@ -54,39 +34,21 @@ pub(crate) fn parse_transformation_operator(
     // exactly where the 3D form keeps Axis3. Reading the 3D layout on a 2D
     // operator therefore both LOST Scale2 (it was read from attr 5, which
     // does not exist) and fed a REAL to the Axis3 direction parse. #1985
-    let is_2d = matches!(
-        entity.ifc_type,
+    // #7880: reject wrong record types before any typed-slot access.
+    let is_2d = match entity.ifc_type {
         IfcType::IfcCartesianTransformationOperator2D
-            | IfcType::IfcCartesianTransformationOperator2DnonUniform
-    );
-
-    // Get LocalOrigin (attribute 2)
-    let origin = if let Some(origin_attr) = entity.get(2) {
-        if !origin_attr.is_null() {
-            if let Some(origin_entity) = decoder.resolve_ref(origin_attr)? {
-                if origin_entity.ifc_type == IfcType::IfcCartesianPoint {
-                    let coords_attr = origin_entity.get(0);
-                    if let Some(coords) = coords_attr.and_then(|a| a.as_list()) {
-                        Point3::new(
-                            coords.first().and_then(|v| v.as_float()).unwrap_or(0.0),
-                            coords.get(1).and_then(|v| v.as_float()).unwrap_or(0.0),
-                            coords.get(2).and_then(|v| v.as_float()).unwrap_or(0.0),
-                        )
-                    } else {
-                        Point3::origin()
-                    }
-                } else {
-                    Point3::origin()
-                }
-            } else {
-                Point3::origin()
-            }
-        } else {
-            Point3::origin()
-        }
-    } else {
-        Point3::origin()
+            | IfcType::IfcCartesianTransformationOperator2DnonUniform => true,
+        IfcType::IfcCartesianTransformationOperator3D
+            | IfcType::IfcCartesianTransformationOperator3DnonUniform => false,
+        ref other => return Err(crate::placement::unsupported(decoder, entity.id, other.clone()).into()),
     };
+
+    // LocalOrigin is mandatory under the leaf rule (#7779 / #7906):
+    // missing and unreadable points are refused and counted, never invented.
+    let origin = Point3::from(decoder.point3_at(
+        entity,
+        slot::IfcCartesianTransformationOperator::LOCAL_ORIGIN.index(),
+    )?.ok_or_else(|| decoder.refuse_malformed(entity.id))?);
 
     // Get Scale (attribute 3). For IfcCartesianTransformationOperator3DNonUniform
     // this is Scale1 (X axis only); attrs 5+6 supply per-axis Y and Z scales,
@@ -96,7 +58,7 @@ pub(crate) fn parse_transformation_operator(
     // Zero and negative pass through: zero collapses the item, and a negative
     // scale is a reflection that real exporters do write (Scale = -1), which the
     // 3D matrix represents exactly.
-    let scale = match entity.get_float(3) {
+    let scale = match entity.real_at(slot::IfcCartesianTransformationOperator::SCALE) {
         Some(v) if v.is_finite() => v,
         _ => 1.0,
     };
@@ -109,56 +71,35 @@ pub(crate) fn parse_transformation_operator(
     // 3DnonUniform: Scale2 at attr 5, Scale3 at attr 6.
     let (scale_y, scale_z) = match (is_non_uniform, is_2d) {
         (false, _) => (scale, scale),
-        (true, true) => (finite_scale(entity.get_float(4), scale), scale),
+        (true, true) => (finite_scale(entity.real_at(slot::IfcCartesianTransformationOperator2DnonUniform::SCALE2), scale), scale),
         (true, false) => (
-            finite_scale(entity.get_float(5), scale),
-            finite_scale(entity.get_float(6), scale),
+            finite_scale(entity.real_at(slot::IfcCartesianTransformationOperator3DnonUniform::SCALE2), scale),
+            finite_scale(entity.real_at(slot::IfcCartesianTransformationOperator3DnonUniform::SCALE3), scale),
         ),
     };
 
     // Get Axis1 (raw local X, attribute 0), defaulting to +X when absent/null.
-    let x_axis_raw = if let Some(axis1_attr) = entity.get(0) {
-        if !axis1_attr.is_null() {
-            if let Some(axis1_entity) = decoder.resolve_ref(axis1_attr)? {
-                parse_direction_ratios(&axis1_entity)?
-            } else {
-                Vector3::new(1.0, 0.0, 0.0)
-            }
-        } else {
-            Vector3::new(1.0, 0.0, 0.0)
-        }
-    } else {
-        Vector3::new(1.0, 0.0, 0.0)
-    };
+    // Directions are read under the leaf rule: one that does not read is
+    // refused and counted, never a ratio of 0.
+    let x_axis_raw = decoder
+        .direction3_at(entity, slot::IfcCartesianTransformationOperator::AXIS1.index())?
+        .map_or_else(|| Vector3::new(1.0, 0.0, 0.0), Vector3::from);
 
     // Get Axis2 (raw local Y, attribute 1), used below only when it is
     // INCONSISTENT with Axis3 × Axis1 (see the y_axis derivation).
-    let y_axis_raw = if let Some(axis2_attr) = entity.get(1) {
-        if !axis2_attr.is_null() {
-            decoder
-                .resolve_ref(axis2_attr)?
-                .and_then(|e| parse_direction_ratios(&e).ok())
-        } else {
-            None
-        }
-    } else {
-        None
-    };
+    let y_axis_raw = decoder.direction3_at(entity, slot::IfcCartesianTransformationOperator::AXIS2.index())?.map(Vector3::from);
 
     let x_axis_raw = base_axis_2d_x(entity, is_2d, x_axis_raw, y_axis_raw);
 
     // Get Axis3 (raw local Z, attribute 4 for 3D), defaulting to +Z. The 2D
     // subtypes have no Axis3 attribute (attr 4 is Scale2 there), so the 2D
     // plane normal is always +Z.
-    let z_axis_raw = match entity.get(4).filter(|_| !is_2d) {
-        Some(axis3_attr) if !axis3_attr.is_null() => {
-            if let Some(axis3_entity) = decoder.resolve_ref(axis3_attr)? {
-                parse_direction_ratios(&axis3_entity)?
-            } else {
-                Vector3::new(0.0, 0.0, 1.0)
-            }
-        }
-        _ => Vector3::new(0.0, 0.0, 1.0),
+    let z_axis_raw = if is_2d {
+        Vector3::new(0.0, 0.0, 1.0)
+    } else {
+        decoder
+            .direction3_at(entity, slot::IfcCartesianTransformationOperator3D::AXIS3.index())?
+            .map_or_else(|| Vector3::new(0.0, 0.0, 1.0), Vector3::from)
     };
 
     // Orthonormalize (Gram-Schmidt), guarding every normalize so a malformed
@@ -167,13 +108,7 @@ pub(crate) fn parse_transformation_operator(
     // Axis3 falls back to +Z; a zero-or-parallel Axis1 keeps the valid Z and
     // takes a deterministic perpendicular X (mirrors build_axis2_matrix). Only
     // the truly degenerate operator reorients, and it always stays finite.
-    let z_axis = z_axis_raw
-        .try_normalize(tol::AXIS_MIN_LEN)
-        .unwrap_or_else(|| Vector3::new(0.0, 0.0, 1.0));
-    let x_norm = x_axis_raw
-        .try_normalize(tol::AXIS_MIN_LEN)
-        .unwrap_or_else(|| Vector3::new(1.0, 0.0, 0.0));
-    let x_axis = crate::axis_projection::perpendicular_x_axis(z_axis, x_norm);
+    let [x_axis, z_axis] = crate::axis_projection::operator_xz_axes(z_axis_raw, x_axis_raw);
     // Y = Z × X (IfcSecondProjAxis' result whenever Axis2 agrees with the
     // right-handed frame, which is every well-formed operator). A supplied
     // Axis2 that DISAGREES — the mirroring/left-handed frames some exporters
@@ -226,7 +161,8 @@ fn base_axis_2d_x(
     x_axis_raw: Vector3<f64>,
     y_axis_raw: Option<Vector3<f64>>,
 ) -> Vector3<f64> {
-    let axis1_absent = entity.get(0).is_none_or(|attr| attr.is_null());
+    let axis1_absent = entity.attr(slot::IfcCartesianTransformationOperator::AXIS1)
+        .is_none_or(|attr| matches!(attr, AttributeValue::Null | AttributeValue::Derived));
     match y_axis_raw {
         Some(d) if is_2d && axis1_absent && d.xy().norm() > 1e-9 => Vector3::new(d.y, -d.x, 0.0),
         _ => x_axis_raw,
@@ -242,44 +178,23 @@ fn finite_scale(value: Option<f64>, default: f64) -> f64 {
     }
 }
 
-/// `IfcDirection.DirectionRatios` as a 3-vector (Z defaults to 0 for the 2D form).
-/// Mirrors `GeometryRouter::parse_direction`, minus the router.
-pub(super) fn parse_direction_ratios(entity: &DecodedEntity) -> Result<Vector3<f64>> {
-    if entity.ifc_type != IfcType::IfcDirection {
-        return Err(crate::Error::geometry(format!(
-            "Expected IfcDirection, got {}",
-            entity.ifc_type
-        )));
-    }
-    let ratios = entity
-        .get(0)
-        .and_then(|a| a.as_list())
-        .ok_or_else(|| crate::Error::geometry("IfcDirection missing ratios".to_string()))?;
-    Ok(Vector3::new(
-        ratios.first().and_then(|v| v.as_float()).unwrap_or(0.0),
-        ratios.get(1).and_then(|v| v.as_float()).unwrap_or(0.0),
-        ratios.get(2).and_then(|v| v.as_float()).unwrap_or(0.0),
-    ))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     // A zero IfcDirection((0,0,0)) as Axis1 made a bare normalize() emit NaN, and
     // the operator matrix was returned Ok, silently poisoning every mapped vertex.
-    // The matrix must now be finite.
+    // The matrix must now be finite; its LocalOrigin is still mandatory (#7779).
     #[test]
     fn cartesian_transformation_operator_zero_axis_stays_finite() {
         let content = "\
 #1=IFCDIRECTION((0.,0.,0.));
-#3=IFCCARTESIANTRANSFORMATIONOPERATOR3D(#1,$,$,$,$);
+#2=IFCCARTESIANPOINT((0.,0.,0.));
+#3=IFCCARTESIANTRANSFORMATIONOPERATOR3D(#1,$,#2,$,$);
 ";
         let mut decoder = EntityDecoder::new(content);
-        let router = GeometryRouter::new();
         let entity = decoder.decode_by_id(3).unwrap();
-        let m = router
-            .parse_cartesian_transformation_operator(&entity, &mut decoder)
+        let m = parse_transformation_operator(&entity, &mut decoder)
             .expect("operator should still parse");
         assert!(m.iter().all(|v| v.is_finite()), "NaN in transform matrix: {m:?}");
     }
@@ -295,10 +210,8 @@ mod tests {
 #2=IFCCARTESIANTRANSFORMATIONOPERATOR2DNONUNIFORM($,$,#1,2.,5.);
 ";
         let mut decoder = EntityDecoder::new(content);
-        let router = GeometryRouter::new();
         let entity = decoder.decode_by_id(2).unwrap();
-        let m = router
-            .parse_cartesian_transformation_operator(&entity, &mut decoder)
+        let m = parse_transformation_operator(&entity, &mut decoder)
             .expect("2D non-uniform operator should parse");
         assert!((m[(0, 0)] - 2.0).abs() < 1e-12, "X scale: {m:?}");
         assert!((m[(1, 1)] - 5.0).abs() < 1e-12, "Y scale (Scale2, attr 4): {m:?}");
@@ -320,10 +233,8 @@ mod tests {
 #5=IFCCARTESIANTRANSFORMATIONOPERATOR3D(#1,#2,#4,$,#3);
 ";
         let mut decoder = EntityDecoder::new(content);
-        let router = GeometryRouter::new();
         let entity = decoder.decode_by_id(5).unwrap();
-        let m = router
-            .parse_cartesian_transformation_operator(&entity, &mut decoder)
+        let m = parse_transformation_operator(&entity, &mut decoder)
             .expect("mirroring operator should parse");
         assert!(
             (m[(1, 1)] + 1.0).abs() < 1e-12,
@@ -353,13 +264,10 @@ mod tests {
 #4=IFCCARTESIANPOINT((0.,0.,0.));
 #5=IFCCARTESIANTRANSFORMATIONOPERATOR3D(#1,$,#4,$,#3);
 ";
-        let router = GeometryRouter::new();
         let parse = |content: &str| {
             let mut decoder = EntityDecoder::new(content);
             let entity = decoder.decode_by_id(5).unwrap();
-            router
-                .parse_cartesian_transformation_operator(&entity, &mut decoder)
-                .expect("operator should parse")
+            parse_transformation_operator(&entity, &mut decoder).expect("operator should parse")
         };
         let a = parse(with_axis2);
         let b = parse(without_axis2);

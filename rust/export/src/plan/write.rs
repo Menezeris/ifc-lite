@@ -3,17 +3,17 @@
 //! record written as it is read and validated as it is written. Nothing the
 //! size of the output is held.
 
-use std::borrow::Cow;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::io::Write;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::step_text::apply_attr_mutations_counted;
 use crate::StepOptions;
 
 use super::index::FileIndex;
+use super::source_text;
 use super::resolve::Resolution;
+use super::removal::{Removal, RemovalReason};
 use super::types::{ExportPlan, PlanError, ValidationFinding, WriteReport};
 use super::validate::{duplicate_pset_names, StreamValidator};
 
@@ -26,16 +26,23 @@ pub(crate) fn write_output<W: Write>(
 ) -> Result<WriteReport, PlanError> {
     let source = index.content();
     let mut out = std::io::BufWriter::with_capacity(1 << 20, out);
-    let header_opts = StepOptions {
+    // The exporting application is the originating system, this crate the
+    // toolkit that wrote the exchange structure, and the change time the
+    // file's time stamp.
+    let mut header_opts = StepOptions {
         author: plan.context.author.clone(),
         organization: plan.context.organization.clone(),
+        // Without an application; `stamp_header` replaces it with the
+        // application's change time when there is one.
         time_stamp: plan.context.time_stamp.clone(),
+        filename: plan.context.file_name.clone(),
         ..Default::default()
     };
+    let originating = resolution.identity.as_ref().map(|identity| identity.stamp_header(&mut header_opts));
     let source_header = crate::source_header::parse_source_header(source);
-    crate::step_header::write_header(&mut out, &header_opts, source_header.as_ref(), schema)?;
+    crate::step_header::write_header_originating(&mut out, &header_opts, source_header.as_ref(), schema, originating.as_deref())?;
 
-    let Resolution { appended, edits_by_id, removed, refusals, patched, added, patched_objects, dropped_representations } =
+    let Resolution { appended, edits_by_id, removed, reasons, refusals, patched, added, patched_objects, dropped_representations, findings, .. } =
         resolution;
     let defined = DefinedIds::new(index, &removed, &appended);
     let mut validator = StreamValidator::new(schema);
@@ -48,22 +55,23 @@ pub(crate) fn write_output<W: Write>(
         if removed.contains(&id) {
             continue;
         }
-        let raw = String::from_utf8_lossy(&source[start..end]);
-        let line = match edits_by_id.get(&id) {
-            Some(edits) => {
-                let before = attribute_edits_refused;
-                let edited = apply_attr_mutations_counted(&raw, edits, &mut attribute_edits_refused);
-                if attribute_edits_refused > before {
-                    unapplied.push(ValidationFinding {
-                        express_id: Some(id),
-                        message: format!("{} planned attribute edit(s) could not be applied", attribute_edits_refused - before),
-                    });
-                }
-                Cow::Owned(edited)
+        // An untouched record is the source's own bytes; an edited one keeps
+        // every byte the edits leave alone (`source_text::apply_edits`).
+        let bytes = &source[start..end];
+        let edited: Option<Vec<u8>> = edits_by_id.get(&id).map(|edits| {
+            let before = attribute_edits_refused;
+            let edited = source_text::apply_edits(bytes, edits, &mut attribute_edits_refused);
+            if attribute_edits_refused > before {
+                unapplied.push(ValidationFinding {
+                    express_id: Some(id),
+                    message: format!("{} planned attribute edit(s) could not be applied", attribute_edits_refused - before),
+                });
             }
-            None => raw,
-        };
-        out.write_all(line.as_bytes())?;
+            edited
+        });
+        let written_bytes = edited.as_deref().unwrap_or(bytes);
+        out.write_all(written_bytes)?;
+        let line = String::from_utf8_lossy(written_bytes);
         out.write_all(b"\n")?;
         written += 1;
         type_upper.clear();
@@ -82,6 +90,7 @@ pub(crate) fn write_output<W: Write>(
 
     let mut psets = duplicate_sets_on_patched(index, schema, &appended, &edits_by_id, &removed, &patched_objects);
     psets.extend(unapplied);
+    psets.extend(findings);
     let mut duplicates: Vec<u32> = index.duplicates.iter().copied().collect();
     duplicates.sort_unstable();
     psets.extend(duplicates.into_iter().map(|id| ValidationFinding {
@@ -93,6 +102,7 @@ pub(crate) fn write_output<W: Write>(
         total: index.len(),
         written,
         deleted: removed.len(),
+        removed: removals(&removed, &reasons),
         patched,
         added,
         refusals,
@@ -119,10 +129,11 @@ fn duplicate_sets_on_patched(
         if removed.contains(&id) {
             return None;
         }
-        let raw = index.raw_line(id)?;
+        // The record as written: the source bytes with the plan's edits.
+        let bytes = index.record_bytes(id)?;
         let text = match edits_by_id.get(&id) {
-            Some(edits) => apply_attr_mutations_counted(&raw, edits, &mut 0),
-            None => raw.into_owned(),
+            Some(edits) => String::from_utf8_lossy(&source_text::apply_edits(bytes, edits, &mut 0)).into_owned(),
+            None => String::from_utf8_lossy(bytes).into_owned(),
         };
         Some((index.type_of(id)?, text))
     };
@@ -184,4 +195,14 @@ impl<'i, 'a> DefinedIds<'i, 'a> {
             None => (self.index.contains(id) && !self.removed.contains(&id)) || self.appended.contains(&id),
         }
     }
+}
+
+/// Every removed record and why, by id: the reason the resolution recorded,
+/// or replaced for what a patch removed itself (an old placement chain or
+/// body).
+fn removals(removed: &HashSet<u32>, reasons: &HashMap<u32, RemovalReason>) -> Vec<Removal> {
+    let mut out: Vec<Removal> =
+        removed.iter().map(|&id| Removal::new(id, reasons.get(&id).copied().unwrap_or(RemovalReason::Replaced))).collect();
+    out.sort_unstable_by_key(|r| r.express_id);
+    out
 }
