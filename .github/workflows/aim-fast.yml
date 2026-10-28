@@ -90,6 +90,11 @@ jobs:
           node scripts/check-i18n-literals.mjs
       - name: Typecheck the viewer
         working-directory: apps/viewer
+        # >>> AIM-FORK: the viewer program (upstream plus the AIM layer) needs about 4.2 GB
+        # of heap in tsc, just over Node's default ceiling on ubuntu-latest (OOM, sync PR #157).
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        # <<< AIM-FORK
         run: npx tsc --noEmit -p .
       # Viewer tests that import a changed file, directly or through other viewer
       # modules (the decision job lists them, none past 40: the release batch runs

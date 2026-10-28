@@ -1738,6 +1738,11 @@ jobs:
       # node-tests made for `test`. A dist missing from the artifact fails tsc
       # loudly; it cannot pass vacuously.
       - run: pnpm typecheck:ci
+        # >>> AIM-FORK: the viewer program (upstream plus the AIM layer) needs about 4.2 GB
+        # of heap in tsc, just over Node's default ceiling on ubuntu-latest (OOM, sync PR #157).
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        # <<< AIM-FORK
 
   lint:
     name: Lint
