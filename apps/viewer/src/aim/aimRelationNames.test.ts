@@ -3,9 +3,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * AIM #277: `spatial` columns `Referenced` (IfcRelReferencedInSpatialStructure) and
- * `Boundary` (IfcRelSpaceBoundary) through the real parser, `createListDataProvider`
- * and `executeList`: the relating space is read from the INVERSE edge of the element.
+ * AIM #277: the provider hooks behind the `spatial` columns `Referenced` (IfcRelReferencedInSpatialStructure)
+ * and `Boundary` (IfcRelSpaceBoundary), on a store from the real parser (no WASM needed): the relating
+ * space is read from the INVERSE edge of the element, then the column resolves through `executeList`.
  */
 
 import { describe, it } from 'node:test';
@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { IfcTypeEnum } from '@ifc-lite/data';
 import { IfcParser } from '@ifc-lite/parser';
 import { executeList, type ListDefinition } from '@ifc-lite/lists';
-import { createListDataProvider } from './adapter.js';
+import { relationNameHooks } from './aimRelationNames.js';
 
 const IFC = `ISO-10303-21;
 HEADER;FILE_DESCRIPTION((''),'2;1');FILE_NAME('a','',(''),(''),'','','');FILE_SCHEMA(('IFC4'));ENDSEC;
@@ -40,8 +40,15 @@ const list = (level: string): ListDefinition => ({
 describe('spatial relation columns on a parsed IFC (#277)', () => {
   it('Referenced and Boundary come from the inverse edges, other elements stay empty', async () => {
     const store = await new IfcParser().parseColumnar(new TextEncoder().encode(IFC).buffer as ArrayBuffer, { disableWorkerScan: true });
-    const provider = createListDataProvider(store);
-    const col = (level: string) => Object.fromEntries(executeList(list(level), provider).rows.map((r) => [r.values[0], r.values[1]]));
+    const hooks = relationNameHooks(store);
+    assert.deepEqual([hooks.getReferencedInNames!(6), hooks.getSpaceBoundaryNames!(5), hooks.getSpaceBoundaryNames!(6)], [['Room A'], ['Room A'], []]);
+    const provider = {
+      getEntitiesByType: (t: IfcTypeEnum) => (t === IfcTypeEnum.IfcWall ? [5, 6] : []),
+      getEntityName: (id: number) => store.entities.getName(id),
+      getEntityGlobalId: () => '', getEntityDescription: () => '', getEntityObjectType: () => '', getEntityTag: () => '',
+      getEntityTypeName: () => 'IfcWall', getPropertySets: () => [], getQuantitySets: () => [], ...hooks,
+    };
+    const col = (level: string) => Object.fromEntries(executeList(list(level), provider as never).rows.map((r) => [r.values[0], r.values[1]]));
     assert.deepEqual(col('Referenced'), { W1: null, W2: 'Room A' });
     assert.deepEqual(col('Boundary'), { W1: 'Room A', W2: null });
   });

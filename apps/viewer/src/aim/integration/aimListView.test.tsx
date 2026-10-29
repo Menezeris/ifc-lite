@@ -25,7 +25,7 @@ import { pendingTableRequest, resetListView, takeTableRequest, tableState } from
 import type { LensInboundMessage } from '@/aim/lens-protocol';
 import { recordListRun } from '@/lib/lists/run-provenance';
 import { captureAnalysisStamp } from '@/hooks/useAnalysisStaleness';
-import { ListResultsTable } from './ListResultsTable.js';
+import { ListResultsTable } from '@/components/viewer/lists/ListResultsTable.js';
 
 const result: ListResult = {
   columns: [
