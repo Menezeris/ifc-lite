@@ -1,12 +1,12 @@
 diff --git b/apps/viewer/src/aim/aimListTable.ts a/apps/viewer/src/aim/aimListTable.ts
-index 35c34016..50f014d3 100644
+index b4e33fb3..6b21a082 100644
 --- b/apps/viewer/src/aim/aimListTable.ts
 +++ a/apps/viewer/src/aim/aimListTable.ts
-@@ -103,6 +103,7 @@ export function useAimListTable(b: AimListTableBinding): { cue: ReactNode; highl
+@@ -104,6 +104,7 @@ export function useAimListTable(b: AimListTableBinding): { cue: ReactNode; highl
        setColorByColIdx(null);
      }
      if (r.export) setExportReady(r.export);
 +    if (r.visibleOnly !== undefined) setVisibleOnly(r.visibleOnly);
      if (r.columnWidths) {
-       const plan = planColumnWidths(r.columnWidths, result.columns, result.rows);
-       if (plan.missing.length > 0) noteIssue(`Zoznam: šírku nastaviť nešlo, stĺpec ${plan.missing.join(', ')} v zozname nie je`);
+       // Matematika šírok sa načíta až teraz (lazy, mimo eager bundlu); `settleListView` na ňu počká.
+       const { columnWidths: spec } = r;

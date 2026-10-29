@@ -31,8 +31,8 @@
     "verdict": "OBSERVED",
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/aimListView.test.tsx; that file has a green, attributable baseline.",
-    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
-    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "base": "bc57988878c68ded4b3f11117798841ba2b246ca",
+    "head": "870a8299f8467e878bc1123006deba280fbf7466",
     "production": [
       "apps/viewer/src/aim/aimListControl.ts"
     ],
@@ -45,8 +45,8 @@
     "verdict": "OBSERVED",
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/aimListView.test.tsx; that file has a green, attributable baseline.",
-    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
-    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "base": "bc57988878c68ded4b3f11117798841ba2b246ca",
+    "head": "870a8299f8467e878bc1123006deba280fbf7466",
     "production": [
       "apps/viewer/src/aim/aimListTable.ts"
     ],
@@ -185,8 +185,8 @@
     "verdict": "OBSERVED",
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/aimListView.test.tsx; that file has a green, attributable baseline.",
-    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
-    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "base": "bc57988878c68ded4b3f11117798841ba2b246ca",
+    "head": "870a8299f8467e878bc1123006deba280fbf7466",
     "production": [
       "apps/viewer/src/aim/aimListTable.ts"
     ],
@@ -199,8 +199,8 @@
     "verdict": "OBSERVED",
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/aimListView.test.tsx; that file has a green, attributable baseline.",
-    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
-    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "base": "bc57988878c68ded4b3f11117798841ba2b246ca",
+    "head": "870a8299f8467e878bc1123006deba280fbf7466",
     "production": [
       "apps/viewer/src/aim/aimListTable.ts"
     ],

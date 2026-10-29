@@ -1,13 +1,13 @@
 diff --git b/apps/viewer/src/aim/aimListTable.ts a/apps/viewer/src/aim/aimListTable.ts
-index 0e149fec..50f014d3 100644
+index 3cd7af3c..6b21a082 100644
 --- b/apps/viewer/src/aim/aimListTable.ts
 +++ a/apps/viewer/src/aim/aimListTable.ts
-@@ -124,7 +124,7 @@ export function useAimListTable(b: AimListTableBinding): { cue: ReactNode; highl
+@@ -135,7 +135,7 @@ export function useAimListTable(b: AimListTableBinding): { cue: ReactNode; highl
      if (highlight.sum && sumColumnIds.length === 0) noteIssue('Zoznam: zvýraznenie súčtu nemá čo ukázať, zoznam nemá súčty (view.sum)');
-   }, [highlight, resolved, sumColumnIds.length]);
-   const classes = useMemo<AimHighlightClasses>(() => (!highlight ? NONE : {
+   }, [highlight, layout, resolved, sumColumnIds.length]);
+   const classes = useMemo<AimHighlightClasses>(() => (!highlight || !layout ? NONE : {
 -    row: (row) => '',
-+    row: (row) => (resolved.rowKeys.has(rowKey(row)) ? ROW_HL : ''),
++    row: (row) => (resolved.rowKeys.has(layout.rowKey(row)) ? ROW_HL : ''),
      column: (id) => (resolved.columnIds.has(id) ? COLUMN_HL : ''),
-     cell: (row, id) => (resolved.cellKeys.has(cellKey(row, id)) ? CELL_HL : ''),
+     cell: (row, id) => (resolved.cellKeys.has(layout.cellKey(row, id)) ? CELL_HL : ''),
      sum: (id) => (resolved.sumAll || resolved.sumIds.has(id) ? SUM_HL : ''),
