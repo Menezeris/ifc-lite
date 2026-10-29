@@ -135,4 +135,12 @@ describe('pohľad Presentation <-> drôt (AIM D-161)', () => {
     assert.notEqual(fingerprint(view({ section: null }), e), base);
     assert.notEqual(fingerprint(view({ viewpoint: null }), e), base);
   });
+
+  it('stav podkladov PDF ide s pohľadom (AIM #325) a mení odtlačok; bez neho pole chýba', () => {
+    const underlays = { show: true, items: [{ document_id: 'd2', visible: true, opacity: 0.6 }] };
+    const withU = env({ underlaysOf: (id) => (id === 'v1' ? underlays : undefined) });
+    assert.deepEqual(encodeView(view(), 0, withU).underlays, underlays);
+    assert.equal('underlays' in encodeView(view(), 0, env()), false);
+    assert.notEqual(fingerprint(view(), withU), fingerprint(view(), env()));
+  });
 });

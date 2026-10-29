@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/view-protocol.ts a/apps/viewer/src/aim/view-protocol.ts
+index c93a584c..287a11fc 100644
+--- b/apps/viewer/src/aim/view-protocol.ts
++++ a/apps/viewer/src/aim/view-protocol.ts
+@@ -245,7 +245,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
+         && optional(m.direction, (d) => (AUTO_ROTATE_DIRECTIONS as readonly unknown[]).includes(d));
+     case 'SET_UNDERLAYS_3D':
+       return (m.show !== undefined || m.underlays !== undefined) && optional(m.show, (b) => typeof b === 'boolean')
+-        && optional(m.underlays, isUnderlayItems) && optional(m.only, (b) => typeof b === 'boolean')
++        && optional(m.underlays, isUnderlayItems) && optional(m.only, (b) => typeof b === 'boolean' && m.underlays !== undefined)
+         && optional(m.persist, (b) => typeof b === 'boolean');
+     case 'SET_PLAN_POSITION':
+       return typeof m.show === 'boolean';

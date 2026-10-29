@@ -45,4 +45,9 @@ describe('správy o pohľadoch (AIM D-161)', () => {
     assert.ok(!isViewsInbound({ source: S, type: 'VIEW_CAPTURE', name: 5 }));
     assert.ok(!isViewsInbound({ source: S, type: 'VIEW_SAVE', view: wire() }));
   });
+
+  it('pohľad so stavom podkladov (AIM #325) prejde, s neplatným nie', () => {
+    assert.ok(isViewWire(wire({ underlays: { show: true, items: [{ document_id: 'd2', visible: true, opacity: 0.6 }] } })));
+    assert.ok(!isViewWire(wire({ underlays: { show: true, items: [{ document_id: 'd2', visible: true, opacity: 3 }] } })));
+  });
 });

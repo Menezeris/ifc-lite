@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/viewsCodec.ts a/apps/viewer/src/aim/viewsCodec.ts
+index 7ffecb6f..c8f46da3 100644
+--- b/apps/viewer/src/aim/viewsCodec.ts
++++ a/apps/viewer/src/aim/viewsCodec.ts
+@@ -157,6 +157,7 @@ export function encodeView(view: BasketView, order: number, env: CodecEnv): View
+     section: view.section ? encodeSection(view.section, env) : null,
+     basket: encodeBasket(view, env),
+     objects: view.entityRefs.length,
++    ...withUnderlays(env.underlaysOf?.(view.id)),
+   };
+ }
+ 

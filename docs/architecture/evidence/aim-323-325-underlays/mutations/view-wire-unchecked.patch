@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/views-protocol.ts a/apps/viewer/src/aim/views-protocol.ts
+index 7c304a21..f9973a19 100644
+--- b/apps/viewer/src/aim/views-protocol.ts
++++ a/apps/viewer/src/aim/views-protocol.ts
+@@ -137,7 +137,7 @@ export function isViewWire(v: unknown): v is ViewWire {
+   return isText(v.id) && isText(v.name) && Number.isInteger(v.order) && (v.transition_ms === null || isNum(v.transition_ms))
+     && (v.source === 'selection' || v.source === 'visible' || v.source === 'hierarchy' || v.source === 'manual')
+     && (v.camera === null || isCamera(v.camera)) && (v.section === null || isSection(v.section))
+-    && isBasket(v.basket) && isNum(v.objects);
++    && isBasket(v.basket) && isNum(v.objects) && optional(v.underlays, isUnderlaysViewWire);
+ }
+ 
+ /** Správa hosta pre pohľady (overí tvar; `views` s neplatným riadkom sa celé zahodí). */
