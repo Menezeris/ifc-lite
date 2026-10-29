@@ -1,0 +1,44 @@
+[
+  {
+    "patch": "hint-on-click.patch",
+    "verdict": "OBSERVED",
+    "restoration": "verified",
+    "base": "origin/main"
+  },
+  {
+    "patch": "hint-without-cooldown.patch",
+    "verdict": "OBSERVED",
+    "restoration": "verified",
+    "base": "origin/main"
+  },
+  {
+    "patch": "key-in-inputs.patch",
+    "verdict": "OBSERVED",
+    "restoration": "verified",
+    "base": "origin/main"
+  },
+  {
+    "patch": "key-outside-lock.patch",
+    "verdict": "OBSERVED",
+    "restoration": "verified",
+    "base": "origin/main"
+  },
+  {
+    "patch": "key-with-modifiers.patch",
+    "verdict": "OBSERVED",
+    "restoration": "verified",
+    "base": "origin/main"
+  },
+  {
+    "patch": "orbit-blocked-without-calibration.patch",
+    "verdict": "OBSERVED",
+    "restoration": "verified",
+    "base": "origin/main"
+  },
+  {
+    "patch": "s.patch",
+    "verdict": null,
+    "restoration": null,
+    "base": "origin/main"
+  }
+]
