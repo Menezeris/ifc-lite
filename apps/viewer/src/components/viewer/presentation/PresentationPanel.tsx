@@ -37,6 +37,9 @@ import { IconButton } from '@/components/ui/icon-button';
 import { useDialogs } from '@/components/ui/confirm-dialog';
 import { useTranslation } from '@/i18n';
 import { useViewerStore } from '@/store';
+// >>> AIM-FORK: feedback when there is nothing to save (D-161)
+import { toast } from '@/components/ui/toast';
+// <<< AIM-FORK
 import {
   executeBasketSet,
   executeBasketAdd,
@@ -85,6 +88,7 @@ export function PresentationPanel() {
     // >>> AIM-FORK: an empty basket saves too, after the same "=" (D-161)
     if (savingThumbnail) return;
     if (pinboardEntities.size === 0) executeBasketSet();
+    if (useViewerStore.getState().pinboardEntities.size === 0) return void toast.info(t('aimFork.presentation.nothingToSave'));
     // <<< AIM-FORK
 
     setSavingThumbnail(true);
@@ -94,7 +98,9 @@ export function PresentationPanel() {
     } finally {
       setSavingThumbnail(false);
     }
-  }, [pinboardEntities, savingThumbnail]);
+  // >>> AIM-FORK: `t` for the nothing-to-save toast
+  }, [pinboardEntities, savingThumbnail, t]);
+  // <<< AIM-FORK
 
   const startRename = useCallback((viewId: string, name: string) => {
     setEditingViewId(viewId);

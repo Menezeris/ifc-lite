@@ -27,6 +27,7 @@ import { ifcDirToRender, ifcPointToRender, unionBoxes, type Box3 } from './viewF
 import { renderBoundsOfIds } from './viewQueries.js';
 import { pickArea, screenAxes } from './cameraArea.js';
 import { noteIssue } from './command-gate.js';
+import { applyFacePreset } from './presetFresh.js';
 
 type State = ReturnType<typeof useViewerStore.getState>;
 type CameraMessage = Extract<ViewInboundMessage, { type: 'SET_CAMERA' }>;
@@ -95,7 +96,8 @@ function setDirection(state: State, msg: CameraMessage, step: CameraStep): numbe
   switch (step.kind) {
     case 'home': cam.home?.(); return 500;
     case 'fit': cam.fitAll?.(); return 0;
-    case 'preset': cam.setPresetView?.(step.view); return 300;
+    // Vždy ako prvé kliknutie na stranu, nie ďalší krok cyklu ViewCube (AIMviewer#324).
+    case 'preset': applyFacePreset(cam, step.view); return 300;
     case 'section': return lookAtSection(state) ? SECTION_VIEW_MS : 0;
     case 'keep': return 0;
   }

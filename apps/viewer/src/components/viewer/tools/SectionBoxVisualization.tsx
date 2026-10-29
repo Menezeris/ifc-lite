@@ -45,7 +45,10 @@ const HANDLE_RADIUS = 8;
 
 export function SectionBoxVisualization() {
   const box = useViewerStore((s) => s.sectionPlane.box);
-  if (!box) return null;
+  // >>> AIM-FORK: no box faces or handles while the section widget is hidden (showGizmo false, AIM D-101, AIMviewer#322)
+  const hidden = useViewerStore((s) => !s.sectionPlane.showGizmo);
+  if (!box || hidden) return null;
+  // <<< AIM-FORK
   return <SectionBoxGizmo box={box} />;
 }
 

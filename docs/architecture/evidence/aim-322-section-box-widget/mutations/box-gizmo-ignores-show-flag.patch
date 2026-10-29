@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/components/viewer/tools/SectionBoxVisualization.tsx a/apps/viewer/src/components/viewer/tools/SectionBoxVisualization.tsx
+index c5f9637c..64f2d329 100644
+--- b/apps/viewer/src/components/viewer/tools/SectionBoxVisualization.tsx
++++ a/apps/viewer/src/components/viewer/tools/SectionBoxVisualization.tsx
+@@ -47,7 +47,7 @@ export function SectionBoxVisualization() {
+   const box = useViewerStore((s) => s.sectionPlane.box);
+   // >>> AIM-FORK: no box faces or handles while the section widget is hidden (showGizmo false, AIM D-101, AIMviewer#322)
+   const hidden = useViewerStore((s) => !s.sectionPlane.showGizmo);
+-  if (!box) return null;
++  if (!box || hidden) return null;
+   // <<< AIM-FORK
+   return <SectionBoxGizmo box={box} />;
+ }

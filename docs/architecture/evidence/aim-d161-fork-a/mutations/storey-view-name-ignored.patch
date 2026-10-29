@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/storeyViews.ts a/apps/viewer/src/aim/storeyViews.ts
+index fabd76db..81a486e3 100644
+--- b/apps/viewer/src/aim/storeyViews.ts
++++ a/apps/viewer/src/aim/storeyViews.ts
+@@ -45,5 +45,5 @@ export function pickStoreyView(
+   const hits = views.filter((v) => v.cutZ.some((z) => cutInStorey(z, storey.elevation, above)));
+   if (hits.length <= 1) return hits[0]?.id ?? null;
+   const name = storey.name.trim().toLowerCase();
+-  return hits[0].id;
++  return (name ? hits.find((v) => v.name.toLowerCase().includes(name)) : undefined)?.id ?? hits[0].id;
+ }

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/views-protocol.ts a/apps/viewer/src/aim/views-protocol.ts
+index 3a0f149b..d012297e 100644
+--- b/apps/viewer/src/aim/views-protocol.ts
++++ a/apps/viewer/src/aim/views-protocol.ts
+@@ -143,7 +143,7 @@ export function isViewsInbound(data: unknown): data is ViewsInboundMessage {
+     case 'VIEWS_LOAD':
+       return Array.isArray(data.views) && data.views.length <= MAX_VIEWS && data.views.every(isViewWire);
+     case 'VIEW_ACTIVATE':
+-      return optional(data.id, isText) && optional(data.name, isText);
++      return (data.id !== undefined || data.name !== undefined) && optional(data.id, isText) && optional(data.name, isText);
+     case 'VIEW_CAPTURE':
+       return optional(data.name, isText) && optional(data.capture_id, isText);
+     default:
