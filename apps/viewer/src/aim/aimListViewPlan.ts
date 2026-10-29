@@ -35,6 +35,32 @@ export interface AimListView {
   colorBy?: AimListColumnRef | null;
   /** Formát, ktorý sa ponúkne na stiahnutie zvýrazneným tlačidlom (klik je na používateľovi). */
   export?: AimListExportFormat;
+  /** Filter tabuľky "len viditeľné v 3D" (#276); `false` ukáže všetky riadky aj pri izolácii v 3D. */
+  visibleOnly?: boolean;
+  /** Šírky stĺpcov (#275): `fit` / `auto` pre všetky, alebo po jednom. */
+  columnWidths?: AimColumnWidths;
+  /** Zvýraznenie riadkov, stĺpcov, buniek a súčtu (#274); `null` = zrušiť. */
+  highlight?: AimListHighlight | null;
+}
+
+export const MIN_COLUMN_WIDTH = 56;
+export const MAX_COLUMN_WIDTH = 800;
+/** `fit` = podľa najdlhšieho obsahu a hlavičky, `auto` = predvolená šírka tabuľky, číslo = px. */
+export type AimColumnWidth = number | 'fit' | 'auto';
+export type AimColumnWidths = 'fit' | 'auto' | { column: AimListColumnRef; width: AimColumnWidth }[];
+
+/** Riadky, ktorých bunka v stĺpci sa rovná niektorej hodnote (text bez ohľadu na veľkosť písmen, číslo číselne). */
+export interface AimRowMatch {
+  column: AimListColumnRef;
+  values: (string | number)[];
+}
+export interface AimListHighlight {
+  rows?: AimRowMatch;
+  columns?: AimListColumnRef[];
+  /** Bunka = stĺpec `column` v riadku, kde `row.column` sa rovná `row.value`. */
+  cells?: { column: AimListColumnRef; row: { column: AimListColumnRef; value: string | number } }[];
+  /** `true` = celý riadok súčtov, alebo len súčty týchto stĺpcov. */
+  sum?: true | AimListColumnRef[];
 }
 
 export type AimListExportFormat = 'csv' | 'xlsx' | 'pdf';
@@ -59,6 +85,66 @@ function parseColumnRefs(raw: unknown): AimListColumnRef[] | null {
   if (!Array.isArray(raw) || raw.length > MAX_VIEW_COLUMNS) return null;
   const out = raw.map(parseColumnRef);
   return out.every((c): c is AimListColumnRef => c !== null) ? out : null;
+}
+
+const MAX_MATCH_VALUES = 200;
+const isCellValue = (v: unknown): v is string | number =>
+  (typeof v === 'string' && v.length <= 200) || (typeof v === 'number' && Number.isFinite(v));
+
+function parseRowMatch(raw: unknown): AimRowMatch | null {
+  if (!isObj(raw) || !Array.isArray(raw.values) || raw.values.length === 0 || raw.values.length > MAX_MATCH_VALUES) return null;
+  const column = parseColumnRef(raw.column);
+  return column && raw.values.every(isCellValue) ? { column, values: raw.values as (string | number)[] } : null;
+}
+
+export function parseColumnWidths(raw: unknown): AimColumnWidths | null {
+  if (raw === 'fit' || raw === 'auto') return raw;
+  if (!Array.isArray(raw) || raw.length === 0 || raw.length > 40) return null;
+  const out: { column: AimListColumnRef; width: AimColumnWidth }[] = [];
+  for (const item of raw) {
+    if (!isObj(item)) return null;
+    const column = parseColumnRef(item.column);
+    const w = item.width;
+    const ok = w === 'fit' || w === 'auto' || (typeof w === 'number' && Number.isFinite(w) && w >= MIN_COLUMN_WIDTH && w <= MAX_COLUMN_WIDTH);
+    if (!column || !ok) return null;
+    out.push({ column, width: w as AimColumnWidth });
+  }
+  return out;
+}
+
+export function parseHighlight(raw: unknown): AimListHighlight | null {
+  if (!isObj(raw)) return null;
+  const out: AimListHighlight = {};
+  if (raw.rows !== undefined) {
+    const rows = parseRowMatch(raw.rows);
+    if (!rows) return null;
+    out.rows = rows;
+  }
+  if (raw.columns !== undefined) {
+    const columns = parseColumnRefs(raw.columns);
+    if (!columns) return null;
+    out.columns = columns;
+  }
+  if (raw.cells !== undefined) {
+    if (!Array.isArray(raw.cells) || raw.cells.length > MAX_MATCH_VALUES) return null;
+    out.cells = [];
+    for (const c of raw.cells) {
+      if (!isObj(c) || !isObj(c.row)) return null;
+      const column = parseColumnRef(c.column);
+      const rowColumn = parseColumnRef(c.row.column);
+      if (!column || !rowColumn || !isCellValue(c.row.value)) return null;
+      out.cells.push({ column, row: { column: rowColumn, value: c.row.value } });
+    }
+  }
+  if (raw.sum !== undefined) {
+    if (raw.sum === true) out.sum = true;
+    else {
+      const sum = parseColumnRefs(raw.sum);
+      if (!sum) return null;
+      out.sum = sum;
+    }
+  }
+  return out;
 }
 
 /** Plná validácia `view` zo správy hosta; `null` = neplatné (správa sa zahodí), bez `view` prázdny objekt. */
@@ -97,6 +183,20 @@ export function parseListView(raw: unknown): AimListView | null {
   if (raw.export !== undefined) {
     if (typeof raw.export !== 'string' || !EXPORT_FORMATS.has(raw.export)) return null;
     out.export = raw.export as AimListExportFormat;
+  }
+  if (raw.visibleOnly !== undefined) {
+    if (typeof raw.visibleOnly !== 'boolean') return null;
+    out.visibleOnly = raw.visibleOnly;
+  }
+  if (raw.columnWidths !== undefined) {
+    const widths = parseColumnWidths(raw.columnWidths);
+    if (!widths) return null;
+    out.columnWidths = widths;
+  }
+  if (raw.highlight !== undefined) {
+    const highlight = raw.highlight === null ? null : parseHighlight(raw.highlight);
+    if (raw.highlight !== null && !highlight) return null;
+    out.highlight = highlight;
   }
   return out;
 }
@@ -195,7 +295,9 @@ export interface ListStateInput {
   /** Počet riadkov výsledku tejto definície; null = zoznam ešte nebežal. */
   rows: number | null;
   table: { sort: { columnId: string; dir: 'asc' | 'desc' } | null; search: string; visibleRows: number;
-    sums: { columnId: string; value: number; unit?: string }[] } | null;
+    sums: { columnId: string; value: number; unit?: string }[];
+    visibleOnly?: boolean; widths?: { columnId: string; width: number }[];
+    highlight?: { rows: number; cells: number; columnIds: string[]; sum: string[] } | null } | null;
   maximized: boolean;
   /** Stĺpec, podľa ktorého sú prvky v 3D ofarbené (id), a formát ponúknutý na stiahnutie. */
   colorBy?: string | null;
@@ -229,6 +331,12 @@ export function describeListState(def: { name: string; columns: ColumnDefinition
     sums: (s.table?.sums ?? []).map((x) => ({ column: label(x.columnId), value: round(x.value), ...(x.unit ? { unit: x.unit } : {}) })),
     maximized: s.maximized,
     ...(s.colorBy ? { color_by: label(s.colorBy) } : {}),
+    ...(s.table?.visibleOnly !== undefined ? { visible_only: s.table.visibleOnly } : {}),
+    ...(s.table?.widths ? { column_widths: s.table.widths.map((w) => ({ column: label(w.columnId), px: Math.round(w.width) })) } : {}),
+    ...(s.table?.highlight ? { highlight: {
+      rows: s.table.highlight.rows, cells: s.table.highlight.cells,
+      columns: s.table.highlight.columnIds.map(label), sum: s.table.highlight.sum.map(label),
+    } } : {}),
     // Stiahnutie bez kliku prehliadač v iframe nepustí (D-111): tlačidlo čaká na používateľa.
     ...(s.exportReady ? { export_ready: s.exportReady } : {}),
   };

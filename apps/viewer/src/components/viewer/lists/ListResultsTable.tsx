@@ -252,10 +252,11 @@ export function ListResultsTable({ result, listName, grouping, onGroupingChange,
       toast.error(t('lists.resultsTable.exportFailed', { message: error instanceof Error ? error.message : 'Unknown error' }));
     });
   }, [listName, columns, sortedRows, grouping, sortCol, sortDir, numericCols, columnWidths, modelUnits, unitDisplayOverrides, t]);
-  // >>> AIM-FORK: zoradenie, hľadanie, súčty, farby a ponuka exportu z chatu (D-149)
-  const aimExportCue = useAimListTable({ result, sortCol, sortDir, search: searchQuery, visibleRows: sortedRows.length, sums: totals.sums,
-    unitSymbol: unitResolver.unitSymbol, setSortCol, setSortDir, setSearch: setSearchQuery,
-    colorByColIdx, setColorByColIdx, onColorBy: handleColorByColumn, onExport: handleExport });
+  // >>> AIM-FORK: zoradenie, hľadanie, súčty, farby, ponuka exportu, šírky stĺpcov a zvýraznenie z chatu (D-149, #274, #275, #276)
+  const { cue: aimExportCue, highlight: aimHl } = useAimListTable({ result, sortCol, sortDir, search: searchQuery, visibleRows: sortedRows.length, sums: totals.sums,
+    unitSymbol: unitResolver.unitSymbol, setSortCol, setSortDir, setSearch: setSearchQuery, colorByColIdx, setColorByColIdx, onColorBy: handleColorByColumn,
+    onExport: handleExport, visibleOnly: filterByVisibility, setVisibleOnly: setFilterByVisibility, columnWidths, setWidthOverrides, sumColumnIds,
+    lines: scheduleMode ? [] : items, virtualizer });
   // <<< AIM-FORK
   // Every rendered line's member rows, in the virtualizer's index space: a
   // group header selects its whole subtree, a schedule row its tuple (#6368).
@@ -323,6 +324,7 @@ export function ListResultsTable({ result, listName, grouping, onGroupingChange,
                     'group/col relative flex items-center gap-0.5 border-r border-border/50 px-2 py-1.5 text-xs font-medium text-muted-foreground shrink-0',
                     colored && 'bg-primary/10',
                     (groupedBy || summed) && 'text-foreground',
+                    aimHl.column(col.id), // AIM-FORK (#274)
                   )}
                   style={{ width: columnWidths[colIdx] }}
                 >
@@ -393,7 +395,7 @@ export function ListResultsTable({ result, listName, grouping, onGroupingChange,
                   key={vRow.key}
                   type="button"
                   aria-pressed={isSelected}
-                  className={cn('absolute left-0 top-0 flex w-full cursor-pointer select-none border-b border-border/30 text-left hover:bg-muted/40', isSelected && 'bg-primary/10')}
+                  className={cn('absolute left-0 top-0 flex w-full cursor-pointer select-none border-b border-border/30 text-left hover:bg-muted/40', isSelected && 'bg-primary/10', aimHl.row(row) /* AIM-FORK (#274) */)}
                   style={{ transform }}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selection.activate(vRow.index, event); }
@@ -403,7 +405,8 @@ export function ListResultsTable({ result, listName, grouping, onGroupingChange,
                   {row.values.map((value, colIdx) => (
                     <span
                       key={colIdx}
-                      className={cn('border-r border-border/20 px-2 py-1 text-xs truncate shrink-0', numericCols[colIdx] && 'text-right font-mono tabular-nums')}
+                      className={cn('border-r border-border/20 px-2 py-1 text-xs truncate shrink-0', numericCols[colIdx] && 'text-right font-mono tabular-nums',
+                        aimHl.column(columns[colIdx].id), aimHl.cell(row, columns[colIdx].id) /* AIM-FORK (#274) */)}
                       // Member rows sit one indent step past the deepest group header.
                       style={{ width: columnWidths[colIdx], ...(isGrouped && colIdx === 0 ? { paddingLeft: 8 + groupColumnIds.length * 16 } : undefined) }}
                       title={value !== null ? String(value) : ''}
@@ -419,7 +422,7 @@ export function ListResultsTable({ result, listName, grouping, onGroupingChange,
           {showSumRow && (
             <div className="flex sticky bottom-0 z-10 border-t-2 border-border bg-muted/90 backdrop-blur-sm">
               {columns.map((col, colIdx) => (
-                <div key={col.id} className="flex items-center border-r border-border/30 px-2 py-1 text-xs font-semibold shrink-0" style={{ width: columnWidths[colIdx] }}>
+                <div key={col.id} className={cn('flex items-center border-r border-border/30 px-2 py-1 text-xs font-semibold shrink-0', aimHl.sum(col.id) /* AIM-FORK (#274) */)} style={{ width: columnWidths[colIdx] }}>
                   {colIdx === 0 && <span className="text-muted-foreground">{t('lists.resultsTable.totalCount', { count: formatLocaleCount(totals.count, locale) })}</span>}
                   {sumColumnIds.includes(col.id) && (
                     <span className="ml-auto font-mono tabular-nums text-foreground">{formatCellValue(totals.sums[col.id])}</span>

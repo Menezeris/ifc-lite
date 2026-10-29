@@ -10,6 +10,8 @@
  * `BottomStrip` je vo vstupnom balíku.
  */
 
+import type { AimColumnWidths, AimListHighlight } from './aimListViewPlan.js';
+
 export interface ListTableRequest {
   /** Id definície zoznamu, na ktorú sa požiadavka vzťahuje; null = na ten, ktorý je zobrazený. */
   target: string | null;
@@ -20,6 +22,10 @@ export interface ListTableRequest {
   colorBy?: string | null;
   /** Formát, ktorý tabuľka ponúkne zvýrazneným tlačidlom na stiahnutie. */
   export?: 'csv' | 'xlsx' | 'pdf';
+  /** Filter "len viditeľné v 3D" zapnúť / vypnúť (#276). */
+  visibleOnly?: boolean;
+  /** Šírky stĺpcov (#275); stĺpce sa hľadajú vo výsledku, ktorý tabuľka ukazuje. */
+  columnWidths?: AimColumnWidths;
 }
 
 /** Čo tabuľka výsledkov práve ukazuje (zapisuje hák v `ListResultsTable`). */
@@ -35,6 +41,12 @@ export interface ListTableReport {
   colorBy: string | null;
   /** Formát ponúknutý na stiahnutie (čaká na klik používateľa). */
   exportReady: 'csv' | 'xlsx' | 'pdf' | null;
+  /** Filter "len viditeľné v 3D" je zapnutý (#276). */
+  visibleOnly: boolean;
+  /** Šírky stĺpcov v px podľa id stĺpca (#275). */
+  widths: { columnId: string; width: number }[];
+  /** Čo je zvýraznené (#274): počty riadkov a buniek, id stĺpcov, súčty. */
+  highlight: { rows: number; cells: number; columnIds: string[]; sum: string[] } | null;
 }
 
 export interface StripReport {
@@ -47,6 +59,8 @@ let tableRequest: ListTableRequest | null = null;
 let maximizeRequest: boolean | null = null;
 let tableReport: ListTableReport | null = null;
 let stripReport: StripReport | null = null;
+/** Zvýraznenie tabuľky z chatu (#274): drží sa, kým ho chat nezruší alebo sa neotvorí nový zoznam. */
+let highlight: AimListHighlight | null = null;
 /** Od posledného `APPLIED` prišla požiadavka hákom (čaká sa na ich hlásenie). */
 let viewRequested = false;
 const listeners = new Set<() => void>();
@@ -67,6 +81,12 @@ export function requestStripMaximize(on: boolean): void {
   viewRequested = true;
   emit();
 }
+export function setListHighlight(h: AimListHighlight | null): void {
+  highlight = h;
+  viewRequested = true;
+  emit();
+}
+export const listHighlight = () => highlight;
 export function takeViewRequested(): boolean {
   const r = viewRequested;
   viewRequested = false;
@@ -93,4 +113,5 @@ export const stripState = () => stripReport;
 export function resetListView(): void {
   tableRequest = null;
   maximizeRequest = null;
+  highlight = null;
 }
