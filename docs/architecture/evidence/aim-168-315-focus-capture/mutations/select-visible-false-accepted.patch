@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/bridge-protocol.ts a/apps/viewer/src/aim/bridge-protocol.ts
+index db7b8101..5e52c826 100644
+--- b/apps/viewer/src/aim/bridge-protocol.ts
++++ a/apps/viewer/src/aim/bridge-protocol.ts
+@@ -314,7 +314,7 @@ export function isInboundMessage(data: unknown): data is InboundMessage {
+     case 'HIGHLIGHT_FILTER':
+       return isStringArray(msg.guids);
+     case 'SELECT':
+-      return msg.visible !== undefined ? msg.guid === undefined && msg.guids === undefined : typeof msg.guid === 'string' && msg.guid.length > 0 && (msg.guids === undefined || isStringArray(msg.guids));
++      return msg.visible !== undefined ? msg.visible === true && msg.guid === undefined && msg.guids === undefined : typeof msg.guid === 'string' && msg.guid.length > 0 && (msg.guids === undefined || isStringArray(msg.guids));
+     case 'CLEAR_FILTER':
+     case 'SHOW_ALL':
+     case 'RESET_COLORS':

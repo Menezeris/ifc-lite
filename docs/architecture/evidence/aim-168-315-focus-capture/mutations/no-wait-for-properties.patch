@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelView.ts a/apps/viewer/src/aim/aimPanelView.ts
+index ee8062c7..84478713 100644
+--- b/apps/viewer/src/aim/aimPanelView.ts
++++ a/apps/viewer/src/aim/aimPanelView.ts
+@@ -148,7 +148,7 @@ export function applyPanelView(view: AimPanelView, target: Target, noteIssue: (t
+           return;
+         }
+         // Kým vlastnosti nie sú v store, sekciu nepreklápame ani nevzdávame: loader ich dotiahne neskôr.
+-        loadedAt ??= Date.now();
++        if (loadedAt === null && propertiesLoaded(target)) loadedAt = Date.now();
+         const giveUp = (text: string) => {
+           section = sections[0];
+           store.getState().setPropertiesActiveTab(section);
