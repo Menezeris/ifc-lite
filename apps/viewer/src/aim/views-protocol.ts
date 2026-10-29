@@ -19,9 +19,11 @@
  *  - `VIEW_SAVE {view, capture_id?}`: vytvor alebo prepíš riadok podľa `view.id`.
  *  - `VIEW_RENAME {id, name}`, `VIEW_DELETE {id}`.
  * Súradnice kamery a rezu sú v IFC svete (m, Z hore), košík ako IFC GlobalId; náhľady sa nenosia (D-135).
+ * `underlays` (AIM #325) = PDF podklady v 3D pri uložení (prepínač, viditeľnosť a priehľadnosť každého).
  */
 
 import { SOURCE } from './bridge-core.js';
+import { isUnderlaysViewWire, type UnderlaysViewWire } from './underlaysPlan.js';
 
 export const MAX_VIEWS = 500;
 /** Strop zoznamu GUID v jednom pohľade; väčší košík ide ako `truncated`. */
@@ -78,6 +80,8 @@ export interface ViewWire {
   basket: ViewBasketWire;
   /** Počet prvkov košíka pri uložení (informatívne). */
   objects: number;
+  /** PDF podklady v 3D pri uložení (AIM #325); chýba = pohľad stav podkladov pri obnove nemení. */
+  underlays?: UnderlaysViewWire;
 }
 
 export interface ViewsLoadMessage { source: typeof SOURCE; type: 'VIEWS_LOAD'; views: ViewWire[] }
@@ -133,7 +137,7 @@ export function isViewWire(v: unknown): v is ViewWire {
   return isText(v.id) && isText(v.name) && Number.isInteger(v.order) && (v.transition_ms === null || isNum(v.transition_ms))
     && (v.source === 'selection' || v.source === 'visible' || v.source === 'hierarchy' || v.source === 'manual')
     && (v.camera === null || isCamera(v.camera)) && (v.section === null || isSection(v.section))
-    && isBasket(v.basket) && isNum(v.objects);
+    && isBasket(v.basket) && isNum(v.objects) && optional(v.underlays, isUnderlaysViewWire);
 }
 
 /** Správa hosta pre pohľady (overí tvar; `views` s neplatným riadkom sa celé zahodí). */

@@ -21,6 +21,7 @@ import { PANEL_KEYS, type PanelKey } from './aimPanelList.js';
 import {
   AUTO_ROTATE_ACTIONS, AUTO_ROTATE_DIRECTIONS, AUTO_ROTATE_SPEED, type AutoRotateAction, type AutoRotateDirection,
 } from './autoRotatePlan.js';
+import { isUnderlayItems, type UnderlayItemWire } from './underlaysPlan.js';
 
 /** keep = smer sa nemení, section = kolmo na aktívny rez ako tlačidlo Set view (AIM D-098). */
 export const CAMERA_PRESETS = ['top', 'bottom', 'front', 'back', 'left', 'right', 'iso', 'fit_all', 'keep', 'section'] as const;
@@ -135,8 +136,12 @@ export type ViewInboundMessage =
   | { source: typeof SOURCE; type: 'QUERY'; id: string; query: ViewQuery; guids?: string[] }
   /** Panely z chatu (AIM D-127): otvoriť, zavrieť, prepnúť; `all` len zavrieť. */
   | { source: typeof SOURCE; type: 'SET_PANELS'; panels?: PanelsRequest; panel_layout?: PanelLayoutRequest }
-  /** PDF podklady v 3D zapnúť / vypnúť (AIM D-133 doplnok, #170); stav viewera, nič sa neukladá. */
-  | { source: typeof SOURCE; type: 'SET_UNDERLAYS_3D'; show: boolean }
+  /**
+   * PDF podklady v 3D zapnúť / vypnúť (AIM D-133 doplnok, #170); stav viewera, nič sa neukladá. `underlays` (#323)
+   * zapne, vypne alebo zmení priehľadnosť jednotlivých podkladov v 3D, `only` vypne v 3D ostatné kalibrované,
+   * `persist` zapíše `visible` a `opacity` do kalibrácie (`UNDERLAY_SAVE`, poloha sa nemení).
+   */
+  | { source: typeof SOURCE; type: 'SET_UNDERLAYS_3D'; show?: boolean; underlays?: UnderlayItemWire[]; only?: boolean; persist?: boolean }
   /** Poloha a smer kamery na kalibrovanom PDF zapnúť / vypnúť (AIM D-161 bod 8, #282); stav viewera. */
   | { source: typeof SOURCE; type: 'SET_PLAN_POSITION'; show: boolean }
   /**
@@ -259,6 +264,9 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
         && optional(m.speedDegS, (v) => inRange(v, AUTO_ROTATE_SPEED.min, AUTO_ROTATE_SPEED.max))
         && optional(m.direction, (d) => (AUTO_ROTATE_DIRECTIONS as readonly unknown[]).includes(d));
     case 'SET_UNDERLAYS_3D':
+      return (m.show !== undefined || m.underlays !== undefined) && optional(m.show, (b) => typeof b === 'boolean')
+        && optional(m.underlays, isUnderlayItems) && optional(m.only, (b) => typeof b === 'boolean' && m.underlays !== undefined)
+        && optional(m.persist, (b) => typeof b === 'boolean');
     case 'SET_PLAN_POSITION':
       return typeof m.show === 'boolean';
     case 'QUERY':

@@ -19,6 +19,7 @@ import {
 import {
   MAX_BASKET_GUIDS, type Vec3Wire, type ViewBasketWire, type ViewCameraWire, type ViewSectionPlaneWire, type ViewSectionWire, type ViewWire,
 } from './views-protocol.js';
+import type { UnderlaysViewWire } from './underlaysPlan.js';
 
 export interface CodecEnv {
   /** Posun rámca modelu (`bcfWorldOffset`). */
@@ -33,6 +34,8 @@ export interface CodecEnv {
   hiddenGuids: () => string[];
   /** Nová rovina rezu so štýlom aktuálnej (stred roviny sa prepíše). */
   makePlane: (name: string) => SectionPlane;
+  /** Stav PDF podkladov uložený s pohľadom (AIM #325). */
+  underlaysOf?: (viewId: string) => UnderlaysViewWire | undefined;
 }
 
 const mm = (v: number) => Math.round(v * 1000) / 1000;
@@ -154,8 +157,11 @@ export function encodeView(view: BasketView, order: number, env: CodecEnv): View
     section: view.section ? encodeSection(view.section, env) : null,
     basket: encodeBasket(view, env),
     objects: view.entityRefs.length,
+    ...withUnderlays(env.underlaysOf?.(view.id)),
   };
 }
+
+const withUnderlays = (u: UnderlaysViewWire | undefined) => (u ? { underlays: u } : {});
 
 /** Pohľad z drôtu; `missing` = prvky košíka, ktoré model (revízia) už nemá. Náhľad ostáva z `prev`. */
 export function decodeView(w: ViewWire, env: CodecEnv, prev?: BasketView): { view: BasketView; missing: number } {

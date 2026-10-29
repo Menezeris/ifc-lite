@@ -29,7 +29,7 @@ import { sectionRenderBounds as sectionBoundsWith } from './sectionRange.js';
 import { noteIssue, track } from './command-gate.js';
 import { CAMERA_SETTLE_MAX_MS, waitCameraSettled } from './cameraSettle.js';
 import { AUTO_ROTATE_SPEED } from './autoRotatePlan.js';
-import { useAimUnderlays3d } from './aimUnderlays3d.js';
+import { applyUnderlaySet } from './underlaysApply.js';
 import { useAimPlanPosition } from './aimPlanPosition.js';
 
 type FocusSummary = () => { count: number; guids: string[] };
@@ -151,7 +151,7 @@ export async function appliedViewState(budgetMs = CAMERA_SETTLE_MAX_MS): Promise
     // Limit vypršal počas pohybu (používateľ otáča kamerou): póza nie je cieľ, nech to host vie.
     ...(settled ? {} : { camera_moving: true }),
     selection_count: s.selection.count, hidden_count: s.hidden_count, isolated_count: s.isolated_count, focus: s.focus,
-    panels: s.panels, underlays_3d: s.underlays_3d, ...(s.plan_position ? { plan_position: s.plan_position } : {}), ...(s.panel_view ? { panel_view: s.panel_view } : {}), tabs: s.tabs, layout: s.layout, ...(s.property_focus ? { property_focus: s.property_focus } : {}), ...(s.document ? { document: s.document } : {}),
+    panels: s.panels, underlays_3d: s.underlays_3d, ...(s.underlays_3d && s.underlays.length > 0 ? { underlays: s.underlays } : {}), ...(s.plan_position ? { plan_position: s.plan_position } : {}), ...(s.panel_view ? { panel_view: s.panel_view } : {}), tabs: s.tabs, layout: s.layout, ...(s.property_focus ? { property_focus: s.property_focus } : {}), ...(s.document ? { document: s.document } : {}),
     ...(s.ids_local ? { ids_local: q.briefIdsLocal(s.ids_local) } : {}),
   };
 }
@@ -274,7 +274,7 @@ export function useAimViewCommands(bim: BimContext) {
         return;
       }
       case 'SET_UNDERLAYS_3D': {
-        useAimUnderlays3d.getState().setShown(msg.show);
+        applyUnderlaySet(msg, noteIssue);
         return;
       }
       case 'SET_PLAN_POSITION': {
