@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/AimUnderlays3dToggle.tsx a/apps/viewer/src/aim/AimUnderlays3dToggle.tsx
+index 124a05cb..1dcaeaad 100644
+--- b/apps/viewer/src/aim/AimUnderlays3dToggle.tsx
++++ a/apps/viewer/src/aim/AimUnderlays3dToggle.tsx
+@@ -24,6 +24,7 @@ function useUnderlaysOffIn3d(viewLocked: boolean): boolean {
+ export function AimUnderlays3dOffBanner({ viewLocked }: { viewLocked: boolean }) {
+   const { t } = useTranslation();
+   const off = useUnderlaysOffIn3d(viewLocked);
++  if (!off) return null;
+   return (
+     <div role="status" data-testid="aim-underlays-3d-off" className="shrink-0 border-b bg-amber-500/10 px-3 py-1.5 text-2xs text-amber-700 dark:text-amber-300">
+       {t('aimFork.underlays3d.offNotice')}

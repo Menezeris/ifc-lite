@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimList.ts a/apps/viewer/src/aim/aimList.ts
+index f494d7e5..5961ecfa 100644
+--- b/apps/viewer/src/aim/aimList.ts
++++ a/apps/viewer/src/aim/aimList.ts
+@@ -33,7 +33,7 @@ export function openListFromChat(data: LensInboundMessage): void {
+   // Izoláciu v 3D neruším (je to pohľad používateľa), len filter "len viditeľné" v tabuľke sa vypne; `view.visibleOnly` ho prebije.
+   const view = parseListView(msg.view) ?? {};
+   setListHighlight(null);
+-  if (view.visibleOnly === undefined && false) view.visibleOnly = false;
++  if (view.visibleOnly === undefined && state.isolatedEntities !== null) view.visibleOnly = false;
+   const definition = applyListView(listDefinitionFromChat(msg, models, crypto.randomUUID(), Date.now()), view);
+   noteListOpened(definition, msg.run === true); // s `run` tabuľku po zobrazení panela spustí hook (D-148)
+   state.setPendingListDraft(definition);

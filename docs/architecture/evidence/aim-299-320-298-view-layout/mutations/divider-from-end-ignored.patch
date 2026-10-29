@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index de1fc859..c5a03ed9 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -98,7 +98,7 @@ export function tileDividers(layout: TileLayout, sizes?: readonly number[] | nul
+   }
+   const axis = layout === 'split_h' || layout === 'three_left' || layout === 'three_right' ? 'x' : 'y';
+   const fromEnd = layout === 'three_right' || layout === 'three_bottom';
+-  return [{ index: 0, axis, pos: round(sz[0]) }];
++  return [{ index: 0, axis, pos: round(fromEnd ? 1 - sz[0] : sz[0]) }];
+ }
+ 
+ /** Nové podiely po potiahnutí čiary `index` na polohu `pos` (zlomok plochy); čiara sa nedostane pod `MIN_TILE_SHARE` k susedom. */

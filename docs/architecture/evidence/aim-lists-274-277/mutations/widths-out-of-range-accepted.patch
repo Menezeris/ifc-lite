@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimListViewPlan.ts a/apps/viewer/src/aim/aimListViewPlan.ts
+index 181c6244..be41b9e4 100644
+--- b/apps/viewer/src/aim/aimListViewPlan.ts
++++ a/apps/viewer/src/aim/aimListViewPlan.ts
+@@ -105,7 +105,7 @@ export function parseColumnWidths(raw: unknown): AimColumnWidths | null {
+     if (!isObj(item)) return null;
+     const column = parseColumnRef(item.column);
+     const w = item.width;
+-    const ok = w === 'fit' || w === 'auto' || (typeof w === 'number');
++    const ok = w === 'fit' || w === 'auto' || (typeof w === 'number' && Number.isFinite(w) && w >= MIN_COLUMN_WIDTH && w <= MAX_COLUMN_WIDTH);
+     if (!column || !ok) return null;
+     out.push({ column, width: w as AimColumnWidth });
+   }

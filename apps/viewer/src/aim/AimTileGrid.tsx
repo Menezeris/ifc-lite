@@ -10,15 +10,16 @@
  * ukazujú snímku (`tileShots.ts`) a klik ich urobí živými; dokument je živý vždy.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { cn } from '@/lib/utils';
+import { capturePointer } from '@/lib/pointer-capture';
 import { useViewerStore } from '@/store';
 import { PdfDocumentView } from '@/components/documents/PdfDocumentView';
 import { ImageDocumentView } from '@/components/documents/ImageDocumentView';
 import { isSceneTab, type ViewTab } from './viewTabsLayout.js';
 import { useAimViewTabs } from './viewTabsStore.js';
-import { TILE_HEADER_PX, TILE_RECTS, liveTile, type TileRect } from './viewTilesPlan.js';
-import { activate, putTile, showViewLive } from './viewTabsApply.js';
+import { TILE_HEADER_PX, liveTile, sizesFromDrag, tileDividers, tileRects, type TileDivider, type TileLayout, type TileRect } from './viewTilesPlan.js';
+import { activate, putTile, resizeTiles, showViewLive } from './viewTabsApply.js';
 import { viewTabId } from './viewTabsPlan.js';
 import { shotOf } from './tileShots.js';
 import { consumeOwn } from './viewTilesScene.js';
@@ -30,6 +31,7 @@ const place = (r: TileRect) => ({ left: pct(r.x), top: pct(r.y), width: pct(r.w)
 export function AimTileGrid() {
   const layout = useAimViewTabs((s) => s.layout);
   const tiles = useAimViewTabs((s) => s.tiles);
+  const sizes = useAimViewTabs((s) => s.sizes);
   const tabs = useAimViewTabs((s) => s.tabs);
   const activeId = useAimViewTabs((s) => s.activeId);
   const sceneId = useAimViewTabs((s) => s.sceneId);
@@ -42,7 +44,7 @@ export function AimTileGrid() {
     if (activeView && layout !== 'single' && !consumeOwn(activeView)) showViewLive(activeView, { applied: true });
   }, [activeView, layout]);
   if (layout === 'single') return null;
-  const rects = TILE_RECTS[layout];
+  const rects = tileRects(layout, sizes);
   const live = liveTile({ layout, tiles }, sceneId);
 
   return (
@@ -71,7 +73,61 @@ export function AimTileGrid() {
           </section>
         );
       })}
+      {tileDividers(layout, sizes).map((d) => <DividerHandle key={d.index} layout={layout} divider={d} />)}
     </div>
+  );
+}
+
+/** Deliaca čiara dlaždíc (AIM #299): ťahom myšou sa menia podiely, dvojklik vráti delenie na polovice. */
+function DividerHandle({ layout, divider }: { layout: TileLayout; divider: TileDivider }) {
+  const vertical = divider.axis === 'x';
+  const onDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const grid = e.currentTarget.parentElement;
+    if (!grid) return;
+    e.preventDefault();
+    const box = grid.getBoundingClientRect();
+    const handle = e.currentTarget;
+    capturePointer(handle, e.pointerId);
+    const move = (ev: PointerEvent) => {
+      const pos = vertical ? (ev.clientX - box.left) / box.width : (ev.clientY - box.top) / box.height;
+      const next = sizesFromDrag(layout, useAimViewTabs.getState().sizes, divider.index, pos);
+      if (next) resizeTiles(next);
+    };
+    const up = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', up);
+      handle.removeEventListener('pointercancel', up);
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', up);
+    handle.addEventListener('pointercancel', up);
+  };
+  // Šípky posunú čiaru o 5 % (klávesnicový ekvivalent ťahania).
+  const onKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const step = e.key === (vertical ? 'ArrowLeft' : 'ArrowUp') ? -0.05 : e.key === (vertical ? 'ArrowRight' : 'ArrowDown') ? 0.05 : 0;
+    if (step === 0) return;
+    e.preventDefault();
+    const next = sizesFromDrag(layout, useAimViewTabs.getState().sizes, divider.index, divider.pos + step);
+    if (next) resizeTiles(next);
+  };
+  return (
+    <div
+      tabIndex={0}
+      // The divider resizes the tiles; a decorative <hr> cannot be operated by keyboard (same as ChatResizeHandle).
+      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+      role="separator"
+      aria-orientation={vertical ? 'vertical' : 'horizontal'}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(divider.pos * 100)}
+      aria-label="Zmeniť veľkosť dlaždíc"
+      data-testid={`aim-tile-divider-${divider.index}`}
+      className={cn('pointer-events-auto absolute z-20 hover:bg-primary/40', vertical ? 'top-0 h-full w-1.5 -translate-x-1/2 cursor-col-resize' : 'left-0 h-1.5 w-full -translate-y-1/2 cursor-row-resize')}
+      style={vertical ? { left: pct(divider.pos) } : { top: pct(divider.pos) }}
+      onPointerDown={onDown}
+      onKeyDown={onKey}
+      onDoubleClick={() => resizeTiles(null)}
+    />
   );
 }
 

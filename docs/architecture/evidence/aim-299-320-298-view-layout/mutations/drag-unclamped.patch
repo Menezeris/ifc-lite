@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index 47c5bc13..c5a03ed9 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -110,7 +110,7 @@ export function sizesFromDrag(layout: TileLayout, sizes: readonly number[] | nul
+   const cur = sizes && sizes.length === n ? [...sizes] : n === 3 ? [T, T, T] : [H, H];
+   if (n === 2) {
+     const first = layout === 'three_right' || layout === 'three_bottom' ? 1 - pos : pos;
+-    const a = first;
++    const a = Math.min(1 - MIN_TILE_SHARE, Math.max(MIN_TILE_SHARE, first));
+     return [a, 1 - a];
+   }
+   const lo = (index === 0 ? 0 : cur[0]) + MIN_TILE_SHARE;

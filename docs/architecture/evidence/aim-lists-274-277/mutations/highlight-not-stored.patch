@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimListControl.ts a/apps/viewer/src/aim/aimListControl.ts
+index 841b54c2..098e31cc 100644
+--- b/apps/viewer/src/aim/aimListControl.ts
++++ a/apps/viewer/src/aim/aimListControl.ts
+@@ -80,6 +80,7 @@ export function applyListView(def: ListDefinition, view: AimListView): ListDefin
+       ...(view.visibleOnly !== undefined ? { visibleOnly: view.visibleOnly } : {}), ...(view.columnWidths ? { columnWidths: view.columnWidths } : {}) });
+   }
+   if (view.columnWidths || view.highlight) void loadLayoutPlan();
++  if (view.highlight !== undefined) setListHighlight(view.highlight);
+   if (view.maximize !== undefined) requestStripMaximize(view.maximize);
+   return next;
+ }

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTabsApply.ts a/apps/viewer/src/aim/viewTabsApply.ts
+index bce48ea3..e0321b6b 100644
+--- b/apps/viewer/src/aim/viewTabsApply.ts
++++ a/apps/viewer/src/aim/viewTabsApply.ts
+@@ -115,7 +115,7 @@ export function resizeTiles(sizes: readonly number[] | null): void {
+   const shares = sizes ? normalizeSizes(sizes, SIZE_COUNT[store.layout]) : undefined;
+   if (shares === null) return;
+   const live = liveTile(store, store.sceneId);
+-  useAimViewTabs.setState({ sizes: shares, frame: store.frame });
++  useAimViewTabs.setState({ sizes: shares, frame: live >= 0 ? tileFrameStyle(tileRects(store.layout, shares)[live]) : null });
+ }
+ 
+ let layoutRun = 0;

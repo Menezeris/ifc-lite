@@ -69,6 +69,24 @@ export function isPanelsRequest(raw: unknown): raw is PanelsRequest {
     PANEL_ACTIONS.includes(v) && PANEL_NAME.test(k) && (k !== 'all' || v === 'close'));
 }
 
+/** Strana, na ktorú sa panel pripne (AIM #320): `right` = pravý stĺpec, ostatné plávajúci panel pripnutý k okraju (`free` = voľne). */
+export const PANEL_SIDES = ['left', 'right', 'bottom', 'free'] as const;
+export type PanelSide = (typeof PANEL_SIDES)[number];
+/** Šírka v % okna (rovnaký rozsah ako host; viewer ju zúži podľa panela). */
+export const PANEL_WIDTH_PCT = { min: 5, max: 90 } as const;
+
+/** Šírka a strana jedného panela (AIM #320); aspoň jedno z `width_pct`, `side`. */
+export interface PanelLayoutRequest { panel: string; width_pct?: number; side?: PanelSide }
+
+export function isPanelLayoutRequest(raw: unknown): raw is PanelLayoutRequest {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+  const m = raw as Record<string, unknown>;
+  return typeof m.panel === 'string' && PANEL_NAME.test(m.panel)
+    && (m.width_pct !== undefined || m.side !== undefined)
+    && optional(m.width_pct, (w) => inRange(w, PANEL_WIDTH_PCT.min, PANEL_WIDTH_PCT.max))
+    && optional(m.side, (x) => (PANEL_SIDES as readonly unknown[]).includes(x));
+}
+
 /** Výška rezu nad úrovňou podlažia v metroch - rovnaký rozsah ako host. */
 export const SECTION_OFFSET_RANGE = { min: -5, max: 20 } as const;
 const MAX_GUIDS = 600;
@@ -117,7 +135,7 @@ export type ViewInboundMessage =
   | { source: typeof SOURCE; type: 'SET_VIEW_MODE'; mode: BridgeViewMode; storeyGuid?: string }
   | { source: typeof SOURCE; type: 'QUERY'; id: string; query: ViewQuery; guids?: string[] }
   /** Panely z chatu (AIM D-127): otvoriť, zavrieť, prepnúť; `all` len zavrieť. */
-  | { source: typeof SOURCE; type: 'SET_PANELS'; panels: PanelsRequest }
+  | { source: typeof SOURCE; type: 'SET_PANELS'; panels?: PanelsRequest; panel_layout?: PanelLayoutRequest }
   /**
    * PDF podklady v 3D zapnúť / vypnúť (AIM D-133 doplnok, #170); stav viewera, nič sa neukladá. `underlays` (#323)
    * zapne, vypne alebo zmení priehľadnosť jednotlivých podkladov v 3D, `only` vypne v 3D ostatné kalibrované,
@@ -234,7 +252,9 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
         && m.points.every(isVec)
         && optional(m.color, (c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c));
     case 'SET_PANELS':
-      return isPanelsRequest(m.panels);
+      // AIM #320: `panel_layout` môže prísť aj bez `panels`; aspoň jedno z nich musí byť.
+      return (m.panels === undefined ? m.panel_layout !== undefined : isPanelsRequest(m.panels))
+        && optional(m.panel_layout, isPanelLayoutRequest);
     case 'SCROLL_PANEL':
       return isPanelScrollRequest(m);
     case 'ZOOM_PANEL':

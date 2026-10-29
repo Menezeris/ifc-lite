@@ -15,6 +15,7 @@ import { compileNameMatcher } from './name-pattern.js';
 import { getWorldCoordinateValue, extractGeometryColumnValue } from './geometry-column.js';
 import { withAggregateInheritance } from './condition-inherit.js';
 import { getAttributeValue } from './entity-attributes.js';
+import { relationLevelValue } from './relation-levels.js'; // AIM-FORK (#277)
 import type {
   ListDataProvider,
   ListDefinition,
@@ -424,6 +425,9 @@ function getSpatialValue(
   level: string,
   provider: ListDataProvider,
 ): CellValue {
+  // AIM-FORK (#277): next 2 lines (levels Referenced / Boundary / Aggregate)
+  const related = relationLevelValue(level, entityId, provider);
+  if (related !== undefined) return related;
   switch (level.toLowerCase()) {
     case 'container':
       return provider.getContainerName?.(entityId) || null;

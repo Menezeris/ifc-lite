@@ -13,7 +13,7 @@
 import { BOTTOM_PANEL_FLAG, isBottomPanel, type BottomPanelFlag } from '@/lib/panels/bottom-panels';
 import { sideDockedPanels } from './aimSideDock.js';
 import { PANEL_KEYS, isPanelKey, panelCatalog, panelIdOf, type PanelKey } from './aimPanelList.js';
-import type { PanelsRequest } from './view-protocol.js';
+import type { PanelLayoutRequest, PanelsRequest } from './view-protocol.js';
 
 export { PANEL_KEYS, type PanelKey, type PanelsRequest };
 
@@ -100,3 +100,61 @@ export function describePanels(s: PanelsStore): Record<PanelKey, PanelInfo> & { 
 
 /** Zoznam platných mien pre hlásenie neznámeho panela. */
 export const validPanelNames = (): string => PANEL_KEYS.join(', ');
+
+/** Okno menšie než toto (px) plávajúci panel nezúži; pravý stĺpec má vlastný rozsah v store (`clampSidebarWidth`). */
+export const FLOAT_MIN_W = 240;
+
+export interface PanelLayoutPlan {
+  /** Panel sa najprv vytrhne z ukotvenia a pripne k okraju (`free` = voľne). */
+  float?: 'left' | 'right' | 'bottom' | 'free';
+  /** Šírka pravého stĺpca v % okna. */
+  sidebarWidthPct?: number;
+  /** Šírka plávajúceho panela v px. */
+  floatWidthPx?: number;
+  issues: string[];
+}
+
+/**
+ * Šírka a strana panela (AIM #320) podľa toho, kde panel je (`panelInfo`). Pravý stĺpec je jeden: jeho šírka platí
+ * pre oba panely splitu. Ľavý stĺpec (hierarchia), spodný pás a samostatné okno šírku nemenia. Bez efektu
+ * a s problémom sa vráti, čo viewer nevie, aby `APPLIED` nehlásil nepravdu.
+ */
+export function planPanelLayout(req: PanelLayoutRequest, info: PanelInfo, windowWidthPx: number): PanelLayoutPlan {
+  const plan: PanelLayoutPlan = { issues: [] };
+  const name = req.panel;
+  if (!info.open) {
+    plan.issues.push(`SET_PANELS: panel ${name} nie je otvorený, šírka a strana sa nenastavili`);
+    return plan;
+  }
+  if (info.where === 'window') {
+    plan.issues.push(`SET_PANELS: panel ${name} je v samostatnom okne, jeho veľkosť viewer nenastavuje`);
+    return plan;
+  }
+  if (info.where === 'left' && (req.side !== undefined || req.width_pct !== undefined)) {
+    plan.issues.push(`SET_PANELS: ľavý panel ${name} má pevnú šírku a stranu`);
+    return plan;
+  }
+  let where = info.where;
+  if (req.side !== undefined) {
+    const docked = where === 'right' || where === 'bottom';
+    if (docked && req.side === where) {
+      // Už je tam.
+    } else if (where === 'floating' && req.side === info.snap) {
+      // Už je pripnutý.
+    } else {
+      plan.float = req.side;
+      where = 'floating';
+    }
+  }
+  if (req.width_pct !== undefined) {
+    if (where === 'right') plan.sidebarWidthPct = req.width_pct;
+    else if (where === 'floating') {
+      const snap = plan.float ?? info.snap;
+      if (snap === 'bottom') plan.issues.push(`SET_PANELS: panel ${name} je pripnutý dole, šírku má celú; mení sa len výška v px`);
+      else plan.floatWidthPx = Math.round(Math.max(FLOAT_MIN_W, Math.min(windowWidthPx * 0.9, (req.width_pct / 100) * windowWidthPx)));
+    } else {
+      plan.issues.push(`SET_PANELS: panel ${name} je v spodnom páse, šírku má celú`);
+    }
+  }
+  return plan;
+}

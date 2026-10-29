@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/view-protocol.ts a/apps/viewer/src/aim/view-protocol.ts
+index 5b479bf1..3ab0a8c6 100644
+--- b/apps/viewer/src/aim/view-protocol.ts
++++ a/apps/viewer/src/aim/view-protocol.ts
+@@ -248,7 +248,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
+         && optional(m.color, (c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c));
+     case 'SET_PANELS':
+       // AIM #320: `panel_layout` môže prísť aj bez `panels`; aspoň jedno z nich musí byť.
+-      return isPanelsRequest(m.panels)
++      return (m.panels === undefined ? m.panel_layout !== undefined : isPanelsRequest(m.panels))
+         && optional(m.panel_layout, isPanelLayoutRequest);
+     case 'SCROLL_PANEL':
+       return isPanelScrollRequest(m);

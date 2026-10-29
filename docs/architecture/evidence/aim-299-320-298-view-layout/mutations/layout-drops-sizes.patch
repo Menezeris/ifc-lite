@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index ad203f28..c5a03ed9 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -202,7 +202,7 @@ export function layoutTiles(
+     return next;
+   });
+   const shares = sizes ? normalizeSizes(sizes, SIZE_COUNT[layout]) : null;
+-  return { layout, tiles };
++  return shares ? { layout, tiles, sizes: shares } : { layout, tiles };
+ }
+ 
+ /**

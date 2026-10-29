@@ -26,7 +26,7 @@ import { runTopView, useAimViewTabs } from './viewTabsStore.js';
 import { isTabsMessage, type TabsMessage } from './tabs-protocol.js';
 import { isTilesMessage, type TilesMessage } from './tiles-protocol.js';
 import {
-  TILE_RECTS, addTile, isTiled, layoutTiles, liveTile, reconcileTiles, setTile, singleTiles, tileFrameStyle, tileScene, type TileLayout,
+  SIZE_COUNT, addTile, isTiled, layoutTiles, liveTile, normalizeSizes, reconcileTiles, setTile, singleTiles, tileFrameStyle, tileRects, tileScene, type TileLayout,
   type TilesState,
 } from './viewTilesPlan.js';
 import { enterScene, forgetStash, leaveScene } from './viewTilesScene.js';
@@ -51,7 +51,7 @@ let entering: Promise<void> = Promise.resolve();
 export function commit(next: ViewTabsState, tilesNext?: TilesState, opts: { applied?: boolean } = {}): void {
   const store = useAimViewTabs.getState();
   // D-157: pri dlaždiciach nie je "Vedľa"; aktívna záložka mimo dlaždíc sa do jednej dá.
-  let tiles = tilesNext ?? { layout: store.layout, tiles: store.tiles };
+  let tiles = tilesNext ?? { layout: store.layout, tiles: store.tiles, sizes: store.sizes };
   if (isTiled(tiles)) {
     next = { ...next, besideId: null };
     tiles = reconcileTiles(next, tiles, store.sceneId);
@@ -70,7 +70,7 @@ export function commit(next: ViewTabsState, tilesNext?: TilesState, opts: { appl
   if (switching && !opts.applied && store.tabs.some((t) => t.id === store.sceneId)) leaveScene(store.sceneId);
   useAimViewTabs.setState({
     tabs: next.tabs, activeId: next.activeId, besideId: next.besideId, sceneId: scene,
-    layout: tiles.layout, tiles: tiles.tiles, frame: live >= 0 ? tileFrameStyle(TILE_RECTS[tiles.layout][live]) : null,
+    layout: tiles.layout, tiles: tiles.tiles, sizes: tiles.sizes, frame: live >= 0 ? tileFrameStyle(tileRects(tiles.layout, tiles.sizes)[live]) : null,
   });
   if (switching && !opts.applied) {
     const tab = next.tabs.find((t) => t.id === scene);
@@ -109,6 +109,15 @@ export function beside(id: string | null, note: Note = () => {}, base?: ViewTabs
   commit(setBeside(s, id));
 }
 
+/** Podiely strán z lišty (ťahanie čiary, AIM #299): prepočíta rámec živej dlaždice; `null` = polovice a tretiny; mimo rozloženia s podielmi nič. */
+export function resizeTiles(sizes: readonly number[] | null): void {
+  const store = useAimViewTabs.getState();
+  const shares = sizes ? normalizeSizes(sizes, SIZE_COUNT[store.layout]) : undefined;
+  if (shares === null) return;
+  const live = liveTile(store, store.sceneId);
+  useAimViewTabs.setState({ sizes: shares, frame: live >= 0 ? tileFrameStyle(tileRects(store.layout, shares)[live]) : null });
+}
+
 let layoutRun = 0;
 const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
 
@@ -127,11 +136,11 @@ function settle(): Promise<void> {
  * undefined = doplniť. Vráti beh, na ktorý most počká pred `APPLIED`: canvas sa
  * po zmene rámca živej dlaždice ešte prekreslí (kamera sa ustáli).
  */
-export function setLayout(layout: TileLayout, refs: readonly (string | null | undefined)[] = [], _note: Note = () => {}, base?: ViewTabsState): Promise<void> | void {
+export function setLayout(layout: TileLayout, refs: readonly (string | null | undefined)[] = [], _note: Note = () => {}, base?: ViewTabsState, sizes?: readonly number[] | null): Promise<void> | void {
   const s = base ?? current();
   if (layout === 'single') return void commit(s, singleTiles());
   const store = useAimViewTabs.getState();
-  commit(s, layoutTiles(s, { layout: store.layout, tiles: store.tiles }, layout, refs));
+  commit(s, layoutTiles(s, { layout: store.layout, tiles: store.tiles }, layout, refs, sizes));
   return settle().then(() => prerenderViews());
 }
 
@@ -366,5 +375,17 @@ function runLayout(msg: TilesMessage, note: Note): Promise<void> | void {
   for (const v of views) s = { ...s, tabs: [...s.tabs, ...v.tabs.filter((t) => !s.tabs.some((x) => x.id === t.id))] };
 
   if (refs.some((r) => typeof r === 'string' && r.startsWith('doc:'))) commit(syncDocTabs(current(), openDocs(), null));
-  return setLayout(msg.layout, refs, note, s);
+  // AIM #299: `ratio` = podiel prvej dlaždice (dvojica podielov), `sizes` váhy všetkých strán.
+  const count = SIZE_COUNT[msg.layout];
+  const raw = msg.sizes ?? (msg.ratio !== undefined ? [msg.ratio, 1 - msg.ratio] : undefined);
+  let sizes: number[] | undefined;
+  if (raw) {
+    const shares = normalizeSizes(raw, count);
+    if (!shares) note(`VIEW_TABS: rozloženie ${msg.layout} ${count === 0 ? 'nemá nastaviteľné podiely' : `berie ${count} podiely`}`);
+    else {
+      sizes = shares;
+      if (raw.length === count && shares.some((v, i) => Math.abs(v - raw[i] / raw.reduce((a, x) => a + x, 0)) > 1e-6)) note('VIEW_TABS: podiel dlaždice je najmenej 10 %, hodnoty sa upravili');
+    }
+  }
+  return setLayout(msg.layout, refs, note, s, sizes);
 }

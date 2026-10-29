@@ -7,7 +7,7 @@ import assert from 'node:assert';
 
 import { initialTabs, openTab, type ViewTab, type ViewTabsState } from './viewTabsPlan.js';
 import {
-  TILE_LAYOUTS, TILE_RECTS, describeLayout, isTileLayout, layoutTiles, liveTile, placeTab, reconcileTiles, setTile,
+  MIN_TILE_SHARE, SIZE_COUNT, TILE_LAYOUTS, TILE_RECTS, describeLayout, normalizeSizes, sizesFromDrag, tileDividers, tileRects, isTileLayout, layoutTiles, liveTile, placeTab, reconcileTiles, setTile,
   singleTiles, tileScene, type TilesState,
 } from './viewTilesPlan.js';
 import { isTilesMessage } from './tiles-protocol.js';
@@ -155,5 +155,82 @@ describe('dlaždice záložiek (AIM D-157)', () => {
     assert.ok(!isTilesMessage(m({ layout: 'split_h', tiles: [{ tab: '' }] })));
     assert.ok(!isTilesMessage({ ...m({ layout: 'single' }), source: 'x' }));
     assert.ok(!isTilesMessage({ ...m({ layout: 'single' }), action: 'open' }));
+  });
+
+  it('podiely strán (AIM #299): normalizácia váh, dolná medza 10 %, zlý počet alebo váha = null', () => {
+    assert.deepStrictEqual(normalizeSizes([1, 3], 2), [0.25, 0.75]);
+    assert.deepStrictEqual(normalizeSizes([0.5, 0.5], 2), [0.5, 0.5]);
+    const low = normalizeSizes([1, 99], 2)!;
+    assert.ok(Math.abs(low[0] - MIN_TILE_SHARE) < 1e-9 && Math.abs(low[0] + low[1] - 1) < 1e-9, `malá strana = ${low[0]}`);
+    const three = normalizeSizes([1, 1, 98], 3)!;
+    assert.ok(three.every((v) => v >= MIN_TILE_SHARE - 1e-9) && Math.abs(three.reduce((a, v) => a + v, 0) - 1) < 1e-9);
+    assert.strictEqual(normalizeSizes([1, 2, 3], 2), null, 'počet nesedí');
+    assert.strictEqual(normalizeSizes([1, 0], 2), null, 'váha musí byť kladná');
+    assert.strictEqual(normalizeSizes([1, Number.NaN], 2), null);
+    assert.strictEqual(normalizeSizes([1, 1], 0), null, 'grid4 a single podiely nemajú');
+  });
+
+  it('obdĺžniky s podielmi: väčšia pravá dlaždica, pokrytie plochy bez prekrytia, predvolené = polovice', () => {
+    assert.deepStrictEqual(tileRects('split_h', [0.3, 0.7]), [{ x: 0, y: 0, w: 0.3, h: 1 }, { x: 0.3, y: 0, w: 0.7, h: 1 }]);
+    assert.deepStrictEqual(tileRects('split_v', [0.25, 0.75]).map((t) => [t.y, t.h]), [[0, 0.25], [0.25, 0.75]]);
+    assert.deepStrictEqual(tileRects('three_right', [0.7, 0.3])[0], { x: 0.3, y: 0, w: 0.7, h: 1 }, 'veľká dlaždica 0 je vpravo');
+    assert.deepStrictEqual(tileRects('three_left', [0.6, 0.4])[1], { x: 0.6, y: 0, w: 0.4, h: 0.5 });
+    assert.deepStrictEqual(tileRects('three_bottom', [0.6, 0.4])[0], { x: 0, y: 0.4, w: 1, h: 0.6 });
+    assert.deepStrictEqual(tileRects('three_h', [0.2, 0.3, 0.5]).map((t) => t.w), [0.2, 0.3, 0.5]);
+    for (const layout of TILE_LAYOUTS) {
+      const n = SIZE_COUNT[layout];
+      const sizes = n === 2 ? [0.7, 0.3] : n === 3 ? [0.5, 0.2, 0.3] : undefined;
+      const rects = tileRects(layout, sizes);
+      assert.ok(Math.abs(rects.reduce((a, t) => a + t.w * t.h, 0) - 1) < 1e-9, `${layout}: plocha`);
+    }
+    assert.deepStrictEqual(tileRects('split_h', [0.3, 0.3, 0.4]), TILE_RECTS.split_h, 'zlý počet podielov = polovice');
+  });
+
+  it('layoutTiles nesie podiely len keď sedia s rozložením; zmena rozloženia ich nenesie', () => {
+    const s = four();
+    assert.deepStrictEqual(layoutTiles(s, singleTiles(), 'split_h', [], [1, 3]).sizes, [0.25, 0.75]);
+    assert.strictEqual(layoutTiles(s, singleTiles(), 'split_h', [], [1, 3, 4]).sizes, undefined);
+    assert.strictEqual(layoutTiles(s, singleTiles(), 'grid4', [], [1, 1]).sizes, undefined);
+    const sized = layoutTiles(s, singleTiles(), 'split_h', [], [1, 3]);
+    assert.strictEqual(layoutTiles(s, sized, 'split_v').sizes, undefined);
+  });
+
+  it('čiary dlaždíc a ťahanie: poloha podľa rozloženia, ťah sa drží od okraja a od susedov', () => {
+    assert.deepStrictEqual(tileDividers('split_h', [0.3, 0.7]), [{ index: 0, axis: 'x', pos: 0.3 }]);
+    assert.deepStrictEqual(tileDividers('three_right', [0.7, 0.3]), [{ index: 0, axis: 'x', pos: 0.3 }], 'veľká vpravo: čiara je 1 - podiel');
+    assert.deepStrictEqual(tileDividers('three_top', [0.6, 0.4]), [{ index: 0, axis: 'y', pos: 0.6 }]);
+    assert.strictEqual(tileDividers('three_h').length, 2);
+    assert.strictEqual(tileDividers('grid4').length, 0);
+    assert.deepStrictEqual(sizesFromDrag('split_h', null, 0, 0.3), [0.3, 0.7]);
+    assert.deepStrictEqual(sizesFromDrag('three_right', [0.5, 0.5], 0, 0.25)!.map((v) => Math.round(v * 100) / 100), [0.75, 0.25]);
+    assert.strictEqual(sizesFromDrag('split_v', null, 0, 0.001)![0], MIN_TILE_SHARE);
+    assert.strictEqual(sizesFromDrag('split_v', null, 0, 5)![0], 1 - MIN_TILE_SHARE);
+    const t = sizesFromDrag('three_v', [0.2, 0.3, 0.5], 0, 0.4)!;
+    assert.deepStrictEqual(t.map((v) => Math.round(v * 100) / 100), [0.4, 0.1, 0.5], 'druhá dlaždica sa nezmenší pod 10 %');
+    assert.strictEqual(sizesFromDrag('split_h', null, 1, 0.5), null);
+    assert.strictEqual(sizesFromDrag('split_h', null, 0, Number.NaN), null);
+  });
+
+  it('view_state.layout hlási podiely, ak sú nastavené', () => {
+    const s = four();
+    assert.deepStrictEqual((describeLayout(s, { layout: 'split_h', tiles: ['3d', 'plan:G1'], sizes: [0.3, 0.7] }, '3d') as { sizes?: number[] }).sizes, [0.3, 0.7]);
+    assert.strictEqual('sizes' in describeLayout(s, { layout: 'split_h', tiles: ['3d', 'plan:G1'] }, '3d'), false);
+  });
+
+  it('VIEW_TABS layout: ratio a sizes sa overujú podľa rozloženia, súčasne nie', () => {
+    const m = (o: Record<string, unknown>) => ({ source: 'aim-bridge', type: 'VIEW_TABS', action: 'layout', ...o });
+    assert.ok(isTilesMessage(m({ layout: 'split_h', ratio: 0.3 })));
+    assert.ok(isTilesMessage(m({ layout: 'three_right', ratio: 0.7, tiles: [{ tab: '3D' }] })));
+    assert.ok(isTilesMessage(m({ layout: 'three_h', sizes: [1, 2, 1] })));
+    assert.ok(isTilesMessage(m({ layout: 'split_v', sizes: [1, 3] })));
+    assert.ok(!isTilesMessage(m({ layout: 'three_h', ratio: 0.3 })), 'ratio len pri dvojici podielov');
+    assert.ok(!isTilesMessage(m({ layout: 'grid4', ratio: 0.3 })));
+    assert.ok(!isTilesMessage(m({ layout: 'split_h', ratio: 1 })));
+    assert.ok(!isTilesMessage(m({ layout: 'split_h', ratio: 0 })));
+    assert.ok(!isTilesMessage(m({ layout: 'split_h', sizes: [1, 2, 3] })));
+    assert.ok(!isTilesMessage(m({ layout: 'split_h', sizes: [1, -2] })));
+    assert.ok(!isTilesMessage(m({ layout: 'split_h', sizes: [1, 2], ratio: 0.3 })));
+    assert.ok(!isTilesMessage(m({ layout: 'grid4', sizes: [] })));
+    assert.ok(!isTilesMessage(m({ layout: 'split_h', ratio: '0.3' })));
   });
 });

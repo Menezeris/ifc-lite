@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/AimUnderlays3dToggle.tsx a/apps/viewer/src/aim/AimUnderlays3dToggle.tsx
+index cfb3bd05..1dcaeaad 100644
+--- b/apps/viewer/src/aim/AimUnderlays3dToggle.tsx
++++ a/apps/viewer/src/aim/AimUnderlays3dToggle.tsx
+@@ -36,7 +36,7 @@ export function AimUnderlays3dOffBanner({ viewLocked }: { viewLocked: boolean })
+ export function AimUnderlayRowNote({ visible, viewLocked }: { visible: boolean; viewLocked: boolean }) {
+   const { t } = useTranslation();
+   const off = useUnderlaysOffIn3d(viewLocked);
+-  if (!off) return null;
++  if (!off || !visible) return null;
+   return (
+     <div data-testid="aim-underlay-row-off" className="mt-1 text-[10px] text-amber-700 dark:text-amber-300">
+       {t('aimFork.underlays3d.rowNote')}
