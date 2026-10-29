@@ -324,7 +324,8 @@ export function ListResultsTable({ result, listName, grouping, onGroupingChange,
                     'group/col relative flex items-center gap-0.5 border-r border-border/50 px-2 py-1.5 text-xs font-medium text-muted-foreground shrink-0',
                     colored && 'bg-primary/10',
                     (groupedBy || summed) && 'text-foreground',
-                    aimHl.column(col.id), // AIM-FORK (#274)
+                    // AIM-FORK (#274): next 1 line
+                    aimHl.column(col.id),
                   )}
                   style={{ width: columnWidths[colIdx] }}
                 >
@@ -395,7 +396,8 @@ export function ListResultsTable({ result, listName, grouping, onGroupingChange,
                   key={vRow.key}
                   type="button"
                   aria-pressed={isSelected}
-                  className={cn('absolute left-0 top-0 flex w-full cursor-pointer select-none border-b border-border/30 text-left hover:bg-muted/40', isSelected && 'bg-primary/10', aimHl.row(row) /* AIM-FORK (#274) */)}
+                  // AIM-FORK (#274): next 1 line
+                  className={cn('absolute left-0 top-0 flex w-full cursor-pointer select-none border-b border-border/30 text-left hover:bg-muted/40', isSelected && 'bg-primary/10', aimHl.row(row))}
                   style={{ transform }}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selection.activate(vRow.index, event); }
@@ -405,8 +407,9 @@ export function ListResultsTable({ result, listName, grouping, onGroupingChange,
                   {row.values.map((value, colIdx) => (
                     <span
                       key={colIdx}
+                      // AIM-FORK (#274): next 2 lines
                       className={cn('border-r border-border/20 px-2 py-1 text-xs truncate shrink-0', numericCols[colIdx] && 'text-right font-mono tabular-nums',
-                        aimHl.column(columns[colIdx].id), aimHl.cell(row, columns[colIdx].id) /* AIM-FORK (#274) */)}
+                        aimHl.column(columns[colIdx].id), aimHl.cell(row, columns[colIdx].id))}
                       // Member rows sit one indent step past the deepest group header.
                       style={{ width: columnWidths[colIdx], ...(isGrouped && colIdx === 0 ? { paddingLeft: 8 + groupColumnIds.length * 16 } : undefined) }}
                       title={value !== null ? String(value) : ''}
@@ -422,7 +425,8 @@ export function ListResultsTable({ result, listName, grouping, onGroupingChange,
           {showSumRow && (
             <div className="flex sticky bottom-0 z-10 border-t-2 border-border bg-muted/90 backdrop-blur-sm">
               {columns.map((col, colIdx) => (
-                <div key={col.id} className={cn('flex items-center border-r border-border/30 px-2 py-1 text-xs font-semibold shrink-0', aimHl.sum(col.id) /* AIM-FORK (#274) */)} style={{ width: columnWidths[colIdx] }}>
+                // AIM-FORK (#274): next 1 line
+                <div key={col.id} className={cn('flex items-center border-r border-border/30 px-2 py-1 text-xs font-semibold shrink-0', aimHl.sum(col.id))} style={{ width: columnWidths[colIdx] }}>
                   {colIdx === 0 && <span className="text-muted-foreground">{t('lists.resultsTable.totalCount', { count: formatLocaleCount(totals.count, locale) })}</span>}
                   {sumColumnIds.includes(col.id) && (
                     <span className="ml-auto font-mono tabular-nums text-foreground">{formatCellValue(totals.sums[col.id])}</span>
