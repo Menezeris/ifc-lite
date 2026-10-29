@@ -14,7 +14,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useViewerStore } from '../store/index.js';
 import { AUTOLOAD_COMPLETE_EVENT, parseAutoloadUrls } from '../lib/autoload.js';
 import { useBim } from '../sdk/BimProvider.js';
-import { selectPickedGlobalId, toggleGlobalIdInSelection } from '../components/viewer/viewport-selection.js';
+import { selectPickedGlobalId } from '../components/viewer/viewport-selection.js';
 import { useAimPanelStore } from './aimPanelStore.js';
 import { createAutoloadLatch } from './autoloadLatch.js';
 
@@ -25,7 +25,6 @@ import { createAutoloadLatch } from './autoloadLatch.js';
 export interface BridgeEntryDeps {
   bim: ReturnType<typeof useBim>;
   selectPickedGlobalId: typeof selectPickedGlobalId;
-  addToSelection: typeof toggleGlobalIdInSelection;
 }
 
 const AimBridge = lazy(() => import('./AimBridge.js').then((m) => ({ default: m.AimBridge })));
@@ -45,7 +44,7 @@ export function AimBridgeMount() {
   const [latch] = useState(() => createAutoloadLatch(autoloadVeil));
   const modelCount = useViewerStore((s) => s.models.size);
   const bim = useBim();
-  const entry = useMemo<BridgeEntryDeps>(() => ({ bim, selectPickedGlobalId, addToSelection: toggleGlobalIdInSelection }), [bim]);
+  const entry = useMemo<BridgeEntryDeps>(() => ({ bim, selectPickedGlobalId }), [bim]);
 
   useEffect(() => {
     if (!embedded) return;
