@@ -55,7 +55,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/toast';
 import { useViewerStore, type UnderlayDrawing } from '@/store';
 import { useFloorplanView } from '@/hooks/useFloorplanView';
-import { CalibrationPdfSurface } from './CalibrationPdfSurface';
+import { CalibrationPdfSurface } from './CalibrationPdfSurface'; import { AimUnderlayRowNoteLive } from '@/aim/AimUnderlayRowNoteLive'; // >>> AIM-FORK (#280): row note when Show in 3D is off <<< AIM-FORK
 
 interface DrawingUnderlayPanelProps {
   onClose: () => void;
@@ -525,7 +525,7 @@ function DrawingRow({
         >
           <Trash2 className="size-3.5" aria-hidden />
         </Button>
-      </div>
+      </div><AimUnderlayRowNoteLive visible={p?.visible ?? false} /> {/* >>> AIM-FORK (#280): on but not drawn in 3D while Show in 3D is off (a locked floor plan still draws) <<< AIM-FORK */}
       <div className="mt-1.5 flex items-center gap-2">
         <Button
           variant="outline"

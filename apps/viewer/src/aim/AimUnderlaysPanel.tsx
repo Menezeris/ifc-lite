@@ -8,12 +8,15 @@
  */
 
 import { Suspense, type ComponentType } from 'react';
-import { AimUnderlays3dToggle } from './AimUnderlays3dToggle.js';
+import { useViewerStore } from '@/store';
+import { AimUnderlays3dOffBanner, AimUnderlays3dToggle } from './AimUnderlays3dToggle.js';
 
 /** `Panel` = upstream DrawingUnderlayPanel (lenivý z renderPanelBody, aby sa nenačítal druhý raz). */
 export function AimUnderlaysPanel({ onClose, Panel }: { onClose: () => void; Panel: ComponentType<{ onClose: () => void }> }) {
+  const viewLocked = useViewerStore((s) => s.underlayViewLocked);
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <AimUnderlays3dOffBanner viewLocked={viewLocked} />
       <div className="min-h-0 flex-1">
         <Suspense fallback={null}><Panel onClose={onClose} /></Suspense>
       </div>

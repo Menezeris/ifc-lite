@@ -1,0 +1,107 @@
+{
+  "banner-always": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlaysOffNote.test.tsx; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "bf5658e131fbb13e795e37ee1edb91a1db3c04d1",
+    "production": [
+      "apps/viewer/src/aim/AimUnderlays3dToggle.tsx"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlaysOffNote.test.tsx"
+    ],
+    "restoration": "verified",
+    "reverted": {
+      "kind": "assertion-failure",
+      "passed": 2,
+      "failed": 2,
+      "total": 4,
+      "evidence": []
+    }
+  },
+  "row-note-never": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlaysOffNote.test.tsx; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "bf5658e131fbb13e795e37ee1edb91a1db3c04d1",
+    "production": [
+      "apps/viewer/src/aim/AimUnderlays3dToggle.tsx"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlaysOffNote.test.tsx"
+    ],
+    "restoration": "verified",
+    "reverted": {
+      "kind": "assertion-failure",
+      "passed": 2,
+      "failed": 2,
+      "total": 4,
+      "evidence": []
+    }
+  },
+  "row-note-on-off-row": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlaysOffNote.test.tsx; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "bf5658e131fbb13e795e37ee1edb91a1db3c04d1",
+    "production": [
+      "apps/viewer/src/aim/AimUnderlays3dToggle.tsx"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlaysOffNote.test.tsx"
+    ],
+    "restoration": "verified",
+    "reverted": {
+      "kind": "assertion-failure",
+      "passed": 3,
+      "failed": 1,
+      "total": 4,
+      "evidence": []
+    }
+  },
+  "state-always-off": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlaysOffNote.test.tsx; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "bf5658e131fbb13e795e37ee1edb91a1db3c04d1",
+    "production": [
+      "apps/viewer/src/aim/AimUnderlays3dToggle.tsx"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlaysOffNote.test.tsx"
+    ],
+    "restoration": "verified",
+    "reverted": {
+      "kind": "assertion-failure",
+      "passed": 3,
+      "failed": 1,
+      "total": 4,
+      "evidence": []
+    }
+  },
+  "view-locked-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlaysOffNote.test.tsx; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "bf5658e131fbb13e795e37ee1edb91a1db3c04d1",
+    "production": [
+      "apps/viewer/src/aim/AimUnderlays3dToggle.tsx"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlaysOffNote.test.tsx"
+    ],
+    "restoration": "verified",
+    "reverted": {
+      "kind": "assertion-failure",
+      "passed": 3,
+      "failed": 1,
+      "total": 4,
+      "evidence": []
+    }
+  }
+}

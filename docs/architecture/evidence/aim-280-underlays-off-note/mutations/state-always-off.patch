@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/AimUnderlays3dToggle.tsx a/apps/viewer/src/aim/AimUnderlays3dToggle.tsx
+index 310832cc..1dcaeaad 100644
+--- b/apps/viewer/src/aim/AimUnderlays3dToggle.tsx
++++ a/apps/viewer/src/aim/AimUnderlays3dToggle.tsx
+@@ -63,7 +63,7 @@ export function AimUnderlays3dToggle() {
+         />
+         {t('aimFork.underlays3d.label')}
+         <span data-testid="aim-underlays-3d-state" className="text-muted-foreground">
+-          {t('aimFork.underlays3d.stateOff')}
++          {hidden ? t('aimFork.underlays3d.stateOff') : t('aimFork.underlays3d.stateOn')}
+         </span>
+       </button>
+       <span className="min-w-0 text-2xs text-muted-foreground">{t('aimFork.underlays3d.hint')}</span>
