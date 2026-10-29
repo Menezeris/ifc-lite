@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimMultiSelect.ts a/apps/viewer/src/aim/aimMultiSelect.ts
+index ada05524..f6b3840b 100644
+--- b/apps/viewer/src/aim/aimMultiSelect.ts
++++ a/apps/viewer/src/aim/aimMultiSelect.ts
+@@ -47,7 +47,7 @@ export function planAddToSelection(
+   if (!last) return null;
+   const entities = new Set(state.selectedEntitiesSet);
+   const ids = new Set(state.selectedEntityIds);
+-  if (false as boolean) {
++  if (entities.size === 0 && state.selectedEntity) {
+     entities.add(entityRefToString(state.selectedEntity));
+     if (state.selectedEntityId !== null) ids.add(state.selectedEntityId);
+   }

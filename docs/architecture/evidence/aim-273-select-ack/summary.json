@@ -1,0 +1,42 @@
+{
+  "m1-select-loop": {
+    "verdict": "OBSERVED",
+    "restoration": "verified",
+    "production": [
+      "apps/viewer/src/aim/visibility-commands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/visibility-select.test.ts"
+    ]
+  },
+  "m2-no-seed": {
+    "verdict": "OBSERVED",
+    "restoration": "verified",
+    "production": [
+      "apps/viewer/src/aim/aimMultiSelect.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimMultiSelect.test.ts"
+    ]
+  },
+  "m3-no-timeout": {
+    "verdict": "OBSERVED",
+    "restoration": "verified",
+    "production": [
+      "apps/viewer/src/aim/ackBudget.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/ackBudget.test.ts"
+    ]
+  },
+  "m4-no-reserve": {
+    "verdict": "OBSERVED",
+    "restoration": "verified",
+    "production": [
+      "apps/viewer/src/aim/ackBudget.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/ackBudget.test.ts"
+    ]
+  }
+}

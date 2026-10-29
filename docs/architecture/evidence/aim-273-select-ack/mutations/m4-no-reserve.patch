@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/ackBudget.ts a/apps/viewer/src/aim/ackBudget.ts
+index f797ef42..c7175309 100644
+--- b/apps/viewer/src/aim/ackBudget.ts
++++ a/apps/viewer/src/aim/ackBudget.ts
+@@ -25,7 +25,7 @@ export interface AckBudget {
+ export function createAckBudget(totalMs: number, now: () => number = Date.now): AckBudget {
+   const deadline = now() + totalMs;
+   const left = () => Math.max(0, deadline - now());
+-  return { left, stepLeft: left };
++  return { left, stepLeft: () => Math.max(0, left() - STATE_RESERVE_MS) };
+ }
+ 
+ /**

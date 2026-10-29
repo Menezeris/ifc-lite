@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/visibility-commands.ts a/apps/viewer/src/aim/visibility-commands.ts
+index 859cb648..79be481b 100644
+--- b/apps/viewer/src/aim/visibility-commands.ts
++++ a/apps/viewer/src/aim/visibility-commands.ts
+@@ -175,7 +175,7 @@ export function runVisibilityCommand(
+       clearFocus(bim); // oranžová by prekryla selekčné zvýraznenie
+       d.selectPickedGlobalId(toGlobalIdFromModels(state.models, ref.modelId, ref.expressId));
+       // Ostatné naraz: rad Ctrl+klikov bol pri stovkách prvkov O(N^2) a APPLIED meškalo (#273).
+-      for (const extra of refs.slice(1)) addGlobalIdsToSelection([toGlobalIdFromModels(state.models, extra.modelId, extra.expressId)]);
++      addGlobalIdsToSelection(refs.slice(1).map((extra) => toGlobalIdFromModels(state.models, extra.modelId, extra.expressId)));
+       useViewerStore.getState().openPanelInHome('properties', 'programmatic');
+       d.track(frameRefs(bim, refs, 'SELECT', d.noteIssue));
+       if (panel) d.track(applyPanelView(panel, ref, d.noteIssue));

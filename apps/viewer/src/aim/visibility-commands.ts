@@ -19,6 +19,7 @@ import { frameRefs, revealGatesForRefs } from './frame-refs.js';
 import { applyPanelView } from './aimPanelView.js';
 import { selectPanel } from './aimPanelViewPlan.js';
 import { useAimFocusRoomsStore } from './aimFocusRoomsStore.js';
+import { addGlobalIdsToSelection } from './aimMultiSelect.js';
 import { isClickGesture, isDismissKey, isSceneTarget } from './focus-dismiss.js';
 
 /** Funkcie z modulov vstupného balíka - lenivý modul ich neimportuje (pravidlo balíka forku). */
@@ -26,8 +27,6 @@ export interface VisibilityDeps {
   resolveGuids: typeof resolveGuids;
   resolveSelector: typeof resolveSelector;
   selectPickedGlobalId: (globalId: number | null) => void;
-  /** Pridá prvok k výberu ako Ctrl+klik (viacnásobný SELECT, AIM #217). */
-  addToSelection: (globalId: number) => void;
   noteIssue: (text: string) => void;
   track: (p: Promise<unknown>) => void;
   FOCUS_COLOR: string;
@@ -180,7 +179,8 @@ export function runVisibilityCommand(
       if (refs.length < wanted.length) d.noteIssue(`SELECT: vo vieweri sa nenašlo ${wanted.length - refs.length} z ${wanted.length} prvkov`);
       clearFocus(bim); // oranžová by prekryla selekčné zvýraznenie
       d.selectPickedGlobalId(toGlobalIdFromModels(state.models, ref.modelId, ref.expressId));
-      for (const extra of refs.slice(1)) d.addToSelection(toGlobalIdFromModels(state.models, extra.modelId, extra.expressId));
+      // Ostatné naraz: rad Ctrl+klikov bol pri stovkách prvkov O(N^2) a APPLIED meškalo (#273).
+      addGlobalIdsToSelection(refs.slice(1).map((extra) => toGlobalIdFromModels(state.models, extra.modelId, extra.expressId)));
       useViewerStore.getState().openPanelInHome('properties', 'programmatic');
       d.track(frameRefs(bim, refs, 'SELECT', d.noteIssue));
       if (panel) d.track(applyPanelView(panel, ref, d.noteIssue));
