@@ -1,0 +1,174 @@
+{
+  "box-ignores-host-widget-choice": {
+    "observer": "tests",
+    "baseline": {
+      "kind": "pass",
+      "passed": 3,
+      "total": 3
+    },
+    "reverted": {
+      "kind": "assertion-failure",
+      "passed": 2,
+      "failed": 1,
+      "total": 3,
+      "evidence": []
+    },
+    "ledger": [
+      {
+        "file": "apps/viewer/src/aim/sectionBoxWidget.test.tsx",
+        "role": "executable",
+        "runKey": "test:apps/viewer/src/aim/sectionBoxWidget.test.tsx",
+        "adapter": "node-test",
+        "runner": {
+          "family": "node-test",
+          "command": [
+            "tsx",
+            "--import",
+            "./src/test/vite-module-hooks.mjs",
+            "--test-timeout=120000",
+            "--test-concurrency=1",
+            "--test",
+            "src/aim/sectionBoxWidget.test.tsx"
+          ]
+        },
+        "features": [],
+        "attribution": "runtime-v8-file",
+        "baseline": {
+          "kind": "pass",
+          "passed": 3,
+          "failed": 0,
+          "total": 3,
+          "exitCode": 0,
+          "signal": null,
+          "toolchain": "node v22.22.0",
+          "attributed": true,
+          "files": [
+            "apps/viewer/src/aim/sectionBoxWidget.test.tsx"
+          ],
+          "testIdentities": [],
+          "evidence": []
+        },
+        "reverted": {
+          "kind": "assertion-failure",
+          "passed": 2,
+          "failed": 1,
+          "total": 3,
+          "exitCode": 1,
+          "signal": null,
+          "toolchain": "node v22.22.0",
+          "attributed": true,
+          "files": [
+            "apps/viewer/src/aim/sectionBoxWidget.test.tsx"
+          ],
+          "testIdentities": [],
+          "evidence": []
+        }
+      }
+    ],
+    "schemaVersion": 2,
+    "channel": "pull-request",
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionBoxWidget.test.tsx; that file has a green, attributable baseline.",
+    "base": "8ac9ac750721b923de4f2967fb8763a78db64f90",
+    "head": "0dd58f7f7deed574fd242eaee9ca1cf0feeece30",
+    "production": [
+      "apps/viewer/src/aim/useAimViewCommands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionBoxWidget.test.tsx"
+    ],
+    "invocationId": "1d2d5540-ca3b-4c2a-9062-e8ddf71cb027",
+    "timing": {
+      "startedAt": "2026-10-28T14:23:58.894Z",
+      "finishedAt": "2026-10-28T14:24:27.286Z"
+    },
+    "restoration": "verified"
+  },
+  "box-gizmo-ignores-show-flag": {
+    "observer": "tests",
+    "baseline": {
+      "kind": "pass",
+      "passed": 3,
+      "total": 3
+    },
+    "reverted": {
+      "kind": "assertion-failure",
+      "passed": 2,
+      "failed": 1,
+      "total": 3,
+      "evidence": []
+    },
+    "ledger": [
+      {
+        "file": "apps/viewer/src/aim/sectionBoxWidget.test.tsx",
+        "role": "executable",
+        "runKey": "test:apps/viewer/src/aim/sectionBoxWidget.test.tsx",
+        "adapter": "node-test",
+        "runner": {
+          "family": "node-test",
+          "command": [
+            "tsx",
+            "--import",
+            "./src/test/vite-module-hooks.mjs",
+            "--test-timeout=120000",
+            "--test-concurrency=1",
+            "--test",
+            "src/aim/sectionBoxWidget.test.tsx"
+          ]
+        },
+        "features": [],
+        "attribution": "runtime-v8-file",
+        "baseline": {
+          "kind": "pass",
+          "passed": 3,
+          "failed": 0,
+          "total": 3,
+          "exitCode": 0,
+          "signal": null,
+          "toolchain": "node v22.22.0",
+          "attributed": true,
+          "files": [
+            "apps/viewer/src/aim/sectionBoxWidget.test.tsx"
+          ],
+          "testIdentities": [],
+          "evidence": []
+        },
+        "reverted": {
+          "kind": "assertion-failure",
+          "passed": 2,
+          "failed": 1,
+          "total": 3,
+          "exitCode": 1,
+          "signal": null,
+          "toolchain": "node v22.22.0",
+          "attributed": true,
+          "files": [
+            "apps/viewer/src/aim/sectionBoxWidget.test.tsx"
+          ],
+          "testIdentities": [],
+          "evidence": []
+        }
+      }
+    ],
+    "schemaVersion": 2,
+    "channel": "pull-request",
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionBoxWidget.test.tsx; that file has a green, attributable baseline.",
+    "base": "8ac9ac750721b923de4f2967fb8763a78db64f90",
+    "head": "0dd58f7f7deed574fd242eaee9ca1cf0feeece30",
+    "production": [
+      "apps/viewer/src/components/viewer/tools/SectionBoxVisualization.tsx"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionBoxWidget.test.tsx"
+    ],
+    "invocationId": "a7ad7503-bd13-4af2-b248-84d9380ddc9d",
+    "timing": {
+      "startedAt": "2026-10-28T14:24:27.361Z",
+      "finishedAt": "2026-10-28T14:24:50.888Z"
+    },
+    "restoration": "verified"
+  }
+}
