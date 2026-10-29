@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlaysPlan.ts a/apps/viewer/src/aim/underlaysPlan.ts
+index 6838d403..ccb08d82 100644
+--- b/apps/viewer/src/aim/underlaysPlan.ts
++++ a/apps/viewer/src/aim/underlaysPlan.ts
+@@ -120,7 +120,7 @@ export function snapshotUnderlays(drawings: readonly CalibratedDrawing[], overri
+     show: shown,
+     items: drawings.slice(0, MAX_UNDERLAY_ITEMS).map((d) => ({
+       document_id: d.id,
+-      visible: d.placement.visible,
++      visible: overrides[d.id]?.visible ?? d.placement.visible,
+       opacity: overrides[d.id]?.opacity ?? d.placement.opacity,
+     })),
+   };

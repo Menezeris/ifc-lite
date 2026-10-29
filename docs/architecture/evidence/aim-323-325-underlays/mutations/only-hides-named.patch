@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlaysPlan.ts a/apps/viewer/src/aim/underlaysPlan.ts
+index 57ceff16..ccb08d82 100644
+--- b/apps/viewer/src/aim/underlaysPlan.ts
++++ a/apps/viewer/src/aim/underlaysPlan.ts
+@@ -89,7 +89,7 @@ export function planUnderlaySet(
+       ...(it.opacity !== undefined ? { opacity: it.opacity } : {}),
+     };
+   }
+-  if (only) for (const d of drawings) next[d.id] = { ...next[d.id], visible: false };
++  if (only) for (const d of drawings) if (!named.has(d.id)) next[d.id] = { ...next[d.id], visible: false };
+   return { overrides: next, unknown };
+ }
+ 

@@ -9,7 +9,8 @@
  * urobí v paneli (uloží, premenuje, zmaže, upraví), ide hostovi ako `VIEW_SAVE`, `VIEW_RENAME`, `VIEW_DELETE`;
  * `VIEWS_LOAD` pohľady naplní, `VIEW_ACTIVATE` jeden aktivuje a `VIEW_CAPTURE` uloží aktuálny stav
  * rovnakou cestou ako tlačidlo Uložiť (prázdny košík najprv "="). Tvar správ je v `views-protocol.ts`,
- * prevod pohľadu v `viewsCodec.ts`.
+ * prevod pohľadu v `viewsCodec.ts`. Stav PDF podkladov v 3D (AIM #325) si most drží k pohľadu sám
+ * (`BasketView` ho nemá): zachytí ho pri uložení alebo prepísaní pohľadu a obnoví pri jeho aktivácii.
  */
 
 import { useViewerStore } from '@/store';
@@ -25,6 +26,8 @@ import { visibilityGuids } from './selectionSummary.js';
 import { worldOffset, type GuidHelpers } from './viewQueries.js';
 import { SOURCE } from './bridge-core.js';
 import { useAimViewTabs, withTabs } from './viewTabsStore.js';
+import { captureUnderlays, restoreUnderlaysView } from './underlaysApply.js';
+import type { UnderlaysViewWire } from './underlaysPlan.js';
 
 /** Čo dodá `AimBridge` (kanál na hosta, hlásenie problémov, sledovanie asynchrónnych krokov, pomocníci GUID). */
 export interface ViewsDeps {
@@ -56,6 +59,8 @@ interface Session {
   resetPending: boolean;
   /** Modely pri poslednom odoslaní: hromadné zmiznutie pohľadov je reset len spolu so zmenou modelov. */
   modelsAtFlush: ReturnType<typeof state>['models'];
+  /** Stav PDF podkladov v 3D uložený s pohľadom (AIM #325). */
+  underlays: Map<string, UnderlaysViewWire>;
 }
 
 let session: Session | null = null;
@@ -64,6 +69,7 @@ const state = () => useViewerStore.getState();
 
 function makeEnv(g: GuidHelpers): CodecEnv {
   const s = state();
+  const underlays = session?.underlays;
   let visible: ReadonlySet<string> | null = null;
   return {
     offset: worldOffset(s),
@@ -76,6 +82,7 @@ function makeEnv(g: GuidHelpers): CodecEnv {
     visibleKeys: () => (visible ??= new Set(getVisibleBasketEntityRefsFromStore(true).map(entityRefToString))),
     hiddenGuids: () => visibilityGuids(s.hiddenEntities, (id) => g.guidForEntity(s.models, resolveEntityRef(id)), MAX_BASKET_GUIDS + 1),
     makePlane: (name) => createSectionPlane(name, s.sectionPlane),
+    underlaysOf: (id) => underlays?.get(id),
   };
 }
 
@@ -93,8 +100,15 @@ function flush(): void {
   const ids = new Set(views.map((v) => v.id));
   const env = makeEnv(sess.deps.guids);
   views.forEach((v, order) => {
-    if (sess.seen.get(v.id) === v) return;
+    const prev = sess.seen.get(v.id);
+    if (prev === v) return;
     sess.seen.set(v.id, v);
+    // Nový pohľad alebo prepísaný aktuálnou kamerou: podklady sa zachytia, ako sú teraz (premenovanie ich nemení).
+    if (!prev || prev.viewpoint !== v.viewpoint) {
+      const u = captureUnderlays();
+      if (u) sess.underlays.set(v.id, u);
+      else sess.underlays.delete(v.id);
+    }
     const known = sess.sent.get(v.id);
     const fp = fingerprint(v, env);
     if (known && known.fp === fp) {
@@ -112,7 +126,7 @@ function flush(): void {
   const removed = [...sess.sent.keys()].filter((id) => !ids.has(id));
   const modelsChanged = state().models !== sess.modelsAtFlush;
   sess.modelsAtFlush = state().models;
-  const forget = (id: string) => { sess.sent.delete(id); sess.seen.delete(id); sess.captureIds.delete(id); };
+  const forget = (id: string) => { sess.sent.delete(id); sess.seen.delete(id); sess.captureIds.delete(id); sess.underlays.delete(id); };
   // Viac pohľadov naraz spolu s výmenou modelov je reset relácie (nový súbor), hosta sa to netýka;
   // hromadné zmazanie rukou (modely nezmenené) sa hostovi hlási.
   if (removed.length >= MASS_REMOVAL && modelsChanged) return void removed.forEach(forget);
@@ -133,9 +147,13 @@ function hydrate(wires: readonly ViewWire[]): void {
   if (!sess) return;
   // Zápis do store vyvolá odber: bez tohto by sa naplnenie po novom súbore spustilo znova (rekurzia).
   sess.resetPending = false;
-  const env = makeEnv(sess.deps.guids);
   const sorted = [...wires].sort((a, b) => a.order - b.order);
   const incoming = new Set(sorted.map((w) => w.id));
+  for (const w of sorted) {
+    if (w.underlays) sess.underlays.set(w.id, w.underlays);
+    else sess.underlays.delete(w.id);
+  }
+  const env = makeEnv(sess.deps.guids);
   const current = state().basketViews;
   const byId = new Map(current.map((v) => [v.id, v]));
   const decoded = sorted.map((w) => {
@@ -152,7 +170,7 @@ function hydrate(wires: readonly ViewWire[]): void {
     sess.seen.set(v.id, v);
     sess.sent.set(v.id, { fp: fingerprint(v, env), name: v.name });
   }
-  for (const id of [...sess.sent.keys()]) if (!incoming.has(id) && sess.synced.has(id)) { sess.sent.delete(id); sess.seen.delete(id); }
+  for (const id of [...sess.sent.keys()]) if (!incoming.has(id) && sess.synced.has(id)) { sess.sent.delete(id); sess.seen.delete(id); sess.underlays.delete(id); }
   sess.synced = incoming;
   sess.known = sorted;
 }
@@ -160,7 +178,7 @@ function hydrate(wires: readonly ViewWire[]): void {
 function start(deps: ViewsDeps): Session {
   const sess: Session = {
     deps, unsubscribe: () => {}, synced: new Set(), known: [], sent: new Map(), seen: new Map(), captureIds: new Map(),
-    timer: null, resetPending: false, modelsAtFlush: state().models,
+    timer: null, resetPending: false, modelsAtFlush: state().models, underlays: new Map(),
   };
   session = sess;
   sess.unsubscribe = useViewerStore.subscribe((s, prev) => {
@@ -169,9 +187,16 @@ function start(deps: ViewsDeps): Session {
       if (prev.basketViews.length > 0 && s.basketViews.length === 0 && s.models !== prev.models) sess.resetPending = true;
       schedule();
     }
+    // Aktivácia pohľadu (klik na kartu, VIEW_ACTIVATE) obnoví aj podklady, ak ich pohľad nesie (AIM #325).
+    if (s.activeBasketViewId !== prev.activeBasketViewId && s.activeBasketViewId !== null) applyUnderlays(sess, s.activeBasketViewId);
     if (sess.resetPending && s.models.size > 0 && !s.geometryStreamingActive && sess.known.length > 0) hydrate(sess.known);
   });
   return sess;
+}
+
+function applyUnderlays(sess: Session, viewId: string): void {
+  const u = sess.underlays.get(viewId);
+  if (u) restoreUnderlaysView(u);
 }
 
 /** Odpojenie mosta: odber store a časovač zaniknú, pohľady v paneli ostanú. */
@@ -187,6 +212,8 @@ async function activate(id: string | undefined, name: string | undefined, noteIs
   const views = state().basketViews;
   const view = id !== undefined ? views.find((v) => v.id === id) : views.find((v) => v.name.toLowerCase() === name?.trim().toLowerCase());
   if (!view) return noteIssue(`VIEW_ACTIVATE: pohľad '${id ?? name}' sa vo vieweri nenašiel`);
+  // Opätovná aktivácia toho istého pohľadu nemení `activeBasketViewId`, odber by podklady neobnovil.
+  if (session) applyUnderlays(session, view.id);
   // Pri dlaždiciach ide pohľad do živej dlaždice (D-161), jej doterajší obsah si stav odloží.
   if (useAimViewTabs.getState().layout !== 'single') return withTabs((m) => m.showViewLive(view.id, {}, noteIssue));
   const { activateBasketViewFromStore } = await import('@/store/basket/basketViewActivator');
