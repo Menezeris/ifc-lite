@@ -32,6 +32,7 @@ import type { MutablePropertyView } from '@ifc-lite/mutations';
 import { effectiveListEntitySets, effectiveListStringAttribute, effectiveListTypeName, effectiveTypeQuantitySets } from './effective-provider-entities.js';
 import type { ZoneListContext } from './zone-list-context.js';
 import { materialNamesOf } from './list-material-names.js';
+import { relationNameHooks } from './relation-names.js'; // AIM-FORK (#277)
 export type { ZoneListContext } from './zone-list-context.js';
 
 /**
@@ -278,6 +279,7 @@ export function createListDataProvider(
     getProjectName(): string {
       return ancestry().projectName;
     },
+    ...relationNameHooks(store), // AIM-FORK (#277): spatial levels Referenced / Boundary
 
     getModelName(): string {
       return modelName;
