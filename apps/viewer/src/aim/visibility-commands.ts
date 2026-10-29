@@ -199,9 +199,14 @@ export function runVisibilityCommand(
       return true;
     }
     case 'CLEAR_FILTER':
-    case 'RESET_COLORS':
       bim.viewer.resetColors();
       forgetFocus();
+      return true;
+    case 'RESET_COLORS':
+      // AIM #298: "reset farieb" je aj návrat z izolácie (host to tvrdí v MCP-TOOLS.md); skrytie ostáva, tomu slúži SHOW_ALL.
+      bim.viewer.resetColors();
+      forgetFocus();
+      useViewerStore.getState().clearIsolation();
       return true;
     case 'CLEAR_FOCUS':
       clearFocus(bim);

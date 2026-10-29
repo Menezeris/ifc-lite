@@ -260,7 +260,7 @@ export function useAimViewCommands(bim: BimContext) {
         return;
       }
       case 'SET_PANELS': {
-        track(loadPanels().then((m) => m.applyPanels(msg.panels, noteIssue)));
+        track(loadPanels().then((m) => m.applyPanels(msg.panels ?? {}, noteIssue, msg.panel_layout)));
         return;
       }
       case 'AUTO_ROTATE': {
