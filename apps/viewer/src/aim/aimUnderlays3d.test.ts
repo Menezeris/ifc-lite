@@ -68,5 +68,6 @@ describe('podklady PDF v 3D (AIM D-133 doplnok, #170)', () => {
     assert.equal(msg({ underlays: [{ document_id: '', visible: true }] }), false);
     assert.equal(msg({ underlays: [{ document_id: 'd2', visible: true }], only: 'yes' }), false);
     assert.equal(msg({ only: true }), false);
+    assert.equal(msg({ show: true, only: true }), false);
   });
 });
