@@ -30,6 +30,8 @@ import { cutsRoom, footprintOutline, footprintPath, looksDown, spaceFootprint, t
 import { sectionRenderBounds } from './sectionRange.js';
 import { fillsRoom, floorLevel, roomFills, type Box3, type RoomFill3d } from './aimRoomFill3d.js';
 import { useAimRoomFill3dStore } from './aimRoomFill3dStore.js';
+import { useAimFocusRoomsStore } from './aimFocusRoomsStore.js';
+import { roomColorMap } from './aimRoomColors.js';
 
 /** Farba vybranej miestnosti, ktorú Lens neofarbila. */
 const SELECTED_COLOR = '#2563eb';
@@ -89,12 +91,14 @@ function spaceLabels(root: SpatialNode | undefined): Map<number, string> {
   return out;
 }
 
-/** Farby miestností: Lens, k tomu vybrané miestnosti farbou výberu (D-125). */
+/** Farby miestností: Lens, vybrané farbou výberu (D-125), zvýraznené z FOCUS oranžovou (#319). */
 function roomColors(state: State, meshes: Map<number, MeshData[]>): Map<number, string> {
-  const colors = new Map(state.lensColorMap);
   const selected = state.selectedEntityIds.size > 0 ? state.selectedEntityIds : state.selectedEntityId !== null ? [state.selectedEntityId] : [];
-  for (const id of selected) if (meshes.has(id) && !colors.has(id)) colors.set(id, SELECTED_COLOR);
-  return colors;
+  const focus = useAimFocusRoomsStore.getState();
+  return roomColorMap({
+    lens: state.lensColorMap, selected, isRoom: (id) => meshes.has(id), focused: focus.ids,
+    selectedColor: SELECTED_COLOR, focusColor: focus.color,
+  });
 }
 
 /** Výška vodorovného rezu v render rámci, alebo null (iná os, bez rezu, bez obálky). */
@@ -134,7 +138,8 @@ function roomsToFill(
 
 /** Ofarbené alebo vybrané miestnosti? (spoločná podmienka 2D aj 3D výplne) */
 function useColored(): boolean {
-  return useViewerStore((s) => (s.activeLensId !== null && s.lensColorMap.size > 0) || s.selectedEntityIds.size > 0 || s.selectedEntityId !== null);
+  const focused = useAimFocusRoomsStore((s) => s.ids.size > 0);
+  return useViewerStore((s) => (s.activeLensId !== null && s.lensColorMap.size > 0) || s.selectedEntityIds.size > 0 || s.selectedEntityId !== null) || focused;
 }
 
 /**
@@ -147,6 +152,7 @@ function AimRoomFill3d({ off }: { off: boolean }) {
   const lensHidden = useViewerStore((s) => s.lensHiddenIds);
   const selectedIds = useViewerStore((s) => s.selectedEntityIds);
   const selectedId = useViewerStore((s) => s.selectedEntityId);
+  const focusIds = useAimFocusRoomsStore((s) => s.ids);
   const sectionPlane = useViewerStore((s) => s.sectionPlane);
   const hidden = useViewerStore((s) => s.hiddenEntities);
   const isolated = useViewerStore((s) => s.isolatedEntities);
@@ -173,7 +179,7 @@ function AimRoomFill3d({ off }: { off: boolean }) {
       if (fp && fillsRoom(level, cutY)) out.push(...roomFills(fp, level, color));
     }
     return out;
-  }, [on, meshes, coverings, footprints, lensColorMap, lensHidden, selectedIds, selectedId, sectionPlane, hidden, isolated]);
+  }, [on, meshes, coverings, footprints, lensColorMap, lensHidden, selectedIds, selectedId, focusIds, sectionPlane, hidden, isolated]);
   useEffect(() => setFills(fills), [fills, setFills]);
   useEffect(() => () => setFills([]), [setFills]);
   return null;
@@ -185,6 +191,7 @@ export function AimRoomFillLayer() {
   const lensColorMap = useViewerStore((s) => s.lensColorMap);
   const selectedIds = useViewerStore((s) => s.selectedEntityIds);
   const selectedId = useViewerStore((s) => s.selectedEntityId);
+  const focusIds = useAimFocusRoomsStore((s) => s.ids);
   const sectionPlane = useViewerStore((s) => s.sectionPlane);
   const models = useViewerStore((s) => s.models);
   const geometryResult = useViewerStore((s) => s.geometryResult);
@@ -203,7 +210,7 @@ export function AimRoomFillLayer() {
     const state = useViewerStore.getState();
     const cutY = horizontalCut(state);
     return cutY === null ? [] : roomsToFill(state, meshes, footprints, cutY);
-  }, [active, meshes, footprints, lensColorMap, selectedIds, selectedId, sectionPlane]);
+  }, [active, meshes, footprints, lensColorMap, selectedIds, selectedId, focusIds, sectionPlane]);
 
   const fill3d = <AimRoomFill3d off={plan3d} />;
   if (!active || rooms.length === 0 || !project) return fill3d;

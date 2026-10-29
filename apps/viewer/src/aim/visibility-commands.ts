@@ -18,6 +18,7 @@ import { nextIsolation, type CommandInboundMessage } from './command-protocol.js
 import { frameRefs, revealGatesForRefs } from './frame-refs.js';
 import { applyPanelView } from './aimPanelView.js';
 import { selectPanel } from './aimPanelViewPlan.js';
+import { useAimFocusRoomsStore } from './aimFocusRoomsStore.js';
 import { isClickGesture, isDismissKey, isSceneTarget } from './focus-dismiss.js';
 
 /** Funkcie z modulov vstupného balíka - lenivý modul ich neimportuje (pravidlo balíka forku). */
@@ -65,11 +66,12 @@ export function focusSummary(): { count: number; guids: string[] } {
 /** Odpojenie mosta: zabudnúť zvýraznené prvky (patria scéne, ktorá už nemusí byť). */
 export function forgetFocus(): void {
   focused = [];
+  useAimFocusRoomsStore.getState().setFocus([], '');
 }
 
 export function clearFocus(bim: BimContext): void {
   if (focused.length > 0) bim.viewer.resetColors(focused);
-  focused = [];
+  forgetFocus();
 }
 
 /**
@@ -153,6 +155,9 @@ export function runVisibilityCommand(
       if (solids.length > 0) bim.viewer.colorize(solids, d.FOCUS_COLOR);
       if (volumes.length > 0) bim.viewer.colorizeRgba(volumes, hexToRgba(d.FOCUS_COLOR, VOLUME_FOCUS_ALPHA));
       focused = refs;
+      // Priesvitný objem splynie s farbou miestnosti, preto aj nepriesvitná výplň podstavy (3D aj zhora, #319).
+      const state = useViewerStore.getState();
+      useAimFocusRoomsStore.getState().setFocus(volumes.map((r) => toGlobalIdFromModels(state.models, r.modelId, r.expressId)), d.FOCUS_COLOR);
       d.track(frameRefs(bim, refs, 'FOCUS', d.noteIssue));
       return true;
     }
@@ -187,7 +192,7 @@ export function runVisibilityCommand(
       return true;
     case 'HIGHLIGHT_FILTER': {
       bim.viewer.resetColors(); // plný reset zhodí aj focus - filter ho nahrádza
-      focused = [];
+      forgetFocus();
       const refs = d.resolveGuids(useViewerStore.getState().models, msg.guids);
       revealGatesForRefs(refs); // ako COLORIZE: miestnosť v skrytej triede by inak nebolo vidieť
       if (refs.length > 0) bim.viewer.colorize(refs, d.FILTER_COLOR);
@@ -196,7 +201,7 @@ export function runVisibilityCommand(
     case 'CLEAR_FILTER':
     case 'RESET_COLORS':
       bim.viewer.resetColors();
-      focused = [];
+      forgetFocus();
       return true;
     case 'CLEAR_FOCUS':
       clearFocus(bim);
