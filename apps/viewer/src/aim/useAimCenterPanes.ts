@@ -21,6 +21,7 @@ import type { PanelImperativeHandle } from 'react-resizable-panels';
 import { useViewerStore } from '@/store';
 import { useFloorplanView } from '@/hooks/useFloorplanView';
 import { useAimCalibrationExit } from './useAimCalibrationExit.js';
+import { useAimOrbitHint } from './useAimOrbitHint.js';
 import { centerLayout } from './viewTabsLayout.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { useAimPlanRefit } from './useAimPlanRefit.js';
@@ -39,6 +40,8 @@ export function useAimCenterPanes(isMobile: boolean) {
   // D-161: zámok kamery trvá len počas kalibrácie podkladu (D-072).
   const { exitDrawingView } = useFloorplanView();
   useAimCalibrationExit(exitDrawingView);
+  // AIMviewer#188: Enter alebo medzerník prepne zamknutý pohľad zhora do 3D (nápovedu ukáže pokus o orbit).
+  useAimOrbitHint(exitDrawingView);
   // 3D sa zbalí pri dokumente ako aktívnej záložke (D-132).
   const tabs = useAimViewTabs((s) => s.tabs);
   const activeId = useAimViewTabs((s) => s.activeId);

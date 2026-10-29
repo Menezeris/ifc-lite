@@ -636,7 +636,7 @@ export function useMouseControls(params: UseMouseControlsParams): void {
         // >>> AIM-FORK: calibration view (D-072): camera locked top-down, a drag pans instead
         // of orbiting; only while a calibration runs (D-161), a stale lock never blocks orbit
         } else if (useViewerStore.getState().underlayViewLocked && useViewerStore.getState().underlayCalibration !== null) {
-          camera.pan(dx, dy, false);
+          camera.pan(dx, dy, false); window.dispatchEvent(new CustomEvent('aim-orbit-attempt', { detail: Math.hypot(totalDx, totalDy) }));
         // <<< AIM-FORK
         } else {
           camera.orbit(dx, dy, false);

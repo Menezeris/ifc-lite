@@ -90,6 +90,12 @@ function post(msg: { type: ViewsOutboundMessage['type'] } & Record<string, unkno
   session?.deps.post({ source: SOURCE, ...msg } as ViewsOutboundMessage);
 }
 
+/** Pohľad bol prepísaný aktuálnym stavom viewera (nie len premenovaný alebo s iným prechodom). */
+function overwritten(prev: BasketView, next: BasketView): boolean {
+  return prev.viewpoint !== next.viewpoint || prev.section !== next.section
+    || prev.thumbnailDataUrl !== next.thumbnailDataUrl || prev.entityRefs !== next.entityRefs;
+}
+
 /** Pošle hostovi, čo sa od posledného razu zmenilo v páse Presentation (nový, upravený, premenovaný, zmazaný pohľad). */
 function flush(): void {
   const sess = session;
@@ -103,8 +109,9 @@ function flush(): void {
     const prev = sess.seen.get(v.id);
     if (prev === v) return;
     sess.seen.set(v.id, v);
-    // Nový pohľad alebo prepísaný aktuálnou kamerou: podklady sa zachytia, ako sú teraz (premenovanie ich nemení).
-    if (!prev || prev.viewpoint !== v.viewpoint) {
+    // Nový pohľad alebo prepísaný aktuálnym stavom: podklady sa zachytia, ako sú teraz. Prepis bez pohybu kamery
+    // nemení `viewpoint`, ale obnoví náhľad, rez alebo košík; premenovanie a prechod ich nemenia.
+    if (!prev || overwritten(prev, v)) {
       const u = captureUnderlays();
       if (u) sess.underlays.set(v.id, u);
       else sess.underlays.delete(v.id);

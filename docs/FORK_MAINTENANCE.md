@@ -76,7 +76,7 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/hooks/useDrawingUnderlay.ts` | 4 | underlays on/off in 3D (D-133 addendum); with a horizontal cut only the underlay of the storey below it is drawn (`aim/underlayAtCut.ts`, D-161) |
 | `apps/viewer/src/components/viewer/viewport-render-options.ts` | 2 | drawing-view storey cut wins over the Section clip (`aim/underlayCut.ts`, D-072) |
 | `apps/viewer/src/components/viewer/selectionHandlers.ts` | 2 | underlay calibration model-point pick (`aim/underlayPick.ts`, D-072) |
-| `apps/viewer/src/components/viewer/useMouseControls.ts` | 2 | drag pans instead of orbiting only while an underlay calibration runs (D-072, D-161: a stale lock never blocks orbit); Ctrl/Cmd+wheel moves the cut while it is active |
+| `apps/viewer/src/components/viewer/useMouseControls.ts` | 2 | drag pans instead of orbiting only while an underlay calibration runs (D-072, D-161: a stale lock never blocks orbit) and fires `aim-orbit-attempt` for the "Enter or Space for 3D" hint (AIMviewer#188); Ctrl/Cmd+wheel moves the cut while it is active |
 | `apps/viewer/src/hooks/useFloorplanView.ts` | 2 | `StoreyInfo` alias + projection/camera selectors for the calibration drawing view (D-072). The split / plan-full entry points (`enterSplitView`, `enterPlanView`) stay as upstream-shaped code, no AIM surface calls them since D-161 |
 | `apps/viewer/src/components/viewer/ribbon/RibbonToolbar.tsx` | 3 | fork-only **AIM** ribbon tab (id `documents`) — strip entry + band mount (D-072/D-075, Derivations group D-089) |
 | `apps/viewer/src/store/constants.ts` | 1 | `'documents'` added to `RibbonTabId` |

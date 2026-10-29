@@ -10,6 +10,7 @@ import type { BasketView } from '@/store/slices/pinboardSlice';
 import { runViewsMessage, stopViewsBridge } from '../viewsBridge.js';
 import type { ViewsOutboundMessage, ViewWire } from '../views-protocol.js';
 import type { GuidHelpers } from '../viewQueries.js';
+import { useAimUnderlays3d } from '../aimUnderlays3d.js';
 
 const S = 'aim-bridge' as const;
 const wait = (ms = 220) => new Promise((r) => setTimeout(r, ms));
@@ -73,6 +74,32 @@ describe('most Presentation <-> uložené pohľady (AIM D-161)', () => {
     useViewerStore.getState().removeBasketView('b');
     await wait();
     assert.deepEqual(posted, [{ source: S, type: 'VIEW_DELETE', id: 'b' }]);
+  });
+
+  it('prepis pohľadu bez pohybu kamery zachytí podklady znova; premenovanie nie (nález z #170)', async () => {
+    const drawing = { id: 'd1', name: 'D', placement: { visible: true, opacity: 0.5 } };
+    useViewerStore.setState({ underlayDrawings: new Map([['d1', drawing]]) as never });
+    useAimUnderlays3d.getState().setOverrides({});
+    const vp = { position: { x: 0, y: 0, z: 1 }, target: { x: 0, y: 0, z: 0 }, up: { x: 0, y: 1, z: 0 }, projectionMode: 'perspective' as const, fov: 45 };
+    load();
+    useViewerStore.setState({ basketViews: [{ ...local('a'), viewpoint: vp as never }] });
+    await wait();
+    const saved = () => posted.filter((m): m is Extract<ViewsOutboundMessage, { type: 'VIEW_SAVE' }> => m.type === 'VIEW_SAVE');
+    assert.equal(saved().length, 1);
+    assert.equal(saved()[0].view.underlays?.items[0].opacity, 0.5);
+    posted = [];
+    // Podklady sa medzitým zmenili; pohľad sa prepíše tou istou kamerou (rovnaká referencia `viewpoint`), mení sa náhľad.
+    useAimUnderlays3d.getState().setOverrides({ d1: { opacity: 0.2 } });
+    useViewerStore.getState().refreshBasketViewThumbnail('a', 'data:x', vp as never);
+    await wait();
+    assert.equal(saved().length, 1);
+    assert.equal(saved()[0].view.underlays?.items[0].opacity, 0.2);
+    posted = [];
+    // Premenovanie podklady nezachytáva znova.
+    useAimUnderlays3d.getState().setOverrides({ d1: { opacity: 0.9 } });
+    useViewerStore.getState().renameBasketView('a', 'Iné');
+    await wait();
+    assert.deepEqual(types(), ['VIEW_RENAME']);
   });
 
   it('nový VIEWS_LOAD odoberie pohľady, ktoré host už nemá; lokálne nepotvrdené ostanú', async () => {
