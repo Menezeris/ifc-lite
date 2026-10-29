@@ -8,15 +8,16 @@
  * riadok `saved_views` s tým istým `id`. Napojenie je cez `useViewerStore.subscribe`: čo používateľ
  * urobí v paneli (uloží, premenuje, zmaže, upraví), ide hostovi ako `VIEW_SAVE`, `VIEW_RENAME`, `VIEW_DELETE`;
  * `VIEWS_LOAD` pohľady naplní, `VIEW_ACTIVATE` jeden aktivuje a `VIEW_CAPTURE` uloží aktuálny stav
- * rovnakou cestou ako tlačidlo Uložiť (prázdny košík najprv "="). Tvar správ je v `views-protocol.ts`,
+ * rovnakou cestou ako tlačidlo Uložiť (košík sa najprv postaví z viditeľných prvkov, `viewCaptureBasket.ts`). Tvar správ je v `views-protocol.ts`,
  * prevod pohľadu v `viewsCodec.ts`.
  */
 
 import { useViewerStore } from '@/store';
 import { entityRefToString, stringToEntityRef } from '@/store/types';
 import { resolveEntityRef } from '@/store/resolveEntityRef';
-import { executeBasketSaveView, executeBasketSet } from '@/store/basket/basketCommands';
-import { getSmartBasketInputFromStore, getVisibleBasketEntityRefsFromStore } from '@/store/basketVisibleSet';
+import { executeBasketSaveView } from '@/store/basket/basketCommands';
+import { getVisibleBasketEntityRefsFromStore } from '@/store/basketVisibleSet';
+import { prepareCaptureBasket } from './viewCaptureBasket.js';
 import { createSectionPlane } from '@/lib/section/section-plane-set';
 import type { BasketView } from '@/store/slices/pinboardSlice';
 import { MAX_BASKET_GUIDS, isViewsInbound, type ViewCaptureMessage, type ViewsLoadMessage, type ViewsOutboundMessage, type ViewWire } from './views-protocol.js';
@@ -194,13 +195,12 @@ async function activate(id: string | undefined, name: string | undefined, noteIs
 }
 
 /**
- * Uloží to, čo je práve nastavené (košík, kamera, rezy), ako tlačidlo Uložiť v paneli. Prázdny košík
- * najprv dostane to isté ako "=" (výber, inak všetko viditeľné); chat tak uloží pohľad na celý model.
+ * Uloží to, čo je práve nastavené (košík, kamera, rezy), ako tlačidlo Uložiť v paneli. Pri izolácii
+ * (Lens, trieda, podlažie, skrytie) je košík to, čo je vidieť; bez nej výber, inak všetko viditeľné (#315).
  */
 async function capture(msg: ViewCaptureMessage, deps: ViewsDeps): Promise<void> {
-  if (state().pinboardEntities.size === 0) executeBasketSet();
-  if (state().pinboardEntities.size === 0) return deps.noteIssue('VIEW_CAPTURE: nič na uloženie, model nemá viditeľné prvky');
-  const { source } = getSmartBasketInputFromStore();
+  const source = prepareCaptureBasket();
+  if (source === null) return deps.noteIssue('VIEW_CAPTURE: nič na uloženie, model nemá viditeľné prvky');
   const id = await executeBasketSaveView(source === 'empty' ? 'manual' : source);
   if (!id) return deps.noteIssue('VIEW_CAPTURE: pohľad sa nepodarilo uložiť');
   if (msg.name) state().renameBasketView(id, msg.name);

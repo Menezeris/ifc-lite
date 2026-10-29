@@ -21,8 +21,10 @@ import { cancelReveal, revealRow } from './aimPanelScroll.js';
 import { focusSections, matchName, panelPlan, propKeyEntity, type AimPanelView, type PanelSection } from './aimPanelViewPlan.js';
 
 const SETTLE_TIMEOUT_MS = 5000;
-/** Ako dlho sa riadok hľadá v jednej sekcii, kým sa skúsi druhá (panel sa vykresľuje postupne). */
+/** Ako dlho sa riadok hľadá v jednej sekcii, kým sa skúsi druhá (panel sa vykresľuje postupne). Počíta sa od chvíle, keď sú vlastnosti prvku v store. */
 const SECTION_SEARCH_MS = 900;
+/** Ako dlho sa čaká na vlastnosti prvku (veľký model ich dotiahne o sekundy po výbere, AIM #168). */
+const LOAD_PATIENCE_MS = 10000;
 const FOCUS_ATTR = 'data-aim-focus';
 
 type Target = { modelId: string; expressId: number };
@@ -37,6 +39,13 @@ export function clearPropertyFocus(): void {
   stopActive = null;
   stop?.();
   cancelReveal();
+}
+
+/** Sú vlastnosti prvku v store? Čiastočný store zo začiatku načítania tabuľku vlastností nemá; kým ju loader nedodá, riadok na paneli ešte nemôže byť. */
+function propertiesLoaded(target: Target): boolean {
+  const s = useViewerStore.getState();
+  const ds = target.modelId === 'legacy' ? s.ifcDataStore : s.models.get(target.modelId)?.ifcDataStore;
+  return !!ds && (ds.onDemandPropertyMap !== undefined || (ds.properties?.count ?? 0) > 0);
 }
 
 /** Obsah panela vlastností: rodič AIM bloku, inak celý dokument. */
@@ -108,6 +117,7 @@ export function applyPanelView(view: AimPanelView, target: Target, noteIssue: (t
       const sections = focusSections(focus.pset);
       const opened = new Set<Element>();
       const startedAt = Date.now();
+      let loadedAt: number | null = null;
       let section = sections[0];
       let found: Hit | null = null;
       if (plan.section !== section) store.getState().setPropertiesActiveTab(section);
@@ -137,17 +147,26 @@ export function applyPanelView(view: AimPanelView, target: Target, noteIssue: (t
           finish();
           return;
         }
-        const elapsed = Date.now() - startedAt;
+        // Kým vlastnosti nie sú v store, sekciu nepreklápame ani nevzdávame: loader ich dotiahne neskôr.
+        if (loadedAt === null && propertiesLoaded(target)) loadedAt = Date.now();
+        const giveUp = (text: string) => {
+          section = sections[0];
+          store.getState().setPropertiesActiveTab(section);
+          report({ ...focus, found: false });
+          noteIssue(text);
+          if (stopActive === stop) stopActive = null;
+          stop();
+        };
+        if (loadedAt === null) {
+          if (Date.now() - startedAt > LOAD_PATIENCE_MS) giveUp(`SELECT: vlastnosti prvku sa nenačítali, ${focus.pset}.${focus.property} sa nedá zvýrazniť`);
+          return;
+        }
+        const elapsed = Date.now() - loadedAt;
         if (section === sections[0] && elapsed > SECTION_SEARCH_MS) {
           section = sections[1];
           store.getState().setPropertiesActiveTab(section);
         } else if (section === sections[1] && elapsed > 2 * SECTION_SEARCH_MS) {
-          section = sections[0];
-          store.getState().setPropertiesActiveTab(section);
-          report({ ...focus, found: false });
-          noteIssue(`SELECT: vlastnosť ${focus.pset}.${focus.property} na prvku v IFC paneli nie je`);
-          if (stopActive === stop) stopActive = null;
-          stop();
+          giveUp(`SELECT: vlastnosť ${focus.pset}.${focus.property} na prvku v IFC paneli nie je`);
         }
       };
       let raf = 0;
