@@ -42,6 +42,8 @@ export const aimForkEn = {
   /** Underlays panel switch (AIM D-133 addendum, #170): hides the PDF underlays in the 3D view only. */
   'aimFork.underlays3d.label': 'Show in 3D',
   'aimFork.underlays3d.hint': 'Off by default: the PDF drawings are not loaded until you turn this on. Affects the 3D view only; calibration stays saved and the 2D plan is unchanged.',
+  /** Save in the Presentation panel with nothing visible to put into the basket (AIM D-161). */
+  'aimFork.presentation.nothingToSave': 'Nothing to save: the model has no visible elements.',
   /** Georeferencing map is closed by default so maplibre and the basemap are not loaded at startup. */
   'aimFork.georefMap.toggle': 'Show map',
   /** Camera position and view direction on a calibrated PDF plan (AIM D-161 step 8, #282). */

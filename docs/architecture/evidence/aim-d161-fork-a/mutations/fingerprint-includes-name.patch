@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewsCodec.ts a/apps/viewer/src/aim/viewsCodec.ts
+index adfeab0c..251f8012 100644
+--- b/apps/viewer/src/aim/viewsCodec.ts
++++ a/apps/viewer/src/aim/viewsCodec.ts
+@@ -196,7 +196,7 @@ export function decodeView(w: ViewWire, env: CodecEnv, prev?: BasketView): { vie
+ 
+ /** Odtlačok obsahu pohľadu bez poradia; zmena odtlačku = pohľad treba poslať hostovi. FNV-1a 32 b + dĺžka. */
+ export function fingerprint(view: BasketView, env: CodecEnv): string {
+-  const json = JSON.stringify({ ...encodeView(view, 0, env) });
++  const json = JSON.stringify({ ...encodeView(view, 0, env), name: '' });
+   let h = 0x811c9dc5;
+   for (let i = 0; i < json.length; i++) {
+     h ^= json.charCodeAt(i);

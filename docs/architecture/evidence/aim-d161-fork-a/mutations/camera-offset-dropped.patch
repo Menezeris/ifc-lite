@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewsCodec.ts a/apps/viewer/src/aim/viewsCodec.ts
+index 947028db..251f8012 100644
+--- b/apps/viewer/src/aim/viewsCodec.ts
++++ a/apps/viewer/src/aim/viewsCodec.ts
+@@ -42,7 +42,7 @@ const vec = (t: readonly number[]): Vec3 => ({ x: t[0], y: t[1], z: t[2] });
+ 
+ function encodeCamera(vp: CameraViewpoint, offset: Vec3): ViewCameraWire {
+   return {
+-    position: tuple(renderPointToIfc(vp.position, { x: 0, y: 0, z: 0 }), mm),
++    position: tuple(renderPointToIfc(vp.position, offset), mm),
+     target: tuple(renderPointToIfc(vp.target, offset), mm),
+     up: tuple(renderDirToIfc(vp.up), ur),
+     fov: ur(vp.fov),

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewsCodec.ts a/apps/viewer/src/aim/viewsCodec.ts
+index e2b59acf..251f8012 100644
+--- b/apps/viewer/src/aim/viewsCodec.ts
++++ a/apps/viewer/src/aim/viewsCodec.ts
+@@ -129,7 +129,7 @@ const sameSet = (keys: readonly string[], set: ReadonlySet<string>) => keys.leng
+ 
+ /** Košík ako GlobalId: "všetko viditeľné" bez zoznamu (výsledok "="), inak zoznam so stropom. */
+ function encodeBasket(view: BasketView, env: CodecEnv): ViewBasketWire {
+-  if (view.source === 'visible') {
++  if (view.source === 'visible' && sameSet(view.entityRefs, env.visibleKeys())) {
+     const hidden = env.hiddenGuids();
+     if (hidden.length <= MAX_BASKET_GUIDS) return { scope: 'all', hidden_guids: hidden };
+   }

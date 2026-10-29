@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewsCodec.ts a/apps/viewer/src/aim/viewsCodec.ts
+index b7f6e7ee..251f8012 100644
+--- b/apps/viewer/src/aim/viewsCodec.ts
++++ a/apps/viewer/src/aim/viewsCodec.ts
+@@ -99,7 +99,7 @@ function encodeSection(s: BasketSectionSnapshot, env: CodecEnv): ViewSectionWire
+ function decodePlane(w: ViewSectionPlaneWire, env: CodecEnv): SectionPlane {
+   const axis = viewerAxis(w.axis);
+   const range = env.bounds ? sectionAxisRange(env.bounds, axis) : null;
+-  const exact = false && w.coordinate !== undefined && !w.box ? cutPercent(ifcCoordinateToRender(w.axis, w.coordinate, env.offset), range) : null;
++  const exact = w.coordinate !== undefined && !w.box ? cutPercent(ifcCoordinateToRender(w.axis, w.coordinate, env.offset), range) : null;
+   const a = w.box ? ifcPointToRender(vec(w.box.min), env.offset) : null;
+   const b = w.box ? ifcPointToRender(vec(w.box.max), env.offset) : null;
+   return {

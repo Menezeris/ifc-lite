@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlayAtCut.ts a/apps/viewer/src/aim/underlayAtCut.ts
+index cca03501..fb6b3f75 100644
+--- b/apps/viewer/src/aim/underlayAtCut.ts
++++ a/apps/viewer/src/aim/underlayAtCut.ts
+@@ -26,7 +26,7 @@ export function storeyZToDraw(storeyZs: readonly number[], cutZ: number | null,
+   if (cutZ === null || storeyZs.length === 0) return null;
+   let best: number | null = null;
+   for (const z of storeyZs) {
+-    if (z > cutZ + 0.01) continue;
++    if (flipped ? z < cutZ - 0.01 : z > cutZ + 0.01) continue;
+     if (best === null || (flipped ? z < best : z > best)) best = z;
+   }
+   return best;
