@@ -15,8 +15,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import type { Clash, ClashResult } from '@ifc-lite/clash';
 import { clashReviewKey } from '@ifc-lite/clash';
 import { useViewerStore } from '@/store';
-import { ClashPanel } from './ClashPanel.js';
-import { clearClashCell, toggleClashCell, cellOf } from '@/aim/clashCellFilter.js';
+import { ClashPanel } from '@/components/viewer/ClashPanel.js';
+import { clearClashCell, toggleClashCell, cellOf } from './clashCellFilter.js';
 
 Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { get: () => 800, configurable: true });
 Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { get: () => 600, configurable: true });

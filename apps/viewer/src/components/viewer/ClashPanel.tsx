@@ -430,7 +430,9 @@ export function ClashPanel({ onClose }: ClashPanelProps) {
       list = list.filter((c) => statusFilter.has(reviewOf(c)));
     }
     return sortClashes(list, sortBy);
-  }, [result, hideTouching, sortBy, statusFilter, reviewOf, aimCell, aimModels]); // AIM-FORK (#302): aimCell, aimModels
+  // >>> AIM-FORK: deps of the matrix cell filter (#302)
+  }, [result, hideTouching, sortBy, statusFilter, reviewOf, aimCell, aimModels]);
+  // <<< AIM-FORK
 
   // A duplicate scan renders one section per coincident SET ("3 coincident
   // IfcColumn objects" holding its pair rows) instead of the generic
