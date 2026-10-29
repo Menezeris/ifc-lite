@@ -1,0 +1,7 @@
+{
+  "feature": "aim-324-top-orientation",
+  "base": "origin/main",
+  "mutations": [
+    { "patch": "cycle-break-removed.patch", "only": "apps/viewer/src/aim/presetFresh.ts", "test": "apps/viewer/src/aim/presetFresh.test.ts", "verdict": "OBSERVED", "exitCode": 0, "restoration": "verified" }
+  ]
+}
