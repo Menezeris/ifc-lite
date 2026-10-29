@@ -6,10 +6,10 @@ import { beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { BimContext, EntityRef } from '@ifc-lite/sdk';
 
-import { useViewerStore, type ViewerState } from '../store/index.js';
-import { selectPickedGlobalId } from '../components/viewer/viewport-selection.js';
-import { runVisibilityCommand, type VisibilityDeps } from './visibility-commands.js';
-import type { InboundMessage } from './bridge-protocol.js';
+import { useViewerStore, type ViewerState } from '../../store/index.js';
+import { selectPickedGlobalId } from '../../components/viewer/viewport-selection.js';
+import { runVisibilityCommand, type VisibilityDeps } from '../visibility-commands.js';
+import type { InboundMessage } from '../bridge-protocol.js';
 
 const COUNT = 300;
 const GUIDS = Array.from({ length: COUNT }, (_, i) => `G${i}`);

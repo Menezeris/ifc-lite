@@ -5,10 +5,10 @@
 import { beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { useViewerStore, type ViewerState } from '../store/index.js';
-import { toggleGlobalIdInSelection } from '../components/viewer/viewport-selection.js';
-import { addGlobalIdsToSelection, planAddToSelection } from './aimMultiSelect.js';
-import type { EntityRef } from '../store/types.js';
+import { useViewerStore, type ViewerState } from '../../store/index.js';
+import { toggleGlobalIdInSelection } from '../../components/viewer/viewport-selection.js';
+import { addGlobalIdsToSelection, planAddToSelection } from '../aimMultiSelect.js';
+import type { EntityRef } from '../../store/types.js';
 
 const COUNT = 300;
 const IDS = Array.from({ length: COUNT }, (_, i) => 1000 + i);

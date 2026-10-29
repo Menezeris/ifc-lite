@@ -6,11 +6,11 @@ import { beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { BimContext, EntityRef } from '@ifc-lite/sdk';
 
-import { useViewerStore, type ViewerState } from '../store/index.js';
-import { selectPickedGlobalId } from '../components/viewer/viewport-selection.js';
-import { useAimFocusRoomsStore } from './aimFocusRoomsStore.js';
-import { clearFocus, forgetFocus, installFocusDismiss, runVisibilityCommand, type VisibilityDeps } from './visibility-commands.js';
-import type { InboundMessage } from './bridge-protocol.js';
+import { useViewerStore, type ViewerState } from '../../store/index.js';
+import { selectPickedGlobalId } from '../../components/viewer/viewport-selection.js';
+import { useAimFocusRoomsStore } from '../aimFocusRoomsStore.js';
+import { clearFocus, forgetFocus, installFocusDismiss, runVisibilityCommand, type VisibilityDeps } from '../visibility-commands.js';
+import type { InboundMessage } from '../bridge-protocol.js';
 
 const refOf = (guid: string): EntityRef => ({ modelId: 'm', expressId: 1000 + Number(guid.slice(1)) });
 
@@ -42,7 +42,6 @@ const deps: VisibilityDeps = {
   resolveGuids: (_models, guids) => guids.map(refOf),
   resolveSelector: () => [],
   selectPickedGlobalId,
-  addToSelection: () => undefined,
   noteIssue: () => undefined,
   track: (p) => { void p.catch(() => undefined); },
   FOCUS_COLOR: '#f97316',
