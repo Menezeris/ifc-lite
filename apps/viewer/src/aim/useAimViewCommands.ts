@@ -27,7 +27,7 @@ import { pickStoreyView, type StoreyViewCandidate } from './storeyViews.js';
 import { placementCoordinateInfo } from '@/lib/section/placement-coordinate-info';
 import { sectionRenderBounds as sectionBoundsWith } from './sectionRange.js';
 import { noteIssue, track } from './command-gate.js';
-import { waitCameraSettled } from './cameraSettle.js';
+import { CAMERA_SETTLE_MAX_MS, waitCameraSettled } from './cameraSettle.js';
 import { AUTO_ROTATE_SPEED } from './autoRotatePlan.js';
 import { useAimUnderlays3d } from './aimUnderlays3d.js';
 import { useAimPlanPosition } from './aimPlanPosition.js';
@@ -140,10 +140,10 @@ function perspective3d(): void {
 }
 
 /** Stav pre `APPLIED` (D-101): rez, režim, výber a viditeľnosť po vykonaní príkazov. */
-export async function appliedViewState(): Promise<Record<string, unknown>> {
+export async function appliedViewState(budgetMs = CAMERA_SETTLE_MAX_MS): Promise<Record<string, unknown>> {
   const q = await loadQueries();
   // Kamera po obnove pohľadu ešte dobieha animáciu; stav má niesť jej cieľ (AIM #97, D-122).
-  const settled = await waitCameraSettled(() => (autoRotating ? null : useViewerStore.getState().cameraCallbacks.getViewpoint?.() ?? null));
+  const settled = await waitCameraSettled(() => (autoRotating ? null : useViewerStore.getState().cameraCallbacks.getViewpoint?.() ?? null), { maxMs: Math.min(CAMERA_SETTLE_MAX_MS, budgetMs) });
   const s = q.queryViewState(useViewerStore.getState(), { ...GUIDS, focus: focusProvider });
   return {
     ...(autoRotating ? { auto_rotate: true } : {}),

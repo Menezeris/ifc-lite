@@ -25,6 +25,7 @@ import {
   type InboundMessage, type OutboundMessage,
 } from './bridge-protocol.js';
 import { isCommandMessage, type AppliedMessage, type CommandInboundMessage } from './command-protocol.js';
+import { ACK_TOTAL_MS, createAckBudget, withinBudget } from './ackBudget.js';
 import { createCommandGate, noteIssue, resetCommandState, settled, takeIssues, track } from './command-gate.js';
 import { useAimPanelStore } from './aimPanelStore.js';
 import { useCapturePinsStore } from './capturePinsStore.js';
@@ -62,8 +63,6 @@ const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER
 let visibility: Promise<typeof import('./visibility-commands.js')> | null = null;
 const loadVisibility = () => (visibility ??= import('./visibility-commands.js'));
 
-/** Najdlhšie čakanie `APPLIED` na asynchrónne kroky (rez cez prvok, kamera, Lens); host čaká 3 s. */
-const ACK_WAIT_MS = 2500;
 /** Ak geometria po ohlásení modelov neprestane prúdiť, príkazy sa pustia aj tak. */
 const STREAM_GRACE_MS = 30_000;
 
@@ -71,7 +70,7 @@ const STREAM_GRACE_MS = 30_000;
 export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry: BridgeEntryDeps }) {
   const { bim, selectPickedGlobalId } = entry;
   /** Helpery pre lenivý modul príkazov viditeľnosti. */
-  const visDeps = { resolveGuids, resolveSelector, selectPickedGlobalId, addToSelection: entry.addToSelection, noteIssue, track, FOCUS_COLOR, FILTER_COLOR };
+  const visDeps = { resolveGuids, resolveSelector, selectPickedGlobalId, noteIssue, track, FOCUS_COLOR, FILTER_COLOR };
   const parentOriginRef = useRef<string | null>(null);
   const embeddedRef = useRef(false);
   // Brána príkazov (AIM D-101): do načítania modelov a dotečenia geometrie sa
@@ -121,10 +120,11 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
 
     // `ACK_REQUEST` ide bránou za príkazmi, preto ich vidí vykonané; počká ešte na ich asynchrónne kroky.
     async function answerAck(cmdId: string) {
-      const listP = listSettled(ACK_WAIT_MS); // beh zoznamu z chatu (D-148) čaká súbežne s ostatnými krokmi
-      const done = await settled(ACK_WAIT_MS);
+      const budget = createAckBudget(ACK_TOTAL_MS); // host čaká 3 s na celé APPLIED, kroky delia jeden rozpočet (#273)
+      const listP = listSettled(budget.stepLeft()); // beh zoznamu z chatu (D-148) čaká súbežne s ostatnými krokmi
+      const done = await settled(budget.stepLeft());
       // null = lens z chatu sa nepoužila; chyba výpočtu súhrnu je problém, nie úspech.
-      const lens = await lensSettled(ACK_WAIT_MS).catch((err: unknown) => {
+      const lens = await lensSettled(budget.stepLeft()).catch((err: unknown) => {
         noteIssue(`Lens: ${err instanceof Error ? err.message : String(err)}`);
         return null;
       });
@@ -132,10 +132,17 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
         noteIssue(`Zoznam: ${err instanceof Error ? err.message : String(err)}`);
         return null;
       });
-      const state = await appliedViewState().catch((err: unknown) => {
-        noteIssue(`stav viewera: ${err instanceof Error ? err.message : String(err)}`);
-        return undefined;
-      });
+      const state = await withinBudget(
+        appliedViewState(budget.left()).catch((err: unknown) => {
+          noteIssue(`stav viewera: ${err instanceof Error ? err.message : String(err)}`);
+          return undefined;
+        }),
+        budget.left(),
+        () => {
+          noteIssue('stav viewera sa nestihol zostaviť v limite potvrdenia');
+          return undefined;
+        },
+      );
       // Problémy až po stave a Lens, aby ich chyby patrili do tohto potvrdenia.
       const issues = takeIssues();
       if (!done) issues.push('niektoré kroky vo vieweri ešte bežia');

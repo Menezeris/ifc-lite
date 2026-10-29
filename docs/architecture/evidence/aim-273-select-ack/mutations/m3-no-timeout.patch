@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/ackBudget.ts a/apps/viewer/src/aim/ackBudget.ts
+index f0a8796f..c7175309 100644
+--- b/apps/viewer/src/aim/ackBudget.ts
++++ a/apps/viewer/src/aim/ackBudget.ts
+@@ -40,7 +40,7 @@ export async function withinBudget<T, U>(
+ ): Promise<T | U> {
+   const late = Symbol('late');
+   const first = await Promise.race([work, sleep(ms).then(() => late)]);
+-  if (first === late && false as boolean) {
++  if (first === late) {
+     work.catch(() => undefined);
+     return onTimeout();
+   }
