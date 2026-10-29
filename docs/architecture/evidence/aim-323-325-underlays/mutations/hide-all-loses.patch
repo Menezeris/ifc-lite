@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlaysPlan.ts a/apps/viewer/src/aim/underlaysPlan.ts
+index a8e060b5..ccb08d82 100644
+--- b/apps/viewer/src/aim/underlaysPlan.ts
++++ a/apps/viewer/src/aim/underlaysPlan.ts
+@@ -64,7 +64,7 @@ export function isUnderlaysViewWire(v: unknown): v is UnderlaysViewWire {
+ 
+ /** Placement pre renderer: prepis podkladu, potom globálne skrytie; store ostáva nedotknutý (kópia). */
+ export function underlayIn3d<T extends { visible: boolean; opacity: number }>(placement: T, override: UnderlayOverride | undefined, hideAll: boolean): T {
+-  const visible = override?.visible ?? (!hideAll && placement.visible);
++  const visible = !hideAll && (override?.visible ?? placement.visible);
+   const opacity = override?.opacity ?? placement.opacity;
+   return visible === placement.visible && opacity === placement.opacity ? placement : { ...placement, visible, opacity };
+ }
