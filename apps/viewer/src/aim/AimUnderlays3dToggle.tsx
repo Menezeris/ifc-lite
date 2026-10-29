@@ -26,9 +26,9 @@ export function AimUnderlays3dOffBanner({ viewLocked }: { viewLocked: boolean })
   const off = useUnderlaysOffIn3d(viewLocked);
   if (!off) return null;
   return (
-    <div role="status" data-testid="aim-underlays-3d-off" className="shrink-0 border-b bg-amber-500/10 px-3 py-1.5 text-2xs text-amber-700 dark:text-amber-300">
+    <output data-testid="aim-underlays-3d-off" className="block shrink-0 border-b bg-amber-500/10 px-3 py-1.5 text-2xs text-amber-700 dark:text-amber-300">
       {t('aimFork.underlays3d.offNotice')}
-    </div>
+    </output>
   );
 }
 
@@ -38,7 +38,7 @@ export function AimUnderlayRowNote({ visible, viewLocked }: { visible: boolean; 
   const off = useUnderlaysOffIn3d(viewLocked);
   if (!off || !visible) return null;
   return (
-    <div data-testid="aim-underlay-row-off" className="mt-1 text-[10px] text-amber-700 dark:text-amber-300">
+    <div data-testid="aim-underlay-row-off" className="mt-1 text-2xs text-amber-700 dark:text-amber-300">
       {t('aimFork.underlays3d.rowNote')}
     </div>
   );
