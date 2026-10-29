@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlaysPlan.ts a/apps/viewer/src/aim/underlaysPlan.ts
+index 33de27b8..ccb08d82 100644
+--- b/apps/viewer/src/aim/underlaysPlan.ts
++++ a/apps/viewer/src/aim/underlaysPlan.ts
+@@ -81,7 +81,7 @@ export function planUnderlaySet(
+   const unknown: string[] = [];
+   const named = new Set<string>();
+   for (const it of items) {
+-    if (!known.has(it.document_id)) unknown.push(it.document_id);
++    if (!known.has(it.document_id)) { unknown.push(it.document_id); continue; }
+     named.add(it.document_id);
+     next[it.document_id] = {
+       ...next[it.document_id],

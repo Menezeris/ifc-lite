@@ -5,7 +5,8 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, it } from 'node:test';
 
-import { useAimUnderlays3d, underlaysHiddenIn3d, withUnderlay3dVisibility, skipUnderlayRaster } from './aimUnderlays3d.js';
+import { useAimUnderlays3d, underlaysHiddenIn3d, skipUnderlayRaster } from './aimUnderlays3d.js';
+import { underlayIn3d } from './underlaysPlan.js';
 import { isViewMessage } from './view-protocol.js';
 import { SOURCE } from './bridge-protocol.js';
 
@@ -37,18 +38,18 @@ describe('podklady PDF v 3D (AIM D-133 doplnok, #170)', () => {
   });
 
   it('skrytie prepíše len kópiu, placement v store ostane viditeľný a kalibrácia nedotknutá', () => {
-    const placement = { visible: true, affine: [1, 0, 0, 0, 1, 0] };
-    const hiddenCopy = withUnderlay3dVisibility(placement, true);
+    const placement = { visible: true, opacity: 0.6, affine: [1, 0, 0, 0, 1, 0] };
+    const hiddenCopy = underlayIn3d(placement, undefined, true);
     assert.equal(hiddenCopy.visible, false);
     assert.deepEqual(hiddenCopy.affine, placement.affine);
     assert.equal(placement.visible, true);
-    assert.equal(withUnderlay3dVisibility(placement, false), placement);
+    assert.equal(underlayIn3d(placement, undefined, false), placement);
   });
 
   it('podklad vypnutý okom (visible kalibrácie) ostane vypnutý aj po zapnutí v 3D', () => {
-    const off = { visible: false };
-    assert.equal(withUnderlay3dVisibility(off, false).visible, false);
-    assert.equal(withUnderlay3dVisibility(off, true).visible, false);
+    const off = { visible: false, opacity: 0.6 };
+    assert.equal(underlayIn3d(off, undefined, false).visible, false);
+    assert.equal(underlayIn3d(off, undefined, true).visible, false);
   });
 
   it('správa SET_UNDERLAYS_3D prejde len s boolean show', () => {
@@ -56,5 +57,17 @@ describe('podklady PDF v 3D (AIM D-133 doplnok, #170)', () => {
     assert.equal(isViewMessage({ source: SOURCE, type: 'SET_UNDERLAYS_3D', show: true }), true);
     assert.equal(isViewMessage({ source: SOURCE, type: 'SET_UNDERLAYS_3D', show: 'no' }), false);
     assert.equal(isViewMessage({ source: SOURCE, type: 'SET_UNDERLAYS_3D' }), false);
+  });
+
+  it('SET_UNDERLAYS_3D s podkladmi (#323): položky s id a visible / opacity 0 až 1, only a persist len boolean', () => {
+    const msg = (over: Record<string, unknown>) => isViewMessage({ source: SOURCE, type: 'SET_UNDERLAYS_3D', ...over });
+    assert.equal(msg({ underlays: [{ document_id: 'd2', visible: true }] }), true);
+    assert.equal(msg({ show: true, underlays: [{ document_id: 'd2', opacity: 0 }], only: true, persist: false }), true);
+    assert.equal(msg({ underlays: [{ document_id: 'd2' }] }), false);
+    assert.equal(msg({ underlays: [{ document_id: 'd2', opacity: 1.5 }] }), false);
+    assert.equal(msg({ underlays: [{ document_id: '', visible: true }] }), false);
+    assert.equal(msg({ underlays: [{ document_id: 'd2', visible: true }], only: 'yes' }), false);
+    assert.equal(msg({ only: true }), false);
+    assert.equal(msg({ show: true, only: true }), false);
   });
 });
