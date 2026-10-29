@@ -107,7 +107,9 @@ describe('šírka a strana panela (AIM #320)', () => {
   it('čo viewer nevie, sa hlási ako problém a nič sa nemení', () => {
     const closed = planPanelLayout({ panel: 'lens', width_pct: 30 }, { open: false }, 1000);
     assert.equal(closed.issues.length, 1);
+    assert.match(closed.issues[0], /nie je otvorený/, 'zatvorený panel sa nemení, ani keď má šírku a stranu');
     assert.equal(closed.sidebarWidthPct, undefined);
+    assert.deepEqual(planPanelLayout({ panel: 'lens', side: 'left' }, { open: false }, 1000).float, undefined);
     assert.equal(planPanelLayout({ panel: 'hierarchy', width_pct: 30 }, { open: true, where: 'left' }, 1000).issues.length, 1);
     assert.equal(planPanelLayout({ panel: 'lens', width_pct: 30 }, { open: true, where: 'window' }, 1000).issues.length, 1);
     const bottom = planPanelLayout({ panel: 'clash', width_pct: 30 }, { open: true, where: 'bottom' }, 1000);
