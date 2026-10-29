@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/AimUnderlays3dToggle.tsx a/apps/viewer/src/aim/AimUnderlays3dToggle.tsx
+index 44a89308..1dcaeaad 100644
+--- b/apps/viewer/src/aim/AimUnderlays3dToggle.tsx
++++ a/apps/viewer/src/aim/AimUnderlays3dToggle.tsx
+@@ -17,7 +17,7 @@ import { useAimUnderlays3d, underlaysHiddenIn3d } from './aimUnderlays3d.js';
+ /** Podklady sa teraz v 3D plátne naozaj nekreslia (vypnuté a nie zamknutý pôdorys). */
+ function useUnderlaysOffIn3d(viewLocked: boolean): boolean {
+   const hidden = useAimUnderlays3d((s) => s.hidden);
+-  return underlaysHiddenIn3d({ hidden, viewLocked: false });
++  return underlaysHiddenIn3d({ hidden, viewLocked });
+ }
+ 
+ /** Pás nad zoznamom podkladov: podklady v 3D sú vypnuté, aj keď sú v riadkoch zapnuté. */
