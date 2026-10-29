@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimListTable.ts a/apps/viewer/src/aim/aimListTable.ts
+index 1e4c67c4..50f014d3 100644
+--- b/apps/viewer/src/aim/aimListTable.ts
++++ a/apps/viewer/src/aim/aimListTable.ts
+@@ -109,6 +109,7 @@ export function useAimListTable(b: AimListTableBinding): { cue: ReactNode; highl
+       if (plan.missing.length > 0) noteIssue(`Zoznam: šírku nastaviť nešlo, stĺpec ${plan.missing.join(', ')} v zozname nie je`);
+       setWidthOverrides((prev) => {
+         const next = { ...prev, ...plan.set };
++        for (const id of plan.reset) delete next[id];
+         return next;
+       });
+     }

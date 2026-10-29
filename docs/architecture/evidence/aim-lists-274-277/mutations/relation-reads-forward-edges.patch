@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimRelationNames.ts a/apps/viewer/src/aim/aimRelationNames.ts
+index fdb52a0e..a0f39398 100644
+--- b/apps/viewer/src/aim/aimRelationNames.ts
++++ a/apps/viewer/src/aim/aimRelationNames.ts
+@@ -15,7 +15,7 @@ import type { ListDataProvider } from '@ifc-lite/lists';
+ export function relationNameHooks(store: IfcDataStore): Pick<ListDataProvider, 'getReferencedInNames' | 'getSpaceBoundaryNames'> {
+   /** Unnamed entities are named by their IFC class. */
+   const names = (entityId: number, relType: RelationshipType): string[] =>
+-    (store.relationships?.getRelated(entityId, relType, 'forward') ?? [])
++    (store.relationships?.getRelated(entityId, relType, 'inverse') ?? [])
+       .map((id) => store.entities.getName(id) || store.entities.getTypeName(id) || '')
+       .filter(Boolean);
+   return {

@@ -1,0 +1,12 @@
+diff --git b/packages/lists/src/engine.ts a/packages/lists/src/engine.ts
+index 16869a09..ad66fe12 100644
+--- b/packages/lists/src/engine.ts
++++ a/packages/lists/src/engine.ts
+@@ -427,6 +427,7 @@ function getSpatialValue(
+ ): CellValue {
+   // AIM-FORK (#277): next 2 lines (levels Referenced / Boundary / Aggregate)
+   const related = relationLevelValue(level, entityId, provider);
++  if (related !== undefined) return related;
+   switch (level.toLowerCase()) {
+     case 'container':
+       return provider.getContainerName?.(entityId) || null;

@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimListViewPlan.ts a/apps/viewer/src/aim/aimListViewPlan.ts
+index 6ed7840d..be41b9e4 100644
+--- b/apps/viewer/src/aim/aimListViewPlan.ts
++++ a/apps/viewer/src/aim/aimListViewPlan.ts
+@@ -185,6 +185,7 @@ export function parseListView(raw: unknown): AimListView | null {
+     out.export = raw.export as AimListExportFormat;
+   }
+   if (raw.visibleOnly !== undefined) {
++    if (typeof raw.visibleOnly !== 'boolean') return null;
+     out.visibleOnly = raw.visibleOnly;
+   }
+   if (raw.columnWidths !== undefined) {
