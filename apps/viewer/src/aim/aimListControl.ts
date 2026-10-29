@@ -25,7 +25,7 @@ import { chatListDefinition, noteListOpened, noteListUpdated } from './aimListRu
 import { andGroups, findColumn, nextGrouping, parseAddedGroups, parseListView, refLabel,
   type AimListColumnRef, type AimListView } from './aimListViewPlan.js';
 import { editColumns, editTypes, hasEdit, parseListEdit, removeFilterKinds } from './aimListEditPlan.js';
-import { pendingMaximize, pendingTableRequest, requestListTable, requestStripMaximize, tableState, takeViewRequested } from './aimListViewStore.js';
+import { layoutPlanLoading, loadLayoutPlan, pendingMaximize, pendingTableRequest, requestListTable, requestStripMaximize, setListHighlight, tableState, takeViewRequested } from './aimListViewStore.js';
 
 type ListUpdateMessage = Extract<LensInboundMessage, { type: 'LIST_UPDATE' }>;
 
@@ -74,10 +74,13 @@ export function applyListView(def: ListDefinition, view: AimListView): ListDefin
     if (id) sort = { columnId: id, dir: view.sort.dir };
   }
   const colorBy = view.colorBy === null ? null : view.colorBy ? colorColumnId(def, view.colorBy) : undefined;
-  if (sort !== undefined || view.search !== undefined || colorBy !== undefined || view.export) {
+  if (sort !== undefined || view.search !== undefined || colorBy !== undefined || view.export || view.visibleOnly !== undefined || view.columnWidths) {
     requestListTable({ target: next.id, ...(sort !== undefined ? { sort } : {}), ...(view.search !== undefined ? { search: view.search } : {}),
-      ...(colorBy !== undefined ? { colorBy } : {}), ...(view.export ? { export: view.export } : {}) });
+      ...(colorBy !== undefined ? { colorBy } : {}), ...(view.export ? { export: view.export } : {}),
+      ...(view.visibleOnly !== undefined ? { visibleOnly: view.visibleOnly } : {}), ...(view.columnWidths ? { columnWidths: view.columnWidths } : {}) });
   }
+  if (view.columnWidths || view.highlight) void loadLayoutPlan();
+  if (view.highlight !== undefined) setListHighlight(view.highlight);
   if (view.maximize !== undefined) requestStripMaximize(view.maximize);
   return next;
 }
@@ -168,6 +171,7 @@ export async function settleListView(timeoutMs: number): Promise<void> {
   // Hák požiadavku vezme hneď, ale stav (napr. `isMaximized`) sa prekreslí až v ďalšom kroku React:
   // po každej požiadavke z tejto správy sa na hlásenie háku chvíľu počká.
   let touched = takeViewRequested();
+  await layoutPlanLoading();
   while (waiting() && Date.now() < until) {
     touched = true;
     await new Promise((r) => setTimeout(r, 50));

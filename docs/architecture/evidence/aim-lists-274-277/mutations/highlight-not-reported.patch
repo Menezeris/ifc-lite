@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimListViewPlan.ts a/apps/viewer/src/aim/aimListViewPlan.ts
+index 870e04d8..be41b9e4 100644
+--- b/apps/viewer/src/aim/aimListViewPlan.ts
++++ a/apps/viewer/src/aim/aimListViewPlan.ts
+@@ -333,7 +333,7 @@ export function describeListState(def: { name: string; columns: ColumnDefinition
+     ...(s.colorBy ? { color_by: label(s.colorBy) } : {}),
+     ...(s.table?.visibleOnly !== undefined ? { visible_only: s.table.visibleOnly } : {}),
+     ...(s.table?.widths ? { column_widths: s.table.widths.map((w) => ({ column: label(w.columnId), px: Math.round(w.width) })) } : {}),
+-    ...(false as boolean && s.table?.highlight ? { highlight: {
++    ...(s.table?.highlight ? { highlight: {
+       rows: s.table.highlight.rows, cells: s.table.highlight.cells,
+       columns: s.table.highlight.columnIds.map(label), sum: s.table.highlight.sum.map(label),
+     } } : {}),

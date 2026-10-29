@@ -1,0 +1,13 @@
+diff --git b/packages/lists/src/relation-levels.ts a/packages/lists/src/relation-levels.ts
+index bb7145d4..65302996 100644
+--- b/packages/lists/src/relation-levels.ts
++++ a/packages/lists/src/relation-levels.ts
+@@ -13,7 +13,7 @@ import type { CellValue } from './result-types.js';
+ 
+ /** Distinct non-empty names joined with ", " (declaration order); null when none. */
+ function joinNames(names: readonly string[] | undefined): CellValue {
+-  const out = (names ?? []).filter(Boolean);
++  const out = [...new Set((names ?? []).filter(Boolean))];
+   return out.length > 0 ? out.join(', ') : null;
+ }
+ 

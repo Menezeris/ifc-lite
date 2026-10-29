@@ -1,0 +1,12 @@
+diff --git b/packages/lists/src/relation-levels.ts a/packages/lists/src/relation-levels.ts
+index c4f19c3f..65302996 100644
+--- b/packages/lists/src/relation-levels.ts
++++ a/packages/lists/src/relation-levels.ts
+@@ -21,6 +21,7 @@ function joinNames(names: readonly string[] | undefined): CellValue {
+ export function relationLevelValue(level: string, entityId: number, provider: ListDataProvider): CellValue | undefined {
+   switch (level.toLowerCase()) {
+     case 'referenced': return joinNames(provider.getReferencedInNames?.(entityId));
++    case 'boundary': return joinNames(provider.getSpaceBoundaryNames?.(entityId));
+     case 'aggregate': return joinNames(provider.getAggregateParents?.(entityId)?.map((id) => provider.getEntityName(id)));
+     default: return undefined;
+   }

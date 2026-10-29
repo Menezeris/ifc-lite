@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimListLayoutPlan.ts a/apps/viewer/src/aim/aimListLayoutPlan.ts
+index 6c920505..3b829604 100644
+--- b/apps/viewer/src/aim/aimListLayoutPlan.ts
++++ a/apps/viewer/src/aim/aimListLayoutPlan.ts
+@@ -33,7 +33,7 @@ export function fitColumnWidth(label: string, rows: readonly ListRow[], colIdx:
+     if (len > longest) longest = len;
+   }
+   const px = Math.max(longest * CHAR_PX + PADDING_PX, label.length * CHAR_PX + HEADER_EXTRA_PX);
+-  return px;
++  return Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, px));
+ }
+ 
+ export interface WidthPlan {

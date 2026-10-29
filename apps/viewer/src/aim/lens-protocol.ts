@@ -72,7 +72,8 @@ export type LensInboundMessage =
       /** `FilterGroup[]` ako pri Lens; pravidlo `model` nesie mená modelov. */
       groups: unknown[];
       columns: AimListColumnWire[];
-      /** Zoskupenie, súčty, zoradenie, hľadanie, maximalizácia (D-149); tvar v `aimListViewPlan.ts`. */
+      /** Zoskupenie, súčty, zoradenie, hľadanie, maximalizácia (D-149), filter viditeľnosti `visibleOnly` (#276),
+       *  šírky stĺpcov `columnWidths` (#275) a zvýraznenie `highlight` (#274); tvar v `aimListViewPlan.ts`. */
       view?: unknown;
     }
   | {

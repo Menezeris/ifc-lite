@@ -1,0 +1,226 @@
+{
+  "fit-ignores-header-and-cap": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimListLayoutPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "production": [
+      "apps/viewer/src/aim/aimListLayoutPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimListLayoutPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "highlight-not-reported": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimListLayoutPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "production": [
+      "apps/viewer/src/aim/aimListViewPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimListLayoutPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "highlight-not-stored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/aimListView.test.tsx; that file has a green, attributable baseline.",
+    "base": "bc57988878c68ded4b3f11117798841ba2b246ca",
+    "head": "870a8299f8467e878bc1123006deba280fbf7466",
+    "production": [
+      "apps/viewer/src/aim/aimListControl.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/aimListView.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "highlight-row-not-styled": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/aimListView.test.tsx; that file has a green, attributable baseline.",
+    "base": "bc57988878c68ded4b3f11117798841ba2b246ca",
+    "head": "870a8299f8467e878bc1123006deba280fbf7466",
+    "production": [
+      "apps/viewer/src/aim/aimListTable.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/aimListView.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "highlight-survives-new-list": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/aimListView.test.tsx; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "production": [
+      "apps/viewer/src/aim/aimList.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/aimListView.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "highlight-text-case-sensitive": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimListLayoutPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "production": [
+      "apps/viewer/src/aim/aimListLayoutPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimListLayoutPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "isolation-hides-new-list": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/aimListView.test.tsx; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "production": [
+      "apps/viewer/src/aim/aimList.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/aimListView.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "relation-boundary-level-missing": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in packages/lists/src/engine.spatial-relations.test.ts; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "production": [
+      "packages/lists/src/relation-levels.ts"
+    ],
+    "tests": [
+      "packages/lists/src/engine.spatial-relations.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "relation-levels-not-wired": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in packages/lists/src/engine.spatial-relations.test.ts; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "production": [
+      "packages/lists/src/engine.ts"
+    ],
+    "tests": [
+      "packages/lists/src/engine.spatial-relations.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "relation-names-not-distinct": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in packages/lists/src/engine.spatial-relations.test.ts; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "production": [
+      "packages/lists/src/relation-levels.ts"
+    ],
+    "tests": [
+      "packages/lists/src/engine.spatial-relations.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "relation-reads-forward-edges": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimRelationNames.test.ts; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "production": [
+      "apps/viewer/src/aim/aimRelationNames.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimRelationNames.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "sum-highlight-not-styled": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/aimListView.test.tsx; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "production": [
+      "apps/viewer/src/components/viewer/lists/ListResultsTable.tsx"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/aimListView.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "visible-only-accepts-non-boolean": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimListLayoutPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "production": [
+      "apps/viewer/src/aim/aimListViewPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimListLayoutPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "visible-only-not-applied": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/aimListView.test.tsx; that file has a green, attributable baseline.",
+    "base": "bc57988878c68ded4b3f11117798841ba2b246ca",
+    "head": "870a8299f8467e878bc1123006deba280fbf7466",
+    "production": [
+      "apps/viewer/src/aim/aimListTable.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/aimListView.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "widths-auto-keeps-manual": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/aimListView.test.tsx; that file has a green, attributable baseline.",
+    "base": "bc57988878c68ded4b3f11117798841ba2b246ca",
+    "head": "870a8299f8467e878bc1123006deba280fbf7466",
+    "production": [
+      "apps/viewer/src/aim/aimListTable.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/aimListView.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "widths-out-of-range-accepted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimListLayoutPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "fef8b3e22d73c89455c238bd05e27949d2daf3d9",
+    "production": [
+      "apps/viewer/src/aim/aimListViewPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimListLayoutPlan.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

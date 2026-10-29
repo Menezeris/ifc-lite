@@ -18,7 +18,7 @@ import { noteListOpened, resetListRun, settledListSummary } from './aimListRun.j
 import { applyListView, settleListView, updateListFromChat } from './aimListControl.js';
 import { describeList } from './aimListState.js';
 import { parseListView } from './aimListViewPlan.js';
-import { resetListView } from './aimListViewStore.js';
+import { resetListView, setListHighlight } from './aimListViewStore.js';
 
 export function openListFromChat(data: LensInboundMessage): void {
   const msg = parseOpenList(data);
@@ -29,7 +29,12 @@ export function openListFromChat(data: LensInboundMessage): void {
   const state = useViewerStore.getState();
   const models = [...state.models.values()].map((m) => ({ name: m.name, fingerprint: m.sourceFingerprint }));
   // Zoskupenie, súčty, zoradenie a maximalizácia z `view` (D-149); `parseOpenList` ho už overil.
-  const definition = applyListView(listDefinitionFromChat(msg, models, crypto.randomUUID(), Date.now()), parseListView(msg.view) ?? {});
+  // Nový zoznam (#276, #274): zvýraznenie predošlého zoznamu zmizne a pri izolácii v 3D sa tabuľka nezúži na jej riadky.
+  // Izoláciu v 3D neruším (je to pohľad používateľa), len filter "len viditeľné" v tabuľke sa vypne; `view.visibleOnly` ho prebije.
+  const view = parseListView(msg.view) ?? {};
+  setListHighlight(null);
+  if (view.visibleOnly === undefined && state.isolatedEntities !== null) view.visibleOnly = false;
+  const definition = applyListView(listDefinitionFromChat(msg, models, crypto.randomUUID(), Date.now()), view);
   noteListOpened(definition, msg.run === true); // s `run` tabuľku po zobrazení panela spustí hook (D-148)
   state.setPendingListDraft(definition);
   state.setListPanelVisible(true);

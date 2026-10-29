@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimListLayoutPlan.ts a/apps/viewer/src/aim/aimListLayoutPlan.ts
+index 135ae74c..3b829604 100644
+--- b/apps/viewer/src/aim/aimListLayoutPlan.ts
++++ a/apps/viewer/src/aim/aimListLayoutPlan.ts
+@@ -81,7 +81,7 @@ export function cellEquals(cell: CellValue, wanted: string | number): boolean {
+   if (cell === null || cell === undefined || cell === '') return false;
+   if (typeof wanted === 'number') return typeof cell === 'number' ? cell === wanted : Number(cell) === wanted;
+   if (typeof cell === 'number') return String(cell) === wanted.trim() || (wanted.trim() !== '' && cell === Number(wanted));
+-  return String(cell) === wanted;
++  return fold(String(cell)) === fold(wanted);
+ }
+ 
+ export function resolveHighlight(h: AimListHighlight, columns: readonly ColumnDefinition[], rows: readonly ListRow[]): ResolvedHighlight {

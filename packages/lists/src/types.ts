@@ -114,6 +114,14 @@ export interface ListDataProvider {
    *  serves (one IfcProject per file). Used by the `spatial` column at
    *  `Project` level. '' when the model has no named project. */
   getProjectName?(): string;
+  // >>> AIM-FORK: stlpce IFC vztahov Referenced / Boundary / Aggregate (#277)
+  /** Names of the spatial structure elements (storey, space...) that reference the element through
+   *  IfcRelReferencedInSpatialStructure (inverse edge); empty when none. `spatial` column, level `Referenced`. */
+  getReferencedInNames?(expressId: number): string[];
+  /** Names of the spaces whose boundary the element forms (IfcRelSpaceBoundary, inverse edge); empty when none.
+   *  `spatial` column, level `Boundary`. */
+  getSpaceBoundaryNames?(expressId: number): string[];
+  // <<< AIM-FORK
   /** Source model / file display name — constant for every element the
    *  provider serves. Used by the `model` column to identify which federated
    *  file a row comes from. '' when unknown (e.g. single-model legacy path). */
