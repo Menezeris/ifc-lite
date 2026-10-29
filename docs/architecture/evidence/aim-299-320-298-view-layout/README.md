@@ -37,7 +37,7 @@ Naraz len jedno z nich. Počet hodnôt `sizes` podľa `layout`:
 
 Príklady: "väčšia pravá dlaždica s výkresom" = `layout: "split_h", tiles: ["3D", "<výkres>"], ratio: 0.3` (3D 30 %, výkres 70 %); alebo `layout: "three_right", ratio: 0.7` (veľká vpravo 70 %).
 
-Pravidlá: žiadna dlaždica nie je menšia než 10 % (menšia hodnota sa zdvihne a `APPLIED.issues` to povie). Zlý počet `sizes` pri danom `layout` správu **odmietne validácia** (nepríde nič); `sizes` / `ratio` pri `grid4` a `single` tiež. Zmena `layout` bez `ratio` / `sizes` vráti delenie na polovice a tretiny. Ručne ťahaný pomer ostane, kým sa `layout` nezmení.
+Pravidlá: žiadna dlaždica nie je menšia než 10 % (menšia hodnota sa zdvihne a `APPLIED.issues` to povie). Zlý počet `sizes` pri danom `layout` správu **odmietne validácia** (`APPLIED.issues`: "VIEW_TABS: neplatná správa", nič sa nezmení); `sizes` / `ratio` pri `grid4` a `single` tiež. Zmena `layout` bez `ratio` / `sizes` vráti delenie na polovice a tretiny. Ručne ťahaný pomer ostane, kým sa `layout` nezmení.
 
 Čítanie: `get_viewer_state` → `layout.sizes` (podiely v poradí z tabuľky, súčet 1; pole chýba pri polovicích a tretinách).
 
