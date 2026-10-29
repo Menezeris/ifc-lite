@@ -104,10 +104,10 @@
    435 apps/viewer/src/components/viewer/TitleBlockEditor.tsx
    501 apps/viewer/src/components/viewer/tools/measure-modes/radius.ts
    818 apps/viewer/src/components/viewer/tools/MeasurementVisuals.tsx
-   741 apps/viewer/src/components/viewer/useGeometryStreaming.ts
+   732 apps/viewer/src/components/viewer/useGeometryStreaming.ts
    901 apps/viewer/src/components/viewer/useMouseControls.ts
    471 apps/viewer/src/components/viewer/ViewerLayout.tsx
-  1548 apps/viewer/src/components/viewer/Viewport.tsx
+  1549 apps/viewer/src/components/viewer/Viewport.tsx
    897 apps/viewer/src/components/viewer/ViewportContainer.tsx
    500 apps/viewer/src/components/viewer/ZonesPanel.tsx
    841 apps/viewer/src/hooks/ids/idsExportService.ts
@@ -120,7 +120,7 @@
   1037 apps/viewer/src/hooks/useDrawingGeneration.ts
    579 apps/viewer/src/hooks/useIfcCache.ts
    655 apps/viewer/src/hooks/useIfcFederation.ts
-  2215 apps/viewer/src/hooks/useIfcLoader.ts
+  2224 apps/viewer/src/hooks/useIfcLoader.ts
    432 apps/viewer/src/hooks/useIfcServer.ts
    457 apps/viewer/src/hooks/useSymbolicAnnotations.ts
    633 apps/viewer/src/lib/analytics-scrub.ts
@@ -178,7 +178,7 @@
    457 packages/codegen/src/express-parser.ts
    645 packages/codegen/src/rust-generator.ts
    640 packages/codegen/src/typescript-generator.ts
-   805 packages/collab-server/src/layer-registry-route.ts
+   766 packages/collab-server/src/layer-registry-route.ts
    691 packages/collab-server/src/room-manager.ts
    499 packages/collab-server/src/room-token.ts
    541 packages/collab-server/src/server.ts
@@ -194,7 +194,6 @@
    432 packages/data/src/property-table.ts
    410 packages/data/src/step-serializers.ts
    484 packages/data/src/types.ts
-   439 packages/diff/src/fingerprint.ts
    547 packages/drawing-2d/src/drawing-generator.ts
    507 packages/drawing-2d/src/dxf/convert.ts
    898 packages/drawing-2d/src/dxf/parser.ts
@@ -212,8 +211,8 @@
    599 packages/drawing-2d/src/sheet/title-block-renderer.ts
    489 packages/drawing-2d/src/styles.ts
    537 packages/drawing-2d/src/svg-exporter.ts
-   573 packages/drawing-2d/src/symbols/door-symbol.ts
-   808 packages/drawing-2d/src/types.ts
+   530 packages/drawing-2d/src/symbols/door-symbol.ts
+   807 packages/drawing-2d/src/types.ts
    478 packages/drawing-underlay/src/pdf-plane-pipeline.ts
    590 packages/export/src/effective-index.ts
    680 packages/export/src/ifc5-exporter.ts
@@ -223,8 +222,8 @@
    498 packages/export/src/schema-converter.ts
    427 packages/extensions/src/testing/runner.ts
    638 packages/geometry/src/coordinate-handler.ts
-  1535 packages/geometry/src/geometry-parallel.ts
-  1772 packages/geometry/src/geometry.worker.ts
+  1541 packages/geometry/src/geometry-parallel.ts
+  1773 packages/geometry/src/geometry.worker.ts
    917 packages/geometry/src/ifc-lite-bridge.ts
   1528 packages/geometry/src/index.ts
    730 packages/geometry/src/native-bridge.ts
@@ -235,8 +234,8 @@
    612 packages/ids/src/translation/service.ts
    630 packages/ids/src/types.ts
    755 packages/ids/src/validation/validator.ts
-   468 packages/ifcx/src/federated-composition.ts
-   645 packages/ifcx/src/index.ts
+   425 packages/ifcx/src/federated-composition.ts
+   693 packages/ifcx/src/index.ts
    753 packages/lists/src/engine.ts
    538 packages/mcp/src/server.ts
    470 packages/mcp/src/tools/layer-review.ts
@@ -247,7 +246,7 @@
    525 packages/mutations/src/csv-connector.ts
   1868 packages/mutations/src/mutable-property-view.ts
    422 packages/oauth-pkce/src/token-manager.ts
-   849 packages/parser/src/columnar-parser.ts
+   851 packages/parser/src/columnar-parser.ts
    467 packages/parser/src/compact-entity-index.ts
    491 packages/parser/src/data-store-transport.ts
    553 packages/parser/src/material-resolver.ts
@@ -273,7 +272,7 @@
    758 packages/renderer/src/pointcloud/point-cloud-spatial-index.ts
    459 packages/renderer/src/raycast-engine.ts
    441 packages/renderer/src/scene-raycaster.ts
-  4030 packages/renderer/src/scene.ts
+  4034 packages/renderer/src/scene.ts
    549 packages/renderer/src/section-2d-overlay.ts
    539 packages/renderer/src/shaders/main.wgsl.ts
    417 packages/renderer/src/shadow-pass.ts

@@ -72,6 +72,7 @@ export const UNSUPPORTED_PANELS: Partial<Record<WorkspacePanelId, TranslationKey
   assistant: 'assistantSources.boundaryAssistant',
   environment: 'assistantSources.boundaryEnvironment',
   idsStudio: 'assistantSources.boundaryIdsStudio',
+  influx: 'assistantSources.boundaryInflux',
   // >>> AIM-FORK: fork-only panels (D-072, D-075) hold no analysis result
   'drawing-underlay': 'aimFork.assistant.boundaryDrawingUnderlay',
   documents: 'aimFork.assistant.boundaryDocuments',
