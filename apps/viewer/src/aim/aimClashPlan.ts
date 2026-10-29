@@ -12,6 +12,8 @@ import {
   MAX_SAVE_RESULTS, type ClashElementWire, type ClashKind, type ClashResultWire, type ClashReviewState, type ClashReviewWire,
   type ClashSeverityWire, type ClashSideWire, type ClashTestWire,
 } from './clash-protocol.js';
+import type { ClashMatrix } from './aimClashMatrix.js';
+import type { MatrixCell } from './clashCellFilter.js';
 
 /** Kľúč kontroly dvojice: pravidlo a oba GUID zoradené, ako `clashReviewKey` z `@ifc-lite/clash`. */
 export const pairKey = (rule: string, a: string, b: string): string => (a <= b ? `${rule} ${a} ${b}` : `${rule} ${b} ${a}`);
@@ -169,6 +171,9 @@ export interface ClashLocalInput {
   selected: { a: ClashElementWire; b: ClashElementWire } | null;
   reviews: ClashReviewWire[];
   missing?: number;
+  /** Matica disciplín behu (#302) a bunka, ktorou je zoznam v paneli práve filtrovaný. */
+  matrix?: ClashMatrix;
+  cell?: MatrixCell | null;
 }
 
 /** `view_state.clash_local` v tvare, ktorý čaká host; `undefined`, keď nie je otvorený žiadny test. */
@@ -178,6 +183,7 @@ export function describeClash(i: ClashLocalInput): Record<string, unknown> | und
   return {
     test: i.test, from_aim: i.fromAim, dirty: i.dirty,
     ...(i.run ? { run: { ...(i.run.id ? { id: i.run.id } : {}), total: i.run.total, by_status: i.run.by_status, by_review: i.run.by_review, source: 'local', ...(i.missing ? { missing_from_saved: i.missing } : {}) } } : {}),
+    ...(i.matrix && i.run ? { matrix: { ...i.matrix, ...(i.cell ? { filter: i.cell } : {}) } } : {}),
     ...(i.selected ? { selected: { a: pick(i.selected.a), b: pick(i.selected.b) } } : {}),
     ...(i.reviews.length ? { reviews: i.reviews } : {}),
   };

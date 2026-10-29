@@ -15,6 +15,8 @@ import { runRequestOf } from '@/lib/clash/run-request';
 import { matchRun, testSignature } from './aimClashPlan.js';
 import { activePreset, changesOf, clashesOf, testOf, useAimClash } from './aimClashStore.js';
 import { saveToAim } from './aimClash.js';
+import { buildMatrix } from './aimClashMatrix.js';
+import { clearClashCell, sameCell, toggleClashCell, useClashCell } from './clashCellFilter.js';
 
 interface Props {
   /** Beh jedného pravidla (presetu) z panela clash. */
@@ -50,6 +52,19 @@ export default function AimClashBar({ runPreset }: Props) {
     void runPreset(preset.id);
   }, [run, preset, hasModel, running, runPreset]);
 
+  // Matica disciplín (#302): z výsledkov behu aktívneho presetu; prepočíta sa len pri zmene výsledku, stavov alebo modelov.
+  const cell = useClashCell((s) => s.cell);
+  const matrix = useMemo(() => {
+    if (!preset || !result || runRequestOf(result)?.kind !== 'preset') return null;
+    const v = useViewerStore.getState();
+    const m = buildMatrix(preset.id, clashesOf(v), (id) => v.models.get(id)?.name ?? id, (k) => v.clashReviews.get(k)?.status);
+    return m.cells.length ? m : null;
+  }, [preset, result, reviews, models]);
+  // Bunka, ktorá v novom behu nie je, by nechala zoznam prázdny bez vysvetlenia.
+  useEffect(() => {
+    if (cell && !matrix?.cells.some((c) => sameCell(c, cell))) clearClashCell();
+  }, [cell, matrix]);
+
   const linked = !!slot && slot.presetId === preset?.id;
   const ranPreset = result != null && preset != null && runRequestOf(result)?.kind === 'preset';
   const match = linked && loaded && ranPreset && preset ? matchRun(loaded.results, clashesOf(useViewerStore.getState()), preset.id) : null;
@@ -84,6 +99,26 @@ export default function AimClashBar({ runPreset }: Props) {
         {t('aimFork.clash.save')}
       </button>
       <output className="min-w-0 break-words text-2xs text-muted-foreground">{statusText}</output>
+      {matrix && (
+        <div className="flex w-full flex-wrap items-center gap-1" role="group" aria-label={t('aimFork.clash.matrix.title')} data-testid="aim-clash-matrix">
+          {matrix.cells.map((c) => {
+            const on = sameCell(c, cell);
+            return (
+              <button
+                key={`${c.a}|${c.b}`}
+                type="button"
+                aria-pressed={on}
+                title={t('aimFork.clash.matrix.cell', { a: c.a, b: c.b, total: c.total, open: c.by_review.open, resolved: c.by_review.resolved, accepted: c.by_review.accepted })}
+                onClick={() => toggleClashCell(c)}
+                className={`min-h-6 rounded border px-2 text-2xs hover:bg-muted ${on ? 'bg-muted font-medium' : ''}`}
+              >
+                {c.a} x {c.b}: {c.total} ({c.by_review.open}/{c.by_review.resolved}/{c.by_review.accepted})
+              </button>
+            );
+          })}
+          {cell && <button type="button" onClick={clearClashCell} className="min-h-6 rounded border px-2 text-2xs hover:bg-muted">{t('aimFork.clash.matrix.clear')}</button>}
+        </div>
+      )}
     </div>
   );
 }

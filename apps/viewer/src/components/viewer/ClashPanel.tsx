@@ -36,6 +36,8 @@ import { ModelBadge } from './ModelBadge';
 import { ClashExportActions } from '@/components/viewer/clash/ClashExportActions';
 // AIM-FORK (D-164): next 1 line
 import { AimClashBarLazy } from '@/aim/AimClashBarLazy';
+// AIM-FORK (#302): next 1 line
+import { inCell, useClashCell } from '@/aim/clashCellFilter';
 import { ClashSettingsDialog } from '@/components/viewer/ClashSettingsDialog';
 import { ClashRevisionCompareDialog } from '@/components/viewer/ClashRevisionCompareDialog';
 import { ClashSavedReportsDialog } from '@/components/viewer/ClashSavedReportsDialog';
@@ -410,15 +412,25 @@ export function ClashPanel({ onClose }: ClashPanelProps) {
   }, [result, reviewOf]);
 
   /** The clashes actually shown: touching + status filters applied, then ordered by `sortBy`. */
+  // >>> AIM-FORK: filter by the discipline matrix cell (#302)
+  const aimCell = useClashCell((s) => s.cell);
+  const aimModels = useViewerStore((s) => s.models);
+  // <<< AIM-FORK
   const visibleClashes = useMemo(() => {
     if (!result) return [] as Clash[];
     let list = hideTouching ? result.clashes.filter((c) => !isTouching(c)) : result.clashes;
+    // >>> AIM-FORK: filter by the discipline matrix cell (#302)
+    if (aimCell) {
+      const lab = (id: string) => aimModels.get(id)?.name ?? id;
+      list = list.filter((c) => inCell(aimCell, lab(c.a.model), lab(c.b.model)));
+    }
+    // <<< AIM-FORK
     // Status filter: skip the per-clash lookup entirely when all statuses show (default).
     if (statusFilter.size < CLASH_REVIEW_STATUSES.length) {
       list = list.filter((c) => statusFilter.has(reviewOf(c)));
     }
     return sortClashes(list, sortBy);
-  }, [result, hideTouching, sortBy, statusFilter, reviewOf]);
+  }, [result, hideTouching, sortBy, statusFilter, reviewOf, aimCell, aimModels]); // AIM-FORK (#302): aimCell, aimModels
 
   // A duplicate scan renders one section per coincident SET ("3 coincident
   // IfcColumn objects" holding its pair rows) instead of the generic
