@@ -56,6 +56,9 @@ import { toast } from '@/components/ui/toast';
 import { useViewerStore, type UnderlayDrawing } from '@/store';
 import { useFloorplanView } from '@/hooks/useFloorplanView';
 import { CalibrationPdfSurface } from './CalibrationPdfSurface';
+// >>> AIM-FORK: row note when Show in 3D is off (#280)
+import { AimUnderlayRowNote } from '@/aim/AimUnderlays3dToggle';
+// <<< AIM-FORK
 
 interface DrawingUnderlayPanelProps {
   onClose: () => void;
@@ -488,6 +491,9 @@ function DrawingRow({
 }) {
   const p = drawing.placement;
   const [fineTune, setFineTune] = useState(false);
+  // >>> AIM-FORK: zamknutý pôdorysný pohľad kreslí podklady aj pri vypnutom Show in 3D (#280)
+  const aimViewLocked = useViewerStore((s) => s.underlayViewLocked);
+  // <<< AIM-FORK
   return (
     <div className={`rounded border p-2 ${calibrating ? 'ring-1 ring-primary/50' : ''}`}>
       <div className="flex items-center gap-1.5">
@@ -526,6 +532,9 @@ function DrawingRow({
           <Trash2 className="size-3.5" aria-hidden />
         </Button>
       </div>
+      {/* >>> AIM-FORK: note on a row that is on but not drawn in 3D because Show in 3D is off (#280) */}
+      <AimUnderlayRowNote visible={p?.visible ?? false} viewLocked={aimViewLocked} />
+      {/* <<< AIM-FORK */}
       <div className="mt-1.5 flex items-center gap-2">
         <Button
           variant="outline"
