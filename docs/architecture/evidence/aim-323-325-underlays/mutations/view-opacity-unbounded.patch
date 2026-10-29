@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlaysPlan.ts a/apps/viewer/src/aim/underlaysPlan.ts
+index 68cf6ef5..ccb08d82 100644
+--- b/apps/viewer/src/aim/underlaysPlan.ts
++++ a/apps/viewer/src/aim/underlaysPlan.ts
+@@ -59,7 +59,7 @@ export function isUnderlayItems(v: unknown): v is UnderlayItemWire[] {
+ 
+ export function isUnderlaysViewWire(v: unknown): v is UnderlaysViewWire {
+   return isObj(v) && isBool(v.show) && Array.isArray(v.items) && v.items.length <= MAX_UNDERLAY_ITEMS
+-    && v.items.every((x) => isObj(x) && isId(x.document_id) && isBool(x.visible) && typeof x.opacity === 'number');
++    && v.items.every((x) => isObj(x) && isId(x.document_id) && isBool(x.visible) && isOpacity(x.opacity));
+ }
+ 
+ /** Placement pre renderer: prepis podkladu, potom globálne skrytie; store ostáva nedotknutý (kópia). */
