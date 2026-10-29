@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/components/viewer/ClashPanel.tsx a/apps/viewer/src/components/viewer/ClashPanel.tsx
+index 1cc73525..8e359f0e 100644
+--- b/apps/viewer/src/components/viewer/ClashPanel.tsx
++++ a/apps/viewer/src/components/viewer/ClashPanel.tsx
+@@ -420,7 +420,7 @@ export function ClashPanel({ onClose }: ClashPanelProps) {
+     if (!result) return [] as Clash[];
+     let list = hideTouching ? result.clashes.filter((c) => !isTouching(c)) : result.clashes;
+     // >>> AIM-FORK: filter by the discipline matrix cell (#302)
+-    if (false as boolean) {
++    if (aimCell) {
+       const lab = (id: string) => aimModels.get(id)?.name ?? id;
+       list = list.filter((c) => inCell(aimCell, lab(c.a.model), lab(c.b.model)));
+     }

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashPlan.ts a/apps/viewer/src/aim/aimClashPlan.ts
+index 2de8f84d..02ecac95 100644
+--- b/apps/viewer/src/aim/aimClashPlan.ts
++++ a/apps/viewer/src/aim/aimClashPlan.ts
+@@ -183,7 +183,7 @@ export function describeClash(i: ClashLocalInput): Record<string, unknown> | und
+   return {
+     test: i.test, from_aim: i.fromAim, dirty: i.dirty,
+     ...(i.run ? { run: { ...(i.run.id ? { id: i.run.id } : {}), total: i.run.total, by_status: i.run.by_status, by_review: i.run.by_review, source: 'local', ...(i.missing ? { missing_from_saved: i.missing } : {}) } } : {}),
+-    ...(i.matrix ? { matrix: { ...i.matrix, ...(i.cell ? { filter: i.cell } : {}) } } : {}),
++    ...(i.matrix && i.run ? { matrix: { ...i.matrix, ...(i.cell ? { filter: i.cell } : {}) } } : {}),
+     ...(i.selected ? { selected: { a: pick(i.selected.a), b: pick(i.selected.b) } } : {}),
+     ...(i.reviews.length ? { reviews: i.reviews } : {}),
+   };

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/AimClashBar.tsx a/apps/viewer/src/aim/AimClashBar.tsx
+index 8ef65419..d411e4d9 100644
+--- b/apps/viewer/src/aim/AimClashBar.tsx
++++ a/apps/viewer/src/aim/AimClashBar.tsx
+@@ -55,7 +55,7 @@ export default function AimClashBar({ runPreset }: Props) {
+   // Matica disciplín (#302): z výsledkov behu aktívneho presetu; prepočíta sa len pri zmene výsledku, stavov alebo modelov.
+   const cell = useClashCell((s) => s.cell);
+   const matrix = useMemo(() => {
+-    if (!preset || !result ) return null;
++    if (!preset || !result || runRequestOf(result)?.kind !== 'preset') return null;
+     const v = useViewerStore.getState();
+     const m = buildMatrix(preset.id, clashesOf(v), (id) => v.models.get(id)?.name ?? id, (k) => v.clashReviews.get(k)?.status);
+     return m.cells.length ? m : null;

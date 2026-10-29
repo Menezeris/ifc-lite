@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/clashCellFilter.ts a/apps/viewer/src/aim/clashCellFilter.ts
+index de5a0e88..f4a6f231 100644
+--- b/apps/viewer/src/aim/clashCellFilter.ts
++++ a/apps/viewer/src/aim/clashCellFilter.ts
+@@ -20,7 +20,7 @@ export const sameCell = (x: MatrixCell | null, y: MatrixCell | null): boolean =>
+ /** Patrí kolízia (modely jej prvkov A a B, už ako štítky) do bunky? Bez bunky patrí každá. */
+ export function inCell(cell: MatrixCell | null, labelA: string, labelB: string): boolean {
+   if (!cell) return true;
+-  return true;
++  return sameCell(cellOf(labelA, labelB), cell);
+ }
+ 
+ export const useClashCell = create<{ cell: MatrixCell | null }>()(() => ({ cell: null }));

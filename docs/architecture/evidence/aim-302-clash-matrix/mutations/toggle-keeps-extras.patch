@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/clashCellFilter.ts a/apps/viewer/src/aim/clashCellFilter.ts
+index 9c1f1c36..f4a6f231 100644
+--- b/apps/viewer/src/aim/clashCellFilter.ts
++++ a/apps/viewer/src/aim/clashCellFilter.ts
+@@ -27,6 +27,6 @@ export const useClashCell = create<{ cell: MatrixCell | null }>()(() => ({ cell:
+ 
+ /** Klik na bunku ju zapne, ďalší klik na tú istú vypne. */
+ export const toggleClashCell = (next: MatrixCell): void =>
+-  useClashCell.setState((s) => ({ cell: sameCell(s.cell, next) ? null : next }));
++  useClashCell.setState((s) => ({ cell: sameCell(s.cell, next) ? null : { a: next.a, b: next.b } }));
+ 
+ export const clearClashCell = (): void => useClashCell.setState({ cell: null });
