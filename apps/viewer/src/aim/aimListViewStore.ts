@@ -115,3 +115,13 @@ export function resetListView(): void {
   maximizeRequest = null;
   highlight = null;
 }
+
+/**
+ * Matematika šírok stĺpcov a zvýraznenia (`aimListLayoutPlan`, #274, #275) je lazy, aby nebola v eager bundli
+ * (strop `bundle.json`): načíta sa pri prvej požiadavke `columnWidths` alebo `highlight`. Jeden spoločný promise,
+ * aby naň vedela počkať aj `settleListView`.
+ */
+let layoutPlan: Promise<typeof import('./aimListLayoutPlan.js')> | null = null;
+export const loadLayoutPlan = () => (layoutPlan ??= import('./aimListLayoutPlan.js'));
+/** Promise načítania, ak sa už začalo (inak `null`): kto hlási stav tabuľky, počká naň. */
+export const layoutPlanLoading = () => layoutPlan;

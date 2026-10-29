@@ -21,7 +21,7 @@ import { invalidateVisibleBasketCache } from '@/store/basketVisibleSet';
 import { openListFromChat } from '@/aim/aimList';
 import { applyListView } from '@/aim/aimListControl';
 import { parseListView } from '@/aim/aimListViewPlan';
-import { pendingTableRequest, resetListView, takeTableRequest, tableState } from '@/aim/aimListViewStore';
+import { layoutPlanLoading, pendingTableRequest, resetListView, takeTableRequest, tableState } from '@/aim/aimListViewStore';
 import type { LensInboundMessage } from '@/aim/lens-protocol';
 import { recordListRun } from '@/lib/lists/run-provenance';
 import { captureAnalysisStamp } from '@/hooks/useAnalysisStaleness';
@@ -42,6 +42,8 @@ const result: ListResult = {
   executionTime: 1,
 };
 const modelUnits = new Map([['a', ProjectUnits.empty()]]);
+// The width and highlight maths (`aimListLayoutPlan`) load lazily on the first request, so wait for that before the next React step.
+const settled = async () => { await layoutPlanLoading(); await advance(5); };
 const AREA = { source: 'quantity' as const, psetName: 'Qto_SlabBaseQuantities', propertyName: 'NetArea' };
 const NAME = { source: 'attribute' as const, propertyName: 'Name' };
 const sumGrouping = { columnId: '', columnIds: [], sumColumnIds: ['col-2'], view: 'nested' as const };
@@ -71,7 +73,7 @@ afterEach(() => {
 const mount = async (grouping?: typeof sumGrouping, listId = 'x') => {
   const shown = recordListRun({ ...result }, { id: listId, name: 'L', createdAt: 0, updatedAt: 0, entityTypes: [], groups: [], columns: result.columns }, captureAnalysisStamp());
   const ui = render(<ListResultsTable result={shown} grouping={grouping} onGroupingChange={() => {}} modelUnits={modelUnits} />);
-  await advance(5);
+  await settled();
   return ui;
 };
 const bodyRows = (ui: HTMLElement) => [...ui.querySelectorAll<HTMLButtonElement>('button.absolute[aria-pressed]')];
@@ -116,14 +118,14 @@ describe('#275 šírky stĺpcov z chatu', () => {
     const before = headerWidth(ui, 'Name');
     applyListView({ id: 'x', name: 'x', createdAt: 0, updatedAt: 0, entityTypes: [], groups: [], columns: result.columns },
       view({ columnWidths: [{ column: NAME, width: 'fit' }, { column: AREA, width: 333 }] }));
-    await advance(5);
+    await settled();
     assert.ok(headerWidth(ui, 'Name') > before, 'fit widened the long column past the 460 px default cap');
     assert.equal(headerWidth(ui, 'NetArea'), 333);
     const widths = tableState()?.widths;
     assert.equal(widths?.find((w) => w.columnId === 'col-2')?.width, 333);
 
     applyListView({ id: 'x', name: 'x', createdAt: 0, updatedAt: 0, entityTypes: [], groups: [], columns: result.columns }, view({ columnWidths: 'auto' }));
-    await advance(5);
+    await settled();
     assert.equal(headerWidth(ui, 'Name'), before, 'auto drops the manual widths');
     assert.notEqual(headerWidth(ui, 'NetArea'), 333);
   });
@@ -140,7 +142,7 @@ describe('#274 zvýraznenie z chatu', () => {
       cells: [{ column: AREA, row: { column: NAME, value: 'Doska A' } }],
       sum: true,
     } }));
-    await advance(5);
+    await settled();
     const rows = bodyRows(ui);
     assert.deepEqual(rows.map(marked), [false, true, false], 'only the row whose space is Izba 2');
     const cells = [...rows[0].querySelectorAll('span')];
@@ -150,7 +152,7 @@ describe('#274 zvýraznenie z chatu', () => {
     assert.deepEqual(tableState()?.highlight, { rows: 1, cells: 1, columnIds: [], sum: ['col-2'] });
 
     applyListView(def, view({ highlight: null }));
-    await advance(5);
+    await settled();
     assert.ok(bodyRows(ui).every((r) => !marked(r) && [...r.querySelectorAll('span')].every((c) => !marked(c))));
     assert.equal(tableState()?.highlight, null);
   });
@@ -158,14 +160,14 @@ describe('#274 zvýraznenie z chatu', () => {
   it('zvýraznený stĺpec farbí hlavičku aj bunky; nový zoznam zvýraznenie zruší', async () => {
     const ui = await mount();
     applyListView(def, view({ highlight: { columns: [AREA] } }));
-    await advance(5);
+    await settled();
     const header = [...ui.querySelectorAll<HTMLElement>('div.group\\/col')].find((c) => c.textContent?.includes('NetArea'))!;
     assert.ok(header.className.includes('bg-amber-300/30'));
     assert.ok(bodyRows(ui).every((r) => r.querySelectorAll('span')[2].className.includes('bg-amber-300/30')));
 
     openListFromChat({ source: 'aim-bridge', type: 'OPEN_LIST', name: 'Ďalší', groups: [{ combinator: 'AND', rules: [{ kind: 'ifcType', op: 'in', values: ['IfcSlab'] }] }],
       columns: [{ source: 'attribute', propertyName: 'Name' }] } as unknown as LensInboundMessage);
-    await advance(5);
+    await settled();
     assert.equal(tableState()?.highlight, null, 'a new list starts without the previous highlight');
   });
 });

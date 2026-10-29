@@ -19,8 +19,8 @@ import { listRunDefinition } from '@/lib/lists/run-provenance';
 import { AUTO_COLOR_FROM_LIST_ID } from '@/lib/lens/persistence';
 import { useViewerStore } from '@/store';
 import { noteIssue } from './command-gate.js';
-import { NO_HIGHLIGHT, cellKey, focusRowKeys, planColumnWidths, resolveHighlight, rowKey } from './aimListLayoutPlan.js';
-import { listHighlight, pendingTableRequest, reportTable, subscribeListView, takeTableRequest } from './aimListViewStore.js';
+import type { ResolvedHighlight } from './aimListLayoutPlan.js';
+import { listHighlight, loadLayoutPlan, pendingTableRequest, reportTable, subscribeListView, takeTableRequest } from './aimListViewStore.js';
 
 type Dir = 'asc' | 'desc';
 
@@ -68,6 +68,7 @@ const COLUMN_HL = 'bg-amber-300/30';
 const CELL_HL = 'bg-amber-400/60 ring-1 ring-inset ring-amber-600';
 const SUM_HL = 'bg-amber-400/60 ring-1 ring-inset ring-amber-600 text-foreground';
 const NONE: AimHighlightClasses = { row: () => '', column: () => '', cell: () => '', sum: () => '' };
+const NO_RESOLVED: ResolvedHighlight = { rowKeys: new Set(), columnIds: new Set(), cellKeys: new Set(), sumAll: false, sumIds: new Set(), missing: [] };
 
 export function useAimListTable(b: AimListTableBinding): { cue: ReactNode; highlight: AimHighlightClasses } {
   const { result, sortCol, sortDir, search, visibleRows, sums, unitSymbol, setSortCol, setSortDir, setSearch,
@@ -105,37 +106,47 @@ export function useAimListTable(b: AimListTableBinding): { cue: ReactNode; highl
     if (r.export) setExportReady(r.export);
     if (r.visibleOnly !== undefined) setVisibleOnly(r.visibleOnly);
     if (r.columnWidths) {
-      const plan = planColumnWidths(r.columnWidths, result.columns, result.rows);
-      if (plan.missing.length > 0) noteIssue(`Zoznam: šírku nastaviť nešlo, stĺpec ${plan.missing.join(', ')} v zozname nie je`);
-      setWidthOverrides((prev) => {
-        const next = { ...prev, ...plan.set };
-        for (const id of plan.reset) delete next[id];
-        return next;
+      // Matematika šírok sa načíta až teraz (lazy, mimo eager bundlu); `settleListView` na ňu počká.
+      const { columnWidths: spec } = r;
+      const { columns, rows } = result;
+      void loadLayoutPlan().then(({ planColumnWidths }) => {
+        const plan = planColumnWidths(spec, columns, rows);
+        if (plan.missing.length > 0) noteIssue(`Zoznam: šírku nastaviť nešlo, stĺpec ${plan.missing.join(', ')} v zozname nie je`);
+        setWidthOverrides((prev) => {
+          const next = { ...prev, ...plan.set };
+          for (const id of plan.reset) delete next[id];
+          return next;
+        });
       });
     }
   }, [request, listId, result, setSortCol, setSortDir, setSearch, onColorBy, setColorByColIdx, setVisibleOnly, setWidthOverrides]);
 
   // Zvýraznenie (#274): drží sa v store, tu sa preloží na stĺpce a riadky výsledku, ktorý tabuľka ukazuje.
   const highlight = useSyncExternalStore(subscribeListView, listHighlight, listHighlight);
-  const resolved = useMemo(() => (highlight ? resolveHighlight(highlight, result.columns, result.rows) : NO_HIGHLIGHT), [highlight, result]);
+  // Matematika zvýraznenia (`aimListLayoutPlan`) je lazy: načíta sa pri prvom zvýraznení, dovtedy `layout` chýba.
+  const [layout, setLayout] = useState<Awaited<ReturnType<typeof loadLayoutPlan>> | null>(null);
   useEffect(() => {
-    if (!highlight) return;
+    if (highlight && !layout) void loadLayoutPlan().then(setLayout);
+  }, [highlight, layout]);
+  const resolved = useMemo(() => (highlight && layout ? layout.resolveHighlight(highlight, result.columns, result.rows) : NO_RESOLVED), [highlight, layout, result]);
+  useEffect(() => {
+    if (!highlight || !layout) return;
     if (resolved.missing.length > 0) noteIssue(`Zoznam: zvýrazniť nešlo, stĺpec ${resolved.missing.join(', ')} v zozname nie je`);
     if (highlight.sum && sumColumnIds.length === 0) noteIssue('Zoznam: zvýraznenie súčtu nemá čo ukázať, zoznam nemá súčty (view.sum)');
-  }, [highlight, resolved, sumColumnIds.length]);
-  const classes = useMemo<AimHighlightClasses>(() => (!highlight ? NONE : {
-    row: (row) => (resolved.rowKeys.has(rowKey(row)) ? ROW_HL : ''),
+  }, [highlight, layout, resolved, sumColumnIds.length]);
+  const classes = useMemo<AimHighlightClasses>(() => (!highlight || !layout ? NONE : {
+    row: (row) => (resolved.rowKeys.has(layout.rowKey(row)) ? ROW_HL : ''),
     column: (id) => (resolved.columnIds.has(id) ? COLUMN_HL : ''),
-    cell: (row, id) => (resolved.cellKeys.has(cellKey(row, id)) ? CELL_HL : ''),
+    cell: (row, id) => (resolved.cellKeys.has(layout.cellKey(row, id)) ? CELL_HL : ''),
     sum: (id) => (resolved.sumAll || resolved.sumIds.has(id) ? SUM_HL : ''),
-  }), [highlight, resolved]);
+  }), [highlight, layout, resolved]);
   // Prvý zvýraznený riadok sa raz posunie na obraz (v zoskupenej tabuľke len ak je jeho skupina rozbalená).
   const scrolled = useRef<unknown>(null);
   const firstLine = useMemo(() => {
-    if (!highlight) return -1;
-    const keys = focusRowKeys(resolved);
-    return lines.findIndex((it) => it.kind === 'row' && keys.has(rowKey(it.row)));
-  }, [highlight, resolved, lines]);
+    if (!highlight || !layout) return -1;
+    const keys = layout.focusRowKeys(resolved);
+    return lines.findIndex((it) => it.kind === 'row' && keys.has(layout.rowKey(it.row)));
+  }, [highlight, layout, resolved, lines]);
   useEffect(() => {
     if (!highlight || firstLine < 0 || scrolled.current === highlight) return;
     scrolled.current = highlight;
