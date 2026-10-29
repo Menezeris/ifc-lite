@@ -66,6 +66,7 @@ export type WorkspacePanelId =
   | 'review'
   | 'assistant'
   | 'idsStudio'
+  | 'influx'
   // >>> AIM-FORK: fork-only panels (D-072 underlays, D-075 documents, D-089 AIM layers)
   | 'drawing-underlay'
   | 'documents'
@@ -224,6 +225,7 @@ export const WORKSPACE_PANELS: readonly WorkspacePanelDef[] = [
   // `@ifc-lite/ids-authoring`. Results stay in Data validation. APPENDED (no
   // Alt shortcut). Flag-free like 'review'; no model gate, an IDS is
   // authored before any model is loaded.
+  { id: 'influx', titleKey: 'influx.title', Icon: BarChart3, group: 'site', region: 'side' },
   { id: 'idsStudio', titleKey: 'idsStudio.title', Icon: ClipboardPen, group: 'check', region: 'side', prefersWide: true },
   // >>> AIM-FORK: fork-only panels, kept last so upstream keeps appending above us.
   // All three form the AIM group at the top of the rail (D-104 in the AIM repo),

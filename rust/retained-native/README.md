@@ -7,14 +7,24 @@ pipeline and introduce no SMLib dependency into published processing.
 
 `run_model_native(source, worker_path, options, sink)` emits one atomic outcome
 per canonical product job. It never retries a failed product or falls back to
-exact geometry. A replacement worker qualifies its own numerical families;
-there are at most three replacements, even if a larger limit is requested.
+exact geometry. A replacement worker qualifies its own numerical families.
+`max_restarts` caps fault recovery at three replacements per model, including
+failed qualification attempts. Settled source/product refusals retain the
+healthy worker and release their receipts, including buffer-budget refusals
+after a complete reply. Cancellation with work still in flight retires its
+captured worker. The first sixteen controller-owned replacements per model are
+uncharged; further replacements spend the fault recovery budget. No cancellation
+refunds earlier faults. `ModelSummary.restarts` reports charged recovery attempts.
+An invocation fault takes precedence over an elapsed product deadline, and a
+domain retired by the executor always requires charged recovery.
 
 Published parts contain f64 object-local metres and column-major placement
 matrices into absolute IFC Z-up world metres. Every product carries
 `PresentationObligationsUnmet`. Completed opening cuts and plan-proven unvoided
-products discharge `OpeningClosure`; material, appearance, and persistent-face
-obligations remain. Final affine-only values remain
+products discharge `OpeningClosure`, and every published part carries its resolved
+appearance (`IfcAppearance` is discharged through exact's own colour resolver), and
+persistent source face keys (`PersistentFaces`) and corner normals (`SurfaceNormals`);
+only `MaterialLayers` remains, so `obligations` is `[MaterialLayers]`. Final affine-only values remain
 `incomplete` in M1. `require_final_product` still refuses.
 
 Build the real worker using `native/smlib-adapter/README.md`, then run from the
@@ -36,8 +46,9 @@ own first commit; never edit existing keys, widen values, or move keys out of
 the base. Each fragment is a JSON object of new preregistrations;
 there is no command-line tolerance override. `--manifest tests/models/manifest.json`
 selects downloaded fixtures. Engine startup/qualification must succeed before any
-coverage is reported. Exact-only orphan type products are listed separately as
-“out of M1 scope”; they never enter the coverage numerator or denominator.
+coverage is reported. Orphan type products are retained candidates since M9; an
+exact type mesh missing from the candidates is listed separately as an
+“unexpected exact-only type product” and is a universe mismatch.
 Missing files are reported explicitly and fail a
 gated run. `--bless` updates the committed coverage manifest only after a clean
 committed-fixture comparison and is forbidden whenever `CI` is set.

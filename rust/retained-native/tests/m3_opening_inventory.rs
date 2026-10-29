@@ -23,6 +23,7 @@ fn every_committed_opening_has_an_explicit_quantity_classification() {
         ("issue_3641_voiding_trap.ifc", vec![], 0), // IfcVoidingFeature, not OpeningElement.
         ("f-a-curved.ifc", vec![63, 129, 195, 261], 0),
         ("f-b-mapped.ifc", vec![135, 160], 0),
+        ("f-e-mapped-booleans.ifc", vec![190], 0), // M7 e13 opening is a .4 m cube.
         ("issue_098_wall_W.ifc", vec![], 7), // All seven Body items are IfcFacetedBrep.
         ("f-c-extrusion.ifc", vec![], 0),
         ("f-c-brep.ifc", vec![], 0),
@@ -41,6 +42,12 @@ fn every_committed_opening_has_an_explicit_quantity_classification() {
         let name = std::path::Path::new(path).file_name().unwrap().to_str().unwrap();
         assert!(pins.iter().any(|p| p.0 == name), "base fixture needs a reviewed count");
     }
+    let pins: Vec<_> = pins.into_iter().chain([
+        // #7955 M9 expands the corpus: #85/#95 are mapped extrusion openings;
+        // the #4560 cutters are Boolean operands, not IfcOpeningElement entities.
+        ("issue_6446_mapped_source_frames.ifc", vec![85, 95], 0),
+        ("issue_4560_wall_roof_polygonal_cutters.ifc", vec![], 0),
+    ]).collect();
     for path in options::committed_models(&root).expect("valid per-slice universe") {
         let name = std::path::Path::new(&path).file_name().unwrap().to_str().unwrap();
         let bytes = std::fs::read(root.join(&path)).expect("committed fixture missing");
