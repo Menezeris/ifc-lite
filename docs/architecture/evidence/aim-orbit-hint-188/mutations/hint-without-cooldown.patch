@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/orbitHintPlan.ts a/apps/viewer/src/aim/orbitHintPlan.ts
+index 973b833f..586dcab9 100644
+--- b/apps/viewer/src/aim/orbitHintPlan.ts
++++ a/apps/viewer/src/aim/orbitHintPlan.ts
+@@ -30,7 +30,7 @@ export function orbitBlocked(s: OrbitLockState): boolean {
+ /** Ukázať nápovedu: orbit je zablokovaný, ťahanie už nie je kliknutie a od poslednej nápovedy ubehla pauza. */
+ export function shouldShowOrbitHint(blocked: boolean, draggedPx: number, now: number, lastShownAt: number | null): boolean {
+   if (!blocked || draggedPx < ORBIT_ATTEMPT_PX) return false;
+-  return true;
++  return lastShownAt === null || now - lastShownAt >= ORBIT_HINT_COOLDOWN_MS;
+ }
+ 
+ /** Čo o klávese a jej cieli treba vedieť (podmnožina `KeyboardEvent`). */

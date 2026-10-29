@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/orbitHintPlan.ts a/apps/viewer/src/aim/orbitHintPlan.ts
+index 2caa0b44..586dcab9 100644
+--- b/apps/viewer/src/aim/orbitHintPlan.ts
++++ a/apps/viewer/src/aim/orbitHintPlan.ts
+@@ -29,7 +29,7 @@ export function orbitBlocked(s: OrbitLockState): boolean {
+ 
+ /** Ukázať nápovedu: orbit je zablokovaný, ťahanie už nie je kliknutie a od poslednej nápovedy ubehla pauza. */
+ export function shouldShowOrbitHint(blocked: boolean, draggedPx: number, now: number, lastShownAt: number | null): boolean {
+-  if (!blocked) return false;
++  if (!blocked || draggedPx < ORBIT_ATTEMPT_PX) return false;
+   return lastShownAt === null || now - lastShownAt >= ORBIT_HINT_COOLDOWN_MS;
+ }
+ 

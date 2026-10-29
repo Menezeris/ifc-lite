@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/orbitHintPlan.ts a/apps/viewer/src/aim/orbitHintPlan.ts
+index b621a0d4..586dcab9 100644
+--- b/apps/viewer/src/aim/orbitHintPlan.ts
++++ a/apps/viewer/src/aim/orbitHintPlan.ts
+@@ -55,7 +55,7 @@ const TYPING_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A']);
+ export function isSwitchTo3dKey(blocked: boolean, e: SwitchKeyEvent): boolean {
+   if (!blocked || e.repeat || e.defaultPrevented) return false;
+   if (e.key !== 'Enter' && e.key !== ' ') return false;
+-  
++  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return false;
+   const t = e.target as { tagName?: string; isContentEditable?: boolean } | null;
+   if (t?.isContentEditable) return false;
+   return !(t?.tagName && TYPING_TAGS.has(t.tagName.toUpperCase()));

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/orbitHintPlan.ts a/apps/viewer/src/aim/orbitHintPlan.ts
+index 66fe1ce7..586dcab9 100644
+--- b/apps/viewer/src/aim/orbitHintPlan.ts
++++ a/apps/viewer/src/aim/orbitHintPlan.ts
+@@ -24,7 +24,7 @@ export interface OrbitLockState {
+ 
+ /** Orbit je zámkom kamery zablokovaný (ťahanie posúva): zamknutý pôdorys počas kalibrácie. */
+ export function orbitBlocked(s: OrbitLockState): boolean {
+-  return s.underlayViewLocked;
++  return s.underlayViewLocked && s.underlayCalibration !== null;
+ }
+ 
+ /** Ukázať nápovedu: orbit je zablokovaný, ťahanie už nie je kliknutie a od poslednej nápovedy ubehla pauza. */

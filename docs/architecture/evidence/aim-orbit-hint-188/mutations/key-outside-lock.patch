@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/orbitHintPlan.ts a/apps/viewer/src/aim/orbitHintPlan.ts
+index 5e4a1894..586dcab9 100644
+--- b/apps/viewer/src/aim/orbitHintPlan.ts
++++ a/apps/viewer/src/aim/orbitHintPlan.ts
+@@ -53,7 +53,7 @@ const TYPING_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A']);
+  * bez modifikátorov a nie pri opakovaní klávesu.
+  */
+ export function isSwitchTo3dKey(blocked: boolean, e: SwitchKeyEvent): boolean {
+-  if (e.repeat || e.defaultPrevented) return false;
++  if (!blocked || e.repeat || e.defaultPrevented) return false;
+   if (e.key !== 'Enter' && e.key !== ' ') return false;
+   if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return false;
+   const t = e.target as { tagName?: string; isContentEditable?: boolean } | null;

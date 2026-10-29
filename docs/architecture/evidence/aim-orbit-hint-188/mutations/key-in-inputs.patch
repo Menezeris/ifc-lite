@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/orbitHintPlan.ts a/apps/viewer/src/aim/orbitHintPlan.ts
+index 365a224e..586dcab9 100644
+--- b/apps/viewer/src/aim/orbitHintPlan.ts
++++ a/apps/viewer/src/aim/orbitHintPlan.ts
+@@ -58,5 +58,5 @@ export function isSwitchTo3dKey(blocked: boolean, e: SwitchKeyEvent): boolean {
+   if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return false;
+   const t = e.target as { tagName?: string; isContentEditable?: boolean } | null;
+   if (t?.isContentEditable) return false;
+-  return true;
++  return !(t?.tagName && TYPING_TAGS.has(t.tagName.toUpperCase()));
+ }
