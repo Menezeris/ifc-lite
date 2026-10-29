@@ -138,9 +138,9 @@ export function useColorOverlaySync({
       } else {
         // >>> AIM-FORK: priestor nikdy plnou farbou, jedno miesto pre všetky cesty (AIM D-173, #298)
         const overrides = withoutOpaqueSpaces(pendingColorUpdates, currentSpacePredicate());
-        // <<< AIM-FORK
         scene.setColorOverrides(overrides, device, pipeline);
         recordAwaitingMesh(scene, overrides);
+        // <<< AIM-FORK
       }
       renderer.requestRender();
       clearPendingColorUpdates();

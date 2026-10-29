@@ -12,7 +12,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { IfcDataStore } from '@ifc-lite/parser';
 import { clearHostColumns, setHostColumn } from '@/aim/aimHostColumns';
-import { createListDataProvider } from './adapter.js';
+import { createListDataProvider } from '@/lib/lists/adapter';
 
 const store = { entities: { getGlobalId: (id: number) => `guid-${id}` } } as unknown as IfcDataStore;
 
