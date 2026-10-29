@@ -9,31 +9,36 @@
  * podkladu v 3D plátne. Kalibrácia, ghost náhľad počas kalibrácie a zamknutý
  * pôdorysný pohľad (kamera zhora, `underlayViewLocked`) ostávajú, lebo to je 2D.
  * Hook `useDrawingUnderlay` číta `hidden` a pre uložené podklady prepíše `visible`.
+ * `overrides` (AIM #323, #325) sú prepisy jednotlivých podkladov v 3D (viditeľnosť, priehľadnosť)
+ * z chatu alebo z uloženého pohľadu, tiež bez zápisu kalibrácie (`underlaysPlan.ts`).
  */
 
 import { create } from 'zustand';
+import type { UnderlayOverrides } from './underlaysPlan.js';
 
 interface AimUnderlays3dStore {
   /** true = uložené podklady sa v 3D nekreslia. Po obnove stránky true (vypnuté). */
   hidden: boolean;
+  /** Prepisy podkladov v 3D podľa id výkresu; chýba = podľa kalibrácie. */
+  overrides: UnderlayOverrides;
   setShown: (show: boolean) => void;
+  setOverrides: (overrides: UnderlayOverrides) => void;
 }
+
+const NO_OVERRIDES: UnderlayOverrides = {};
 
 export const useAimUnderlays3d = create<AimUnderlays3dStore>((set) => ({
   // After a page reload the underlays are off: the PDFs are neither fetched nor rasterized at
   // startup, they turn on with the switch or set_view_mode underlays_3d=true
   hidden: true,
+  overrides: NO_OVERRIDES,
   setShown: (show) => set({ hidden: !show }),
+  setOverrides: (overrides) => set({ overrides }),
 }));
 
 /** Podklady sa v 3D plátne nekreslia: vypnuté a nejde o zamknutý pôdorysný pohľad (2D). */
 export function underlaysHiddenIn3d(flags: { hidden: boolean; viewLocked: boolean }): boolean {
   return flags.hidden && !flags.viewLocked;
-}
-
-/** Placement pre renderer: pri skrytí `visible: false`, kalibrácia v store ostáva nedotknutá (kópia). */
-export function withUnderlay3dVisibility<T extends { visible: boolean }>(placement: T, hide: boolean): T {
-  return hide && placement.visible ? { ...placement, visible: false } : placement;
 }
 
 /** Skrytý placement bez textúry sa nesťahuje ani nerasterizuje, až kým sa nezapne (štart viewera). */
