@@ -1,0 +1,210 @@
+{
+  "clear-filter-drops-isolation": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/visibility-commands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/focus-dismiss-fill.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "closed-panel-resized": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/aimPanelsPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "divider-from-end-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/viewTilesPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "drag-unclamped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/viewTilesPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "float-min-width-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/aimPanelsPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "layout-drops-sizes": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/viewTilesPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "layout-without-panels-refused": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "min-share-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/viewTilesPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "panel-width-docked-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/aimPanelsPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "ratio-any-layout": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/tiles-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "reset-colors-keeps-isolation": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/visibility-commands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/focus-dismiss-fill.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "resize-keeps-old-frame": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/viewTabsApply.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/tileResize.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "side-same-as-docked-floats": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/aimPanelsPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "sizes-and-ratio-together": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/tiles-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "three-right-swapped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/viewTilesPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTilesPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "width-range-open": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "base": "f86607ad35882a8e18813a1bc6ee2d5085b7a18a",
+    "head": "aeea3f60208a686394bf4156f7f2345ebbcbddab",
+    "production": [
+      "apps/viewer/src/aim/view-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelsPlan.ts a/apps/viewer/src/aim/aimPanelsPlan.ts
+index 308546c5..e605f6a1 100644
+--- b/apps/viewer/src/aim/aimPanelsPlan.ts
++++ a/apps/viewer/src/aim/aimPanelsPlan.ts
+@@ -137,7 +137,7 @@ export function planPanelLayout(req: PanelLayoutRequest, info: PanelInfo, window
+   let where = info.where;
+   if (req.side !== undefined) {
+     const docked = where === 'right' || where === 'bottom';
+-    if (false) {
++    if (docked && req.side === where) {
+       // Už je tam.
+     } else if (where === 'floating' && req.side === info.snap) {
+       // Už je pripnutý.

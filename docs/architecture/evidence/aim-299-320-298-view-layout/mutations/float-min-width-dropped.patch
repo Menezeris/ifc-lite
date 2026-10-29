@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelsPlan.ts a/apps/viewer/src/aim/aimPanelsPlan.ts
+index c8534979..e605f6a1 100644
+--- b/apps/viewer/src/aim/aimPanelsPlan.ts
++++ a/apps/viewer/src/aim/aimPanelsPlan.ts
+@@ -151,7 +151,7 @@ export function planPanelLayout(req: PanelLayoutRequest, info: PanelInfo, window
+     else if (where === 'floating') {
+       const snap = plan.float ?? info.snap;
+       if (snap === 'bottom') plan.issues.push(`SET_PANELS: panel ${name} je pripnutý dole, šírku má celú; mení sa len výška v px`);
+-      else plan.floatWidthPx = Math.round(Math.min(windowWidthPx * 0.9, (req.width_pct / 100) * windowWidthPx));
++      else plan.floatWidthPx = Math.round(Math.max(FLOAT_MIN_W, Math.min(windowWidthPx * 0.9, (req.width_pct / 100) * windowWidthPx)));
+     } else {
+       plan.issues.push(`SET_PANELS: panel ${name} je v spodnom páse, šírku má celú`);
+     }
