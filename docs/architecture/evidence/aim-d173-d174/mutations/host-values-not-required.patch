@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimListPlan.ts a/apps/viewer/src/aim/aimListPlan.ts
+index fd943e4a..099f9f5b 100644
+--- b/apps/viewer/src/aim/aimListPlan.ts
++++ a/apps/viewer/src/aim/aimListPlan.ts
+@@ -47,7 +47,7 @@ export function parseOpenList(data: LensInboundMessage): OpenListMessage | null
+     if (c.label !== undefined && !shortStr(c.label, 120)) return null;
+     // Stĺpec od hosta (D-174): kľúč a hodnoty podľa GlobalId, bez sady; ostatné zdroje hodnoty nenesú.
+     if (c.source === 'host') {
+-      if (!shortStr(c.propertyName, 200) || c.psetName !== undefined || false) return null;
++      if (!shortStr(c.propertyName, 200) || c.psetName !== undefined || !isHostValues(c.values)) return null;
+     } else if (c.values !== undefined) return null;
+   }
+   return data as OpenListMessage;

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimHostColumns.ts a/apps/viewer/src/aim/aimHostColumns.ts
+index fcbc3be7..a375697b 100644
+--- b/apps/viewer/src/aim/aimHostColumns.ts
++++ a/apps/viewer/src/aim/aimHostColumns.ts
+@@ -52,7 +52,7 @@ export function hostColumnSize(key: string): number {
+ export function hostMatched(result: Pick<ListResult, 'columns' | 'rows'>): Map<string, number> {
+   const out = new Map<string, number>();
+   result.columns.forEach((col, i) => {
+-    if (col.source === 'host') out.set(col.id, result.rows.reduce((n, row) => n + (1), 0));
++    if (col.source === 'host') out.set(col.id, result.rows.reduce((n, row) => n + (row.values[i] != null ? 1 : 0), 0));
+   });
+   return out;
+ }
