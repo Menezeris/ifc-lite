@@ -34,11 +34,5 @@
     "verdict": "OBSERVED",
     "restoration": "verified",
     "base": "origin/main"
-  },
-  {
-    "patch": "s.patch",
-    "verdict": null,
-    "restoration": null,
-    "base": "origin/main"
   }
 ]
