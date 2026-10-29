@@ -19,6 +19,7 @@ import { applyListView, settleListView, updateListFromChat } from './aimListCont
 import { describeList } from './aimListState.js';
 import { parseListView } from './aimListViewPlan.js';
 import { resetListView, setListHighlight } from './aimListViewStore.js';
+import { clearHostColumns, hostColumnSize, hostMatched, setHostColumn } from './aimHostColumns.js';
 
 export function openListFromChat(data: LensInboundMessage): void {
   const msg = parseOpenList(data);
@@ -26,6 +27,9 @@ export function openListFromChat(data: LensInboundMessage): void {
     noteIssue('Zoznam: viewer správu odmietol (neplatné filtre alebo stĺpce)');
     return;
   }
+  // Nový zoznam zahodí hodnoty stĺpcov od hosta predošlého (D-174).
+  clearHostColumns();
+  for (const c of msg.columns) if (c.source === 'host' && c.values) setHostColumn(c.propertyName, c.values);
   const state = useViewerStore.getState();
   const models = [...state.models.values()].map((m) => ({ name: m.name, fingerprint: m.sourceFingerprint }));
   // Zoskupenie, súčty, zoradenie a maximalizácia z `view` (D-149); `parseOpenList` ho už overil.
@@ -47,10 +51,25 @@ export async function listSummary(timeoutMs: number): Promise<Record<string, unk
   const run = await settledListSummary(timeoutMs);
   if (!run) return null;
   await settleListView(timeoutMs);
-  return { ...describeList(), ...run };
+  const state = describeList();
+  noteUnmatchedHostColumns();
+  return { ...state, ...run };
+}
+
+/** Stĺpec od hosta s hodnotami, ktoré sa nezhodli so žiadnym riadkom, je problém v `APPLIED` (D-174). */
+function noteUnmatchedHostColumns(): void {
+  const result = useViewerStore.getState().listResult;
+  if (!result) return;
+  for (const [id, matched] of hostMatched(result)) {
+    const col = result.columns.find((c) => c.id === id);
+    if (col && matched === 0 && hostColumnSize(col.propertyName) > 0) {
+      noteIssue(`Zoznam: hodnoty stĺpca ${col.label ?? col.propertyName} sa nezhodujú so žiadnym riadkom (skontroluj GlobalId)`);
+    }
+  }
 }
 
 export function resetListFromChat(): void {
+  clearHostColumns();
   resetListRun();
   resetListView();
 }

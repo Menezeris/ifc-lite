@@ -121,6 +121,9 @@ export interface ListDataProvider {
   /** Names of the spaces whose boundary the element forms (IfcRelSpaceBoundary, inverse edge); empty when none.
    *  `spatial` column, level `Boundary`. */
   getSpaceBoundaryNames?(expressId: number): string[];
+  /** Text of the `host` column `key` for the element (values the AIM host sends by GlobalId, D-174, #277);
+   *  `undefined` = empty cell. */
+  getHostValue?(expressId: number, key: string): string | undefined;
   // <<< AIM-FORK
   /** Source model / file display name — constant for every element the
    *  provider serves. Used by the `model` column to identify which federated
@@ -321,7 +324,9 @@ export interface ColumnDefinition {
    * `PropertyCondition.source` for the exact `psetName`/`propertyName`
    * contract, shared verbatim between conditions and columns.
    */
-  source: 'attribute' | 'property' | 'quantity' | 'material' | 'classification' | 'spatial' | 'model' | 'zone' | 'geometry';
+  // >>> AIM-FORK: `host` = values from the AIM host by GlobalId, `propertyName` is its key (D-174, #277)
+  source: 'attribute' | 'property' | 'quantity' | 'material' | 'classification' | 'spatial' | 'model' | 'zone' | 'geometry' | 'host';
+  // <<< AIM-FORK
   /** For property: pset name. For quantity: qset name. For zone: the zone-SET id. */
   psetName?: string;
   /** Attribute / property / quantity name, the spatial level for `spatial`

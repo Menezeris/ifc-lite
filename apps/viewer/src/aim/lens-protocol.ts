@@ -88,10 +88,12 @@ export type LensInboundMessage =
 
 /** Stĺpec zoznamu z chatu, tvar `ColumnDefinition` z `@ifc-lite/lists` bez `id`. */
 export interface AimListColumnWire {
-  source: 'attribute' | 'property' | 'quantity' | 'material' | 'classification' | 'spatial' | 'model' | 'zone' | 'geometry';
+  source: 'attribute' | 'property' | 'quantity' | 'material' | 'classification' | 'spatial' | 'model' | 'zone' | 'geometry' | 'host';
   psetName?: string;
   propertyName: string;
   label?: string;
+  /** `host` (D-174): text podľa IFC GlobalId (najviac 20 000 kľúčov, hodnota najviac 200 znakov); `propertyName` je kľúč stĺpca. */
+  values?: Record<string, string>;
 }
 
 /** Obálka správy Lens (zdroj a typ); obsah overí `parseLensMessage` v lenivom module. */

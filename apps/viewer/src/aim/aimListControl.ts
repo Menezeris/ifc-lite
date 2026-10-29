@@ -24,6 +24,7 @@ import { resolveModelRules } from './aimLensPlan.js';
 import { chatListDefinition, noteListOpened, noteListUpdated } from './aimListRun.js';
 import { andGroups, findColumn, nextGrouping, parseAddedGroups, parseListView, refLabel,
   type AimListColumnRef, type AimListView } from './aimListViewPlan.js';
+import { setHostColumn } from './aimHostColumns.js';
 import { editColumns, editTypes, hasEdit, parseListEdit, removeFilterKinds } from './aimListEditPlan.js';
 import { layoutPlanLoading, loadLayoutPlan, pendingMaximize, pendingTableRequest, requestListTable, requestStripMaximize, setListHighlight, tableState, takeViewRequested } from './aimListViewStore.js';
 
@@ -48,13 +49,13 @@ function columnIds(def: ListDefinition, refs: AimListColumnRef[] | undefined): s
 }
 
 /** Stĺpce, ktoré Lens farbiť nevie (upstream by ich ticho preložil na triedu IFC). */
-const NO_COLOR = new Set(['spatial', 'zone', 'geometry']);
+const NO_COLOR = new Set(['spatial', 'zone', 'geometry', 'host']);
 
 /** Id stĺpca na farby; stĺpec, ktorý Lens nevie, je problém v `APPLIED`. */
 function colorColumnId(def: ListDefinition, ref: AimListColumnRef): string | undefined {
   const col = findColumn(def.columns, ref);
   if (col && NO_COLOR.has(col.source)) {
-    noteIssue(`Zoznam: podľa stĺpca ${refLabel(ref)} (podlažie, priestor, zóna) Lens farbiť nevie; vyber stĺpec vlastnosti, atribútu, materiálu alebo modelu`);
+    noteIssue(`Zoznam: podľa stĺpca ${refLabel(ref)} (podlažie, priestor, zóna, odvodený z DB) Lens farbiť nevie; vyber stĺpec vlastnosti, atribútu, materiálu alebo modelu`);
     return undefined;
   }
   return columnIds(def, [ref])?.[0];
@@ -104,6 +105,8 @@ export function updateListFromChat(msg: ListUpdateMessage): void {
     noteIssue('Zoznam: nie je otvorený žiadny zoznam (najprv open_list)');
     return;
   }
+  // Hodnoty stĺpcov od hosta (D-174) prepíšu staré aj pri už pridanom stĺpci.
+  for (const c of edit.addColumns ?? []) if (c.source === 'host' && c.values) setHostColumn(c.propertyName, c.values);
   let def = base;
   let removed: string[] = [];
   const rerun = added.length > 0 || hasEdit(edit);

@@ -14,13 +14,14 @@ import type { ColumnDefinition, ListDefinition } from '@ifc-lite/lists';
 import type { LensInboundMessage } from './lens-protocol.js';
 import { MAX_AIM_GLOBAL_IDS, resolveModelRules, type ModelRef } from './aimLensPlan.js';
 import { parseListView } from './aimListViewPlan.js';
+import { isHostValues } from './aimHostColumns.js';
 
 export type OpenListMessage = Extract<LensInboundMessage, { type: 'OPEN_LIST' }>;
 
 const MAX_GROUPS = 8;
 const MAX_COLUMNS = 40;
 const SOURCES = new Set<ColumnDefinition['source']>([
-  'attribute', 'property', 'quantity', 'material', 'classification', 'spatial', 'model', 'zone', 'geometry',
+  'attribute', 'property', 'quantity', 'material', 'classification', 'spatial', 'model', 'zone', 'geometry', 'host',
 ]);
 /** Zdroje, pri ktorých `psetName` nesie meno sady (pset / qset / zónová sada). */
 const NEEDS_SET = new Set<ColumnDefinition['source']>(['property', 'quantity']);
@@ -44,6 +45,10 @@ export function parseOpenList(data: LensInboundMessage): OpenListMessage | null 
     if (c.psetName !== undefined && !shortStr(c.psetName, 200)) return null;
     if (NEEDS_SET.has(c.source as ColumnDefinition['source']) && c.psetName === undefined) return null;
     if (c.label !== undefined && !shortStr(c.label, 120)) return null;
+    // Stĺpec od hosta (D-174): kľúč a hodnoty podľa GlobalId, bez sady; ostatné zdroje hodnoty nenesú.
+    if (c.source === 'host') {
+      if (!shortStr(c.propertyName, 200) || c.psetName !== undefined || !isHostValues(c.values)) return null;
+    } else if (c.values !== undefined) return null;
   }
   return data as OpenListMessage;
 }

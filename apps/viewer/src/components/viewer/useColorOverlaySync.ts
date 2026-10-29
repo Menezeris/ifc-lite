@@ -64,6 +64,10 @@
 import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 import type { Renderer, SceneContents } from '@ifc-lite/renderer';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
+// >>> AIM-FORK: priestor nikdy plnou farbou (AIM D-173, #298)
+import { withoutOpaqueSpaces } from '../../aim/aimSpaceColor.js';
+import { currentSpacePredicate } from '../../aim/aimSpaceColorStore.js';
+// <<< AIM-FORK
 
 /** How long the geometry counter must hold still before the catch-up starts. */
 const REPAINT_DEBOUNCE_MS = 250;
@@ -132,8 +136,11 @@ export function useColorOverlaySync({
         scene.clearColorOverrides();
         awaitingMeshRef.current = [];
       } else {
-        scene.setColorOverrides(pendingColorUpdates, device, pipeline);
-        recordAwaitingMesh(scene, pendingColorUpdates);
+        // >>> AIM-FORK: priestor nikdy plnou farbou, jedno miesto pre všetky cesty (AIM D-173, #298)
+        const overrides = withoutOpaqueSpaces(pendingColorUpdates, currentSpacePredicate());
+        // <<< AIM-FORK
+        scene.setColorOverrides(overrides, device, pipeline);
+        recordAwaitingMesh(scene, overrides);
       }
       renderer.requestRender();
       clearPendingColorUpdates();
