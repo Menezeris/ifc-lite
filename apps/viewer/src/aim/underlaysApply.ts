@@ -37,11 +37,14 @@ export function applyUnderlaySet(msg: UnderlaySetMessage, noteIssue: (text: stri
     const store = useViewerStore.getState();
     for (const it of msg.underlays) {
       const placement = store.underlayDrawings.get(it.document_id)?.placement;
-      const o = overrides[it.document_id];
-      if (!placement || !o) continue;
-      store.updateUnderlayPlacementLive(it.document_id, { ...placement, visible: o.visible ?? placement.visible, opacity: o.opacity ?? placement.opacity });
+      if (!placement) continue;
+      // Do kalibrácie ide len to, čo položka nesie; ostatné pole prepisu (napr. z pohľadu) ostane prepisom.
+      store.updateUnderlayPlacementLive(it.document_id, { ...placement, visible: it.visible ?? placement.visible, opacity: it.opacity ?? placement.opacity });
       store.commitUnderlayPlacement(it.document_id);
-      delete overrides[it.document_id];
+      const { visible, opacity, ...rest } = overrides[it.document_id] ?? {};
+      const left = { ...(it.visible === undefined && visible !== undefined ? { visible } : {}), ...(it.opacity === undefined && opacity !== undefined ? { opacity } : {}), ...rest };
+      if (Object.keys(left).length > 0) overrides[it.document_id] = left;
+      else delete overrides[it.document_id];
     }
   }
   u.setOverrides(overrides);
