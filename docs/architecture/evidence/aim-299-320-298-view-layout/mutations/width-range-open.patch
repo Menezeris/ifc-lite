@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/view-protocol.ts a/apps/viewer/src/aim/view-protocol.ts
+index aa39990a..3ab0a8c6 100644
+--- b/apps/viewer/src/aim/view-protocol.ts
++++ a/apps/viewer/src/aim/view-protocol.ts
+@@ -82,7 +82,7 @@ export function isPanelLayoutRequest(raw: unknown): raw is PanelLayoutRequest {
+   const m = raw as Record<string, unknown>;
+   return typeof m.panel === 'string' && PANEL_NAME.test(m.panel)
+     && (m.width_pct !== undefined || m.side !== undefined)
+-    && optional(m.width_pct, (w) => inRange(w, 0, 1000))
++    && optional(m.width_pct, (w) => inRange(w, PANEL_WIDTH_PCT.min, PANEL_WIDTH_PCT.max))
+     && optional(m.side, (x) => (PANEL_SIDES as readonly unknown[]).includes(x));
+ }
+ 

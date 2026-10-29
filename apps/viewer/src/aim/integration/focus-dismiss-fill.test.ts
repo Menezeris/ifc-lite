@@ -126,6 +126,18 @@ describe('zrušenie zvýraznenia FOCUS klikom a Esc (AIM #94, #164)', () => {
     }
   });
 
+  it('RESET_COLORS zruší aj izoláciu, CLEAR_FILTER a CLEAR_FOCUS ju nechajú; skrytie ostáva (AIM #298)', () => {
+    for (const [type, cleared] of [['RESET_COLORS', true], ['CLEAR_FILTER', false], ['CLEAR_FOCUS', false]] as const) {
+      const { off, bim } = setup();
+      useViewerStore.setState({ isolatedEntities: new Set([1001, 1002]), hiddenEntities: new Set([1005]) });
+      runVisibilityCommand(msg({ type }), bim, deps);
+      assert.equal(useViewerStore.getState().isolatedEntities === null, cleared, `${type}: izolácia`);
+      assert.deepEqual([...useViewerStore.getState().hiddenEntities], [1005], `${type}: skrytie ostáva`);
+      off();
+    }
+    useViewerStore.setState({ isolatedEntities: null, hiddenEntities: new Set() });
+  });
+
   it('clearFocus bez zvýraznenia je bezpečný', () => {
     const calls: Calls = { colorize: [], colorizeRgba: [], resetColors: [] };
     clearFocus(fakeBim(calls));

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index fae9aeba..c5a03ed9 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -68,7 +68,7 @@ export function tileRects(layout: TileLayout, sizes?: readonly number[] | null):
+     case 'split_h': return [r(0, 0, a, 1), r(a, 0, b, 1)];
+     case 'split_v': return [r(0, 0, 1, a), r(0, a, 1, b)];
+     case 'three_left': return [r(0, 0, a, 1), r(a, 0, b, H), r(a, H, b, H)];
+-    case 'three_right': return [r(a, 0, a, 1), r(0, 0, b, H), r(0, H, b, H)];
++    case 'three_right': return [r(b, 0, a, 1), r(0, 0, b, H), r(0, H, b, H)];
+     case 'three_top': return [r(0, 0, 1, a), r(0, a, H, b), r(H, a, H, b)];
+     case 'three_bottom': return [r(0, b, 1, a), r(0, 0, H, b), r(H, 0, H, b)];
+     case 'three_h': return [r(0, 0, a, 1), r(a, 0, b, 1), r(a + b, 0, c, 1)];

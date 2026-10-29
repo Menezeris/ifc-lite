@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/visibility-commands.ts a/apps/viewer/src/aim/visibility-commands.ts
+index 10a6c937..c0101467 100644
+--- b/apps/viewer/src/aim/visibility-commands.ts
++++ a/apps/viewer/src/aim/visibility-commands.ts
+@@ -201,7 +201,6 @@ export function runVisibilityCommand(
+     case 'CLEAR_FILTER':
+       bim.viewer.resetColors();
+       forgetFocus();
+-      useViewerStore.getState().clearIsolation();
+       return true;
+     case 'RESET_COLORS':
+       // AIM #298: "reset farieb" je aj návrat z izolácie (host to tvrdí v MCP-TOOLS.md); skrytie ostáva, tomu slúži SHOW_ALL.

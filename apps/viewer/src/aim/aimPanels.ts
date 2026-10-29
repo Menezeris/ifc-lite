@@ -13,7 +13,9 @@ import { closePanelWindow } from '../services/panel-windows.js';
 import { SIDEBAR_PANEL_FLAGS } from '../store/store-sync.js';
 import { BOTTOM_PANEL_SETTER, isBottomPanel } from '../lib/panels/bottom-panels.js';
 import { panelIdOf } from './aimPanelList.js';
-import { panelInfo, planPanels, validPanelNames, type PanelKey, type PanelsRequest } from './aimPanelsPlan.js';
+import { planPanelLayout, panelInfo, planPanels, validPanelNames, type PanelKey, type PanelsRequest } from './aimPanelsPlan.js';
+import { isPanelKey } from './aimPanelList.js';
+import type { PanelLayoutRequest } from './view-protocol.js';
 import { forgetPanelZoom } from './aimPanelScroll.js';
 
 type Store = ReturnType<typeof useViewerStore.getState>;
@@ -82,7 +84,7 @@ function openPanel(s: Store, key: PanelKey): void {
 }
 
 /** Vykoná požiadavku; čo sa nepodarilo (napr. mobil s jedným panelom), zapíše ako problém pre `APPLIED`. */
-export function applyPanels(req: PanelsRequest, noteIssue: (text: string) => void): void {
+export function applyPanels(req: PanelsRequest, noteIssue: (text: string) => void, layout?: PanelLayoutRequest): void {
   const store = useViewerStore;
   const { steps, unknown } = planPanels(req, (key) => panelInfo(store.getState(), key).open);
   if (unknown.length > 0) noteIssue(`SET_PANELS: neznámy panel ${unknown.join(', ')} (platné: ${validPanelNames()})`);
@@ -94,4 +96,20 @@ export function applyPanels(req: PanelsRequest, noteIssue: (text: string) => voi
   if (failed.length > 0) {
     noteIssue(`SET_PANELS: ${failed.map((f) => `${f.key} ${f.open ? 'sa neotvoril' : 'sa nezavrel'}`).join(', ')}`);
   }
+  if (layout) applyPanelLayout(layout, noteIssue);
+}
+
+/** `panel_layout` (AIM #320): strana a šírka panela tými istými akciami store ako ťahanie a pripnutie myšou. */
+function applyPanelLayout(layout: PanelLayoutRequest, noteIssue: (text: string) => void): void {
+  if (!isPanelKey(layout.panel)) return noteIssue(`SET_PANELS: neznámy panel ${layout.panel} (platné: ${validPanelNames()})`);
+  const s = useViewerStore.getState();
+  const id = panelIdOf(layout.panel);
+  const plan = planPanelLayout(layout, panelInfo(s, layout.panel), window.innerWidth);
+  for (const issue of plan.issues) noteIssue(issue);
+  if (plan.float) {
+    s.floatPanel(id);
+    s.snapFloatingPanel(id, plan.float);
+  }
+  if (plan.sidebarWidthPct !== undefined) s.setSidebarWidthPct(plan.sidebarWidthPct);
+  if (plan.floatWidthPx !== undefined) s.setFloatingPanelRect(id, { w: plan.floatWidthPx });
 }

@@ -1,0 +1,15 @@
+diff --git b/apps/viewer/src/aim/aimPanelsPlan.ts a/apps/viewer/src/aim/aimPanelsPlan.ts
+index c50776a9..e605f6a1 100644
+--- b/apps/viewer/src/aim/aimPanelsPlan.ts
++++ a/apps/viewer/src/aim/aimPanelsPlan.ts
+@@ -122,6 +122,10 @@ export interface PanelLayoutPlan {
+ export function planPanelLayout(req: PanelLayoutRequest, info: PanelInfo, windowWidthPx: number): PanelLayoutPlan {
+   const plan: PanelLayoutPlan = { issues: [] };
+   const name = req.panel;
++  if (!info.open) {
++    plan.issues.push(`SET_PANELS: panel ${name} nie je otvorený, šírka a strana sa nenastavili`);
++    return plan;
++  }
+   if (info.where === 'window') {
+     plan.issues.push(`SET_PANELS: panel ${name} je v samostatnom okne, jeho veľkosť viewer nenastavuje`);
+     return plan;

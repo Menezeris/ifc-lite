@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTilesPlan.ts a/apps/viewer/src/aim/viewTilesPlan.ts
+index bd86fef3..c5a03ed9 100644
+--- b/apps/viewer/src/aim/viewTilesPlan.ts
++++ a/apps/viewer/src/aim/viewTilesPlan.ts
+@@ -51,7 +51,7 @@ export function normalizeSizes(raw: readonly number[], count: number): number[]
+   const total = raw.reduce((a, v) => a + v, 0);
+   const out = raw.map((v) => v / total);
+   for (let pass = 0; pass < count; pass++) {
+-    const low = out.map((v, i) => (v < 0 ? i : -1)).filter((i) => i >= 0);
++    const low = out.map((v, i) => (v < MIN_TILE_SHARE - 1e-9 ? i : -1)).filter((i) => i >= 0);
+     if (low.length === 0) break;
+     const rest = out.reduce((a, v, i) => (low.includes(i) ? a : a + v), 0);
+     const room = 1 - MIN_TILE_SHARE * low.length;

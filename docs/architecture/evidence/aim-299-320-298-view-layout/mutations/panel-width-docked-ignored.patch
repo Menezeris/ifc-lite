@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimPanelsPlan.ts a/apps/viewer/src/aim/aimPanelsPlan.ts
+index 3d49eaee..e605f6a1 100644
+--- b/apps/viewer/src/aim/aimPanelsPlan.ts
++++ a/apps/viewer/src/aim/aimPanelsPlan.ts
+@@ -147,7 +147,7 @@ export function planPanelLayout(req: PanelLayoutRequest, info: PanelInfo, window
+     }
+   }
+   if (req.width_pct !== undefined) {
+-    if (where === 'right') plan.issues.push('x');
++    if (where === 'right') plan.sidebarWidthPct = req.width_pct;
+     else if (where === 'floating') {
+       const snap = plan.float ?? info.snap;
+       if (snap === 'bottom') plan.issues.push(`SET_PANELS: panel ${name} je pripnutý dole, šírku má celú; mení sa len výška v px`);

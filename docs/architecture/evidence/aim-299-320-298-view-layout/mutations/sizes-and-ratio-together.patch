@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/tiles-protocol.ts a/apps/viewer/src/aim/tiles-protocol.ts
+index cd606052..6ccf0797 100644
+--- b/apps/viewer/src/aim/tiles-protocol.ts
++++ a/apps/viewer/src/aim/tiles-protocol.ts
+@@ -46,6 +46,7 @@ export function isTilesMessage(data: unknown): data is TilesMessage {
+   const m = data as Record<string, unknown>;
+   if (m.source !== SOURCE || m.type !== 'VIEW_TABS' || m.action !== 'layout' || !isTileLayout(m.layout)) return false;
+   const count = SIZE_COUNT[m.layout];
++  if (m.sizes !== undefined && m.ratio !== undefined) return false;
+   if (m.ratio !== undefined && (count !== 2 || typeof m.ratio !== 'number' || !(m.ratio > 0 && m.ratio < 1))) return false;
+   if (m.sizes !== undefined && (count === 0 || !Array.isArray(m.sizes) || m.sizes.length !== count || !m.sizes.every((v) => typeof v === 'number' && Number.isFinite(v) && v > 0 && v <= 1e6))) return false;
+   if (m.tiles === undefined) return true;

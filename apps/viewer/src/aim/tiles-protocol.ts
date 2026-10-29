@@ -13,7 +13,7 @@
  */
 
 import { SOURCE } from './bridge-protocol.js';
-import { TILE_RECTS, isTileLayout, type TileLayout } from './viewTilesPlan.js';
+import { SIZE_COUNT, TILE_RECTS, isTileLayout, type TileLayout } from './viewTilesPlan.js';
 
 export type TileWire = { tab: string } | { plan: string } | { view: string } | null;
 
@@ -23,6 +23,10 @@ export interface TilesMessage {
   action: 'layout';
   layout: TileLayout;
   tiles?: TileWire[];
+  /** Podiel prvej (veľkej) dlaždice 0 až 1 pri rozloženiach s dvojicou podielov (AIM #299); súčasne so `sizes` nie. */
+  ratio?: number;
+  /** Váhy strán (AIM #299): 2 pri `split_*` a `three_left/right/top/bottom` (veľká : zvyšok), 3 pri `three_h` / `three_v`; viewer ich normalizuje. */
+  sizes?: number[];
 }
 
 const MAX_TEXT = 200;
@@ -41,6 +45,10 @@ export function isTilesMessage(data: unknown): data is TilesMessage {
   if (!data || typeof data !== 'object') return false;
   const m = data as Record<string, unknown>;
   if (m.source !== SOURCE || m.type !== 'VIEW_TABS' || m.action !== 'layout' || !isTileLayout(m.layout)) return false;
+  const count = SIZE_COUNT[m.layout];
+  if (m.sizes !== undefined && m.ratio !== undefined) return false;
+  if (m.ratio !== undefined && (count !== 2 || typeof m.ratio !== 'number' || !(m.ratio > 0 && m.ratio < 1))) return false;
+  if (m.sizes !== undefined && (count === 0 || !Array.isArray(m.sizes) || m.sizes.length !== count || !m.sizes.every((v) => typeof v === 'number' && Number.isFinite(v) && v > 0 && v <= 1e6))) return false;
   if (m.tiles === undefined) return true;
   return Array.isArray(m.tiles) && m.tiles.length <= TILE_RECTS[m.layout].length && m.tiles.every(isTile);
 }
