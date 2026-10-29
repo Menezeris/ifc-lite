@@ -17,17 +17,18 @@ import { rememberRunRequest } from '@/lib/clash/run-request';
 import { useViewerStore } from '@/store';
 import AimClashBar from './AimClashBar.js';
 import { clearClashCell, useClashCell } from './clashCellFilter.js';
+import { useAimClash } from './aimClashStore.js';
 
 const clash = (id: string, rule: string, ma: string, mb: string): Clash => ({
   id, a: { key: `${id}-a`, ref: 1, model: ma, tag: 'IfcWall' }, b: { key: `${id}-b`, ref: 2, model: mb, tag: 'IfcDuctSegment' },
   rule, status: 'hard', distance: -0.05, point: [0, 0, 0], bounds: { min: [0, 0, 0], max: [1, 1, 1] }, severity: 'major',
 });
-const resultOf = (presetId: string, clashes: Clash[]): ClashResult => {
+const resultOf = (presetId: string, clashes: Clash[], kind: 'preset' | 'all' = 'preset'): ClashResult => {
   const r = {
     clashes, summary: { total: clashes.length, byRule: {}, byTypePair: {}, bySeverity: { critical: 0, major: clashes.length, minor: 0, info: 0 } },
     rulesRun: [], settings: { tolerance: 0.002, excludeVoidsAndHosts: true },
   } as unknown as ClashResult;
-  rememberRunRequest(r, { kind: 'preset', presetId, name: 'T' });
+  rememberRunRequest(r, kind === 'preset' ? { kind, presetId, name: 'T' } : { kind });
   return r;
 };
 
@@ -50,6 +51,7 @@ afterEach(async () => {
   container?.remove();
   container = null;
   clearClashCell();
+  useAimClash.setState({ slot: null });
   useViewerStore.setState({ clashRawResult: null, clashResult: null, models: new Map(), clashReviews: new Map() });
 });
 
@@ -75,5 +77,14 @@ describe('AimClashBar: matica disciplín', () => {
     useClashCell.setState({ cell: { a: 'VZT', b: 'VZT' } });
     await act(async () => { useViewerStore.setState({ models, clashRawResult: raw, clashResult: raw }); });
     assert.equal(useClashCell.getState().cell, null);
+  });
+
+  it('výsledok iného druhu behu než jeden preset (napr. všetky prvky) maticu nemá', async () => {
+    const preset = useViewerStore.getState().clashPresets[0]!;
+    const raw = resultOf(preset.id, [clash('1', preset.id, 'm1', 'm2')], 'all');
+    useAimClash.setState({ slot: { code: 'C1', presetId: preset.id, testSig: '', reviews: new Map() } });
+    useViewerStore.setState({ models, clashRawResult: raw, clashResult: raw });
+    await render();
+    assert.equal(buttons().length, 0);
   });
 });

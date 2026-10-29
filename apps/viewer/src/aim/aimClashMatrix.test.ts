@@ -29,6 +29,10 @@ describe('matica disciplín kolízií (#302)', () => {
     assert.deepEqual(cell, { a: 'ASR', b: 'VZT', total: 3, by_status: { hard: 2, clearance: 1 }, by_review: { open: 1, resolved: 1, accepted: 1 } });
   });
 
+  it('modely sú zoradené podľa štítku, nie podľa poradia výskytu', () => {
+    assert.deepEqual(buildMatrix('r', [c('1', 'm2', '2', 'm2'), c('3', 'm1', '4', 'm1')], label, none).models, ['ASR', 'VZT']);
+  });
+
   it('bez kolízií je matica prázdna', () => {
     assert.deepEqual(buildMatrix('r', [], label, none), { models: [], cells: [] });
   });
