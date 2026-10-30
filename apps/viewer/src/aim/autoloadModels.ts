@@ -148,5 +148,6 @@ export async function autoloadModels(urls: string[], deps: AutoloadDeps): Promis
     return p;
   });
   for (let i = 0; i < total; i++) await load(i, files[i], reports[i]);
-  if (loaded.length > 0) await (deps.prune ?? pruneModelCache)(loaded);
+  // Na pozadí: MODELS_LOADED (koniec autoloadu) na upratanie cache nečaká.
+  if (loaded.length > 0) void (deps.prune ?? pruneModelCache)(loaded);
 }
