@@ -299,12 +299,21 @@ export function storeyDrawingDoc(storeyGuid: string): string | null {
   return (docs.find((d) => calibrated(d.id)) ?? docs[0])?.id ?? null;
 }
 
+/** Výkres, ktorý vybral host (AIM D-176, `SET_VIEW_MODE documentId`); neznámy alebo nie výkres sa hlási a vráti null (vlastný výber). */
+export function hostDrawingDoc(documentId: string | undefined, note: Note): string | null {
+  if (documentId === undefined) return null;
+  const doc = useViewerStore.getState().viewerDocuments.get(documentId);
+  if (doc?.kind === 'drawing') return doc.id;
+  note(`SET_VIEW_MODE: dokument ${documentId} ${doc ? 'nie je výkres' : 'nie je v knižnici dokumentov'}, výkres sa vyberie podľa podlažia`);
+  return null;
+}
+
 /**
  * Pohľad zhora na podlažie a k nemu výkres PDF v dlaždiciach (AIM D-161: nahrádza D-072 split,
  * `SET_VIEW_MODE split`). Bez výkresu podlažia ostane len pohľad zhora a povie sa to.
  */
-export async function splitWithDrawing(storeyGuid: string, note: Note): Promise<void> {
-  const docId = storeyDrawingDoc(storeyGuid);
+export async function splitWithDrawing(storeyGuid: string, note: Note, documentId?: string): Promise<void> {
+  const docId = hostDrawingDoc(documentId, note) ?? storeyDrawingDoc(storeyGuid);
   if (!docId) return note('split: podlažie nemá výkres PDF v knižnici dokumentov, ostáva pohľad zhora na 3D');
   const vs = useViewerStore.getState();
   vs.openDocument(docId);

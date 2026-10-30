@@ -303,7 +303,7 @@ export function useAimViewCommands(bim: BimContext) {
           if (msg.mode === '3d') { m.beside(null, noteIssue); return; }
           const top = openTop(target?.guid, noteIssue);
           if (msg.mode !== 'split' || !target) return top;
-          return top.then(() => m.splitWithDrawing(target.guid, noteIssue));
+          return top.then(() => m.splitWithDrawing(target.guid, noteIssue, msg.documentId));
         });
         const done = msg.mode === '3d' ? (p ? p.then(perspective3d) : perspective3d()) : p;
         if (done) track(done);

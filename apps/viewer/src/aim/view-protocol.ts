@@ -132,7 +132,7 @@ export type ViewInboundMessage =
       /** Zarámovať len prvky cieľa alebo výberu v danej tretine obrazu (AIM D-128). */
       area?: CameraArea;
     }
-  | { source: typeof SOURCE; type: 'SET_VIEW_MODE'; mode: BridgeViewMode; storeyGuid?: string }
+  | { source: typeof SOURCE; type: 'SET_VIEW_MODE'; mode: BridgeViewMode; storeyGuid?: string; documentId?: string }
   | { source: typeof SOURCE; type: 'QUERY'; id: string; query: ViewQuery; guids?: string[] }
   /** Panely z chatu (AIM D-127): otvoriť, zavrieť, prepnúť; `all` len zavrieť. */
   | { source: typeof SOURCE; type: 'SET_PANELS'; panels?: PanelsRequest; panel_layout?: PanelLayoutRequest }
@@ -238,7 +238,7 @@ export function isViewMessage(data: unknown): data is ViewInboundMessage {
       return m.viewpoint === undefined || m.preset === 'keep';
     }
     case 'SET_VIEW_MODE':
-      return (VIEW_MODES as readonly unknown[]).includes(m.mode) && optional(m.storeyGuid, isStr);
+      return (VIEW_MODES as readonly unknown[]).includes(m.mode) && optional(m.storeyGuid, isStr) && optional(m.documentId, isStr);
     case 'MEASURE_SHOW':
       // Prázdny zoznam = zmazať kóty od hosta, merania používateľa ostanú (AIM D-152).
       return Array.isArray(m.segments)
