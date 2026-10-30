@@ -1,5 +1,5 @@
 diff --git b/packages/drawing-underlay/src/section-plane.ts a/packages/drawing-underlay/src/section-plane.ts
-index 3fe95c22..5a504c76 100644
+index d62e3e38..b9edcb32 100644
 --- b/packages/drawing-underlay/src/section-plane.ts
 +++ a/packages/drawing-underlay/src/section-plane.ts
 @@ -204,7 +204,7 @@ const dirToWorld = (d: readonly number[]): Vec3 => ({ x: d[0], y: d[2], z: -d[1]

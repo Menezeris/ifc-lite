@@ -1,5 +1,5 @@
 diff --git b/packages/drawing-underlay/src/section-plane.ts a/packages/drawing-underlay/src/section-plane.ts
-index 06b91e75..5a504c76 100644
+index 781300d3..b9edcb32 100644
 --- b/packages/drawing-underlay/src/section-plane.ts
 +++ a/packages/drawing-underlay/src/section-plane.ts
 @@ -207,7 +207,7 @@ export function sectionWorldCorners(p: SectionPlacement, offset: Vec3, lift: num

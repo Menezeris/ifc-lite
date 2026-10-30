@@ -15,7 +15,7 @@ Each patch is written mutant->fixed (the orientation of `git diff base...head`);
 | `region-ignored.patch` | `section-plane.ts` | a page `region` does not crop the quad and texture | `section-plane.test.ts` |
 | `lift-dropped.patch` | `section-plane.ts` | the quad is not lifted off the cut faces along `u x v` | `section-plane.test.ts` |
 | `source-from-placement.patch` | `section-plane.ts` | a save takes `source` from the parsed placement, so a second save after a manual move says `auto` again | `section-plane.test.ts` |
-| `winding-flip-inverted.patch` | `pdf-plane-pipeline.ts` | the reading side and the faint back side swap | `section-plane.test.ts` |
+| `winding-flip-inverted.patch` | `section-plane.ts` (`windingFlip`, used by `pdf-plane-pipeline.ts`) | the reading side and the faint back side swap | `section-plane.test.ts` |
 | `plan-of-section-doc-kept.patch` | `sectionUnderlays.ts` | a section document keeps its v1 placement, drawn as a floor plan | `sectionUnderlays.test.ts` |
 | `ids-without-index.patch` | `sectionUnderlays.ts` | several calibrations of one document share one store key | `sectionUnderlays.test.ts` |
 | `save-never-manual.patch` | `sectionUnderlays.ts` | a moved section is saved without `source: manual` | `sectionUnderlays.test.ts` |
