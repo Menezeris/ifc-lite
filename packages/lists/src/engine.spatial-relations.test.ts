@@ -26,7 +26,7 @@ function provider(): ListDataProvider {
     getEntityTypeName: () => 'IfcWall',
     getPropertySets: () => [],
     getQuantitySets: () => [],
-    getReferencedInNames: (id) => (id === 1 ? ['Izba A', 'Izba A'] : []),
+    getReferencedInNames: (id) => (id === 1 ? ['Izba A'] : []),
     getSpaceBoundaryNames: (id) => (id === 1 ? ['Izba A', 'Izba B'] : []),
     getAggregateParents: (id) => (id === 2 ? [5] : []),
   };
@@ -56,5 +56,12 @@ describe('spatial column: IFC relation levels (#277)', () => {
     const bare = { ...provider(), getReferencedInNames: undefined, getSpaceBoundaryNames: undefined, getStoreyName: () => 'NP1' };
     const r = executeList(list('Boundary'), bare);
     expect(r.rows.map((row) => row.values[0])).toEqual([null, null]);
+  });
+  it('Aggregate: parents are distinct by id, same-named parents both show, an unnamed one gets its IFC class', () => {
+    const p = (parents: number[]): ListDataProvider => ({ ...provider(), getEntityName: (id) => (id === 7 ? '' : id === 8 ? 'Zostava Z' : NAMES[id] ?? `E${id}`), getEntityTypeName: () => 'IfcElementAssembly', getAggregateParents: () => parents });
+    const first = (parents: number[]) => executeList(list('Aggregate'), p(parents)).rows[0].values[0];
+    expect(first([5, 5])).toBe('Zostava Z');
+    expect(first([5, 8])).toBe('Zostava Z, Zostava Z');
+    expect(first([7])).toBe('IfcElementAssembly');
   });
 });
