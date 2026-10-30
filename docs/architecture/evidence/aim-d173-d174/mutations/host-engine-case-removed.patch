@@ -1,0 +1,13 @@
+diff --git b/packages/lists/src/engine.ts a/packages/lists/src/engine.ts
+index cddf2cb5..c9c7d502 100644
+--- b/packages/lists/src/engine.ts
++++ a/packages/lists/src/engine.ts
+@@ -572,7 +572,7 @@ function extractColumnValues(
+         values[i] = extractGeometryColumnValue(entityId, col.propertyName, provider, columnMeta[i]);
+         break;
+       // >>> AIM-FORK: column with values from the AIM host (D-174, #277)
+-      case 'host': values[i] = null; break;
++      case 'host': values[i] = provider.getHostValue?.(entityId, col.propertyName) ?? null; break;
+       // <<< AIM-FORK
+       default:
+         values[i] = null;

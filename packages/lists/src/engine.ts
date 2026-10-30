@@ -571,6 +571,9 @@ function extractColumnValues(
       case 'geometry':
         values[i] = extractGeometryColumnValue(entityId, col.propertyName, provider, columnMeta[i]);
         break;
+      // >>> AIM-FORK: column with values from the AIM host (D-174, #277)
+      case 'host': values[i] = provider.getHostValue?.(entityId, col.propertyName) ?? null; break;
+      // <<< AIM-FORK
       default:
         values[i] = null;
     }

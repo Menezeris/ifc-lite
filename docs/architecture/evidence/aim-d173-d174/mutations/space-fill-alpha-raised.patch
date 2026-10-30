@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimRoomFill3d.ts a/apps/viewer/src/aim/aimRoomFill3d.ts
+index 0d2c2547..74104c59 100644
+--- b/apps/viewer/src/aim/aimRoomFill3d.ts
++++ a/apps/viewer/src/aim/aimRoomFill3d.ts
+@@ -30,7 +30,7 @@ export interface Box3 {
+ }
+ 
+ /** Priehľadnosť výplne, rovnaká ako v pôdoryse (`AimRoomFillLayer`). */
+-export const FILL_ALPHA = 0.45;
++export const FILL_ALPHA = 0.35;
+ /**
+  * Výplň nad vrchom krytiny, m. Výplne renderera majú záporný depth bias, ktorý ich
+  * v reverse-Z odtlačí od kamery: 3 mm nad krytinou výplň zmizla, 2 cm už nie (živo, #175).

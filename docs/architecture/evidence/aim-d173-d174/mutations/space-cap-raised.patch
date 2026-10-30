@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimSpaceColor.ts a/apps/viewer/src/aim/aimSpaceColor.ts
+index b172a8fd..ec288150 100644
+--- b/apps/viewer/src/aim/aimSpaceColor.ts
++++ a/apps/viewer/src/aim/aimSpaceColor.ts
+@@ -13,7 +13,7 @@
+  */
+ 
+ /** Najvyššie krytie farby priestoru (rozhodnutie Samuela, D-173). */
+-export const SPACE_MAX_OPACITY = 0.6;
++export const SPACE_MAX_OPACITY = 0.35;
+ 
+ /** Triedy, ktorých geometria sa nikdy nefarbí plnou farbou. */
+ const SPACE_CLASSES = new Set(['IfcSpace', 'IfcSpatialZone']);

@@ -67,7 +67,7 @@ export type AimListExportFormat = 'csv' | 'xlsx' | 'pdf';
 const EXPORT_FORMATS = new Set<string>(['csv', 'xlsx', 'pdf']);
 
 const MAX_VIEW_COLUMNS = 8;
-const SOURCES = new Set<string>(['attribute', 'property', 'quantity', 'material', 'classification', 'spatial', 'model', 'zone', 'geometry']);
+const SOURCES = new Set<string>(['attribute', 'property', 'quantity', 'material', 'classification', 'spatial', 'model', 'zone', 'geometry', 'host']);
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 
 export function parseColumnRef(raw: unknown): AimListColumnRef | null {
@@ -302,6 +302,8 @@ export interface ListStateInput {
   /** Stĺpec, podľa ktorého sú prvky v 3D ofarbené (id), a formát ponúknutý na stiahnutie. */
   colorBy?: string | null;
   exportReady?: AimListExportFormat | null;
+  /** Stĺpce od hosta (D-174): id stĺpca -> počet riadkov, ktorým sa našla hodnota. */
+  hostMatched?: ReadonlyMap<string, number>;
 }
 
 const round = (v: number) => Math.round(v * 1e6) / 1e6;
@@ -321,7 +323,8 @@ export function describeListState(def: { name: string; columns: ColumnDefinition
     ...(s.executing ? { executing: true } : {}),
     ...(s.rows !== null ? { rows: s.rows } : {}),
     ...(s.table ? { visible_rows: s.table.visibleRows } : {}),
-    columns: def.columns.map(columnLabel),
+    // Stĺpec od hosta nesie `matched` (D-174): koľko riadkov dostalo hodnotu, aby host overil, že GlobalId sedia.
+    columns: def.columns.map((c) => (c.source === 'host' ? { name: columnLabel(c), source: 'host', matched: s.hostMatched?.get(c.id) ?? 0 } : columnLabel(c))),
     filters: describeGroups(def.groups),
     sort: s.table?.sort ? { column: label(s.table.sort.columnId), dir: s.table.sort.dir } : null,
     ...(s.table?.search ? { search: s.table.search } : {}),

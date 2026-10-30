@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/components/viewer/useColorOverlaySync.ts a/apps/viewer/src/components/viewer/useColorOverlaySync.ts
+index 880c8d03..ff166ed9 100644
+--- b/apps/viewer/src/components/viewer/useColorOverlaySync.ts
++++ a/apps/viewer/src/components/viewer/useColorOverlaySync.ts
+@@ -137,7 +137,7 @@ export function useColorOverlaySync({
+         awaitingMeshRef.current = [];
+       } else {
+         // >>> AIM-FORK: priestor nikdy plnou farbou, jedno miesto pre všetky cesty (AIM D-173, #298)
+-        const overrides = pendingColorUpdates;
++        const overrides = withoutOpaqueSpaces(pendingColorUpdates, currentSpacePredicate());
+         scene.setColorOverrides(overrides, device, pipeline);
+         recordAwaitingMesh(scene, overrides);
+         // <<< AIM-FORK

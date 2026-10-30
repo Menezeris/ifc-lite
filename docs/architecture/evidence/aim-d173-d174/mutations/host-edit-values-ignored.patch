@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimListEditPlan.ts a/apps/viewer/src/aim/aimListEditPlan.ts
+index 4dd55685..9f30c276 100644
+--- b/apps/viewer/src/aim/aimListEditPlan.ts
++++ a/apps/viewer/src/aim/aimListEditPlan.ts
+@@ -49,7 +49,7 @@ export function parseListEdit(raw: unknown): AimListEdit | null {
+       // Stĺpec od hosta (D-174): pri pridaní nesie hodnoty (prepíšu staré), pri odobratí len odkaz; iné zdroje hodnoty nemajú.
+       const carriesValues = ref.source === 'host' && key === 'addColumns';
+       if (carriesValues ? !ref.propertyName || ref.psetName !== undefined || !isHostValues(values) : values !== undefined) return null;
+-      const withValues = ref;
++      const withValues = carriesValues ? { ...ref, values: values as Record<string, string> } : ref;
+       if (label === undefined) return withValues;
+       return typeof label === 'string' && label && label.length <= 120 ? { ...withValues, label } : null;
+     });

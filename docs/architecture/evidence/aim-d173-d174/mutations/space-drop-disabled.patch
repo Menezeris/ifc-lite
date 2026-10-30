@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimSpaceColor.ts a/apps/viewer/src/aim/aimSpaceColor.ts
+index 20b53622..ec288150 100644
+--- b/apps/viewer/src/aim/aimSpaceColor.ts
++++ a/apps/viewer/src/aim/aimSpaceColor.ts
+@@ -28,7 +28,7 @@ type Rgba = readonly [number, number, number, number];
+ export function withoutOpaqueSpaces<T extends Rgba>(colors: Map<number, T>, isSpace: (id: number) => boolean): Map<number, T> {
+   let out: Map<number, T> | null = null;
+   for (const [id, rgba] of colors) {
+-    if (false && isSpace(id)) {
++    if (rgba[3] > SPACE_MAX_OPACITY && isSpace(id)) {
+       out ??= new Map(colors);
+       out.delete(id);
+     }

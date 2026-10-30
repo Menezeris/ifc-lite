@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimHostColumns.ts a/apps/viewer/src/aim/aimHostColumns.ts
+index ae506f84..a375697b 100644
+--- b/apps/viewer/src/aim/aimHostColumns.ts
++++ a/apps/viewer/src/aim/aimHostColumns.ts
+@@ -31,7 +31,7 @@ export function isHostValues(v: unknown): v is Record<string, string> {
+ 
+ /** Hodnoty stĺpca `key`; nové prepíšu staré (znovu pridaný stĺpec). */
+ export function setHostColumn(key: string, values: Record<string, string>): void {
+-  if (!columns.has(key)) columns.set(key, new Map(Object.entries(values)));
++  columns.set(key, new Map(Object.entries(values)));
+ }
+ 
+ export function clearHostColumns(): void {
