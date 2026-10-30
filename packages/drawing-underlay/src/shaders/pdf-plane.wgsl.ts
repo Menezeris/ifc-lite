@@ -17,7 +17,9 @@ struct Camera {
 };
 
 struct Plane {
-  // x = opacity in [0..1]; yzw = padding (uniform buffers round to 16 B).
+  // >>> AIM-FORK: x = opacity in [0..1]; y = back-side opacity factor, z = 1
+  // when the front_facing side is the back (AIM #284); w = padding.
+  // <<< AIM-FORK
   params: vec4<f32>,
 };
 
@@ -44,10 +46,13 @@ fn vs_main(in: VsIn) -> VsOut {
   return out;
 }
 
+// >>> AIM-FORK: fainter back side of a section underlay (AIM #284, D-179)
 @fragment
-fn fs_main(in: VsOut) -> @location(0) vec4<f32> {
+fn fs_main(in: VsOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4<f32> {
   let texel = textureSample(planeTexture, planeSampler, in.uv);
-  let alpha = texel.a * plane.params.x;
+  let back = frontFacing == (plane.params.z > 0.5);
+  let alpha = texel.a * plane.params.x * select(1.0, plane.params.y, back);
+// <<< AIM-FORK
   return vec4<f32>(texel.rgb * alpha, alpha);
 }
 `;

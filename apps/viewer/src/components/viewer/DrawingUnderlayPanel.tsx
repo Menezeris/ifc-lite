@@ -55,6 +55,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/toast';
 import { useViewerStore, type UnderlayDrawing } from '@/store';
 import { useFloorplanView } from '@/hooks/useFloorplanView';
+// >>> AIM-FORK: section underlays are calibrated in AIM (AIMviewer #284)
+import { useSectionCalibrateNote } from '@/aim/sectionCalibrateNote';
+// <<< AIM-FORK
 import { CalibrationPdfSurface } from './CalibrationPdfSurface'; import { AimUnderlayRowNoteLive } from '@/aim/AimUnderlayRowNoteLive'; // >>> AIM-FORK (#280): row note when Show in 3D is off <<< AIM-FORK
 
 interface DrawingUnderlayPanelProps {
@@ -63,6 +66,7 @@ interface DrawingUnderlayPanelProps {
 
 export function DrawingUnderlayPanel({ onClose }: DrawingUnderlayPanelProps) {
   const drawings = useViewerStore((s) => s.underlayDrawings);
+  const aimSectionNote = useSectionCalibrateNote(); // >>> AIM-FORK (#284): note for Calibrate on a section underlay <<< AIM-FORK
   const calibration = useViewerStore((s) => s.underlayCalibration);
   const startCalibration = useViewerStore((s) => s.startUnderlayCalibration);
   const setCalibrationMode = useViewerStore((s) => s.setUnderlayCalibrationMode);
@@ -423,6 +427,12 @@ export function DrawingUnderlayPanel({ onClose }: DrawingUnderlayPanelProps) {
               drawing={d}
               calibrating={calibration?.drawingId === d.id}
               onCalibrate={() => {
+                // >>> AIM-FORK: a section underlay is calibrated in AIM, the storey flow would turn it into a plan (AIM #284)
+                if (d.placement?.plane) {
+                  toast.info(aimSectionNote);
+                  return;
+                }
+                // <<< AIM-FORK
                 // Recalibration edits the drawing's OWN storey — preselect it
                 // so Save can't silently move the drawing to whatever level
                 // happened to be picked in the dropdown.

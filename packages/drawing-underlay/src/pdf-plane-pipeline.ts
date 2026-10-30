@@ -62,6 +62,10 @@ export interface PlaneInput {
   opacity?: number;
   /** Whether the plane renders. Default true. */
   visible?: boolean;
+  // >>> AIM-FORK: fainter back side of a section underlay (AIM #284, D-179)
+  /** Opacity factor of the side opposite `corners.normal`. Default 1 (same as the front). */
+  backOpacity?: number;
+  // <<< AIM-FORK
 }
 
 const QUAD_VERTEX_STRIDE_BYTES = (3 + 2) * 4; // pos.xyz + uv.xy
@@ -74,7 +78,23 @@ interface PlaneEntry {
   bindGroup: GPUBindGroup;
   opacity: number;
   visible: boolean;
+  // >>> AIM-FORK: fainter back side of a section underlay (AIM #284, D-179)
+  backOpacity: number;
+  /** 1 = the strip's counter-clockwise side is the back (normal opposite the winding). */
+  flip: number;
+  // <<< AIM-FORK
 }
+
+// >>> AIM-FORK: fainter back side of a section underlay (AIM #284, D-179)
+/** 1 when the strip winding (tl, tr, bl) faces away from `corners.normal`, so `front_facing` is the back. */
+export function windingFlip(c: PlacementCorners): number {
+  if (!c.normal) return 0;
+  const a = { x: c.tr.x - c.tl.x, y: c.tr.y - c.tl.y, z: c.tr.z - c.tl.z };
+  const b = { x: c.bl.x - c.tl.x, y: c.bl.y - c.tl.y, z: c.bl.z - c.tl.z };
+  const n = { x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x };
+  return n.x * c.normal.x + n.y * c.normal.y + n.z * c.normal.z < 0 ? 1 : 0;
+}
+// <<< AIM-FORK
 
 function imageSize(image: PlaneImageSource): { width: number; height: number } {
   return { width: image.width, height: image.height };
@@ -87,12 +107,15 @@ function mipLevelCount(width: number, height: number): number {
 /** Interleave the quad as a triangle strip: tl, tr, bl, br. */
 function quadVertices(c: PlacementCorners): Float32Array {
   const v = (p: Vec3, u: number, w: number) => [p.x, p.y, p.z, u, w];
+  // >>> AIM-FORK: texture window of a page region (AIM #284, D-179)
+  const { u0, v0, u1, v1 } = c.uv ?? { u0: 0, v0: 0, u1: 1, v1: 1 };
   return new Float32Array([
-    ...v(c.tl, 0, 0),
-    ...v(c.tr, 1, 0),
-    ...v(c.bl, 0, 1),
-    ...v(c.br, 1, 1),
+    ...v(c.tl, u0, v0),
+    ...v(c.tr, u1, v0),
+    ...v(c.bl, u0, v1),
+    ...v(c.br, u1, v1),
   ]);
+  // <<< AIM-FORK
 }
 
 export class PdfPlanePipeline {
@@ -341,6 +364,11 @@ export class PdfPlanePipeline {
         this.writePlaneUniform(existing);
       }
       if (input.visible !== undefined) existing.visible = input.visible;
+      // >>> AIM-FORK: fainter back side of a section underlay (AIM #284, D-179)
+      existing.backOpacity = input.backOpacity ?? existing.backOpacity;
+      existing.flip = windingFlip(input.corners);
+      this.writePlaneUniform(existing);
+      // <<< AIM-FORK
       if (input.image) {
         existing.texture.destroy();
         existing.texture = this.createMippedTexture(input.image);
@@ -370,6 +398,10 @@ export class PdfPlanePipeline {
       bindGroup: this.createPlaneBindGroup(uniformBuffer, texture),
       opacity: input.opacity ?? 1,
       visible: input.visible ?? true,
+      // >>> AIM-FORK: fainter back side of a section underlay (AIM #284, D-179)
+      backOpacity: input.backOpacity ?? 1,
+      flip: windingFlip(input.corners),
+      // <<< AIM-FORK
     };
     this.writePlaneUniform(entry);
     this.planes.set(id, entry);
@@ -391,7 +423,9 @@ export class PdfPlanePipeline {
     this.device.queue.writeBuffer(
       entry.uniformBuffer,
       0,
-      new Float32Array([entry.opacity, 0, 0, 0]),
+      // >>> AIM-FORK: y = back-side factor, z = winding flip (AIM #284, D-179)
+      new Float32Array([entry.opacity, entry.backOpacity, entry.flip, 0]),
+      // <<< AIM-FORK
     );
   }
 

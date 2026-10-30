@@ -94,6 +94,8 @@ export interface UnderlayDrawingWire {
   name: string;
   pdfUrl: string;
   georef?: unknown;
+  /** Kalibrácie strán v2 (D-179): položka s `plane` = zvislý podklad rezu (sectionUnderlays.ts). */
+  georefV2?: unknown;
 }
 
 /**
@@ -115,6 +117,8 @@ export interface DocumentDescriptorWire {
   folder?: string[];
   /** Free-form metadata shown in the list (revision, status, discipline…). */
   meta?: Record<string, string>;
+  /** Kalibrácie strán v2 (D-179), ako pri `UnderlayDrawingWire`; rez sa zobrazí aj bez UNDERLAYS_LOAD. */
+  georefV2?: unknown;
 }
 
 /**
@@ -177,7 +181,8 @@ export type OutboundMessage =
   | { source: typeof SOURCE; type: 'AIM_NAVIGATE'; href: string }
   // A drawing was (re)calibrated in the viewer — the host persists the
   // serialized _georef v1 JSON on the document (D-072).
-  | { source: typeof SOURCE; type: 'UNDERLAY_SAVE'; documentId: string; georef: unknown }
+  // Rez (D-179): `georef` je položka `georefV2.calibrations[calibrationIndex]` (version 2, plane, source).
+  | { source: typeof SOURCE; type: 'UNDERLAY_SAVE'; documentId: string; georef: unknown; page?: number; calibrationIndex?: number }
   // A reality-capture pin was clicked in 3D (D-073) — the host opens the
   // capture's gallery / 360° panorama for the given capture point id.
   | { source: typeof SOURCE; type: 'CAPTURE_PIN_CLICK'; captureId: string }

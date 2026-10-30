@@ -21,6 +21,8 @@ export interface PlanPlacementLike {
   affine: Affine2x3;
   pageSize: [number, number];
   page: number;
+  /** Zvislý podklad rezu (AIM #284): poloha kamery na pôdorysnej strane nemá zmysel. */
+  plane?: unknown;
 }
 
 export interface PlanCameraLike {
@@ -51,7 +53,7 @@ export function planMarker(
   cam: PlanCameraLike,
 ): PlanMarker | null {
   const [w, h] = placement.pageSize;
-  if (!(w > 0) || !(h > 0)) return null;
+  if (!(w > 0) || !(h > 0) || placement.plane) return null;
   try {
     const page = ifcMetresToPage(placement.affine, worldToIfcMetres(cam.position, offset));
     let fx = cam.target.x - cam.position.x;
