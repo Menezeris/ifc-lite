@@ -21,7 +21,7 @@ describe('podklady rezov z georefV2 (AIMviewer #284, D-179)', () => {
   it('rez A: položka s plane = jeden zvislý podklad pod id dokumentu; v1 georef takého dokumentu sa ignoruje', () => {
     const sections = sectionEntries([{ documentId: 'rez-a', name: 'REZ-A', pdfUrl: 'a.pdf', georef: PLAN_V1, georefV2: { calibrations: [SECTION] } }]);
     assert.deepEqual(sections.map((s) => [s.id, s.index, s.placement.page]), [['rez-a', 0, 1]]);
-    const merged = mergeSectionUnderlays([plan, { id: 'rez-a', name: 'REZ-A', pdfUrl: 'a.pdf', placement: null }], sections);
+    const merged = mergeSectionUnderlays([plan, { id: 'rez-a', name: 'REZ-A', pdfUrl: 'a.pdf', placement: { ...plan.placement, storeyGuid: 'G-2NP' } }], sections);
     assert.deepEqual(merged.map((d) => d.id), ['plan-1np', 'rez-a']);
     assert.ok(merged[1].placement && 'plane' in merged[1].placement);
   });
