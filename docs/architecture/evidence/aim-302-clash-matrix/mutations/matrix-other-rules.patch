@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashMatrix.ts a/apps/viewer/src/aim/aimClashMatrix.ts
+index 8a891b5c..f74221a4 100644
+--- b/apps/viewer/src/aim/aimClashMatrix.ts
++++ a/apps/viewer/src/aim/aimClashMatrix.ts
+@@ -35,7 +35,7 @@ export function buildMatrix(
+   const cells = new Map<string, MatrixRow>();
+   const models = new Set<string>();
+   for (const c of clashes) {
+-    if (c.status === 'touch') continue;
++    if (c.rule !== rule || c.status === 'touch') continue;
+     const la = labelOf(c.a.model);
+     const lb = labelOf(c.b.model);
+     models.add(la);

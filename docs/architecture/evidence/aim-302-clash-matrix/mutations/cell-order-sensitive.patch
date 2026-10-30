@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/clashCellFilter.ts a/apps/viewer/src/aim/clashCellFilter.ts
+index 21060448..f4a6f231 100644
+--- b/apps/viewer/src/aim/clashCellFilter.ts
++++ a/apps/viewer/src/aim/clashCellFilter.ts
+@@ -13,7 +13,7 @@ import { create } from 'zustand';
+ export interface MatrixCell { a: string; b: string }
+ 
+ /** Dvojica štítkov v stálom poradí, aby ASR x VZT a VZT x ASR boli jedna bunka. */
+-export const cellOf = (x: string, y: string): MatrixCell => ({ a: x, b: y });
++export const cellOf = (x: string, y: string): MatrixCell => (x <= y ? { a: x, b: y } : { a: y, b: x });
+ 
+ export const sameCell = (x: MatrixCell | null, y: MatrixCell | null): boolean => (x == null || y == null ? x === y : x.a === y.a && x.b === y.b);
+ 

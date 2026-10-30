@@ -28,6 +28,9 @@ export const aimForkEn = {
   'aimFork.clash.linked': 'From AIM: {code}.',
   'aimFork.clash.linkedEdited': 'From AIM: {code} (edited, not saved).',
   'aimFork.clash.unlinked': 'Not in AIM yet. Run one rule (sets A and B), then saving creates a new clash test there.',
+  'aimFork.clash.matrix.title': 'Discipline matrix',
+  'aimFork.clash.matrix.cell': '{a} x {b}: {total} clashes, open {open}, resolved {resolved}, accepted {accepted}. Click to filter the list.',
+  'aimFork.clash.matrix.clear': 'Show all',
   'aimFork.clash.matched': 'Saved pairs found again: {found}, missing: {missing}.',
   'aimFork.legend.title': 'Legend',
   /** Presentation view card (D-161): shows the view in a new tile next to the 3D view. */

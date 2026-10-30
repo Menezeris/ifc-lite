@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/AimClashBar.tsx a/apps/viewer/src/aim/AimClashBar.tsx
+index 33454f08..d411e4d9 100644
+--- b/apps/viewer/src/aim/AimClashBar.tsx
++++ a/apps/viewer/src/aim/AimClashBar.tsx
+@@ -62,7 +62,7 @@ export default function AimClashBar({ runPreset }: Props) {
+   }, [preset, result, reviews, models]);
+   // Bunka, ktorá v novom behu nie je, by nechala zoznam prázdny bez vysvetlenia.
+   useEffect(() => {
+-    void clearClashCell;
++    if (cell && !matrix?.cells.some((c) => sameCell(c, cell))) clearClashCell();
+   }, [cell, matrix]);
+ 
+   const linked = !!slot && slot.presetId === preset?.id;
