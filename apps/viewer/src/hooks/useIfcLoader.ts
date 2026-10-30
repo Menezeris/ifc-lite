@@ -48,6 +48,7 @@ import { notifyResourceRetry, resolveResourceRetryTier } from '../lib/resource-r
 import { publishLoadTrace } from '../lib/perf/activeLoadTrace.js';
 import { acquireFileBuffer, type AcquiredBuffer } from '../utils/acquireFileBuffer.js';
 import { buildGeometryCacheKey } from './geometryCacheKey.js';
+import { createFederatedCacheHit, federatedCacheKey, federatedHitModel, federatedHitIsCurrent } from './federatedCacheHit.js'; // >>> AIM-FORK: AIM #308 <<< AIM-FORK
 import { forwardEntityIndexTo, createSourceFingerprintCell, type EntityIndexSink } from './entityIndexHandoff.js';
 import { computeSourceFingerprint, computeSourceFingerprintFromBlob, type GeometryData } from '@ifc-lite/cache';
 import { SERVER_URL, USE_SERVER, CACHE_SIZE_THRESHOLD, CACHE_MAX_SOURCE_SIZE, CACHE_MESH_ONLY_MAX_SIZE } from '../utils/ifcConfig.js';
@@ -1100,14 +1101,17 @@ export function useIfcLoader() {
       // stays filename-safe and independent of the original filename. Pinned
       // to FORMAT_VERSION so a format bump invalidates stale entries (e.g. v5
       // added the geometryClass tag the Model/Types switch needs).
-      const cacheKey = buildGeometryCacheKey(
+      // >>> AIM-FORK: a federated add's meshes sit in the shared RTC frame, so its key carries it (AIM #308)
+      const cacheKey = federatedCacheKey(buildGeometryCacheKey(
         buffer.byteLength,
         sourceKeyFingerprint.hex,
         mergeLayersAtLoad,
         undefined,
         skipSmallCutsAtLoad,
         loadTessellationTier
-      );
+      ), target.kind === 'federated' ? target.sharedRtcOffset : undefined);
+      const federatedCache = target.kind === 'federated' ? options?.federatedCache : undefined;
+      // <<< AIM-FORK
       console.log(`[useIfc] loadFile "${file.name}" session=${currentSession} mergeLayers=${mergeLayersAtLoad} geomMode=${geometryModeAtLoad} tier=${loadTessellationTier ?? 'medium'} cacheKey=${cacheKey}`);
 
       // Decide the cache tier ONCE (single source of truth for read + write, see
@@ -1118,7 +1122,7 @@ export function useIfcLoader() {
       // NOT served (and files outside any band skip a pointless lookup).
       const cachePlan = geometryKernel.cachePlan(planCacheWrite(buffer.byteLength, {
         meshOnlyEnabled: isMeshOnlyCacheEnabled(),
-        minSize: CACHE_SIZE_THRESHOLD,
+        minSize: /* >>> AIM-FORK: AIM #308 */ federatedCache?.minSize ?? /* <<< AIM-FORK */ CACHE_SIZE_THRESHOLD,
         maxSourceSize: CACHE_MAX_SOURCE_SIZE,
         maxMeshOnlySize: CACHE_MESH_ONLY_MAX_SIZE,
       }));
@@ -1129,7 +1133,7 @@ export function useIfcLoader() {
       // cannot persist UVs/textures, so any existing entry — including one
       // written before texture support shipped — would serve the model
       // permanently untextured. Mirrors the cache-write skip below.
-      if (target.kind === 'primary' && cachePlan.shouldCache && !textureBitmaps) {
+      if ((target.kind === 'primary' /* >>> AIM-FORK: AIM #308 */ || federatedCache /* <<< AIM-FORK */) && cachePlan.shouldCache && !textureBitmaps) {
         setProgress({ phase: 'Checking cache', percent: 5 });
         loadStage = 'cache-lookup';
         const cacheResult = await trace.span('cache.lookup', () => getCached(cacheKey));
@@ -1144,8 +1148,13 @@ export function useIfcLoader() {
           // (worst case stale-but-consistent; legacy entries lack the field).
           // A served hit with a stored full hash is revalidated after finalize;
           // a hash from before #7022 cannot be compared, so that entry misses.
-          const { serve: mayServe, revalidateAgainst } = decideCacheHit({ sourceDecoupled: !cacheResult.sourceBuffer,
+          // >>> AIM-FORK: a published federated model cannot reload in place, so it checks the full hash first (AIM #308)
+          const { serve: tierServes, revalidateAgainst } = decideCacheHit({ sourceDecoupled: !cacheResult.sourceBuffer,
             storedMtime: cacheResult.lastModified, freshMtime: file.lastModified, fullSourceHash: cacheResult.fullSourceHash });
+          const federatedHit = target.kind === 'federated' ? createFederatedCacheHit() : undefined;
+          const mayServe = tierServes && (!federatedHit || await federatedHitIsCurrent(placementIdentity, revalidateAgainst));
+          if (isStale()) return;
+          // <<< AIM-FORK
 
           if (!mayServe) {
             console.warn(`[useIfc] cache MISS (source changed / unvalidatable) — reparsing "${file.name}"`);
@@ -1164,7 +1173,7 @@ export function useIfcLoader() {
               modelId,
               cacheKey,
               buffer,
-              () => isStale(), trace,
+              () => isStale(), trace, /* >>> AIM-FORK: AIM #308 */ federatedHit, /* <<< AIM-FORK */
             );
             // `loadFromCache` returns the SAME `{ success: false }` for a
             // superseded load as for an ordinary miss, so branching on
@@ -1183,11 +1192,13 @@ export function useIfcLoader() {
               return;
             }
             if (cacheOutcome === 'serve') {
-              const state = useViewerStore.getState();
+              // >>> AIM-FORK: a federated hit joins through the same finalize as a fresh federated parse (AIM #308)
+              const state = federatedHit ? federatedHitModel(federatedHit, cacheResult.instancedGeometry) : useViewerStore.getState();
               await finalizeModel(state.ifcDataStore, state.geometryResult, getViewerSchemaVersion(state.ifcDataStore), {
                 loadState: 'complete', cacheState: 'hit',
                 loadPath: 'cache', tessellationTier: loadTessellationTier, skipSmallCuts: skipSmallCutsAtLoad,
-              });
+              }, federatedHit?.shards);
+              // <<< AIM-FORK
               if (isStale()) return; // finalize awaited the identity pass (#7022)
               const cacheTotalMs = trace.finish({ journey: 'J2', loadPath: 'cache', cacheTier: cachePlan.tier });
               console.log(`[useIfc] TOTAL LOAD TIME (from cache): ${cacheTotalMs.toFixed(0)}ms`);
@@ -1214,7 +1225,7 @@ export function useIfcLoader() {
               // full-content hash (this load's identity pass) and, if the source
               // changed with its mtime preserved, purge + auto-reload.
               // Fire-and-forget so the instant hit above is never delayed.
-              if (revalidateAgainst) {
+              if (revalidateAgainst /* >>> AIM-FORK: federated checked it before serving (AIM #308) */ && !federatedHit /* <<< AIM-FORK */) {
                 void revalidateServedCacheHit({
                   file,
                   target,
@@ -1939,6 +1950,14 @@ export function useIfcLoader() {
                       ? { instancedGeometryVolumes: allInstancedGeometryVolumes }
                       : {}),
                   };
+                  // >>> AIM-FORK: written BEFORE finalize, which offsets ids and aligns these meshes in place (AIM #308)
+                  if (federatedCache && cachePlan.shouldCache && !skippedHungElements && allMeshes.length > 0 && !allMeshes.some((m) => m.texture || m.textureRef)) {
+                    await trace.span('cache.write', () => saveToCache(cacheKey, dataStore, {
+                      ...federatedGeometry, ...(allInstancedShards.length > 0 ? { instancedShards: allInstancedShards } : {}),
+                    }, arrayBuffer, file.name, { persistSource: cachePlan.persistSource, lastModified: file.lastModified, fullSourceHash: placementIdentity, instancedGeometry: federatedGeometry }));
+                    if (isStale()) return;
+                  }
+                  // <<< AIM-FORK
                   await trace.span('load.finalize', () => finalizeModel(dataStore, federatedGeometry, getViewerSchemaVersion(dataStore), {
                     loadState: 'complete', loadPath: 'wasm', tessellationTier: loadTessellationTier, skipSmallCuts: skipSmallCutsAtLoad,
                   }, allInstancedShards));

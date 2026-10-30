@@ -10,6 +10,10 @@
  */
 
 import { IdbConnectionLifecycle } from './idb-connection.js';
+// >>> AIM-FORK: geometry facts of instancing-only elements, which the binary cache format does not carry (AIM #308)
+import type { GeometryResult } from '@ifc-lite/geometry';
+export type InstancedGeometryMaps = Pick<GeometryResult, 'instancedGeometryHashes' | 'instancedGeometryAabbs' | 'instancedGeometryVolumes'>;
+// <<< AIM-FORK
 
 const DB_NAME = 'ifc-lite-cache';
 const DB_VERSION = 1;
@@ -41,6 +45,7 @@ interface CacheEntry {
    * fingerprint. Absent when Web Crypto was unavailable at write.
    */
   fullSourceHash?: string;
+  instancedGeometry?: InstancedGeometryMaps; // AIM-FORK (AIM #308): next 0 lines
 }
 
 /**
@@ -248,12 +253,14 @@ export interface CacheResult {
   lastModified?: number;
   /** True full-file content hash (SHA-256 hex) stored at write; see {@link CacheEntry}. */
   fullSourceHash?: string;
+  instancedGeometry?: InstancedGeometryMaps; // AIM-FORK (AIM #308): next 0 lines
 }
 
 /** Extra validation metadata persisted alongside a cache entry (mesh-only tier). */
 export interface CacheEntryMeta {
   lastModified?: number;
   fullSourceHash?: string;
+  instancedGeometry?: InstancedGeometryMaps; // AIM-FORK (AIM #308): next 0 lines
 }
 
 /**
@@ -277,6 +284,7 @@ export async function getCached(key: string): Promise<CacheResult | null> {
             sourceBuffer: entry.sourceBuffer,
             lastModified: entry.lastModified,
             fullSourceHash: entry.fullSourceHash,
+            instancedGeometry: entry.instancedGeometry, // AIM-FORK (AIM #308): next 0 lines
           });
         } else {
           resolve(null);
@@ -354,6 +362,7 @@ export async function setCached(
         createdAt: Date.now(),
         lastModified: meta?.lastModified,
         fullSourceHash: meta?.fullSourceHash,
+        ...(meta?.instancedGeometry ? { instancedGeometry: meta.instancedGeometry } : {}), // AIM-FORK (AIM #308): next 0 lines
       };
 
       tx.oncomplete = () => done();

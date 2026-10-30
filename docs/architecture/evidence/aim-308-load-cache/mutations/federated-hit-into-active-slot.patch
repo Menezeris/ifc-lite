@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/hooks/useIfcCache.ts a/apps/viewer/src/hooks/useIfcCache.ts
+index e25dc001..737839f5 100644
+--- b/apps/viewer/src/hooks/useIfcCache.ts
++++ a/apps/viewer/src/hooks/useIfcCache.ts
+@@ -210,7 +210,7 @@ export function useIfcCache() {
+   ): Promise<CacheLoadResult> => {
+     const activeSlot = { setGeometryResult, setGeometryStreamingActive, appendGeometryBatch, appendInstancedShards, setIfcDataStore, coldTier: true };
+     try {
+-      const { setGeometryResult, setGeometryStreamingActive, appendGeometryBatch, appendInstancedShards, setIfcDataStore, coldTier } = activeSlot;
++      const { setGeometryResult, setGeometryStreamingActive, appendGeometryBatch, appendInstancedShards, setIfcDataStore, coldTier } = federatedHit ? federatedCacheSink(federatedHit) : activeSlot;
+       // <<< AIM-FORK
+       const cacheLoadStart = performance.now();
+ 

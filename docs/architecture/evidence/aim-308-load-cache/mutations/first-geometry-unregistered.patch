@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/autoloadModels.ts a/apps/viewer/src/aim/autoloadModels.ts
+index 1d3b750d..8feeee22 100644
+--- b/apps/viewer/src/aim/autoloadModels.ts
++++ a/apps/viewer/src/aim/autoloadModels.ts
+@@ -119,7 +119,7 @@ export async function autoloadModels(urls: string[], deps: AutoloadDeps): Promis
+       unwatch();
+       unwatch = null;
+       if (id) loaded.push({ fileName: ready.name, fileSize: ready.size });
+-      {
++      if (id) {
+         await nextFrame(); // model je v store, geometria sa nahrá do GPU pri najbližšom snímku
+         post({ source: 'aim-bridge', type: 'FIRST_GEOMETRY', model, index, total });
+       }

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/modelFile.ts a/apps/viewer/src/aim/modelFile.ts
+index 7163e88c..fe3837e3 100644
+--- b/apps/viewer/src/aim/modelFile.ts
++++ a/apps/viewer/src/aim/modelFile.ts
+@@ -48,7 +48,7 @@ export function aimModelLastModified(url: URL, lastModifiedHeader: string | null
+   const parsed = lastModifiedHeader ? Date.parse(lastModifiedHeader) : NaN;
+   if (Number.isFinite(parsed) && parsed > 0) return parsed;
+   const archive = ARCHIVE_RE.exec(url.pathname);
+-  return archive ? Number(archive[2]) : Date.now();
++  return archive ? Number(archive[2]) : 0;
+ }
+ 
+ /** The fetched model as a `File` for `addModel`: gzip unpacked, plain name kept. */
