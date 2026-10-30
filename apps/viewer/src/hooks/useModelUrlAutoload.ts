@@ -75,37 +75,39 @@ export function useModelUrlAutoload(): void {
       showLoadError(setError, setLastLoadRetry, t(key, values), code, retry);
     };
 
-    // >>> AIM-FORK: sequential multi-URL load; the WASM parser isn't re-entrant,
-    // and federated adds must observe the earlier model's RTC/anchor before they
-    // finalize. AUTOLOAD_COMPLETE_EVENT always fires — even when some (or all)
-    // URLs failed — so AimBridge's MODELS_LOADED can't wait forever.
+    // >>> AIM-FORK: multi-URL load for the AIM host (`aim/autoloadModels.ts`, AIM #308):
+    // every download starts at once, parsing stays sequential (the WASM parser
+    // isn't re-entrant, and federated adds must observe the earlier model's
+    // RTC/anchor), each model goes through the parsed-model cache, and the host
+    // gets per-model LOAD_PROGRESS / FIRST_GEOMETRY. AUTOLOAD_COMPLETE_EVENT
+    // always fires — even when some (or all) URLs failed — so AimBridge's
+    // MODELS_LOADED can't wait forever.
     if (source.urls.length === 0) {
       fail('viewportLighting.container.modelUrlAutoload.crossOrigin', 'model_url_cross_origin', null);
       window.dispatchEvent(new Event(AUTOLOAD_COMPLETE_EVENT));
       return;
     }
-    const loadOne = async (modelUrl: string): Promise<void> => {
-      try {
-        // Entries were validated and made absolute when the hook mounted.
-        const url = new URL(modelUrl);
-        const res = await fetch(url.href);
-        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-        // AIM D-135: the host sends immutable revision archives (gzip); unpack
-        // them and keep the plain model name (`ASR.ifc`) the bridge matches on.
-        // Lazy: nothing of it is needed at boot (entry chunk stays as it was).
-        const { aimModelFile } = await import('@/aim/modelFile');
-        const file = await aimModelFile(url, await res.blob());
-        await addModel(file);
-      } catch (err) {
-        const reason = err instanceof Error ? err.message : String(err);
-        fail('viewportLighting.container.modelUrlAutoload.fetchFailed', 'model_url_fetch_failed',
-          () => { void loadOne(modelUrl); }, { reason });
-      }
+    const failFetch = (err: unknown, retry: (() => void) | null) => {
+      const reason = err instanceof Error ? err.message : String(err);
+      fail('viewportLighting.container.modelUrlAutoload.fetchFailed', 'model_url_fetch_failed', retry, { reason });
     };
     const attempt = async () => {
       if (!guardWebGpu(() => { void attempt(); })) return;
-      for (const modelUrl of source.urls) await loadOne(modelUrl);
-      window.dispatchEvent(new Event(AUTOLOAD_COMPLETE_EVENT));
+      try {
+        // Lazy: nothing of it is needed at boot (entry chunk stays as it was).
+        const { autoloadModels } = await import('@/aim/autoloadModels');
+        await autoloadModels(source.urls, {
+          addModel,
+          fail: failFetch,
+          watchProgress: (fn) => useViewerStore.subscribe((s, prev) => {
+            if (s.progress !== prev.progress && s.progress) fn(s.progress.percent);
+          }),
+        });
+      } catch (err) {
+        failFetch(err, () => { void attempt(); });
+      } finally {
+        window.dispatchEvent(new Event(AUTOLOAD_COMPLETE_EVENT));
+      }
     };
     // <<< AIM-FORK
 
