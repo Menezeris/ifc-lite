@@ -523,7 +523,7 @@ export function useIfcCache() {
     geometry: GeometryData,
     sourceBuffer: ArrayBuffer,
     fileName: string,
-    options: { persistSource?: boolean; lastModified?: number; fullSourceHash?: Promise<string | undefined> } = {}
+    options: { persistSource?: boolean; lastModified?: number; fullSourceHash?: Promise<string | undefined>; /* >>> AIM-FORK: AIM #308 */ instancedGeometry?: CacheResult['instancedGeometry'] /* <<< AIM-FORK */ } = {}
   ): Promise<void> => {
     // `persistSource` (default true) is the classic <=150MB tier: the raw source
     // is stored alongside the cache so lazy property/quantity accessors + re-export
@@ -567,7 +567,7 @@ export function useIfcCache() {
         fileName,
         sourceBuffer.byteLength,
         persistSource ? sourceBuffer : undefined,
-        { lastModified, fullSourceHash },
+        { lastModified, fullSourceHash, /* >>> AIM-FORK: AIM #308 */ instancedGeometry: options.instancedGeometry /* <<< AIM-FORK */ },
       );
       console.log(`[useIfcCache] ✓ Cache saved successfully (${persistSource ? 'with' : 'without'} source, mtime=${lastModified ?? 'n/a'}, fullHash=${fullSourceHash ? 'yes' : 'no'})`);
     } catch (err) {

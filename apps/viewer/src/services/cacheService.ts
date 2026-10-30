@@ -20,6 +20,7 @@
 export interface CacheEntryMeta {
   lastModified?: number;
   fullSourceHash?: string;
+  instancedGeometry?: import('./ifc-cache.js').InstancedGeometryMaps; // AIM-FORK (AIM #308): next 0 lines
 }
 
 /**
@@ -36,6 +37,7 @@ export interface CacheResult {
   lastModified?: number;
   /** True full-file content hash (SHA-256 hex) stored at write; mesh-only revalidation. */
   fullSourceHash?: string;
+  instancedGeometry?: import('./ifc-cache.js').InstancedGeometryMaps; // AIM-FORK (AIM #308): next 0 lines
 }
 
 /**

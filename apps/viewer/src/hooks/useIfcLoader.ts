@@ -1193,7 +1193,7 @@ export function useIfcLoader() {
             }
             if (cacheOutcome === 'serve') {
               // >>> AIM-FORK: a federated hit joins through the same finalize as a fresh federated parse (AIM #308)
-              const state = federatedHit ? federatedHitModel(federatedHit) : useViewerStore.getState();
+              const state = federatedHit ? federatedHitModel(federatedHit, cacheResult.instancedGeometry) : useViewerStore.getState();
               await finalizeModel(state.ifcDataStore, state.geometryResult, getViewerSchemaVersion(state.ifcDataStore), {
                 loadState: 'complete', cacheState: 'hit',
                 loadPath: 'cache', tessellationTier: loadTessellationTier, skipSmallCuts: skipSmallCutsAtLoad,
@@ -1954,7 +1954,7 @@ export function useIfcLoader() {
                   if (federatedCache && cachePlan.shouldCache && !skippedHungElements && allMeshes.length > 0 && !allMeshes.some((m) => m.texture || m.textureRef)) {
                     await trace.span('cache.write', () => saveToCache(cacheKey, dataStore, {
                       ...federatedGeometry, ...(allInstancedShards.length > 0 ? { instancedShards: allInstancedShards } : {}),
-                    }, arrayBuffer, file.name, { persistSource: cachePlan.persistSource, lastModified: file.lastModified, fullSourceHash: placementIdentity }));
+                    }, arrayBuffer, file.name, { persistSource: cachePlan.persistSource, lastModified: file.lastModified, fullSourceHash: placementIdentity, instancedGeometry: federatedGeometry }));
                     if (isStale()) return;
                   }
                   // <<< AIM-FORK

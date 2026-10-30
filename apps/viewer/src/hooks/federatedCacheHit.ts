@@ -59,7 +59,11 @@ export function federatedCacheSink(hit: FederatedCacheHit) {
 }
 
 /** The decoded hit as the `finalizeModel` inputs a fresh federated parse builds. */
-export function federatedHitModel(hit: FederatedCacheHit): { ifcDataStore: IfcDataStore | null; geometryResult: GeometryResult } {
+export function federatedHitModel(
+  hit: FederatedCacheHit,
+  // Instancing-only elements' hashes, boxes and volumes: kept beside the entry, not in its binary format.
+  instanced?: Pick<GeometryResult, 'instancedGeometryHashes' | 'instancedGeometryAabbs' | 'instancedGeometryVolumes'>,
+): { ifcDataStore: IfcDataStore | null; geometryResult: GeometryResult } {
   let totalVertices = 0;
   let totalTriangles = 0;
   for (const mesh of hit.meshes) {
@@ -67,7 +71,12 @@ export function federatedHitModel(hit: FederatedCacheHit): { ifcDataStore: IfcDa
     totalTriangles += mesh.indices.length / 3;
   }
   const coordinateInfo = hit.coordinateInfo ?? createCoordinateInfo(calculateMeshBounds(hit.meshes).bounds);
-  return { ifcDataStore: hit.dataStore, geometryResult: { meshes: hit.meshes, totalVertices, totalTriangles, coordinateInfo } };
+  const maps = {
+    ...(instanced?.instancedGeometryHashes ? { instancedGeometryHashes: instanced.instancedGeometryHashes } : {}),
+    ...(instanced?.instancedGeometryAabbs ? { instancedGeometryAabbs: instanced.instancedGeometryAabbs } : {}),
+    ...(instanced?.instancedGeometryVolumes ? { instancedGeometryVolumes: instanced.instancedGeometryVolumes } : {}),
+  };
+  return { ifcDataStore: hit.dataStore, geometryResult: { meshes: hit.meshes, totalVertices, totalTriangles, coordinateInfo, ...maps } };
 }
 
 /**
