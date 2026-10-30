@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/hooks/useIfcLoader.ts a/apps/viewer/src/hooks/useIfcLoader.ts
+index 5521d4fb..77ddcbb0 100644
+--- b/apps/viewer/src/hooks/useIfcLoader.ts
++++ a/apps/viewer/src/hooks/useIfcLoader.ts
+@@ -1951,7 +1951,7 @@ export function useIfcLoader() {
+                       : {}),
+                   };
+                   // >>> AIM-FORK: written BEFORE finalize, which offsets ids and aligns these meshes in place (AIM #308)
+-                  if (false && federatedCache && cachePlan.shouldCache && !skippedHungElements && allMeshes.length > 0 && !allMeshes.some((m) => m.texture || m.textureRef)) {
++                  if (federatedCache && cachePlan.shouldCache && !skippedHungElements && allMeshes.length > 0 && !allMeshes.some((m) => m.texture || m.textureRef)) {
+                     await trace.span('cache.write', () => saveToCache(cacheKey, dataStore, {
+                       ...federatedGeometry, ...(allInstancedShards.length > 0 ? { instancedShards: allInstancedShards } : {}),
+                     }, arrayBuffer, file.name, { persistSource: cachePlan.persistSource, lastModified: file.lastModified, fullSourceHash: placementIdentity, instancedGeometry: federatedGeometry }));

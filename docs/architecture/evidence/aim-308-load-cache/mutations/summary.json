@@ -1,0 +1,240 @@
+{
+  "cache-floor-default": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/autoloadModels.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/aim/autoloadModels.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/autoloadModels.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "downloads-sequential": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/autoloadModels.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/aim/autoloadModels.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/autoloadModels.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "federated-hash-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/hooks/useIfcLoader.federatedCache.real-ifc.test.tsx; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/hooks/useIfcLoader.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/hooks/useIfcLoader.federatedCache.real-ifc.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "federated-hit-into-active-slot": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/hooks/useIfcLoader.federatedCache.real-ifc.test.tsx; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/hooks/useIfcCache.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/hooks/useIfcLoader.federatedCache.real-ifc.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "federated-min-size-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/hooks/useIfcLoader.federatedCache.real-ifc.test.tsx; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/hooks/useIfcLoader.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/hooks/useIfcLoader.federatedCache.real-ifc.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "federated-read-gate-closed": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/hooks/useIfcLoader.federatedCache.real-ifc.test.tsx; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/hooks/useIfcLoader.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/hooks/useIfcLoader.federatedCache.real-ifc.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "federated-write-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/hooks/useIfcLoader.federatedCache.real-ifc.test.tsx; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/hooks/useIfcLoader.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/hooks/useIfcLoader.federatedCache.real-ifc.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "first-geometry-unregistered": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/autoloadModels.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/aim/autoloadModels.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/autoloadModels.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "hash-mismatch-served": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/hooks/federatedCacheHit.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/hooks/federatedCacheHit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/hooks/federatedCacheHit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "instanced-maps-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/hooks/federatedCacheHit.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/hooks/federatedCacheHit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/hooks/federatedCacheHit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "instanced-maps-not-stored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/hooks/federatedCacheHit.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/services/ifc-cache.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/hooks/federatedCacheHit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "mtime-not-on-file": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/modelFile.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/aim/modelFile.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/modelFile.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "mtime-now": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/modelFile.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/aim/modelFile.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/modelFile.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "prune-ignores-file-name": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/cachePrune.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/aim/cachePrune.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/cachePrune.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "prune-keeps-no-other-revision": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/cachePrune.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/aim/cachePrune.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/cachePrune.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "rtc-origin-not-in-key": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/hooks/federatedCacheHit.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/hooks/federatedCacheHit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/hooks/federatedCacheHit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "throttle-off": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/autoloadModels.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "ac1263eccac2c915d3ad004d0d213501dda1a553",
+    "production": [
+      "apps/viewer/src/aim/autoloadModels.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/autoloadModels.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

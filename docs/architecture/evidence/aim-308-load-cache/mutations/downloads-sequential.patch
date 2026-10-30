@@ -1,0 +1,18 @@
+diff --git b/apps/viewer/src/aim/autoloadModels.ts a/apps/viewer/src/aim/autoloadModels.ts
+index 5ebfe23c..8feeee22 100644
+--- b/apps/viewer/src/aim/autoloadModels.ts
++++ a/apps/viewer/src/aim/autoloadModels.ts
+@@ -142,7 +142,12 @@ export async function autoloadModels(urls: string[], deps: AutoloadDeps): Promis
+ 
+   // Všetky sťahovania naraz; zamietnutie sa ošetrí až pri poradí modelu (žiadne unhandled rejection).
+   const reports = urls.map((_, i) => reporter(i));
+-  for (let i = 0; i < total; i++) await load(i, download(new URL(urls[i]), reports[i]), reports[i]);
++  const files = urls.map((u, i) => {
++    const p = download(new URL(u), reports[i]);
++    p.catch(() => {});
++    return p;
++  });
++  for (let i = 0; i < total; i++) await load(i, files[i], reports[i]);
+   // Na pozadí: MODELS_LOADED (koniec autoloadu) na upratanie cache nečaká.
+   if (loaded.length > 0) void (deps.prune ?? pruneModelCache)(loaded);
+ }

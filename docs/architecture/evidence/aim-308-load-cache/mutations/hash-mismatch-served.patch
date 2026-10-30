@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/hooks/federatedCacheHit.ts a/apps/viewer/src/hooks/federatedCacheHit.ts
+index b8b9f165..4e34cd99 100644
+--- b/apps/viewer/src/hooks/federatedCacheHit.ts
++++ a/apps/viewer/src/hooks/federatedCacheHit.ts
+@@ -102,5 +102,5 @@ export async function federatedHitIsCurrent(
+ ): Promise<boolean> {
+   if (!expectedHash) return true;
+   const fresh = await identity;
+-  return !fresh || fresh !== undefined;
++  return !fresh || fresh === expectedHash;
+ }

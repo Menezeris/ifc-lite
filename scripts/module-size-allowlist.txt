@@ -118,9 +118,9 @@
   1296 apps/viewer/src/hooks/useClash.ts
   1290 apps/viewer/src/hooks/useDrawingExport.ts
   1037 apps/viewer/src/hooks/useDrawingGeneration.ts
-   579 apps/viewer/src/hooks/useIfcCache.ts
+   585 apps/viewer/src/hooks/useIfcCache.ts
    655 apps/viewer/src/hooks/useIfcFederation.ts
-  2224 apps/viewer/src/hooks/useIfcLoader.ts
+  2243 apps/viewer/src/hooks/useIfcLoader.ts
    432 apps/viewer/src/hooks/useIfcServer.ts
    457 apps/viewer/src/hooks/useSymbolicAnnotations.ts
    633 apps/viewer/src/lib/analytics-scrub.ts
@@ -144,7 +144,7 @@
    426 apps/viewer/src/lib/tours/controller.ts
    588 apps/viewer/src/sdk/adapters/export-adapter.ts
    617 apps/viewer/src/services/extensions/host.ts
-   484 apps/viewer/src/services/ifc-cache.ts
+   493 apps/viewer/src/services/ifc-cache.ts
    558 apps/viewer/src/store/basketVisibleSet.ts
    426 apps/viewer/src/store/constants.ts
    452 apps/viewer/src/store/slices/chatSlice.ts

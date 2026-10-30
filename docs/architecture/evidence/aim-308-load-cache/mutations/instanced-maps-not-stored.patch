@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/services/ifc-cache.ts a/apps/viewer/src/services/ifc-cache.ts
+index 52cd4e04..4f09e332 100644
+--- b/apps/viewer/src/services/ifc-cache.ts
++++ a/apps/viewer/src/services/ifc-cache.ts
+@@ -362,7 +362,7 @@ export async function setCached(
+         createdAt: Date.now(),
+         lastModified: meta?.lastModified,
+         fullSourceHash: meta?.fullSourceHash,
+-        // AIM-FORK (AIM #308): next 0 lines
++        ...(meta?.instancedGeometry ? { instancedGeometry: meta.instancedGeometry } : {}), // AIM-FORK (AIM #308): next 0 lines
+       };
+ 
+       tx.oncomplete = () => done();

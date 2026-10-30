@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/cachePrune.ts a/apps/viewer/src/aim/cachePrune.ts
+index 0f164fbd..b3831f5f 100644
+--- b/apps/viewer/src/aim/cachePrune.ts
++++ a/apps/viewer/src/aim/cachePrune.ts
+@@ -73,7 +73,7 @@ export async function pruneModelCache(targets: PruneTarget[], idb: IDBFactory =
+           const c = cursor.result;
+           if (!c) { resolve(); return; }
+           const size = keyFileSize(c.primaryKey);
+-          if (size !== null) entries.push({ key: c.primaryKey, fileSize: size, createdAt: Number(c.key) });
++          if (keys.has(c.primaryKey) && size !== null) entries.push({ key: c.primaryKey, fileSize: size, createdAt: Number(c.key) });
+           c.continue();
+         };
+       });
