@@ -44,6 +44,7 @@ function harness(fetchImpl: (url: string) => Promise<Response>, addModel?: Autol
     watchProgress: () => () => {},
     post: (msg) => { posts.push(msg); },
     nextFrame: async () => {},
+    prune: async (targets) => { log.push(`prune ${targets.map((t) => t.fileName).join(',')}`); },
   };
   return { deps, log, posts, failures, added, maxActive: () => maxActive };
 }
@@ -61,7 +62,7 @@ describe('autoloadModels', () => {
     assert.deepEqual(h.log, ['fetch ASR', 'fetch VZT', 'add ASR.ifc']);
     asrParse.resolve('asr');
     await run;
-    assert.deepEqual(h.log, ['fetch ASR', 'fetch VZT', 'add ASR.ifc', 'add VZT.ifc']);
+    assert.deepEqual(h.log, ['fetch ASR', 'fetch VZT', 'add ASR.ifc', 'add VZT.ifc', 'prune ASR.ifc,VZT.ifc']);
   });
 
   it('parses one model at a time in URL order, even when the later download finishes first', async () => {

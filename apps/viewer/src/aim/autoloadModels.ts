@@ -18,6 +18,7 @@
 
 import type { SOURCE } from './bridge-core.js';
 import { aimModelFile, aimModelFileName, aimModelLastModified } from './modelFile.js';
+import { pruneModelCache, type PruneTarget } from './cachePrune.js';
 
 /** Prah cache pre modely z AIM (bez neho platí CACHE_SIZE_THRESHOLD 10 MiB; VZT má 9,98 MB). */
 export const AIM_CACHE_MIN_SIZE = 1024 * 1024;
@@ -38,6 +39,8 @@ export interface AutoloadDeps {
   fetch?: (url: string) => Promise<Response>;
   post?: (msg: LoadProgressMessage) => void;
   nextFrame?: () => Promise<void>;
+  /** Po autoloade: staré revízie načítaných modelov z cache preč (cachePrune.ts). */
+  prune?: (targets: PruneTarget[]) => Promise<unknown>;
 }
 
 /** Telo odpovede ako Blob, s priebehom podľa Content-Length (bez neho len 0 a 100). */
@@ -93,6 +96,7 @@ export async function autoloadModels(urls: string[], deps: AutoloadDeps): Promis
   const post = deps.post ?? postToHost;
   const nextFrame = deps.nextFrame ?? nextFrameOrTimeout;
   const total = urls.length;
+  const loaded: PruneTarget[] = [];
 
   const download = async (url: URL, report: (phase: LoadPhase, percent: number) => void): Promise<File> => {
     report('download', 0);
@@ -114,6 +118,7 @@ export async function autoloadModels(urls: string[], deps: AutoloadDeps): Promis
       const id = await deps.addModel(ready, { federatedCache: { minSize: AIM_CACHE_MIN_SIZE } });
       unwatch();
       unwatch = null;
+      if (id) loaded.push({ fileName: ready.name, fileSize: ready.size });
       if (id) {
         await nextFrame(); // model je v store, geometria sa nahrá do GPU pri najbližšom snímku
         post({ source: 'aim-bridge', type: 'FIRST_GEOMETRY', model, index, total });
@@ -143,4 +148,5 @@ export async function autoloadModels(urls: string[], deps: AutoloadDeps): Promis
     return p;
   });
   for (let i = 0; i < total; i++) await load(i, files[i], reports[i]);
+  if (loaded.length > 0) await (deps.prune ?? pruneModelCache)(loaded);
 }
