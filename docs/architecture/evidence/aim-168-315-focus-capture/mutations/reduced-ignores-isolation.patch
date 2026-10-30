@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewCaptureBasket.ts a/apps/viewer/src/aim/viewCaptureBasket.ts
+index 56c2f237..7e742be4 100644
+--- b/apps/viewer/src/aim/viewCaptureBasket.ts
++++ a/apps/viewer/src/aim/viewCaptureBasket.ts
+@@ -18,7 +18,7 @@ type Snapshot = ReturnType<typeof useViewerStore.getState>;
+ 
+ /** Je v platnosti izolácia alebo skrytie, ktoré zužuje to, čo je vidieť (Lens skrýva cez `hiddenEntities` aj `lensHiddenIds`). */
+ export function isViewReduced(s: Snapshot): boolean {
+-  return s.hiddenEntities.size > 0 || s.lensHiddenIds.size > 0;
++  return computeIsolationFilterSet(s) !== null || s.hiddenEntities.size > 0 || s.lensHiddenIds.size > 0;
+ }
+ 
+ /**

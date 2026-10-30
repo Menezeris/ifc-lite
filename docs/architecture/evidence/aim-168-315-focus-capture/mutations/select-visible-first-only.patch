@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/visibility-commands.ts a/apps/viewer/src/aim/visibility-commands.ts
+index e5dc189b..803158f4 100644
+--- b/apps/viewer/src/aim/visibility-commands.ts
++++ a/apps/viewer/src/aim/visibility-commands.ts
+@@ -173,7 +173,7 @@ export function runVisibilityCommand(
+       // prvý GUID nesie panel a ďalšie (AIM #217) sa pridajú ako Ctrl+klik. Neznáme sa preskočia.
+       let refs: EntityRef[];
+       if (msg.visible === true) {
+-        refs = getVisibleBasketEntityRefsFromStore().slice(0, 1);
++        refs = getVisibleBasketEntityRefsFromStore();
+         if (refs.length === 0) {
+           d.noteIssue('SELECT: nič nie je viditeľné');
+           return true;

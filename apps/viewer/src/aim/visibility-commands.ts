@@ -20,6 +20,7 @@ import { applyPanelView } from './aimPanelView.js';
 import { selectPanel } from './aimPanelViewPlan.js';
 import { useAimFocusRoomsStore } from './aimFocusRoomsStore.js';
 import { addGlobalIdsToSelection } from './aimMultiSelect.js';
+import { getVisibleBasketEntityRefsFromStore } from '../store/basketVisibleSet.js';
 import { isClickGesture, isDismissKey, isSceneTarget } from './focus-dismiss.js';
 
 /** Funkcie z modulov vstupného balíka - lenivý modul ich neimportuje (pravidlo balíka forku). */
@@ -168,15 +169,25 @@ export function runVisibilityCommand(
         return true;
       }
       const state = useViewerStore.getState();
-      // Prvý GUID nesie panel; ďalšie (AIM #217) sa pridajú ako Ctrl+klik. Neznáme sa preskočia.
-      const wanted = [...new Set([msg.guid, ...(msg.guids ?? [])])];
-      const refs = wanted.flatMap((g) => d.resolveGuids(state.models, [g]).slice(0, 1));
-      const [ref] = refs;
-      if (!ref) {
-        d.noteIssue('SELECT: prvok sa vo vieweri nenašiel');
-        return true;
+      // `visible: true` (#315): všetko, čo je teraz vidieť (po izolácii, Lens, skrytí, rezoch podlaží); inak
+      // prvý GUID nesie panel a ďalšie (AIM #217) sa pridajú ako Ctrl+klik. Neznáme sa preskočia.
+      let refs: EntityRef[];
+      if (msg.visible === true) {
+        refs = getVisibleBasketEntityRefsFromStore();
+        if (refs.length === 0) {
+          d.noteIssue('SELECT: nič nie je viditeľné');
+          return true;
+        }
+      } else {
+        const wanted = [...new Set([msg.guid ?? '', ...(msg.guids ?? [])])].filter((g) => g !== '');
+        refs = wanted.flatMap((g) => d.resolveGuids(state.models, [g]).slice(0, 1));
+        if (refs.length === 0) {
+          d.noteIssue('SELECT: prvok sa vo vieweri nenašiel');
+          return true;
+        }
+        if (refs.length < wanted.length) d.noteIssue(`SELECT: vo vieweri sa nenašlo ${wanted.length - refs.length} z ${wanted.length} prvkov`);
       }
-      if (refs.length < wanted.length) d.noteIssue(`SELECT: vo vieweri sa nenašlo ${wanted.length - refs.length} z ${wanted.length} prvkov`);
+      const [ref] = refs;
       clearFocus(bim); // oranžová by prekryla selekčné zvýraznenie
       d.selectPickedGlobalId(toGlobalIdFromModels(state.models, ref.modelId, ref.expressId));
       // Ostatné naraz: rad Ctrl+klikov bol pri stovkách prvkov O(N^2) a APPLIED meškalo (#273).
