@@ -49,12 +49,7 @@ export type { PlacementCorners, Vec3 } from './world-transform.js';
 export {
   isSectionPlacement,
   parseGeorefV2Sections,
-  parsePageRegion,
-  parseSectionCalibration,
-  parseSectionPlane,
   SECTION_BACK_OPACITY,
-  sectionPageToIfc,
-  sectionWorldCorners,
   serializeSectionCalibration,
 } from './section-plane.js';
 export type { PageRegion, SectionPlacement, SectionPlane } from './section-plane.js';
