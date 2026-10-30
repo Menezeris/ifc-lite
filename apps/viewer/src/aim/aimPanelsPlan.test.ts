@@ -115,6 +115,10 @@ describe('šírka a strana panela (AIM #320)', () => {
     const bottom = planPanelLayout({ panel: 'clash', width_pct: 30 }, { open: true, where: 'bottom' }, 1000);
     assert.equal(bottom.issues.length, 1);
     assert.equal(bottom.floatWidthPx, undefined);
+    const bottomSide = planPanelLayout({ panel: 'clash', side: 'left' }, { open: true, where: 'bottom' }, 1000);
+    assert.equal(bottomSide.issues.length, 1, 'strana pri paneli v spodnom páse sa hlási');
+    assert.equal(bottomSide.float, undefined, 'panel sa neodpojí');
+    assert.deepEqual(planPanelLayout({ panel: 'clash', side: 'bottom' }, { open: true, where: 'bottom' }, 1000), { issues: [] });
     assert.equal(planPanelLayout({ panel: 'lens', width_pct: 30, side: 'bottom' }, { open: true, where: 'right' }, 1000).issues.length, 1, 'pripnutý dole má celú šírku');
   });
 });

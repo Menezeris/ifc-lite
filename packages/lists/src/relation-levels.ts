@@ -11,9 +11,9 @@
 import type { ListDataProvider } from './types.js';
 import type { CellValue } from './result-types.js';
 
-/** Distinct non-empty names joined with ", " (declaration order); null when none. */
+/** Non-empty names joined with ", " (declaration order); null when none. Distinct entities with the same name stay separate (dedup is by id, upstream). */
 function joinNames(names: readonly string[] | undefined): CellValue {
-  const out = [...new Set((names ?? []).filter(Boolean))];
+  const out = (names ?? []).filter(Boolean);
   return out.length > 0 ? out.join(', ') : null;
 }
 
@@ -22,7 +22,8 @@ export function relationLevelValue(level: string, entityId: number, provider: Li
   switch (level.toLowerCase()) {
     case 'referenced': return joinNames(provider.getReferencedInNames?.(entityId));
     case 'boundary': return joinNames(provider.getSpaceBoundaryNames?.(entityId));
-    case 'aggregate': return joinNames(provider.getAggregateParents?.(entityId)?.map((id) => provider.getEntityName(id)));
+    // Distinct parents by id; an unnamed parent is named by its IFC class, like Referenced and Boundary.
+    case 'aggregate': return joinNames([...new Set(provider.getAggregateParents?.(entityId) ?? [])].map((id) => provider.getEntityName(id) || provider.getEntityTypeName(id)));
     default: return undefined;
   }
 }

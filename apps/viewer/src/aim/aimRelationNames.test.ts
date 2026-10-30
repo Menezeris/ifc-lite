@@ -52,4 +52,19 @@ describe('spatial relation columns on a parsed IFC (#277)', () => {
     assert.deepEqual(col('Referenced'), { W1: null, W2: 'Room A' });
     assert.deepEqual(col('Boundary'), { W1: 'Room A', W2: null });
   });
+
+  it('dva priestory s rovnakým názvom sa v stĺpci ukážu oba', async () => {
+    const twin = IFC.replace('ENDDATA;', `#12=IFCSPACE('000000000000000000000C',$,'Room A',$,$,$,$,$,.ELEMENT.,.INTERNAL.,$);
+#13=IFCRELSPACEBOUNDARY('000000000000000000000D',$,$,$,#12,#5,$,.PHYSICAL.,.INTERNAL.);
+ENDDATA;`);
+    const store = await new IfcParser().parseColumnar(new TextEncoder().encode(twin).buffer as ArrayBuffer, { disableWorkerScan: true });
+    const provider = {
+      getEntitiesByType: (t: IfcTypeEnum) => (t === IfcTypeEnum.IfcWall ? [5] : []),
+      getEntityName: (id: number) => store.entities.getName(id),
+      getEntityGlobalId: () => '', getEntityDescription: () => '', getEntityObjectType: () => '', getEntityTag: () => '',
+      getEntityTypeName: () => 'IfcWall', getPropertySets: () => [], getQuantitySets: () => [], ...relationNameHooks(store),
+    };
+    const cell = executeList(list('Boundary'), provider as never).rows[0].values[1];
+    assert.equal(cell, 'Room A, Room A', 'dva rôzne priestory, nie jeden');
+  });
 });

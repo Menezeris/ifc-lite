@@ -78,7 +78,7 @@ export const cellKey = (row: Pick<ListRow, 'modelId' | 'entityId'>, columnId: st
 const fold = (v: string) => v.trim().toLowerCase();
 /** Bunka sa rovná hodnote od hosta: číslo číselne (aj číslo v texte), text bez ohľadu na veľkosť písmen. */
 export function cellEquals(cell: CellValue, wanted: string | number): boolean {
-  if (cell === null || cell === undefined || cell === '') return false;
+  if (cell === null || cell === undefined) return false;
   if (typeof wanted === 'number') return typeof cell === 'number' ? cell === wanted : Number(cell) === wanted;
   if (typeof cell === 'number') return String(cell) === wanted.trim() || (wanted.trim() !== '' && cell === Number(wanted));
   return fold(String(cell)) === fold(wanted);

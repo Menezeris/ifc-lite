@@ -194,7 +194,7 @@ export function putTile(index: number, ref: string | null): void {
     s = v.next;
     id = v.id;
   }
-  const tiles = setTile(s, { layout: store.layout, tiles: store.tiles }, index, id);
+  const tiles = setTile(s, { layout: store.layout, tiles: store.tiles, sizes: store.sizes }, index, id);
   commit(id ? activateTab(s, id) : s, tiles);
 }
 

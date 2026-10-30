@@ -11,6 +11,7 @@
 import '@/test/setup-dom.js';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { act, useState } from 'react';
 import { ProjectUnits } from '@ifc-lite/parser';
 import type { ListResult } from '@ifc-lite/lists';
 import { installLayout } from '@/test/dom-layout.js';
@@ -128,6 +129,27 @@ describe('#275 šírky stĺpcov z chatu', () => {
     await settled();
     assert.equal(headerWidth(ui, 'Name'), before, 'auto drops the manual widths');
     assert.notEqual(headerWidth(ui, 'NetArea'), 333);
+  });
+});
+
+describe('#275 šírky stĺpcov pri inom zozname', () => {
+  it('ručná šírka z jedného zoznamu sa neprenesie na stĺpce rovnakého id v druhom', async () => {
+    const run = (id: string) => recordListRun({ ...result }, { id, name: id, createdAt: 0, updatedAt: 0, entityTypes: [], groups: [], columns: result.columns }, captureAnalysisStamp());
+    const second = run('druhy');
+    let show: (r: ListResult) => void = () => {};
+    const Host = () => {
+      const [shown, setShown] = useState(() => run('prvy'));
+      show = setShown;
+      return <ListResultsTable result={shown} onGroupingChange={() => {}} modelUnits={modelUnits} />;
+    };
+    const ui = render(<Host />);
+    await settled();
+    applyListView({ id: 'prvy', name: 'prvy', createdAt: 0, updatedAt: 0, entityTypes: [], groups: [], columns: result.columns }, view({ columnWidths: [{ column: AREA, width: 333 }] }));
+    await settled();
+    assert.equal(headerWidth(ui, 'NetArea'), 333);
+    act(() => show(second));
+    await settled();
+    assert.notEqual(headerWidth(ui, 'NetArea'), 333, 'nový zoznam začína s automatickými šírkami');
   });
 });
 

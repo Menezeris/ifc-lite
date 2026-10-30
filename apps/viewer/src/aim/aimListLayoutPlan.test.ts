@@ -69,6 +69,8 @@ describe('view: filter viditeľnosti (#276), šírky (#275) a zvýraznenie (#274
     assert.ok(cellEquals(7, '7'));
     assert.ok(cellEquals('7', 7));
     assert.ok(!cellEquals(null, ''));
+    assert.ok(cellEquals('', ''), 'prázdnu bunku sa dá zvýrazniť');
+    assert.ok(!cellEquals('', 'x'));
     assert.ok(!cellEquals('Izba 12', 'Izba 1'));
   });
 

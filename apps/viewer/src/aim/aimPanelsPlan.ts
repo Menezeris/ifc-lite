@@ -134,6 +134,10 @@ export function planPanelLayout(req: PanelLayoutRequest, info: PanelInfo, window
     plan.issues.push(`SET_PANELS: ľavý panel ${name} má pevnú šírku a stranu`);
     return plan;
   }
+  if (info.where === 'bottom' && req.side !== undefined && req.side !== 'bottom') {
+    plan.issues.push(`SET_PANELS: panel ${name} je v spodnom páse, stranu viewer nemení`);
+    return plan;
+  }
   let where = info.where;
   if (req.side !== undefined) {
     const docked = where === 'right' || where === 'bottom';
