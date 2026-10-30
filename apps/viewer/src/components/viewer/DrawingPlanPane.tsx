@@ -58,9 +58,7 @@ export function DrawingPlanPane() {
     if (!storeyGuid) return [];
     const list = [];
     for (const d of drawings.values()) {
-      // >>> AIM-FORK: a section underlay with a storey is not that storey's plan (AIM #284)
-      if (d.placement && d.placement.visible && d.placement.storeyGuid === storeyGuid && !d.placement.plane) {
-      // <<< AIM-FORK
+      if (d.placement && d.placement.visible && d.placement.storeyGuid === storeyGuid && !d.placement.plane) { // >>> AIM-FORK (#284): a section underlay is not the storey's plan <<< AIM-FORK
         list.push(d);
       }
     }

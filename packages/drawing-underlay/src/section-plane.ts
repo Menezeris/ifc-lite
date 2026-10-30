@@ -222,3 +222,12 @@ export function sectionWorldCorners(p: SectionPlacement, offset: Vec3, lift: num
     uv: { u0: r.x, v0: r.y, u1: r.x + r.w, v1: r.y + r.h },
   };
 }
+
+/** 1 when the strip winding (tl, tr, bl) faces away from `corners.normal`, so `front_facing` is the back side. */
+export function windingFlip(c: PlacementCorners): number {
+  if (!c.normal) return 0;
+  const a = [c.tr.x - c.tl.x, c.tr.y - c.tl.y, c.tr.z - c.tl.z];
+  const b = [c.bl.x - c.tl.x, c.bl.y - c.tl.y, c.bl.z - c.tl.z];
+  const n = cross(a, b);
+  return n[0] * c.normal.x + n[1] * c.normal.y + n[2] * c.normal.z < 0 ? 1 : 0;
+}

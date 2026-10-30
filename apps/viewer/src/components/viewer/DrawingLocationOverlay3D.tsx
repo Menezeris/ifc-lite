@@ -63,9 +63,7 @@ export function DrawingLocationOverlay3D() {
       let placement: DrawingPlacement | null = null;
       if (guid) {
         for (const d of state.underlayDrawings.values()) {
-          // >>> AIM-FORK: a section underlay with a storey is not that storey's plan (AIM #284)
-          if (d.placement && d.placement.storeyGuid === guid && !d.placement.plane) {
-          // <<< AIM-FORK
+          if (d.placement && d.placement.storeyGuid === guid && !d.placement.plane) { // >>> AIM-FORK (#284): a section underlay is not the storey's plan <<< AIM-FORK
             placement = d.placement;
             break;
           }

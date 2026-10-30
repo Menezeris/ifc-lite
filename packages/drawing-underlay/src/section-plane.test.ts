@@ -4,7 +4,6 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { windingFlip } from './pdf-plane-pipeline.js';
 import {
   isSectionPlacement,
   parseGeorefV2Sections,
@@ -12,6 +11,7 @@ import {
   parseSectionPlane,
   sectionPageToIfc,
   serializeSectionCalibration,
+  windingFlip,
 } from './section-plane.js';
 import { placementWorldCorners, ZERO_OFFSET } from './world-transform.js';
 
