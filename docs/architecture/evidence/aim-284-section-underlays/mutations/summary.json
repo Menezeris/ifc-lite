@@ -1,0 +1,198 @@
+{
+  "documents-override-underlays": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionUnderlays.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "apps/viewer/src/aim/sectionUnderlays.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionUnderlays.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "ids-without-index": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionUnderlays.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "apps/viewer/src/aim/sectionUnderlays.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionUnderlays.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "kind-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionUnderlays.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "apps/viewer/src/aim/underlaysPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionUnderlays.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "lift-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in packages/drawing-underlay/src/section-plane.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "packages/drawing-underlay/src/section-plane.ts"
+    ],
+    "tests": [
+      "packages/drawing-underlay/src/section-plane.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "plan-of-section-doc-kept": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionUnderlays.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "apps/viewer/src/aim/sectionUnderlays.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionUnderlays.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "plane-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in packages/drawing-underlay/src/section-plane.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "packages/drawing-underlay/src/section-plane.ts"
+    ],
+    "tests": [
+      "packages/drawing-underlay/src/section-plane.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "region-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in packages/drawing-underlay/src/section-plane.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "packages/drawing-underlay/src/section-plane.ts"
+    ],
+    "tests": [
+      "packages/drawing-underlay/src/section-plane.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "s-along-v": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in packages/drawing-underlay/src/section-plane.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "packages/drawing-underlay/src/section-plane.ts"
+    ],
+    "tests": [
+      "packages/drawing-underlay/src/section-plane.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "save-never-manual": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionUnderlays.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "apps/viewer/src/aim/sectionUnderlays.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionUnderlays.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "section-under-cut": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionUnderlays.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "apps/viewer/src/aim/underlayAtCut.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionUnderlays.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "snapshot-per-record": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionUnderlays.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "apps/viewer/src/aim/underlaysPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionUnderlays.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "source-from-placement": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in packages/drawing-underlay/src/section-plane.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "packages/drawing-underlay/src/section-plane.ts"
+    ],
+    "tests": [
+      "packages/drawing-underlay/src/section-plane.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "winding-flip-inverted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in packages/drawing-underlay/src/section-plane.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "packages/drawing-underlay/src/pdf-plane-pipeline.ts"
+    ],
+    "tests": [
+      "packages/drawing-underlay/src/section-plane.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "wire-id-exact-only": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionUnderlays.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "d25a160b6803fd19817ccad4b2364e1e5e04ae6c",
+    "production": [
+      "apps/viewer/src/aim/underlaysPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionUnderlays.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

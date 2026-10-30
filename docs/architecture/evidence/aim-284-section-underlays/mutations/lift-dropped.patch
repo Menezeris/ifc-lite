@@ -1,0 +1,13 @@
+diff --git b/packages/drawing-underlay/src/section-plane.ts a/packages/drawing-underlay/src/section-plane.ts
+index 06b91e75..5a504c76 100644
+--- b/packages/drawing-underlay/src/section-plane.ts
++++ a/packages/drawing-underlay/src/section-plane.ts
+@@ -207,7 +207,7 @@ export function sectionWorldCorners(p: SectionPlacement, offset: Vec3, lift: num
+   const r = p.region ?? { x: 0, y: 0, w: 1, h: 1 };
+   const n = cross(p.plane.u, p.plane.v);
+   const nl = length(n);
+-  const k = 0 * lift / nl;
++  const k = lift / nl;
+   const corner = (fx: number, fy: number): Vec3 => {
+     const q = sectionPageToIfc(p, { x: fx * w, y: (1 - fy) * h });
+     return toWorld([q[0] + n[0] * k, q[1] + n[1] * k, q[2] + n[2] * k], offset);

@@ -1,0 +1,13 @@
+diff --git b/packages/drawing-underlay/src/section-plane.ts a/packages/drawing-underlay/src/section-plane.ts
+index 9260a06d..5a504c76 100644
+--- b/packages/drawing-underlay/src/section-plane.ts
++++ a/packages/drawing-underlay/src/section-plane.ts
+@@ -185,7 +185,7 @@ export function serializeSectionCalibration(p: SectionPlacement, base: Raw = {},
+ export function sectionPageToIfc(p: SectionPlacement, page: { x: number; y: number }): [number, number, number] {
+   const st = applyAffine(p.affine, page);
+   const { origin: o, u, v } = p.plane;
+-  return [o[0] + st.x * v[0] + st.y * u[0], o[1] + st.x * v[1] + st.y * u[1], o[2] + st.x * v[2] + st.y * u[2]];
++  return [o[0] + st.x * u[0] + st.y * v[0], o[1] + st.x * u[1] + st.y * v[1], o[2] + st.x * u[2] + st.y * v[2]];
+ }
+ 
+ /** Lift off the cut faces, as `DEFAULT_PLANE_LIFT` of a floor plan. */

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionUnderlays.ts a/apps/viewer/src/aim/sectionUnderlays.ts
+index 15df63f5..708bb54e 100644
+--- b/apps/viewer/src/aim/sectionUnderlays.ts
++++ a/apps/viewer/src/aim/sectionUnderlays.ts
+@@ -89,7 +89,7 @@ export function sectionEntries(docs: readonly SectionSourceDoc[]): SectionEntry[
+  */
+ export function mergeSectionUnderlays(base: readonly UnderlayLike[], sections: readonly SectionEntry[]): UnderlayLike[] {
+   const sectionDocs = new Set(sections.map((s) => s.documentId));
+-  const out: UnderlayLike[] = base.filter((d) => d.placement !== null || !sectionDocs.has(d.id));
++  const out: UnderlayLike[] = base.filter((d) => !sectionDocs.has(d.id));
+   const seen = new Set(out.map((d) => d.id));
+   for (const s of sections) {
+     if (seen.has(s.id)) continue;

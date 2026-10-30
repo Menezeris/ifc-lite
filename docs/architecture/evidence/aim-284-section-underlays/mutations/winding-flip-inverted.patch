@@ -1,0 +1,13 @@
+diff --git b/packages/drawing-underlay/src/pdf-plane-pipeline.ts a/packages/drawing-underlay/src/pdf-plane-pipeline.ts
+index a2846f0c..e695b653 100644
+--- b/packages/drawing-underlay/src/pdf-plane-pipeline.ts
++++ a/packages/drawing-underlay/src/pdf-plane-pipeline.ts
+@@ -92,7 +92,7 @@ export function windingFlip(c: PlacementCorners): number {
+   const a = { x: c.tr.x - c.tl.x, y: c.tr.y - c.tl.y, z: c.tr.z - c.tl.z };
+   const b = { x: c.bl.x - c.tl.x, y: c.bl.y - c.tl.y, z: c.bl.z - c.tl.z };
+   const n = { x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x };
+-  return n.x * c.normal.x + n.y * c.normal.y + n.z * c.normal.z > 0 ? 1 : 0;
++  return n.x * c.normal.x + n.y * c.normal.y + n.z * c.normal.z < 0 ? 1 : 0;
+ }
+ // <<< AIM-FORK
+ 
