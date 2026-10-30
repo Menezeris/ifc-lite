@@ -21,10 +21,16 @@ export interface ModelLoadOptions {
   // prompt's retry). Absent: the user's standing settings
   // (`landXmlGeorefAssumptionSettings`) apply. Never inferred.
   landXmlAssumptions?: LandXmlGeorefAssumptions;
+  // >>> AIM-FORK: persisted cache for a federated add (AIM #308, hooks/federatedCacheHit.ts)
+  // Opt-in: a federated add reads and writes the IndexedDB cache like a primary
+  // load. `minSize` overrides the size floor (CACHE_SIZE_THRESHOLD) for it.
+  federatedCache?: { minSize?: number };
+  // <<< AIM-FORK
 }
 
 /** Federation placement/display options share loader ownership and source handles. */
-export interface FederationAddModelOptions extends Pick<ModelLoadOptions, 'sourceHandle' | 'workflowOwner'> {
+// AIM-FORK (AIM #308): next 1 line, `federatedCache` passes through addModel
+export interface FederationAddModelOptions extends Pick<ModelLoadOptions, 'sourceHandle' | 'workflowOwner' | 'federatedCache'> {
   name?: string;
   modelId?: string;
   loadedAt?: number;
