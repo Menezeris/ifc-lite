@@ -87,7 +87,7 @@ describe('rucny posun rezu vydrzi pri dalsich spravach hosta (AIM #187 follow-up
   const load = (affine: number[]) => setSectionRegistry(sectionEntries(doc(affine)))[0];
   const move = (affine: number[]) => {
     const e = sectionEntry('rez-a')!;
-    const placement = { ...e.placement, affine: affine as typeof e.placement.affine };
+    const placement = { ...e.placement, affine: affine as unknown as typeof e.placement.affine };
     rememberSectionSave('rez-a', placement, sectionSave(e, placement)!.georef);
   };
 
