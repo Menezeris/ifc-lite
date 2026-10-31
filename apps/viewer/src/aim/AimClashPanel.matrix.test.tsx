@@ -13,7 +13,6 @@ import assert from 'node:assert/strict';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { Clash, ClashResult } from '@ifc-lite/clash';
-import { clashReviewKey } from '@ifc-lite/clash';
 import { useViewerStore } from '@/store';
 import { ClashPanel } from '@/components/viewer/ClashPanel.js';
 import { clearClashCell, toggleClashCell, cellOf } from './clashCellFilter.js';
