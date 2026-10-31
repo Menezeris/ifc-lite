@@ -1,0 +1,16 @@
+--- a/apps/viewer/src/aim/sectionUnderlays.ts
++++ b/apps/viewer/src/aim/sectionUnderlays.ts
+@@ -148,7 +148,12 @@
+   const out: SectionEntry[] = [];
+   registry.clear();
+   for (const e of entries) {
+-    const use = e;
++    const p = pending.get(e.id);
++    let use = e;
++    if (p) {
++      if (p.stale.some((s) => sameGeometry(s, e.placement)) && !sameGeometry(p.entry.placement, e.placement)) use = p.entry;
++      else pending.delete(e.id);
++    }
+     registry.set(use.id, use);
+     out.push(use);
+   }

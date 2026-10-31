@@ -5,7 +5,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { combineSections, mergeSectionUnderlays, sectionEntries, sectionSave } from './sectionUnderlays.js';
+import {
+  combineSections, mergeSectionUnderlays, rememberSectionSave, resetSectionRegistry, sectionEntries, sectionEntry, sectionSave, setSectionRegistry,
+} from './sectionUnderlays.js';
 import { calibratedDrawings, describeUnderlays, planUnderlaySet, restoreUnderlays, snapshotUnderlays } from './underlaysPlan.js';
 import { underlaysAtCut } from './underlayAtCut.js';
 
@@ -73,5 +75,55 @@ describe('podklady rezov z georefV2 (AIMviewer #284, D-179)', () => {
     const p2 = { placement: { storeyZ: 3.2 } };
     assert.deepEqual(underlaysAtCut([sec, p1, p2], 1.2, false), [p1]);
     assert.deepEqual(underlaysAtCut([sec, p1, p2], null, false), [sec, p1, p2]);
+  });
+});
+
+describe('rucny posun rezu vydrzi pri dalsich spravach hosta (AIM #187 follow-up)', () => {
+  const doc = (affine: number[]) => [{ documentId: 'rez-a', name: 'REZ-A', pdfUrl: 'a.pdf', georefV2: { calibrations: [{ ...SECTION, affine }] } }];
+  const OLD = [K, 0, -2, 0, K, -1];
+  const MOVED = [K, 0, -1.5, 0, K, -1];
+  const MOVED2 = [K, 0, -1, 0, K, -1];
+  const NEWER = [K, 0, 7, 0, K, -1];
+  const load = (affine: number[]) => setSectionRegistry(sectionEntries(doc(affine)))[0];
+  const move = (affine: number[]) => {
+    const e = sectionEntry('rez-a')!;
+    const placement = { ...e.placement, affine: affine as typeof e.placement.affine };
+    rememberSectionSave('rez-a', placement, sectionSave(e, placement)!.georef);
+  };
+
+  it('posun -> UNDERLAYS_LOAD so starym stavom -> posun ostane; stav hosta s rovnakou polohou ho potvrdi', () => {
+    resetSectionRegistry();
+    load(OLD);
+    move(MOVED);
+    assert.deepEqual(load(OLD).placement.affine, MOVED);
+    assert.equal(load(OLD).raw.source, 'manual');
+    assert.deepEqual(load(MOVED).placement.affine, MOVED); // potvrdenie
+    assert.deepEqual(load(OLD).placement.affine, OLD); // po potvrdeni uz nie je co drzat
+  });
+
+  it('novy stav hosta (ina poloha ako pred posunom aj ako uloziena) prevezme', () => {
+    resetSectionRegistry();
+    load(OLD);
+    move(MOVED);
+    assert.deepEqual(load(NEWER).placement.affine, NEWER);
+    assert.deepEqual(load(OLD).placement.affine, OLD);
+  });
+
+  it('dva posuny za sebou: host s prvym uz stary stav, druhy posun ostane', () => {
+    resetSectionRegistry();
+    load(OLD);
+    move(MOVED);
+    move(MOVED2);
+    assert.deepEqual(load(MOVED).placement.affine, MOVED2);
+    assert.deepEqual(load(OLD).placement.affine, MOVED2);
+    assert.deepEqual(load(MOVED2).placement.affine, MOVED2);
+  });
+
+  it('rez, ktory host uz neposle, zahodi aj nepotvrdeny posun', () => {
+    resetSectionRegistry();
+    load(OLD);
+    move(MOVED);
+    setSectionRegistry([]);
+    assert.deepEqual(load(OLD).placement.affine, OLD);
   });
 });
