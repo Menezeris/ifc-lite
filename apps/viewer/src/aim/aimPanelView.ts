@@ -48,6 +48,16 @@ function propertiesLoaded(target: Target): boolean {
   return !!ds && (ds.onDemandPropertyMap !== undefined || (ds.properties?.count ?? 0) > 0);
 }
 
+/** Loader dobehol (`loading` je false) a store nenesie žiadny zdroj vlastností ani výmer: prvok ich nemá a nič sa už nedotiahne (follow-up #176). */
+function loaderReturnedEmpty(target: Target): boolean {
+  const s = useViewerStore.getState();
+  if (s.loading) return false;
+  const ds = target.modelId === 'legacy' ? s.ifcDataStore : s.models.get(target.modelId)?.ifcDataStore;
+  if (!ds) return false;
+  return ds.onDemandPropertyMap === undefined && ds.onDemandQuantityMap === undefined
+    && (ds.properties?.count ?? 0) === 0 && (ds.quantities?.count ?? 0) === 0;
+}
+
 /** Obsah panela vlastností: rodič AIM bloku, inak celý dokument. */
 function panelScope(): ParentNode {
   return document.querySelector('[data-aim-inspector]')?.parentElement ?? document;
@@ -158,6 +168,11 @@ export function applyPanelView(view: AimPanelView, target: Target, noteIssue: (t
           stop();
         };
         if (loadedAt === null) {
+          // Loader dobehol naprázdno: nečakaj LOAD_PATIENCE_MS na vlastnosti, ktoré nepridú.
+          if (loaderReturnedEmpty(target)) {
+            giveUp(`SELECT: vlastnosť ${focus.pset}.${focus.property} na prvku v IFC paneli nie je`);
+            return;
+          }
           if (Date.now() - startedAt > LOAD_PATIENCE_MS) giveUp(`SELECT: vlastnosti prvku sa nenačítali, ${focus.pset}.${focus.property} sa nedá zvýrazniť`);
           return;
         }

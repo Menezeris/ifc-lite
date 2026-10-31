@@ -118,12 +118,15 @@ export async function autoloadModels(urls: string[], deps: AutoloadDeps): Promis
       const id = await deps.addModel(ready, { federatedCache: { minSize: AIM_CACHE_MIN_SIZE } });
       unwatch();
       unwatch = null;
-      if (id) loaded.push({ fileName: ready.name, fileSize: ready.size });
       if (id) {
+        loaded.push({ fileName: ready.name, fileSize: ready.size });
         await nextFrame(); // model je v store, geometria sa nahrá do GPU pri najbližšom snímku
         post({ source: 'aim-bridge', type: 'FIRST_GEOMETRY', model, index, total });
+        report('done', 100);
+      } else {
+        // addModel nevrátil id: model sa nezaregistroval, host nesmie dostať "done 100" (fail hlási už addModel).
+        report('error', 0);
       }
-      report('done', 100);
     } catch (err) {
       unwatch?.();
       report('error', 0);

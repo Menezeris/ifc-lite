@@ -362,7 +362,7 @@ export async function setCached(
         createdAt: Date.now(),
         lastModified: meta?.lastModified,
         fullSourceHash: meta?.fullSourceHash,
-        ...(meta?.instancedGeometry ? { instancedGeometry: meta.instancedGeometry } : {}), // AIM-FORK (AIM #308): next 0 lines
+        ...(meta?.instancedGeometry ? { instancedGeometry: { instancedGeometryHashes: meta.instancedGeometry.instancedGeometryHashes, instancedGeometryAabbs: meta.instancedGeometry.instancedGeometryAabbs, instancedGeometryVolumes: meta.instancedGeometry.instancedGeometryVolumes } } : {}), // AIM-FORK (AIM #308, follow-up #182: len tri mapy, nie cely GeometryResult): next 0 lines
       };
 
       tx.oncomplete = () => done();
