@@ -20,7 +20,7 @@ const load = (c: unknown): InboundMessage => ({
   source: 'aim-host', type: 'UNDERLAYS_LOAD',
   drawings: [{ documentId: 'rez-a', name: 'REZ-A', pdfUrl: 'a.pdf', georefV2: { calibrations: [c] } }],
 } as unknown as InboundMessage);
-const affineOf = () => (useViewerStore.getState().underlayDrawings.get('rez-a')?.placement as { affine: number[] }).affine;
+const affineOf = () => (useViewerStore.getState().underlayDrawings.get('rez-a')?.placement as unknown as { affine: number[] }).affine;
 
 describe('posun rezu cez skutocny tok UNDERLAY_SAVE -> host -> UNDERLAYS_LOAD', () => {
   it('host po PATCH posle novy stav; nesuvisiaca sprava so starym stavom posun nezahodi', () => {
