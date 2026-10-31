@@ -8,7 +8,10 @@
  * modelov bez ohľadu na poradie (ASR x VZT je to isté ako VZT x ASR).
  */
 
+import { useCallback } from 'react';
 import { create } from 'zustand';
+import type { Clash } from '@ifc-lite/clash';
+import { useViewerStore } from '@/store';
 
 export interface MatrixCell { a: string; b: string }
 
@@ -24,6 +27,17 @@ export function inCell(cell: MatrixCell | null, labelA: string, labelB: string):
 }
 
 export const useClashCell = create<{ cell: MatrixCell | null }>()(() => ({ cell: null }));
+
+/** Filter kolízií podľa vybranej bunky; zmení identitu len pri zmene bunky alebo modelov (deps `useMemo` v ClashPanel). */
+export function useClashCellFilter(): (list: Clash[]) => Clash[] {
+  const cell = useClashCell((s) => s.cell);
+  const models = useViewerStore((s) => s.models);
+  return useCallback((list: Clash[]) => {
+    if (!cell) return list;
+    const lab = (id: string) => models.get(id)?.name ?? id;
+    return list.filter((c) => inCell(cell, lab(c.a.model), lab(c.b.model)));
+  }, [cell, models]);
+}
 
 /** Klik na bunku ju zapne, ďalší klik na tú istú vypne. */
 export const toggleClashCell = (next: MatrixCell): void =>

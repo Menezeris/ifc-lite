@@ -8,7 +8,7 @@
  * and `Aggregate` (IfcRelAggregates parents). Several related entities are joined with ", ".
  */
 
-import type { ListDataProvider } from './types.js';
+import type { ColumnDefinition, ListDataProvider } from './types.js';
 import type { CellValue } from './result-types.js';
 
 /** Non-empty names joined with ", " (declaration order); null when none. Distinct entities with the same name stay separate (dedup is by id, upstream). */
@@ -26,4 +26,9 @@ export function relationLevelValue(level: string, entityId: number, provider: Li
     case 'aggregate': return joinNames([...new Set(provider.getAggregateParents?.(entityId) ?? [])].map((id) => provider.getEntityName(id) || provider.getEntityTypeName(id)));
     default: return undefined;
   }
+}
+
+/** Cell of a column source the engine has no case for: `host` (values the AIM host sent by GlobalId, D-174), else empty. */
+export function defaultColumnValue(col: ColumnDefinition, entityId: number, provider: ListDataProvider): CellValue {
+  return col.source === 'host' ? provider.getHostValue?.(entityId, col.propertyName) ?? null : null;
 }

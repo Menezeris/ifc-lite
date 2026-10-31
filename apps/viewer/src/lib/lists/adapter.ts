@@ -278,10 +278,7 @@ export function createListDataProvider(
     getProjectName(): string {
       return ancestry().projectName;
     },
-    ...relationNameHooks(store), // >>> AIM-FORK (#277): spatial levels Referenced / Boundary <<< AIM-FORK
-    // >>> AIM-FORK: `host` column, values by GlobalId from the AIM host (D-174, #277)
-    getHostValue: (entityId, key) => hostColumnValue(key, store.entities.getGlobalId(entityId)),
-    // <<< AIM-FORK
+    ...relationNameHooks(store), getHostValue: (entityId, key) => hostColumnValue(key, store.entities.getGlobalId(entityId)), // >>> AIM-FORK (#277, D-174): spatial levels Referenced / Boundary, `host` column <<< AIM-FORK
     getModelName(): string {
       return modelName;
     },

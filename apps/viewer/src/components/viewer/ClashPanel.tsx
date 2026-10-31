@@ -34,10 +34,8 @@ import { useViewerStore } from '@/store';
 import { hasRetainedShapeOnlyModel, RETAINED_SHAPE_ONLY_REASON } from '@/store/retainedGeometry';
 import { ModelBadge } from './ModelBadge';
 import { ClashExportActions } from '@/components/viewer/clash/ClashExportActions';
-// AIM-FORK (D-164): next 1 line
-import { AimClashBarLazy } from '@/aim/AimClashBarLazy';
-// AIM-FORK (#302): next 1 line
-import { inCell, useClashCell } from '@/aim/clashCellFilter';
+// AIM-FORK (D-164, #302): next 1 line
+import { AimClashBarLazy } from '@/aim/AimClashBarLazy'; import { useClashCellFilter } from '@/aim/clashCellFilter';
 import { ClashSettingsDialog } from '@/components/viewer/ClashSettingsDialog';
 import { ClashRevisionCompareDialog } from '@/components/viewer/ClashRevisionCompareDialog';
 import { ClashSavedReportsDialog } from '@/components/viewer/ClashSavedReportsDialog';
@@ -409,30 +407,18 @@ export function ClashPanel({ onClose }: ClashPanelProps) {
     const counts: Record<ClashReviewStatus, number> = { open: 0, resolved: 0, accepted: 0 };
     if (result) for (const c of result.clashes) counts[reviewOf(c)] += 1;
     return counts;
-  }, [result, reviewOf]);
+  }, [result, reviewOf]); const aimCellFilter = useClashCellFilter(); // >>> AIM-FORK (#302) <<< AIM-FORK
 
   /** The clashes actually shown: touching + status filters applied, then ordered by `sortBy`. */
-  // >>> AIM-FORK: filter by the discipline matrix cell (#302)
-  const aimCell = useClashCell((s) => s.cell);
-  const aimModels = useViewerStore((s) => s.models);
-  // <<< AIM-FORK
   const visibleClashes = useMemo(() => {
     if (!result) return [] as Clash[];
-    let list = hideTouching ? result.clashes.filter((c) => !isTouching(c)) : result.clashes;
-    // >>> AIM-FORK: filter by the discipline matrix cell (#302)
-    if (aimCell) {
-      const lab = (id: string) => aimModels.get(id)?.name ?? id;
-      list = list.filter((c) => inCell(aimCell, lab(c.a.model), lab(c.b.model)));
-    }
-    // <<< AIM-FORK
+    let list = aimCellFilter(hideTouching ? result.clashes.filter((c) => !isTouching(c)) : result.clashes); // >>> AIM-FORK: discipline matrix cell filter (#302) <<< AIM-FORK
     // Status filter: skip the per-clash lookup entirely when all statuses show (default).
     if (statusFilter.size < CLASH_REVIEW_STATUSES.length) {
       list = list.filter((c) => statusFilter.has(reviewOf(c)));
     }
     return sortClashes(list, sortBy);
-  // >>> AIM-FORK: deps of the matrix cell filter (#302)
-  }, [result, hideTouching, sortBy, statusFilter, reviewOf, aimCell, aimModels]);
-  // <<< AIM-FORK
+  }, [result, hideTouching, sortBy, statusFilter, reviewOf, aimCellFilter]); // >>> AIM-FORK (#302) <<< AIM-FORK
 
   // A duplicate scan renders one section per coincident SET ("3 coincident
   // IfcColumn objects" holding its pair rows) instead of the generic
