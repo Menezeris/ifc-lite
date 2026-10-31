@@ -28,7 +28,6 @@ import {
 } from './docIssueModel.js';
 import type { MarkupType } from './docMarkup.js';
 import { markupSvg, pageAspect } from './docMarkupSvg.js';
-import { ensureTopicComponents, selectGuidsIn3d } from './docEntitiesScene.js';
 
 export type DocIssuePhase = 'idle' | 'drawing' | 'entities' | 'form';
 /** Nástroj kreslenia: oblasť (obdĺžnik D-158, hneď otvorí formulár) alebo značka (AIM #199). */
@@ -89,6 +88,9 @@ function finish(note: string | null): void {
  */
 export async function openIssueForm(target: DocIssueTarget, docName: string, entityGuids: readonly string[] = []): Promise<boolean> {
   stopWatch?.();
+  // Lenivo: docEntitiesScene ťahá useBCF a ďalšie moduly zdieľané s eager kódom; staticky ho sem nedávame
+  // (E2E mobile-journey:174, check-aim-doc-lazy-imports.mjs). Načíta sa len keď sú vybrané prvky.
+  const scene = entityGuids.length ? await import('./docEntitiesScene.js') : null;
   const store = useViewerStore.getState();
   store.showWorkspacePanel('bcf', 'programmatic');
   store.setActiveTopic(null);
@@ -99,7 +101,7 @@ export async function openIssueForm(target: DocIssueTarget, docName: string, ent
   }
   const before = new Set(useViewerStore.getState().bcfProject?.topics.keys() ?? []);
   // AIM #199 bod 2: vybrané prvky ako výber v 3D, formulár ich zachytí do pohľadu témy.
-  const inModel = entityGuids.length ? selectGuidsIn3d(entityGuids) : [];
+  const inModel = scene ? scene.selectGuidsIn3d(entityGuids) : [];
   useAimDocIssueStore.getState().set({ phase: 'form', docId: target.docId, note: null, pending: null });
   button.click();
   const ref = docIssueReference(aimBcfContext()?.origin ?? null, docName, target);
@@ -116,8 +118,8 @@ export async function openIssueForm(target: DocIssueTarget, docName: string, ent
     useViewerStore.getState().updateTopic(guid, { documentReferences: [...(topic?.documentReferences ?? []), ref] });
     void attachSnapshot(guid, target);
     // Pohľad témy pridáva formulár hneď po založení; komponenty, ktoré nezachytil, sa doplnia.
-    if (entityGuids.length) setTimeout(() => {
-      const ok = ensureTopicComponents(guid, mergeWithModel(entityGuids, inModel));
+    if (scene) setTimeout(() => {
+      const ok = scene.ensureTopicComponents(guid, mergeWithModel(entityGuids, inModel));
       if (!ok) useAimDocIssueStore.getState().set({ note: 'Téma nemá pohľad (bez snímky), IFC prvky sa neuložia.' });
     }, 500);
     return true;
