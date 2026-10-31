@@ -133,9 +133,32 @@ export function sectionSave(entry: SectionEntry, placement: DrawingPlacement): S
 /** Rezy poslednej relácie mosta; `documentOf` a uloženie podľa kľúča store. */
 const registry = new Map<string, SectionEntry>();
 
-export function setSectionRegistry(entries: readonly SectionEntry[]): void {
+/**
+ * Lokálne uložený posun, ktorý host ešte nepotvrdil: `stale` sú polohy pred posunom (host ich môže
+ * poslať znova, kým PATCH nedobehne), `entry` je posledný uložený stav.
+ */
+const pending = new Map<string, { stale: SectionPlacement[]; entry: SectionEntry }>();
+
+/**
+ * Nastaví register z rezov hosta. Lokálne uložený posun vydrží, kým host nepošle rovnakú polohu
+ * (potvrdenie) alebo inú ako pôvodnú (novší stav hosta): vtedy ho nahradí stav hosta. Poloha rovná
+ * staršej (pred posunom) znamená, že host ešte nestihol uložiť, a posun ostane. Vráti rezy pre store.
+ */
+export function setSectionRegistry(entries: readonly SectionEntry[]): SectionEntry[] {
+  const out: SectionEntry[] = [];
   registry.clear();
-  for (const e of entries) registry.set(e.id, e);
+  for (const e of entries) {
+    const p = pending.get(e.id);
+    let use = e;
+    if (p) {
+      if (p.stale.some((s) => sameGeometry(s, e.placement)) && !sameGeometry(p.entry.placement, e.placement)) use = p.entry;
+      else pending.delete(e.id);
+    }
+    registry.set(use.id, use);
+    out.push(use);
+  }
+  for (const id of [...pending.keys()]) if (!registry.has(id)) pending.delete(id);
+  return out;
 }
 
 export const sectionEntry = (id: string): SectionEntry | undefined => registry.get(id);
@@ -143,7 +166,17 @@ export const sectionEntry = (id: string): SectionEntry | undefined => registry.g
 /** Po uložení je nová poloha základom ďalšieho porovnania (druhá úprava je tiež `manual`). */
 export function rememberSectionSave(id: string, placement: SectionPlacement, georef: Record<string, unknown>): void {
   const e = registry.get(id);
-  if (e) registry.set(id, { ...e, placement, raw: georef });
+  if (!e) return;
+  const next = { ...e, placement, raw: georef };
+  registry.set(id, next);
+  const stale = pending.get(id)?.stale ?? [];
+  pending.set(id, { stale: [...stale, e.placement], entry: next });
+}
+
+/** Test: zabudnúť všetko (register aj nepotvrdené posuny). */
+export function resetSectionRegistry(): void {
+  registry.clear();
+  pending.clear();
 }
 
 /** Skutočné id dokumentu záznamu store (pôdorys: id samo). */
