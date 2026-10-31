@@ -34,8 +34,7 @@ let documentSections: SectionEntry[] = [];
 
 function publishUnderlays(): void {
   const sections = combineSections(underlaySections, documentSections);
-  setSectionRegistry(sections);
-  useViewerStore.getState().setUnderlayDrawings(mergeSectionUnderlays(lastUnderlays, sections));
+  useViewerStore.getState().setUnderlayDrawings(mergeSectionUnderlays(lastUnderlays, setSectionRegistry(sections)));
 }
 
 /** Vybaví správu o dokumentoch; false = správa sem nepatrí. */
