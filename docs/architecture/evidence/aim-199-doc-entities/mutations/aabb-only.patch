@@ -1,0 +1,11 @@
+--- a/apps/viewer/src/aim/docEntities.ts
++++ b/apps/viewer/src/aim/docEntities.ts	2026-10-31 20:12:25.623566109 +0000
+@@ -132,7 +132,7 @@
+   for (const b of boxes) {
+     if (!b.guid || seen.has(b.guid) || !isPickableClass(b.ifcType)) continue;
+     if (b.max.z < band[0] + BAND_MIN || b.min.z > band[1] - BAND_MIN) continue;
+-    
++    if (!boxOverlapsPolygon(b, poly)) continue;
+     seen.add(b.guid);
+     hits.push({
+       guid: b.guid,
