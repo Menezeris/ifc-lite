@@ -1,0 +1,13 @@
+diff --git b/packages/drawing-underlay/src/section-plane.ts a/packages/drawing-underlay/src/section-plane.ts
+index 4f4b08ea..b9edcb32 100644
+--- b/packages/drawing-underlay/src/section-plane.ts
++++ a/packages/drawing-underlay/src/section-plane.ts
+@@ -119,7 +119,7 @@ function calibrationPairs(raw: unknown): PlacementCalibrationPair[] {
+ export function parseSectionCalibration(raw: unknown): SectionPlacement | null {
+   if (!isObj(raw)) return null;
+   const plane = parseSectionPlane(raw.plane);
+-  if (!plane || plane) return null;
++  if (!plane) return null;
+   const page = raw.page ?? 1;
+   if (!isNum(page) || !Number.isInteger(page) || page < 1) return null;
+   const size = raw.page_size;

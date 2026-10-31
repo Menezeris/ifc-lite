@@ -93,7 +93,7 @@ export interface UnderlayDrawingWire {
   documentId: string;
   name: string;
   pdfUrl: string;
-  georef?: unknown;
+  georef?: unknown; georefV2?: unknown; // georefV2: page calibrations v2 (D-179), an entry with `plane` is a section underlay (sectionUnderlays.ts)
 }
 
 /**
@@ -114,7 +114,7 @@ export interface DocumentDescriptorWire {
   /** Host-defined tree path for the panel's grouping, e.g. ['Building A', '2.NP']. */
   folder?: string[];
   /** Free-form metadata shown in the list (revision, status, discipline…). */
-  meta?: Record<string, string>;
+  meta?: Record<string, string>; georefV2?: unknown; // georefV2 as in UnderlayDrawingWire: a section shows without UNDERLAYS_LOAD (D-179)
 }
 
 /**
@@ -176,8 +176,8 @@ export type OutboundMessage =
   // navigation (href is a host-relative path, e.g. /node/{id}).
   | { source: typeof SOURCE; type: 'AIM_NAVIGATE'; href: string }
   // A drawing was (re)calibrated in the viewer — the host persists the
-  // serialized _georef v1 JSON on the document (D-072).
-  | { source: typeof SOURCE; type: 'UNDERLAY_SAVE'; documentId: string; georef: unknown }
+  // serialized _georef v1 JSON on the document (D-072); a section (D-179): the georefV2 entry with page and calibrationIndex.
+  | { source: typeof SOURCE; type: 'UNDERLAY_SAVE'; documentId: string; georef: unknown; page?: number; calibrationIndex?: number }
   // A reality-capture pin was clicked in 3D (D-073) — the host opens the
   // capture's gallery / 360° panorama for the given capture point id.
   | { source: typeof SOURCE; type: 'CAPTURE_PIN_CLICK'; captureId: string }

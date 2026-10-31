@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionUnderlays.ts a/apps/viewer/src/aim/sectionUnderlays.ts
+index f4bf60f0..708bb54e 100644
+--- b/apps/viewer/src/aim/sectionUnderlays.ts
++++ a/apps/viewer/src/aim/sectionUnderlays.ts
+@@ -102,7 +102,7 @@ export function mergeSectionUnderlays(base: readonly UnderlayLike[], sections: r
+ /** Rezy z UNDERLAYS_LOAD majú prednosť pred tými istými z DOCUMENTS_LOAD (podľa id záznamu). */
+ export function combineSections(fromUnderlays: readonly SectionEntry[], fromDocuments: readonly SectionEntry[]): SectionEntry[] {
+   const docs = new Set(fromUnderlays.map((s) => s.documentId));
+-  return [...fromDocuments, ...fromUnderlays.filter((s) => !fromDocuments.some((d) => d.documentId === s.documentId))];
++  return [...fromUnderlays, ...fromDocuments.filter((s) => !docs.has(s.documentId))];
+ }
+ 
+ const sameGeometry = (a: SectionPlacement, b: SectionPlacement) =>

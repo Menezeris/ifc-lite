@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlaysPlan.ts a/apps/viewer/src/aim/underlaysPlan.ts
+index a6911fca..4a34bc17 100644
+--- b/apps/viewer/src/aim/underlaysPlan.ts
++++ a/apps/viewer/src/aim/underlaysPlan.ts
+@@ -135,7 +135,7 @@ export function snapshotUnderlays(drawings: readonly CalibratedDrawing[], overri
+   const seen = new Set<string>();
+   const items: UnderlaysViewWire['items'] = [];
+   for (const d of drawings) {
+-    if (items.length >= MAX_UNDERLAY_ITEMS) continue;
++    if (seen.has(docId(d)) || items.length >= MAX_UNDERLAY_ITEMS) continue;
+     seen.add(docId(d));
+     items.push({
+       document_id: docId(d),

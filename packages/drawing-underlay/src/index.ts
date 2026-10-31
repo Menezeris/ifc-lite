@@ -45,6 +45,16 @@ export {
 } from './world-transform.js';
 export type { PlacementCorners, Vec3 } from './world-transform.js';
 
+// >>> AIM-FORK: vertical section underlays from georefV2 (AIM #284, D-179)
+export {
+  isSectionPlacement,
+  parseGeorefV2Sections,
+  SECTION_BACK_OPACITY,
+  serializeSectionCalibration,
+} from './section-plane.js';
+export type { PageRegion, SectionPlacement, SectionPlane } from './section-plane.js';
+// <<< AIM-FORK
+
 export { PdfPlanePipeline } from './pdf-plane-pipeline.js';
 export type {
   PdfPlanePipelineOptions,
