@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docIssueModel.ts a/apps/viewer/src/aim/docIssueModel.ts
+index 48d70fc0..4f645744 100644
+--- b/apps/viewer/src/aim/docIssueModel.ts
++++ a/apps/viewer/src/aim/docIssueModel.ts
+@@ -134,7 +134,7 @@ export function docIssueLabel(docName: string, t: DocIssueTarget): string {
+ export function docIssueReference(origin: string | null, docName: string, t: DocIssueTarget): AimDocumentReference {
+   const url = docIssueUrl(origin, t);
+   const markup = normalizeMarkup(t.markup);
+-  return { url, referencedDocument: url, isExternal: true, description: docIssueLabel(docName, t) };
++  return { url, referencedDocument: url, isExternal: true, description: docIssueLabel(docName, t), ...(markup.length ? { markup } : {}) };
+ }
+ 
+ /** Odkazy témy na dokument AIM. */

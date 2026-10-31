@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/docMarkup.ts a/apps/viewer/src/aim/docMarkup.ts
+index dc55cfc7..f982518f 100644
+--- b/apps/viewer/src/aim/docMarkup.ts
++++ a/apps/viewer/src/aim/docMarkup.ts
+@@ -54,6 +54,7 @@ export function normalizeMarkup(raw: unknown): MarkupShape[] {
+   if (!Array.isArray(raw)) return [];
+   const out: MarkupShape[] = [];
+   for (const item of raw) {
++    if (out.length >= MAX_MARKUP) break;
+     if (!item || typeof item !== 'object') continue;
+     const s = item as Record<string, unknown>;
+     const type = s.type as MarkupType;
