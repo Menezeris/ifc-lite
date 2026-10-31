@@ -41,10 +41,10 @@ export function AimDocumentEntities({ docId }: { docId: string }) {
   const total = proposal.status === 'ok' ? proposal.total : 0;
 
   return (
-    <div
-      role="dialog"
+    <dialog
+      open
       aria-label="IFC prvky pod oblasťou"
-      className="fixed right-3 top-24 z-50 flex max-h-[60vh] w-80 flex-col gap-1 rounded border bg-background p-2 text-2xs shadow-lg"
+      className="fixed left-auto right-3 top-24 z-50 m-0 flex text-foreground max-h-[60vh] w-80 flex-col gap-1 rounded border bg-background p-2 text-2xs shadow-lg"
       data-aim-document-entities
     >
       <div className="font-semibold">IFC prvky pripomienky</div>
@@ -85,6 +85,6 @@ export function AimDocumentEntities({ docId }: { docId: string }) {
           Pokračovať ({on.size + manual})
         </button>
       </div>
-    </div>
+    </dialog>
   );
 }
