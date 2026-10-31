@@ -100,7 +100,7 @@ export default function AimClashBar({ runPreset }: Props) {
       </button>
       <output className="min-w-0 break-words text-2xs text-muted-foreground">{statusText}</output>
       {matrix && (
-        <div className="flex w-full flex-wrap items-center gap-1" role="group" aria-label={t('aimFork.clash.matrix.title')} data-testid="aim-clash-matrix">
+        <fieldset className="m-0 flex w-full min-w-0 flex-wrap items-center gap-1 border-0 p-0" aria-label={t('aimFork.clash.matrix.title')} data-testid="aim-clash-matrix">
           {matrix.cells.map((c) => {
             const on = sameCell(c, cell);
             return (
@@ -117,7 +117,7 @@ export default function AimClashBar({ runPreset }: Props) {
             );
           })}
           {cell && <button type="button" onClick={clearClashCell} className="min-h-6 rounded border px-2 text-2xs hover:bg-muted">{t('aimFork.clash.matrix.clear')}</button>}
-        </div>
+        </fieldset>
       )}
     </div>
   );
