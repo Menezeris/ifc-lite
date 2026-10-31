@@ -13,14 +13,6 @@ import { IdbConnectionLifecycle } from './idb-connection.js';
 // >>> AIM-FORK: geometry facts of instancing-only elements, which the binary cache format does not carry (AIM #308)
 import type { GeometryResult } from '@ifc-lite/geometry';
 export type InstancedGeometryMaps = Pick<GeometryResult, 'instancedGeometryHashes' | 'instancedGeometryAabbs' | 'instancedGeometryVolumes'>;
-/** Len tri mapy; volajúci smie podať celý `GeometryResult` a do IndexedDB nesmú ísť jeho siete (follow-up #182). */
-export function pickInstancedGeometry(g: InstancedGeometryMaps): InstancedGeometryMaps {
-  const out: InstancedGeometryMaps = {};
-  if (g.instancedGeometryHashes) out.instancedGeometryHashes = g.instancedGeometryHashes;
-  if (g.instancedGeometryAabbs) out.instancedGeometryAabbs = g.instancedGeometryAabbs;
-  if (g.instancedGeometryVolumes) out.instancedGeometryVolumes = g.instancedGeometryVolumes;
-  return out;
-}
 // <<< AIM-FORK
 
 const DB_NAME = 'ifc-lite-cache';
@@ -370,7 +362,7 @@ export async function setCached(
         createdAt: Date.now(),
         lastModified: meta?.lastModified,
         fullSourceHash: meta?.fullSourceHash,
-        ...(meta?.instancedGeometry ? { instancedGeometry: pickInstancedGeometry(meta.instancedGeometry) } : {}), // AIM-FORK (AIM #308): next 0 lines
+        ...(meta?.instancedGeometry ? { instancedGeometry: { instancedGeometryHashes: meta.instancedGeometry.instancedGeometryHashes, instancedGeometryAabbs: meta.instancedGeometry.instancedGeometryAabbs, instancedGeometryVolumes: meta.instancedGeometry.instancedGeometryVolumes } } : {}), // AIM-FORK (AIM #308, follow-up #182: len tri mapy, nie cely GeometryResult): next 0 lines
       };
 
       tx.oncomplete = () => done();
