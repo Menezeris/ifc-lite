@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/icddPlan.ts a/apps/viewer/src/aim/icddPlan.ts
+index a8e35aee..4693b25c 100644
+--- b/apps/viewer/src/aim/icddPlan.ts
++++ a/apps/viewer/src/aim/icddPlan.ts
+@@ -10,7 +10,7 @@
+ import type { IcddCheckResult, IcddExportResult, IcddOp, IcddStatusMessage } from './icdd-protocol.js';
+ 
+ /** Starší host `ICDD_*` nepozná: bez prvého `ICDD_STATUS` do tohto limitu ho viewer vyhlási za nepodporujúceho. */
+-export const ICDD_HOST_TIMEOUT_MS = 15000;
++export const ICDD_HOST_TIMEOUT_MS = 5000;
+ export const ICDD_NO_HOST = 'host nepodporuje ICDD';
+ /** Koľko prvých chýb dialóg ukáže. */
+ export const ICDD_MAX_SHOWN = 5;
