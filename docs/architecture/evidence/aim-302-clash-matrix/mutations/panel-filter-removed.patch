@@ -1,13 +1,13 @@
 diff --git b/apps/viewer/src/components/viewer/ClashPanel.tsx a/apps/viewer/src/components/viewer/ClashPanel.tsx
-index 1cc73525..8e359f0e 100644
+index 44b4e50a9..1e1a56c8b 100644
 --- b/apps/viewer/src/components/viewer/ClashPanel.tsx
 +++ a/apps/viewer/src/components/viewer/ClashPanel.tsx
-@@ -420,7 +420,7 @@ export function ClashPanel({ onClose }: ClashPanelProps) {
+@@ -412,7 +412,7 @@ export function ClashPanel({ onClose }: ClashPanelProps) {
+   /** The clashes actually shown: touching + status filters applied, then ordered by `sortBy`. */
+   const visibleClashes = useMemo(() => {
      if (!result) return [] as Clash[];
-     let list = hideTouching ? result.clashes.filter((c) => !isTouching(c)) : result.clashes;
-     // >>> AIM-FORK: filter by the discipline matrix cell (#302)
--    if (false as boolean) {
-+    if (aimCell) {
-       const lab = (id: string) => aimModels.get(id)?.name ?? id;
-       list = list.filter((c) => inCell(aimCell, lab(c.a.model), lab(c.b.model)));
-     }
+-    let list = (hideTouching ? result.clashes.filter((c) => !isTouching(c)) : result.clashes); // >>> AIM-FORK: discipline matrix cell filter (#302) <<< AIM-FORK
++    let list = aimCellFilter(hideTouching ? result.clashes.filter((c) => !isTouching(c)) : result.clashes); // >>> AIM-FORK: discipline matrix cell filter (#302) <<< AIM-FORK
+     // Status filter: skip the per-clash lookup entirely when all statuses show (default).
+     if (statusFilter.size < CLASH_REVIEW_STATUSES.length) {
+       list = list.filter((c) => statusFilter.has(reviewOf(c)));

@@ -21,7 +21,7 @@ Kazdy patch je zapisany mutant -> opraveny (orientacia `git diff -R` mutovaneho 
 | `host-matched-counts-empty.patch` | matched pocita aj riadky bez hodnoty | `aimHostColumns.test.ts` |
 | `host-edit-values-ignored.patch` | LIST_UPDATE addColumns zahodi values | `aimHostColumns.test.ts` |
 | `host-values-overwrite-lost.patch` | znovu pridany stlpec neprepise stare hodnoty | `aimHostColumns.test.ts` |
-| `host-engine-case-removed.patch` | engine nezavola getHostValue | `engine.host-column.test.ts` |
+| `host-engine-case-removed.patch` | engine nezavola getHostValue (defaultColumnValue vracia null) | `engine.host-column.test.ts` |
 | `host-adapter-hook-removed.patch` | provider nema hook getHostValue | `adapterHostColumn.test.ts` |
 
 ## Replay

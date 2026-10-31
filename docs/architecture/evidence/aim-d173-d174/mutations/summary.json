@@ -114,9 +114,9 @@
     },
     {
       "patch": "host-engine-case-removed.patch",
-      "production": "packages/lists/src/engine.ts",
+      "production": "packages/lists/src/relation-levels.ts",
       "test": "packages/lists/src/engine.host-column.test.ts",
-      "mutation": "engine nezavola getHostValue",
+      "mutation": "engine nezavola getHostValue (defaultColumnValue vracia null)",
       "verdict": "OBSERVED",
       "exitCode": 0,
       "restoration": "verified",
