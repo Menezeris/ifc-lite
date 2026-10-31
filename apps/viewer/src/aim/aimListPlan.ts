@@ -45,6 +45,8 @@ export function parseOpenList(data: LensInboundMessage): OpenListMessage | null 
     if (c.psetName !== undefined && !shortStr(c.psetName, 200)) return null;
     if (NEEDS_SET.has(c.source as ColumnDefinition['source']) && c.psetName === undefined) return null;
     if (c.label !== undefined && !shortStr(c.label, 120)) return null;
+    // Príznak AIM_VIEWER_HOST_COLUMNS je len na hostovi (AIMviewer): rozhoduje, či host stĺpce `host` vôbec pošle.
+    // Viewer ho nečíta a správu so stĺpcom `host` prijme vždy, preto tu nie je žiadna podmienka podľa príznaku.
     // Stĺpec od hosta (D-174): kľúč a hodnoty podľa GlobalId, bez sady; ostatné zdroje hodnoty nenesú.
     if (c.source === 'host') {
       if (!shortStr(c.propertyName, 200) || c.psetName !== undefined || !isHostValues(c.values)) return null;
