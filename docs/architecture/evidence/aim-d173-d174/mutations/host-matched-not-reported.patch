@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimListViewPlan.ts a/apps/viewer/src/aim/aimListViewPlan.ts
+index b78f7703..445be52f 100644
+--- b/apps/viewer/src/aim/aimListViewPlan.ts
++++ a/apps/viewer/src/aim/aimListViewPlan.ts
+@@ -324,7 +324,7 @@ export function describeListState(def: { name: string; columns: ColumnDefinition
+     ...(s.rows !== null ? { rows: s.rows } : {}),
+     ...(s.table ? { visible_rows: s.table.visibleRows } : {}),
+     // Stĺpec od hosta nesie `matched` (D-174): koľko riadkov dostalo hodnotu, aby host overil, že GlobalId sedia.
+-    columns: def.columns.map((c) => columnLabel(c)),
++    columns: def.columns.map((c) => (c.source === 'host' ? { name: columnLabel(c), source: 'host', matched: s.hostMatched?.get(c.id) ?? 0 } : columnLabel(c))),
+     filters: describeGroups(def.groups),
+     sort: s.table?.sort ? { column: label(s.table.sort.columnId), dir: s.table.sort.dir } : null,
+     ...(s.table?.search ? { search: s.table.search } : {}),

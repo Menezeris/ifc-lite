@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/cachePrune.ts a/apps/viewer/src/aim/cachePrune.ts
+index f3c5e362..b3831f5f 100644
+--- b/apps/viewer/src/aim/cachePrune.ts
++++ a/apps/viewer/src/aim/cachePrune.ts
+@@ -34,7 +34,7 @@ interface EntryHead {
+ export function staleRevisionKeys(entries: EntryHead[], currentSize: number, keepOther = 1): IDBValidKey[] {
+   const others = entries.filter((e) => e.fileSize !== currentSize).sort((a, b) => b.createdAt - a.createdAt);
+   const kept = new Set<number>();
+-  for (const e of others) if (kept.size < keepOther - 1) kept.add(e.fileSize);
++  for (const e of others) if (kept.size < keepOther) kept.add(e.fileSize);
+   return others.filter((e) => !kept.has(e.fileSize)).map((e) => e.key);
+ }
+ 

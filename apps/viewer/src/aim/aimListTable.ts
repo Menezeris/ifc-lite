@@ -79,6 +79,14 @@ export function useAimListTable(b: AimListTableBinding): { cue: ReactNode; highl
   const colorActive = useViewerStore((s) => s.activeLensId === AUTO_COLOR_FROM_LIST_ID);
   const [exportReady, setExportReady] = useState<ExportFormat | null>(null);
 
+  // Ručné šírky sú pod `col-N`: pri inom zozname by sa preniesli na stĺpce s rovnakým id (aimList.ts: nový zoznam).
+  const shownList = useRef(listId);
+  useEffect(() => {
+    if (shownList.current === listId) return;
+    shownList.current = listId;
+    setWidthOverrides({});
+  }, [listId, setWidthOverrides]);
+
   useEffect(() => {
     if (!request || (request.target !== null && request.target !== listId)) return;
     const r = takeTableRequest();

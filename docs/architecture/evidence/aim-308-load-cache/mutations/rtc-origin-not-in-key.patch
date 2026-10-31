@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/hooks/federatedCacheHit.ts a/apps/viewer/src/hooks/federatedCacheHit.ts
+index 749a6fcd..4e34cd99 100644
+--- b/apps/viewer/src/hooks/federatedCacheHit.ts
++++ a/apps/viewer/src/hooks/federatedCacheHit.ts
+@@ -85,7 +85,7 @@ export function federatedHitModel(
+  * for the desktop cache).
+  */
+ export function federatedCacheKey(baseKey: string, sharedRtcOffset?: { x: number; y: number; z: number }): string {
+-  if (!sharedRtcOffset || baseKey) return baseKey;
++  if (!sharedRtcOffset) return baseKey;
+   const mm = (v: number) => String(Math.round(v * 1000));
+   return `${baseKey}-r${mm(sharedRtcOffset.x)}_${mm(sharedRtcOffset.y)}_${mm(sharedRtcOffset.z)}`;
+ }

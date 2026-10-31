@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/hooks/federatedCacheHit.ts a/apps/viewer/src/hooks/federatedCacheHit.ts
+index e441ec1f..4e34cd99 100644
+--- b/apps/viewer/src/hooks/federatedCacheHit.ts
++++ a/apps/viewer/src/hooks/federatedCacheHit.ts
+@@ -76,7 +76,7 @@ export function federatedHitModel(
+     ...(instanced?.instancedGeometryAabbs ? { instancedGeometryAabbs: instanced.instancedGeometryAabbs } : {}),
+     ...(instanced?.instancedGeometryVolumes ? { instancedGeometryVolumes: instanced.instancedGeometryVolumes } : {}),
+   };
+-  return { ifcDataStore: hit.dataStore, geometryResult: { meshes: hit.meshes, totalVertices, totalTriangles, coordinateInfo } };
++  return { ifcDataStore: hit.dataStore, geometryResult: { meshes: hit.meshes, totalVertices, totalTriangles, coordinateInfo, ...maps } };
+ }
+ 
+ /**

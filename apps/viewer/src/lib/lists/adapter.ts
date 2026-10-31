@@ -31,7 +31,7 @@ import { validEntry } from '../zones/index.js';
 import type { MutablePropertyView } from '@ifc-lite/mutations';
 import { effectiveListEntitySets, effectiveListStringAttribute, effectiveListTypeName, effectiveTypeQuantitySets } from './effective-provider-entities.js';
 import type { ZoneListContext } from './zone-list-context.js';
-import { materialNamesOf } from './list-material-names.js'; import { relationNameHooks } from '@/aim/aimRelationNames'; // >>> AIM-FORK (#277) <<< AIM-FORK
+import { materialNamesOf } from './list-material-names.js'; import { relationNameHooks } from '@/aim/aimRelationNames'; import { hostColumnValue } from '@/aim/aimHostColumns'; // >>> AIM-FORK (#277, D-174) <<< AIM-FORK
 export type { ZoneListContext } from './zone-list-context.js';
 
 /**
@@ -278,7 +278,7 @@ export function createListDataProvider(
     getProjectName(): string {
       return ancestry().projectName;
     },
-    ...relationNameHooks(store), // >>> AIM-FORK (#277): spatial levels Referenced / Boundary <<< AIM-FORK
+    ...relationNameHooks(store), getHostValue: (entityId, key) => hostColumnValue(key, store.entities.getGlobalId(entityId)), // >>> AIM-FORK (#277, D-174): spatial levels Referenced / Boundary, `host` column <<< AIM-FORK
     getModelName(): string {
       return modelName;
     },

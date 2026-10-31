@@ -26,6 +26,7 @@ describe('isViewMessage (AIM D-083)', () => {
       { source: S, type: 'SET_CAMERA', preset: 'iso' },
       { source: S, type: 'SET_VIEW_MODE', mode: '2d', storeyGuid: G },
       { source: S, type: 'SET_VIEW_MODE', mode: '3d' },
+      { source: S, type: 'SET_VIEW_MODE', mode: 'split', storeyGuid: G, documentId: 'doc-1' },
       // D-085: rez cez prvok, na súradnici IFC sveta a otázky na stav.
       { source: S, type: 'SET_SECTION', action: 'set', guids: [G], fit: 'along' },
       { source: S, type: 'SET_SECTION', action: 'set', guids: [G], fit: 'across', flipped: true },
@@ -50,6 +51,7 @@ describe('isViewMessage (AIM D-083)', () => {
       { source: S, type: 'SET_CAMERA', preset: 'diagonal' },
       { source: S, type: 'SET_CAMERA', preset: 'top', guids: [1, 2] },
       { source: S, type: 'SET_VIEW_MODE', mode: '4d' },
+      { source: S, type: 'SET_VIEW_MODE', mode: 'split', documentId: 5 },
       { source: S, type: 'SELECT', guid: G },
       // along/across volí os sám, stredom treba os; prázdny cieľ a súradnica bez osi neplatia.
       { source: S, type: 'SET_SECTION', action: 'set', guids: [G], fit: 'along', axis: 'x' },

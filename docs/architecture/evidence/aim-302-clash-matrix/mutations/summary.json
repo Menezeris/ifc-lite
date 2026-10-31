@@ -1,0 +1,198 @@
+{
+  "bar-matrix-any-run": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/AimClashBar.matrix.test.tsx; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "7bf233940a3e9a9ef0a63733e02f80fd13f7b7dd",
+    "production": [
+      "apps/viewer/src/aim/AimClashBar.tsx"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/AimClashBar.matrix.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "bar-stale-cell-kept": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/AimClashBar.matrix.test.tsx; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "093c9003b6564e60e44a5c197c499ba00f1dd83f",
+    "production": [
+      "apps/viewer/src/aim/AimClashBar.tsx"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/AimClashBar.matrix.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "cell-order-sensitive": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashMatrix.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "093c9003b6564e60e44a5c197c499ba00f1dd83f",
+    "production": [
+      "apps/viewer/src/aim/clashCellFilter.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashMatrix.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "describe-filter-dropped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashMatrix.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "093c9003b6564e60e44a5c197c499ba00f1dd83f",
+    "production": [
+      "apps/viewer/src/aim/aimClashPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashMatrix.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "describe-matrix-without-run": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashMatrix.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "093c9003b6564e60e44a5c197c499ba00f1dd83f",
+    "production": [
+      "apps/viewer/src/aim/aimClashPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashMatrix.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "incell-ignores-cell": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashMatrix.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "093c9003b6564e60e44a5c197c499ba00f1dd83f",
+    "production": [
+      "apps/viewer/src/aim/clashCellFilter.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashMatrix.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "matrix-counts-touch": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashMatrix.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "093c9003b6564e60e44a5c197c499ba00f1dd83f",
+    "production": [
+      "apps/viewer/src/aim/aimClashMatrix.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashMatrix.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "matrix-other-rules": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashMatrix.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "093c9003b6564e60e44a5c197c499ba00f1dd83f",
+    "production": [
+      "apps/viewer/src/aim/aimClashMatrix.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashMatrix.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "models-unsorted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashMatrix.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "7bf233940a3e9a9ef0a63733e02f80fd13f7b7dd",
+    "production": [
+      "apps/viewer/src/aim/aimClashMatrix.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashMatrix.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "panel-filter-removed": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/AimClashPanel.matrix.test.tsx; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "093c9003b6564e60e44a5c197c499ba00f1dd83f",
+    "production": [
+      "apps/viewer/src/components/viewer/ClashPanel.tsx"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/AimClashPanel.matrix.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "review-default-resolved": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashMatrix.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "093c9003b6564e60e44a5c197c499ba00f1dd83f",
+    "production": [
+      "apps/viewer/src/aim/aimClashMatrix.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashMatrix.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "status-split-wrong": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashMatrix.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "093c9003b6564e60e44a5c197c499ba00f1dd83f",
+    "production": [
+      "apps/viewer/src/aim/aimClashMatrix.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashMatrix.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "toggle-keeps-extras": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/AimClashBar.matrix.test.tsx; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "093c9003b6564e60e44a5c197c499ba00f1dd83f",
+    "production": [
+      "apps/viewer/src/aim/clashCellFilter.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/AimClashBar.matrix.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "toggle-never-off": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimClashMatrix.test.ts; that file has a green, attributable baseline.",
+    "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+    "head": "093c9003b6564e60e44a5c197c499ba00f1dd83f",
+    "production": [
+      "apps/viewer/src/aim/clashCellFilter.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimClashMatrix.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

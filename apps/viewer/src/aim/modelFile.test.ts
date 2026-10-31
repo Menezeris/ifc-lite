@@ -5,7 +5,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { gzipSync } from 'node:zlib';
-import { aimModelFile, aimModelFileName, isGzip } from './modelFile.js';
+import { aimModelFile, aimModelFileName, aimModelLastModified, isGzip } from './modelFile.js';
 
 const BASE = 'https://x.supabase.co/storage/v1/object/public/ifc';
 const IFC = 'ISO-10303-21;\nHEADER;\nENDSEC;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n';
@@ -48,5 +48,26 @@ describe('aimModelFile', () => {
     assert.equal(file.name, 'VZT.ifc');
     assert.equal(file.type, 'application/octet-stream');
     assert.equal(await file.text(), IFC);
+  });
+});
+
+describe('aimModelLastModified (AIM #308)', () => {
+  it('prefers the Last-Modified header: the same archive gives the same mtime on every open', () => {
+    const url = new URL(`${BASE}/archive/ASR/v078.ifc.gz`);
+    const header = 'Tue, 21 Oct 2026 08:15:00 GMT';
+    assert.equal(aimModelLastModified(url, header), Date.parse(header));
+    assert.equal(aimModelLastModified(url, header), aimModelLastModified(url, header));
+  });
+
+  it('falls back to the archive revision, else 0 (unknown), never the current time', () => {
+    assert.equal(aimModelLastModified(new URL(`${BASE}/archive/ASR/v078.ifc.gz`), null), 78);
+    assert.equal(aimModelLastModified(new URL(`${BASE}/archive/VZT/v1234.ifc.gz`), 'garbage'), 1234);
+    assert.equal(aimModelLastModified(new URL(`${BASE}/ASR.ifc`), null), 0);
+  });
+
+  it('the File carries it, gzip or plain', async () => {
+    const gz = new Blob([gzipSync(Buffer.from(IFC))]);
+    assert.equal((await aimModelFile(new URL(`${BASE}/archive/ASR/v078.ifc.gz`), gz, 78)).lastModified, 78);
+    assert.equal((await aimModelFile(new URL(`${BASE}/VZT.ifc`), new Blob([IFC]), 0)).lastModified, 0);
   });
 });

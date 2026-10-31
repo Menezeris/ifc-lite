@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/autoloadModels.ts a/apps/viewer/src/aim/autoloadModels.ts
+index 5c22ef33..8feeee22 100644
+--- b/apps/viewer/src/aim/autoloadModels.ts
++++ a/apps/viewer/src/aim/autoloadModels.ts
+@@ -21,7 +21,7 @@ import { aimModelFile, aimModelFileName, aimModelLastModified } from './modelFil
+ import { pruneModelCache, type PruneTarget } from './cachePrune.js';
+ 
+ /** Prah cache pre modely z AIM (bez neho platí CACHE_SIZE_THRESHOLD 10 MiB; VZT má 9,98 MB). */
+-export const AIM_CACHE_MIN_SIZE = 10 * 1024 * 1024;
++export const AIM_CACHE_MIN_SIZE = 1024 * 1024;
+ 
+ export type LoadPhase = 'download' | 'process' | 'done' | 'error';
+ 

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimListViewPlan.ts a/apps/viewer/src/aim/aimListViewPlan.ts
+index cab545df..445be52f 100644
+--- b/apps/viewer/src/aim/aimListViewPlan.ts
++++ a/apps/viewer/src/aim/aimListViewPlan.ts
+@@ -67,7 +67,7 @@ export type AimListExportFormat = 'csv' | 'xlsx' | 'pdf';
+ const EXPORT_FORMATS = new Set<string>(['csv', 'xlsx', 'pdf']);
+ 
+ const MAX_VIEW_COLUMNS = 8;
+-const SOURCES = new Set<string>(['attribute', 'property', 'quantity', 'material', 'classification', 'spatial', 'model', 'zone', 'geometry']);
++const SOURCES = new Set<string>(['attribute', 'property', 'quantity', 'material', 'classification', 'spatial', 'model', 'zone', 'geometry', 'host']);
+ const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+ 
+ export function parseColumnRef(raw: unknown): AimListColumnRef | null {

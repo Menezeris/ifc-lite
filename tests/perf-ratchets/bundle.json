@@ -37,14 +37,14 @@
       "metric": "raw-bytes",
       "unit": "bytes",
       "description": "summed raw size of every JS file dist/index.html loads eagerly: the module <script src> plus <link rel=modulepreload>",
-      "ceiling": 19344560,
+      "ceiling": 19363934,
       "tolerance": {
         "kind": "relative",
         "value": 0.001
       },
       "provenance": {
-        "commit": "8df30e22f1c3f417816d5d3b2194464457b91f97",
-        "measuredAt": "2026-10-22T18:32:38.000Z"
+        "commit": "40a6994ec53112a6f3bb5b746a16b1446390f1f8",
+        "measuredAt": "2026-10-30T23:38:00.000Z"
       }
     }
   ]

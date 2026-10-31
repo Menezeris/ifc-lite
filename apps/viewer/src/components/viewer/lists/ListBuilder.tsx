@@ -557,7 +557,7 @@ const SOURCE_TAG: Record<ColumnDefinition['source'], string> = {
   spatial: 'storey',
   model: 'model',
   zone: 'zone',
-  geometry: 'world',
+  geometry: 'world', host: 'DB', // >>> AIM-FORK: host column (D-174) <<< AIM-FORK
 };
 
 /** `spatial`/`zone` tags reflect level/mode; everything else uses the flat per-source tag. */

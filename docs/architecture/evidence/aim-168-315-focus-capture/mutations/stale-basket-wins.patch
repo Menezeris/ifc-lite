@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewCaptureBasket.ts a/apps/viewer/src/aim/viewCaptureBasket.ts
+index 3e725a80..7e742be4 100644
+--- b/apps/viewer/src/aim/viewCaptureBasket.ts
++++ a/apps/viewer/src/aim/viewCaptureBasket.ts
+@@ -27,7 +27,7 @@ export function isViewReduced(s: Snapshot): boolean {
+  */
+ export function prepareCaptureBasket(): BasketInputSource | null {
+   const s = useViewerStore.getState();
+-  if (isViewReduced(s) && s.pinboardEntities.size === 0) {
++  if (isViewReduced(s)) {
+     const refs = getVisibleBasketEntityRefsFromStore();
+     if (refs.length === 0) return null;
+     s.setBasket(refs);

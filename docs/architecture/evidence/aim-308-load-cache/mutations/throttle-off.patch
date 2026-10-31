@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/autoloadModels.ts a/apps/viewer/src/aim/autoloadModels.ts
+index cc610e42..8feeee22 100644
+--- b/apps/viewer/src/aim/autoloadModels.ts
++++ a/apps/viewer/src/aim/autoloadModels.ts
+@@ -68,7 +68,7 @@ export function progressThrottle(post: (phase: LoadPhase, percent: number) => vo
+   let last: { phase: LoadPhase; percent: number } | null = null;
+   return (phase: LoadPhase, percent: number) => {
+     const p = Math.max(0, Math.min(100, Math.round(percent)));
+-    if (last && last.phase === phase && p === last.percent) return;
++    if (last && last.phase === phase && p < 100 && p < last.percent + step) return;
+     last = { phase, percent: p };
+     post(phase, p);
+   };

@@ -32,6 +32,7 @@ import { fillsRoom, floorLevel, roomFills, type Box3, type RoomFill3d } from './
 import { useAimRoomFill3dStore } from './aimRoomFill3dStore.js';
 import { useAimFocusRoomsStore } from './aimFocusRoomsStore.js';
 import { roomColorMap } from './aimRoomColors.js';
+import { SPACE_MAX_OPACITY } from './aimSpaceColor.js';
 
 /** Farba vybranej miestnosti, ktorú Lens neofarbila. */
 const SELECTED_COLOR = '#2563eb';
@@ -224,7 +225,7 @@ export function AimRoomFillLayer() {
         const d = footprintPath(room.footprint.triangles, toScreen);
         return d ? (
           <g key={room.id}>
-            <path d={d} fill={room.color} fillOpacity={0.45} />
+            <path d={d} fill={room.color} fillOpacity={SPACE_MAX_OPACITY} />
             <path d={footprintOutline(room.footprint.triangles, toScreen)} fill="none" stroke={room.color} strokeWidth={2} />
           </g>
         ) : null;

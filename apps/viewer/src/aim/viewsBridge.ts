@@ -8,7 +8,7 @@
  * riadok `saved_views` s tým istým `id`. Napojenie je cez `useViewerStore.subscribe`: čo používateľ
  * urobí v paneli (uloží, premenuje, zmaže, upraví), ide hostovi ako `VIEW_SAVE`, `VIEW_RENAME`, `VIEW_DELETE`;
  * `VIEWS_LOAD` pohľady naplní, `VIEW_ACTIVATE` jeden aktivuje a `VIEW_CAPTURE` uloží aktuálny stav
- * rovnakou cestou ako tlačidlo Uložiť (prázdny košík najprv "="). Tvar správ je v `views-protocol.ts`,
+ * rovnakou cestou ako tlačidlo Uložiť (košík sa najprv postaví z viditeľných prvkov, `viewCaptureBasket.ts`). Tvar správ je v `views-protocol.ts`,
  * prevod pohľadu v `viewsCodec.ts`. Stav PDF podkladov v 3D (AIM #325) si most drží k pohľadu sám
  * (`BasketView` ho nemá): zachytí ho pri uložení alebo prepísaní pohľadu a obnoví pri jeho aktivácii.
  */
@@ -16,8 +16,9 @@
 import { useViewerStore } from '@/store';
 import { entityRefToString, stringToEntityRef } from '@/store/types';
 import { resolveEntityRef } from '@/store/resolveEntityRef';
-import { executeBasketSaveView, executeBasketSet } from '@/store/basket/basketCommands';
-import { getSmartBasketInputFromStore, getVisibleBasketEntityRefsFromStore } from '@/store/basketVisibleSet';
+import { executeBasketSaveView } from '@/store/basket/basketCommands';
+import { getVisibleBasketEntityRefsFromStore } from '@/store/basketVisibleSet';
+import { prepareCaptureBasket } from './viewCaptureBasket.js';
 import { createSectionPlane } from '@/lib/section/section-plane-set';
 import type { BasketView } from '@/store/slices/pinboardSlice';
 import { MAX_BASKET_GUIDS, isViewsInbound, type ViewCaptureMessage, type ViewsLoadMessage, type ViewsOutboundMessage, type ViewWire } from './views-protocol.js';
@@ -90,6 +91,12 @@ function post(msg: { type: ViewsOutboundMessage['type'] } & Record<string, unkno
   session?.deps.post({ source: SOURCE, ...msg } as ViewsOutboundMessage);
 }
 
+/** Pohľad bol prepísaný aktuálnym stavom viewera (nie len premenovaný alebo s iným prechodom). */
+function overwritten(prev: BasketView, next: BasketView): boolean {
+  return prev.viewpoint !== next.viewpoint || prev.section !== next.section
+    || prev.thumbnailDataUrl !== next.thumbnailDataUrl || prev.entityRefs !== next.entityRefs;
+}
+
 /** Pošle hostovi, čo sa od posledného razu zmenilo v páse Presentation (nový, upravený, premenovaný, zmazaný pohľad). */
 function flush(): void {
   const sess = session;
@@ -103,8 +110,9 @@ function flush(): void {
     const prev = sess.seen.get(v.id);
     if (prev === v) return;
     sess.seen.set(v.id, v);
-    // Nový pohľad alebo prepísaný aktuálnou kamerou: podklady sa zachytia, ako sú teraz (premenovanie ich nemení).
-    if (!prev || prev.viewpoint !== v.viewpoint) {
+    // Nový pohľad alebo prepísaný aktuálnym stavom: podklady sa zachytia, ako sú teraz. Prepis bez pohybu kamery
+    // nemení `viewpoint`, ale obnoví náhľad, rez alebo košík; premenovanie a prechod ich nemenia.
+    if (!prev || overwritten(prev, v)) {
       const u = captureUnderlays();
       if (u) sess.underlays.set(v.id, u);
       else sess.underlays.delete(v.id);
@@ -221,13 +229,12 @@ async function activate(id: string | undefined, name: string | undefined, noteIs
 }
 
 /**
- * Uloží to, čo je práve nastavené (košík, kamera, rezy), ako tlačidlo Uložiť v paneli. Prázdny košík
- * najprv dostane to isté ako "=" (výber, inak všetko viditeľné); chat tak uloží pohľad na celý model.
+ * Uloží to, čo je práve nastavené (košík, kamera, rezy), ako tlačidlo Uložiť v paneli. Pri izolácii
+ * (Lens, trieda, podlažie, skrytie) je košík to, čo je vidieť; bez nej výber, inak všetko viditeľné (#315).
  */
 async function capture(msg: ViewCaptureMessage, deps: ViewsDeps): Promise<void> {
-  if (state().pinboardEntities.size === 0) executeBasketSet();
-  if (state().pinboardEntities.size === 0) return deps.noteIssue('VIEW_CAPTURE: nič na uloženie, model nemá viditeľné prvky');
-  const { source } = getSmartBasketInputFromStore();
+  const source = prepareCaptureBasket();
+  if (source === null) return deps.noteIssue('VIEW_CAPTURE: nič na uloženie, model nemá viditeľné prvky');
   const id = await executeBasketSaveView(source === 'empty' ? 'manual' : source);
   if (!id) return deps.noteIssue('VIEW_CAPTURE: pohľad sa nepodarilo uložiť');
   if (msg.name) state().renameBasketView(id, msg.name);

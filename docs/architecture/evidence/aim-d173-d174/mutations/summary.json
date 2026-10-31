@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9",
+  "mutations": [
+    {
+      "patch": "space-drop-disabled.patch",
+      "production": "apps/viewer/src/aim/aimSpaceColor.ts",
+      "test": "apps/viewer/src/aim/aimSpaceColor.test.ts",
+      "mutation": "plna farba priestoru sa nevyradi",
+      "verdict": "OBSERVED",
+      "exitCode": 0,
+      "restoration": "verified",
+      "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9"
+    },
+    {
+      "patch": "space-cap-raised.patch",
+      "production": "apps/viewer/src/aim/aimSpaceColor.ts",
+      "test": "apps/viewer/src/aim/aimSpaceColor.test.ts",
+      "mutation": "strop krytia priestoru 0,6 namiesto 0,35",
+      "verdict": "OBSERVED",
+      "exitCode": 0,
+      "restoration": "verified",
+      "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9"
+    },
+    {
+      "patch": "space-fill-alpha-raised.patch",
+      "production": "apps/viewer/src/aim/aimRoomFill3d.ts",
+      "test": "apps/viewer/src/aim/aimSpaceColor.test.ts",
+      "mutation": "podstava miestnosti kreslena s krytim 0,45",
+      "verdict": "OBSERVED",
+      "exitCode": 0,
+      "restoration": "verified",
+      "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9"
+    },
+    {
+      "patch": "space-sink-bypassed.patch",
+      "production": "apps/viewer/src/components/viewer/useColorOverlaySync.ts",
+      "test": "apps/viewer/src/aim/integration/spaceColorSink.test.tsx",
+      "mutation": "kanal do renderera nevola withoutOpaqueSpaces",
+      "verdict": "OBSERVED",
+      "exitCode": 0,
+      "restoration": "verified",
+      "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9"
+    },
+    {
+      "patch": "host-source-unknown.patch",
+      "production": "apps/viewer/src/aim/aimListPlan.ts",
+      "test": "apps/viewer/src/aim/aimHostColumns.test.ts",
+      "mutation": "OPEN_LIST nepozna zdroj host, sprava sa zahodi",
+      "verdict": "OBSERVED",
+      "exitCode": 0,
+      "restoration": "verified",
+      "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9"
+    },
+    {
+      "patch": "host-values-not-required.patch",
+      "production": "apps/viewer/src/aim/aimListPlan.ts",
+      "test": "apps/viewer/src/aim/aimHostColumns.test.ts",
+      "mutation": "stlpec host bez values je platny",
+      "verdict": "OBSERVED",
+      "exitCode": 0,
+      "restoration": "verified",
+      "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9"
+    },
+    {
+      "patch": "host-ref-source-unknown.patch",
+      "production": "apps/viewer/src/aim/aimListViewPlan.ts",
+      "test": "apps/viewer/src/aim/aimHostColumns.test.ts",
+      "mutation": "column_ref {source: host} je neplatny (sum, sort, highlight)",
+      "verdict": "OBSERVED",
+      "exitCode": 0,
+      "restoration": "verified",
+      "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9"
+    },
+    {
+      "patch": "host-matched-not-reported.patch",
+      "production": "apps/viewer/src/aim/aimListViewPlan.ts",
+      "test": "apps/viewer/src/aim/aimHostColumns.test.ts",
+      "mutation": "view_state.list.columns nenesie matched",
+      "verdict": "OBSERVED",
+      "exitCode": 0,
+      "restoration": "verified",
+      "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9"
+    },
+    {
+      "patch": "host-matched-counts-empty.patch",
+      "production": "apps/viewer/src/aim/aimHostColumns.ts",
+      "test": "apps/viewer/src/aim/aimHostColumns.test.ts",
+      "mutation": "matched pocita aj riadky bez hodnoty",
+      "verdict": "OBSERVED",
+      "exitCode": 0,
+      "restoration": "verified",
+      "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9"
+    },
+    {
+      "patch": "host-edit-values-ignored.patch",
+      "production": "apps/viewer/src/aim/aimListEditPlan.ts",
+      "test": "apps/viewer/src/aim/aimHostColumns.test.ts",
+      "mutation": "LIST_UPDATE addColumns zahodi values",
+      "verdict": "OBSERVED",
+      "exitCode": 0,
+      "restoration": "verified",
+      "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9"
+    },
+    {
+      "patch": "host-values-overwrite-lost.patch",
+      "production": "apps/viewer/src/aim/aimHostColumns.ts",
+      "test": "apps/viewer/src/aim/aimHostColumns.test.ts",
+      "mutation": "znovu pridany stlpec neprepise stare hodnoty",
+      "verdict": "OBSERVED",
+      "exitCode": 0,
+      "restoration": "verified",
+      "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9"
+    },
+    {
+      "patch": "host-engine-case-removed.patch",
+      "production": "packages/lists/src/relation-levels.ts",
+      "test": "packages/lists/src/engine.host-column.test.ts",
+      "mutation": "engine nezavola getHostValue (defaultColumnValue vracia null)",
+      "verdict": "OBSERVED",
+      "exitCode": 0,
+      "restoration": "verified",
+      "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9"
+    },
+    {
+      "patch": "host-adapter-hook-removed.patch",
+      "production": "apps/viewer/src/lib/lists/adapter.ts",
+      "test": "apps/viewer/src/aim/integration/adapterHostColumn.test.ts",
+      "mutation": "provider nema hook getHostValue",
+      "verdict": "OBSERVED",
+      "exitCode": 0,
+      "restoration": "verified",
+      "base": "9eaf517b21f9680b9d8e00ca8f75b45464b7b7f9"
+    }
+  ]
+}

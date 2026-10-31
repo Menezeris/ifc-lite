@@ -15,7 +15,7 @@ import { compileNameMatcher } from './name-pattern.js';
 import { getWorldCoordinateValue, extractGeometryColumnValue } from './geometry-column.js';
 import { withAggregateInheritance } from './condition-inherit.js';
 import { getAttributeValue } from './entity-attributes.js';
-import { relationLevelValue } from './relation-levels.js'; // AIM-FORK (#277)
+import { relationLevelValue, defaultColumnValue } from './relation-levels.js'; // AIM-FORK (#277, D-174)
 import type {
   ListDataProvider,
   ListDefinition,
@@ -572,7 +572,7 @@ function extractColumnValues(
         values[i] = extractGeometryColumnValue(entityId, col.propertyName, provider, columnMeta[i]);
         break;
       default:
-        values[i] = null;
+        values[i] = defaultColumnValue(col, entityId, provider); // AIM-FORK (D-174): `host` column, else null
     }
   }
   return values;

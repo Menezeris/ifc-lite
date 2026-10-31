@@ -20,6 +20,8 @@ import {
   buildTest, countRun, describeClash, knownPairs, matchModelLabel, matchRun, reviewChanges, reviewSnapshot, testSignature,
   type ClashRich, type ReviewState,
 } from './aimClashPlan.js';
+import { buildMatrix } from './aimClashMatrix.js';
+import { useClashCell } from './clashCellFilter.js';
 import { setClashLocalDescriber } from './clashLocal.js';
 
 type Viewer = ReturnType<typeof useViewerStore.getState>;
@@ -142,6 +144,7 @@ export function describeClashLocal(): Record<string, unknown> | undefined {
     run: ranHere ? { ...countRun(preset.id, clashes, (k) => v.clashReviews.get(k)?.status), ...(aim.loaded?.runId ? { id: aim.loaded.runId } : {}) } : null,
     selected: selected && selected.rule === preset.id ? { a: el(selected.a as ClashRich['a']), b: el(selected.b as ClashRich['a']) } : null,
     reviews: changes,
+    matrix: buildMatrix(preset.id, clashes, label, (k) => v.clashReviews.get(k)?.status), cell: useClashCell.getState().cell,
     ...(aim.loaded && ranHere ? { missing: matchRun(aim.loaded.results, clashes, preset.id).missing } : {}),
   });
 }

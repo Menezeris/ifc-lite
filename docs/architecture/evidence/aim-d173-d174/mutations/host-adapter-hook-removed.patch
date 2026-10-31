@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/lib/lists/adapter.ts a/apps/viewer/src/lib/lists/adapter.ts
+index 8a7dcf6c6..812031dc6 100644
+--- b/apps/viewer/src/lib/lists/adapter.ts
++++ a/apps/viewer/src/lib/lists/adapter.ts
+@@ -278,7 +278,7 @@ export function createListDataProvider(
+     getProjectName(): string {
+       return ancestry().projectName;
+     },
+-    ...relationNameHooks(store), // >>> AIM-FORK (#277, D-174): spatial levels Referenced / Boundary, `host` column <<< AIM-FORK
++    ...relationNameHooks(store), getHostValue: (entityId, key) => hostColumnValue(key, store.entities.getGlobalId(entityId)), // >>> AIM-FORK (#277, D-174): spatial levels Referenced / Boundary, `host` column <<< AIM-FORK
+     getModelName(): string {
+       return modelName;
+     },

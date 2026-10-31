@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/hooks/useIfcLoader.ts a/apps/viewer/src/hooks/useIfcLoader.ts
+index 6382c423..77ddcbb0 100644
+--- b/apps/viewer/src/hooks/useIfcLoader.ts
++++ a/apps/viewer/src/hooks/useIfcLoader.ts
+@@ -1133,7 +1133,7 @@ export function useIfcLoader() {
+       // cannot persist UVs/textures, so any existing entry — including one
+       // written before texture support shipped — would serve the model
+       // permanently untextured. Mirrors the cache-write skip below.
+-      if ((target.kind === 'primary' /* >>> AIM-FORK: AIM #308 */ /* <<< AIM-FORK */) && cachePlan.shouldCache && !textureBitmaps) {
++      if ((target.kind === 'primary' /* >>> AIM-FORK: AIM #308 */ || federatedCache /* <<< AIM-FORK */) && cachePlan.shouldCache && !textureBitmaps) {
+         setProgress({ phase: 'Checking cache', percent: 5 });
+         loadStage = 'cache-lookup';
+         const cacheResult = await trace.span('cache.lookup', () => getCached(cacheKey));

@@ -34,8 +34,8 @@ import { useViewerStore } from '@/store';
 import { hasRetainedShapeOnlyModel, RETAINED_SHAPE_ONLY_REASON } from '@/store/retainedGeometry';
 import { ModelBadge } from './ModelBadge';
 import { ClashExportActions } from '@/components/viewer/clash/ClashExportActions';
-// AIM-FORK (D-164): next 1 line
-import { AimClashBarLazy } from '@/aim/AimClashBarLazy';
+// AIM-FORK (D-164, #302): next 1 line
+import { AimClashBarLazy } from '@/aim/AimClashBarLazy'; import { useClashCellFilter } from '@/aim/clashCellFilter';
 import { ClashSettingsDialog } from '@/components/viewer/ClashSettingsDialog';
 import { ClashRevisionCompareDialog } from '@/components/viewer/ClashRevisionCompareDialog';
 import { ClashSavedReportsDialog } from '@/components/viewer/ClashSavedReportsDialog';
@@ -407,18 +407,18 @@ export function ClashPanel({ onClose }: ClashPanelProps) {
     const counts: Record<ClashReviewStatus, number> = { open: 0, resolved: 0, accepted: 0 };
     if (result) for (const c of result.clashes) counts[reviewOf(c)] += 1;
     return counts;
-  }, [result, reviewOf]);
+  }, [result, reviewOf]); const aimCellFilter = useClashCellFilter(); // >>> AIM-FORK (#302) <<< AIM-FORK
 
   /** The clashes actually shown: touching + status filters applied, then ordered by `sortBy`. */
   const visibleClashes = useMemo(() => {
     if (!result) return [] as Clash[];
-    let list = hideTouching ? result.clashes.filter((c) => !isTouching(c)) : result.clashes;
+    let list = aimCellFilter(hideTouching ? result.clashes.filter((c) => !isTouching(c)) : result.clashes); // >>> AIM-FORK: discipline matrix cell filter (#302) <<< AIM-FORK
     // Status filter: skip the per-clash lookup entirely when all statuses show (default).
     if (statusFilter.size < CLASH_REVIEW_STATUSES.length) {
       list = list.filter((c) => statusFilter.has(reviewOf(c)));
     }
     return sortClashes(list, sortBy);
-  }, [result, hideTouching, sortBy, statusFilter, reviewOf]);
+  }, [result, hideTouching, sortBy, statusFilter, reviewOf, aimCellFilter]); // >>> AIM-FORK (#302) <<< AIM-FORK
 
   // A duplicate scan renders one section per coincident SET ("3 coincident
   // IfcColumn objects" holding its pair rows) instead of the generic

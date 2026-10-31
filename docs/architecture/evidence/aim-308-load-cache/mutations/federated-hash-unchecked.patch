@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/hooks/useIfcLoader.ts a/apps/viewer/src/hooks/useIfcLoader.ts
+index c9833cc5..77ddcbb0 100644
+--- b/apps/viewer/src/hooks/useIfcLoader.ts
++++ a/apps/viewer/src/hooks/useIfcLoader.ts
+@@ -1152,7 +1152,7 @@ export function useIfcLoader() {
+           const { serve: tierServes, revalidateAgainst } = decideCacheHit({ sourceDecoupled: !cacheResult.sourceBuffer,
+             storedMtime: cacheResult.lastModified, freshMtime: file.lastModified, fullSourceHash: cacheResult.fullSourceHash });
+           const federatedHit = target.kind === 'federated' ? createFederatedCacheHit() : undefined;
+-          const mayServe = tierServes;
++          const mayServe = tierServes && (!federatedHit || await federatedHitIsCurrent(placementIdentity, revalidateAgainst));
+           if (isStale()) return;
+           // <<< AIM-FORK
+ 

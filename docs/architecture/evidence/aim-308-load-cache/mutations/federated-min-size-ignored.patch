@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/hooks/useIfcLoader.ts a/apps/viewer/src/hooks/useIfcLoader.ts
+index 4a6ba0c8..77ddcbb0 100644
+--- b/apps/viewer/src/hooks/useIfcLoader.ts
++++ a/apps/viewer/src/hooks/useIfcLoader.ts
+@@ -1122,7 +1122,7 @@ export function useIfcLoader() {
+       // NOT served (and files outside any band skip a pointless lookup).
+       const cachePlan = geometryKernel.cachePlan(planCacheWrite(buffer.byteLength, {
+         meshOnlyEnabled: isMeshOnlyCacheEnabled(),
+-        minSize: /* >>> AIM-FORK: AIM #308 */ /* <<< AIM-FORK */ CACHE_SIZE_THRESHOLD,
++        minSize: /* >>> AIM-FORK: AIM #308 */ federatedCache?.minSize ?? /* <<< AIM-FORK */ CACHE_SIZE_THRESHOLD,
+         maxSourceSize: CACHE_MAX_SOURCE_SIZE,
+         maxMeshOnlySize: CACHE_MESH_ONLY_MAX_SIZE,
+       }));

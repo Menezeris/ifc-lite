@@ -1,0 +1,114 @@
+{
+  "capture-ignores-isolation": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/viewCapture.test.ts; that file has a green, attributable baseline.",
+    "base": "41064ab07b7e756afa833b97c26c3edb42fd96f3",
+    "head": "b80a5702ee9ca221bb00308c2dff6c515f336fa9",
+    "production": [
+      "apps/viewer/src/aim/viewCaptureBasket.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/viewCapture.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "no-wait-for-properties": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimPanelView.sticky.test.tsx; that file has a green, attributable baseline.",
+    "base": "41064ab07b7e756afa833b97c26c3edb42fd96f3",
+    "head": "b80a5702ee9ca221bb00308c2dff6c515f336fa9",
+    "production": [
+      "apps/viewer/src/aim/aimPanelView.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimPanelView.sticky.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "reduced-ignores-hidden": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/viewCapture.test.ts; that file has a green, attributable baseline.",
+    "base": "41064ab07b7e756afa833b97c26c3edb42fd96f3",
+    "head": "b80a5702ee9ca221bb00308c2dff6c515f336fa9",
+    "production": [
+      "apps/viewer/src/aim/viewCaptureBasket.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/viewCapture.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "reduced-ignores-isolation": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/viewCapture.test.ts; that file has a green, attributable baseline.",
+    "base": "41064ab07b7e756afa833b97c26c3edb42fd96f3",
+    "head": "b80a5702ee9ca221bb00308c2dff6c515f336fa9",
+    "production": [
+      "apps/viewer/src/aim/viewCaptureBasket.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/viewCapture.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "select-visible-false-accepted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/select-visible.test.ts; that file has a green, attributable baseline.",
+    "base": "41064ab07b7e756afa833b97c26c3edb42fd96f3",
+    "head": "b80a5702ee9ca221bb00308c2dff6c515f336fa9",
+    "production": [
+      "apps/viewer/src/aim/bridge-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/select-visible.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "select-visible-first-only": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/select-visible.test.ts; that file has a green, attributable baseline.",
+    "base": "41064ab07b7e756afa833b97c26c3edb42fd96f3",
+    "head": "b80a5702ee9ca221bb00308c2dff6c515f336fa9",
+    "production": [
+      "apps/viewer/src/aim/visibility-commands.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/select-visible.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "select-visible-with-guid": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/select-visible.test.ts; that file has a green, attributable baseline.",
+    "base": "41064ab07b7e756afa833b97c26c3edb42fd96f3",
+    "head": "b80a5702ee9ca221bb00308c2dff6c515f336fa9",
+    "production": [
+      "apps/viewer/src/aim/bridge-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/select-visible.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "stale-basket-wins": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/integration/viewCapture.test.ts; that file has a green, attributable baseline.",
+    "base": "41064ab07b7e756afa833b97c26c3edb42fd96f3",
+    "head": "b80a5702ee9ca221bb00308c2dff6c515f336fa9",
+    "production": [
+      "apps/viewer/src/aim/viewCaptureBasket.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/integration/viewCapture.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

@@ -12,6 +12,7 @@ import { listRunDefinition } from '@/lib/lists/run-provenance';
 import { chatListDefinition } from './aimListRun.js';
 import { describeListState } from './aimListViewPlan.js';
 import { stripState, tableState } from './aimListViewStore.js';
+import { hostMatched } from './aimHostColumns.js';
 
 /** Stav zoznamu v paneli Lists (aj zoznamu, ktorý zostavil používateľ); null = panel zavretý a bez výsledku. */
 export function describeList(): Record<string, unknown> | null {
@@ -31,5 +32,6 @@ export function describeList(): Record<string, unknown> | null {
     maximized: strip?.active === 'lists' && strip.maximized,
     colorBy: table?.colorBy ?? null,
     exportReady: table?.exportReady ?? null,
+    hostMatched: shown && s.listResult ? hostMatched(s.listResult) : undefined,
   });
 }

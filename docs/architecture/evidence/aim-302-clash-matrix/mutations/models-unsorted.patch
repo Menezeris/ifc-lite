@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimClashMatrix.ts a/apps/viewer/src/aim/aimClashMatrix.ts
+index c3855013..f74221a4 100644
+--- b/apps/viewer/src/aim/aimClashMatrix.ts
++++ a/apps/viewer/src/aim/aimClashMatrix.ts
+@@ -52,7 +52,7 @@ export function buildMatrix(
+     row.by_review[review(pairKey(rule, c.a.key, c.b.key)) ?? 'open'] += 1;
+   }
+   return {
+-    models: [...models],
++    models: [...models].sort(),
+     cells: [...cells.values()].sort((x, y) => (x.a < y.a ? -1 : x.a > y.a ? 1 : x.b < y.b ? -1 : x.b > y.b ? 1 : 0)),
+   };
+ }

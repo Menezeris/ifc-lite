@@ -37,6 +37,7 @@ import { getCached, setCached, deleteCached, type CacheResult } from '../service
 import { rebuildSpatialHierarchy, rebuildOnDemandMaps } from '../utils/spatialHierarchy.js';
 import { calculateStoreyHeights } from '../utils/localParsingUtils.js';
 import { recordFirstVisible } from '../lib/perf/loadTrace.js';
+import { federatedCacheSink, type FederatedCacheHit } from './federatedCacheHit.js'; // >>> AIM-FORK: AIM #308 <<< AIM-FORK
 
 // Re-export types for convenience
 export type { CacheResult } from '../services/cacheService.js';
@@ -204,8 +205,13 @@ export function useIfcCache() {
      */
     isStale?: () => boolean,
     trace: LoadTrace = NOOP_LOAD_TRACE, // #6956: the J2 (warm open) spans land on the caller's load trace
+    // >>> AIM-FORK: a federated hit (AIM #308) decodes into `federatedHit` and never writes the active slot
+    federatedHit?: FederatedCacheHit,
   ): Promise<CacheLoadResult> => {
+    const activeSlot = { setGeometryResult, setGeometryStreamingActive, appendGeometryBatch, appendInstancedShards, setIfcDataStore, coldTier: true };
     try {
+      const { setGeometryResult, setGeometryStreamingActive, appendGeometryBatch, appendInstancedShards, setIfcDataStore, coldTier } = federatedHit ? federatedCacheSink(federatedHit) : activeSlot;
+      // <<< AIM-FORK
       const cacheLoadStart = performance.now();
 
       // Re-check before the first write — and `setProgress` below IS a write
@@ -456,7 +462,7 @@ export function useIfcCache() {
         // loads only — a federated add clears the provider (its geometry is
         // not in this entry, so cold restores could not serve it).
         const renderer = getGlobalRenderer();
-        if (renderer) {
+        if (renderer /* >>> AIM-FORK: no cold tier for a federated hit (AIM #308) */ && coldTier /* <<< AIM-FORK */) {
           renderer.getScene().setColdGeometryProvider(makeColdGeometryProvider({
             source: cacheBlob ?? cacheBuffer,
             geometrySectionOffset: geometrySection.offset,
@@ -517,7 +523,7 @@ export function useIfcCache() {
     geometry: GeometryData,
     sourceBuffer: ArrayBuffer,
     fileName: string,
-    options: { persistSource?: boolean; lastModified?: number; fullSourceHash?: Promise<string | undefined> } = {}
+    options: { persistSource?: boolean; lastModified?: number; fullSourceHash?: Promise<string | undefined>; /* >>> AIM-FORK: AIM #308 */ instancedGeometry?: CacheResult['instancedGeometry'] /* <<< AIM-FORK */ } = {}
   ): Promise<void> => {
     // `persistSource` (default true) is the classic <=150MB tier: the raw source
     // is stored alongside the cache so lazy property/quantity accessors + re-export
@@ -561,7 +567,7 @@ export function useIfcCache() {
         fileName,
         sourceBuffer.byteLength,
         persistSource ? sourceBuffer : undefined,
-        { lastModified, fullSourceHash },
+        { lastModified, fullSourceHash, /* >>> AIM-FORK: AIM #308 */ instancedGeometry: options.instancedGeometry /* <<< AIM-FORK */ },
       );
       console.log(`[useIfcCache] ✓ Cache saved successfully (${persistSource ? 'with' : 'without'} source, mtime=${lastModified ?? 'n/a'}, fullHash=${fullSourceHash ? 'yes' : 'no'})`);
     } catch (err) {

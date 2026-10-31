@@ -11,6 +11,7 @@
 
 import type { FilterGroup, FilterRule } from '@ifc-lite/rules';
 import type { ColumnDefinition, ListGrouping } from '@ifc-lite/lists';
+import { isHostValues } from './aimHostColumns.js';
 import { findColumn, nextGrouping, parseColumnRef, refLabel, type AimListColumnRef } from './aimListViewPlan.js';
 
 /** Druhy pravidiel, ktoré chat vie odobrať; `all` = všetky okrem tried. */
@@ -20,7 +21,7 @@ const MAX_ITEMS = 16;
 const NEEDS_SET = new Set<string>(['property', 'quantity']);
 
 export interface AimListEdit {
-  addColumns?: (AimListColumnRef & { label?: string })[];
+  addColumns?: (AimListColumnRef & { label?: string; values?: Record<string, string> })[];
   removeColumns?: AimListColumnRef[];
   addTypes?: string[];
   removeTypes?: string[];
@@ -44,9 +45,13 @@ export function parseListEdit(raw: unknown): AimListEdit | null {
     const refs = list.map((c) => {
       const ref = parseColumnRef(c);
       if (!ref || (NEEDS_SET.has(ref.source) && !ref.psetName)) return null;
-      const label = (c as Record<string, unknown>).label;
-      if (label === undefined) return ref;
-      return typeof label === 'string' && label && label.length <= 120 ? { ...ref, label } : null;
+      const { label, values } = c as Record<string, unknown>;
+      // Stĺpec od hosta (D-174): pri pridaní nesie hodnoty (prepíšu staré), pri odobratí len odkaz; iné zdroje hodnoty nemajú.
+      const carriesValues = ref.source === 'host' && key === 'addColumns';
+      if (carriesValues ? !ref.propertyName || ref.psetName !== undefined || !isHostValues(values) : values !== undefined) return null;
+      const withValues = carriesValues ? { ...ref, values: values as Record<string, string> } : ref;
+      if (label === undefined) return withValues;
+      return typeof label === 'string' && label && label.length <= 120 ? { ...withValues, label } : null;
     });
     if (!refs.every((r) => r !== null)) return null;
     out[key] = refs as AimListColumnRef[];
@@ -85,7 +90,7 @@ export function editColumns(columns: readonly ColumnDefinition[], grouping: List
   const out = [...kept];
   for (const ref of edit.addColumns ?? []) {
     if (findColumn(out, ref)) continue;
-    const { label, ...rest } = ref as AimListColumnRef & { label?: string };
+    const { label, values: _values, ...rest } = ref as AimListColumnRef & { label?: string; values?: unknown };
     out.push({ id: `col-${next++}`, ...rest, ...(label ? { label } : {}) });
   }
   if (out.length === 0) return { error: 'zoznam by ostal bez stĺpcov' };

@@ -1,0 +1,11 @@
+diff --git b/packages/lists/src/relation-levels.ts a/packages/lists/src/relation-levels.ts
+index 0467794ee..5d62b1f0c 100644
+--- b/packages/lists/src/relation-levels.ts
++++ a/packages/lists/src/relation-levels.ts
+@@ -30,5 +30,5 @@ export function relationLevelValue(level: string, entityId: number, provider: Li
+ 
+ /** Cell of a column source the engine has no case for: `host` (values the AIM host sent by GlobalId, D-174), else empty. */
+ export function defaultColumnValue(col: ColumnDefinition, entityId: number, provider: ListDataProvider): CellValue {
+-  return null;
++  return col.source === 'host' ? provider.getHostValue?.(entityId, col.propertyName) ?? null : null;
+ }

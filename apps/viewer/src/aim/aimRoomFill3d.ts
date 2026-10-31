@@ -30,7 +30,7 @@ export interface Box3 {
 }
 
 /** Priehľadnosť výplne, rovnaká ako v pôdoryse (`AimRoomFillLayer`). */
-export const FILL_ALPHA = 0.45;
+export const FILL_ALPHA = 0.35;
 /**
  * Výplň nad vrchom krytiny, m. Výplne renderera majú záporný depth bias, ktorý ich
  * v reverse-Z odtlačí od kamery: 3 mm nad krytinou výplň zmizla, 2 cm už nie (živo, #175).

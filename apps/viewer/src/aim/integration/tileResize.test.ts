@@ -6,7 +6,7 @@ import { beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { useAimViewTabs } from '../viewTabsStore.js';
-import { resizeTiles } from '../viewTabsApply.js';
+import { putTile, resizeTiles } from '../viewTabsApply.js';
 
 /** Živá 3D dlaždica je dlaždica 0 v `split_h` (AIM #299). */
 function tiled(layout: 'split_h' | 'grid4', sizes?: number[]) {
@@ -33,5 +33,15 @@ describe('podiely dlaždíc v lište (AIM #299)', () => {
     tiled('grid4');
     resizeTiles([1, 3]);
     assert.equal(useAimViewTabs.getState().sizes, undefined, 'grid4 podiely nemá');
+  });
+});
+
+describe('výber záložky do dlaždice (AIM #299 doplnok)', () => {
+  it('putTile nechá potiahnutý pomer, nevráti polovice', () => {
+    tiled('split_h', [0.3, 0.7]);
+    putTile(1, null);
+    const s = useAimViewTabs.getState();
+    assert.deepEqual(s.sizes, [0.3, 0.7]);
+    assert.match(s.frame?.width ?? '', /^calc\(30% - 2px\)$/, 'živá 3D dlaždica ostáva na 30 %');
   });
 });

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimListPlan.ts a/apps/viewer/src/aim/aimListPlan.ts
+index d89a0f37..099f9f5b 100644
+--- b/apps/viewer/src/aim/aimListPlan.ts
++++ a/apps/viewer/src/aim/aimListPlan.ts
+@@ -21,7 +21,7 @@ export type OpenListMessage = Extract<LensInboundMessage, { type: 'OPEN_LIST' }>
+ const MAX_GROUPS = 8;
+ const MAX_COLUMNS = 40;
+ const SOURCES = new Set<ColumnDefinition['source']>([
+-  'attribute', 'property', 'quantity', 'material', 'classification', 'spatial', 'model', 'zone', 'geometry',
++  'attribute', 'property', 'quantity', 'material', 'classification', 'spatial', 'model', 'zone', 'geometry', 'host',
+ ]);
+ /** Zdroje, pri ktorých `psetName` nesie meno sady (pset / qset / zónová sada). */
+ const NEEDS_SET = new Set<ColumnDefinition['source']>(['property', 'quantity']);

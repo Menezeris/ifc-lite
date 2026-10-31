@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/components/viewer/ClashPanel.tsx a/apps/viewer/src/components/viewer/ClashPanel.tsx
+index 44b4e50a9..1e1a56c8b 100644
+--- b/apps/viewer/src/components/viewer/ClashPanel.tsx
++++ a/apps/viewer/src/components/viewer/ClashPanel.tsx
+@@ -412,7 +412,7 @@ export function ClashPanel({ onClose }: ClashPanelProps) {
+   /** The clashes actually shown: touching + status filters applied, then ordered by `sortBy`. */
+   const visibleClashes = useMemo(() => {
+     if (!result) return [] as Clash[];
+-    let list = (hideTouching ? result.clashes.filter((c) => !isTouching(c)) : result.clashes); // >>> AIM-FORK: discipline matrix cell filter (#302) <<< AIM-FORK
++    let list = aimCellFilter(hideTouching ? result.clashes.filter((c) => !isTouching(c)) : result.clashes); // >>> AIM-FORK: discipline matrix cell filter (#302) <<< AIM-FORK
+     // Status filter: skip the per-clash lookup entirely when all statuses show (default).
+     if (statusFilter.size < CLASH_REVIEW_STATUSES.length) {
+       list = list.filter((c) => statusFilter.has(reviewOf(c)));
