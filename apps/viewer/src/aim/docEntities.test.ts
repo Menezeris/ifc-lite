@@ -3,7 +3,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
 import {
@@ -149,16 +148,4 @@ describe('neznáma výška podlažia a nerozpoznaný typ (minor nálezy review #
     assert.equal(total, 1);
     assert.deepEqual(candidates.map((c) => c.guid), ['x']);
   });
-});
-
-describe('lenivé súbory pripomienky nezdieľajú modul s eager kódom (E2E mobile-journey:174)', () => {
-  // #190 importoval z lenivej karty `aimMultiSelect.js`, ktorý používa aj eager `visibility-commands.ts`:
-  // bundler z neho spravil samostatný chunk s top-level await, ktorý vstup importuje, a tap vo 3D
-  // prestal vyberať prvok. Karta použije akcie store, nie tento modul.
-  for (const file of ['docEntitiesScene.ts', 'docIssues.ts', 'AimDocumentEntities.tsx', 'AimDocumentIssue.tsx', 'docIssueDraw.ts']) {
-    it(`${file} neimportuje aimMultiSelect`, () => {
-      const source = readFileSync(new URL(`./${file}`, import.meta.url), 'utf8');
-      assert.ok(!/from\s+['"][^'"]*aimMultiSelect/.test(source));
-    });
-  }
 });

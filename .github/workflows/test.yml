@@ -2206,6 +2206,11 @@ jobs:
       # it used to be the one non-executable case in frameWait.test.ts (#2434).
       - name: Check for unbounded animation-frame waits
         run: node scripts/check-unbounded-frame-wait.mjs
+      # The lazy AIM issue-card files must not import aimMultiSelect: it is shared
+      # with the eager visibility-commands.ts and the resulting chunk with a
+      # top-level await broke tap selection (E2E mobile-journey:174).
+      - name: Check lazy AIM issue-card files do not import aimMultiSelect
+        run: node scripts/check-aim-doc-lazy-imports.mjs
       # Icon-only buttons go through IconButton, which requires a label (#5811).
       # A per-file two-way ratchet over the components tree: an absence claim
       # with nothing to drive, so a lint rather than a unit test.
