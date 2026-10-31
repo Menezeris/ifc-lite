@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docMarkup.ts a/apps/viewer/src/aim/docMarkup.ts
+index aa6e7fc5..f982518f 100644
+--- b/apps/viewer/src/aim/docMarkup.ts
++++ a/apps/viewer/src/aim/docMarkup.ts
+@@ -136,7 +136,7 @@ export function cloudPath(x0: number, y0: number, x1: number, y1: number, scallo
+     const n = Math.max(1, Math.round(len / (2 * scallop)));
+     const r = len / n / 2;
+     for (let i = 1; i <= n; i++) {
+-      d += `A${f(r)} ${f(r)} 0 0 0 ${f(ax + ((bx - ax) * i) / n)} ${f(ay + ((by - ay) * i) / n)}`;
++      d += `A${f(r)} ${f(r)} 0 0 1 ${f(ax + ((bx - ax) * i) / n)} ${f(ay + ((by - ay) * i) / n)}`;
+     }
+   }
+   return `${d}Z`;

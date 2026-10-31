@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docMarkup.ts a/apps/viewer/src/aim/docMarkup.ts
+index dae15af3..f982518f 100644
+--- b/apps/viewer/src/aim/docMarkup.ts
++++ a/apps/viewer/src/aim/docMarkup.ts
+@@ -109,7 +109,7 @@ export function markupFromDrag(
+  * Oblasť pripomienky (zlomky 0-1) okolo značiek s okrajom `pad` (zlomok strany),
+  * aby rámik, snímka hosta a priblíženie z chatu ukázali všetky značky. Bez značiek null.
+  */
+-export function markupBounds(shapes: readonly MarkupShape[], pad = 0): IssueRegion | null {
++export function markupBounds(shapes: readonly MarkupShape[], pad = 0.02): IssueRegion | null {
+   const pts = shapes.flatMap((s) => s.points);
+   if (!pts.length) return null;
+   const xs = pts.map((p) => p.x / 100);

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docMarkup.ts a/apps/viewer/src/aim/docMarkup.ts
+index 1040434b..f982518f 100644
+--- b/apps/viewer/src/aim/docMarkup.ts
++++ a/apps/viewer/src/aim/docMarkup.ts
+@@ -40,7 +40,7 @@ export const MAX_MARKUP_TEXT = 200;
+ export const MIN_MARKUP_DRAG = 0.005;
+ 
+ const POINTS: Record<MarkupType, number> = { cloud: 2, arrow: 2, text: 1, pin: 1 };
+-const clamp100 = (v: number) => v;
++const clamp100 = (v: number) => Math.min(100, Math.max(0, v));
+ const round = (v: number) => +v.toFixed(2);
+ 
+ function cleanText(raw: unknown): string | undefined {

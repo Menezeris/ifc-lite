@@ -93,7 +93,8 @@ export function attachIssueDrawing(root: HTMLElement, docId: string, onDone: (t:
     field.addEventListener('blur', () => commit(true));
     pageEl.appendChild(field);
     input = field;
-    setTimeout(() => field.focus(), 0);
+    // Hneď, nie v ďalšom tiku: inak prvé napísané znaky idú mimo poľa.
+    field.focus();
   };
 
   const onDown = (e: PointerEvent) => {
