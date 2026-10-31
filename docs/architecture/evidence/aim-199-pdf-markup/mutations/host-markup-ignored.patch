@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimBcf.ts a/apps/viewer/src/aim/aimBcf.ts
+index b41c4d20..c05f8d77 100644
+--- b/apps/viewer/src/aim/aimBcf.ts
++++ a/apps/viewer/src/aim/aimBcf.ts
+@@ -53,6 +53,7 @@ async function attachDocumentReferences(project: BCFProject, msg: BcfLoadMessage
+         // AIM #199: značky z `model_task_documents.markup` (starší host pole nemá).
+         const markup = normalizeMarkup(r.markup);
+         refs.push({
++          ...(markup.length ? { markup } : {}),
+           ...(typeof r.guid === 'string' ? { guid: r.guid } : {}),
+           url: r.url,
+           referencedDocument: r.url,

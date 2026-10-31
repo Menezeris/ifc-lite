@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docMarkup.ts a/apps/viewer/src/aim/docMarkup.ts
+index d7dd0211..f982518f 100644
+--- b/apps/viewer/src/aim/docMarkup.ts
++++ a/apps/viewer/src/aim/docMarkup.ts
+@@ -94,7 +94,7 @@ export function markupFromDrag(
+   const min = MIN_MARKUP_DRAG * 100;
+   if (type === 'cloud') {
+     if (Math.abs(p1.x - p0.x) < min || Math.abs(p1.y - p0.y) < min) return null;
+-    return { type, points: [p0, p1] };
++    return { type, points: [{ x: Math.min(p0.x, p1.x), y: Math.min(p0.y, p1.y) }, { x: Math.max(p0.x, p1.x), y: Math.max(p0.y, p1.y) }] };
+   }
+   if (type === 'arrow') {
+     if (Math.hypot(p1.x - p0.x, p1.y - p0.y) < min) return null;

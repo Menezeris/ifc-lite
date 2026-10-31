@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/docMarkup.ts a/apps/viewer/src/aim/docMarkup.ts
+index a933bdd5..f982518f 100644
+--- b/apps/viewer/src/aim/docMarkup.ts
++++ a/apps/viewer/src/aim/docMarkup.ts
+@@ -153,6 +153,6 @@ export function arrowHead(
+   const dy = (head.y - tail.y) / len;
+   const bx = head.x - dx * size;
+   const by = head.y - dy * size;
+-  const half = 0;
++  const half = size / 2;
+   return [head, { x: bx - dy * half, y: by + dx * half }, { x: bx + dy * half, y: by - dx * half }];
+ }

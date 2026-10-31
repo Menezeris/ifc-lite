@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/docMarkup.ts a/apps/viewer/src/aim/docMarkup.ts
+index 9f691ccf..f982518f 100644
+--- b/apps/viewer/src/aim/docMarkup.ts
++++ a/apps/viewer/src/aim/docMarkup.ts
+@@ -67,6 +67,7 @@ export function normalizeMarkup(raw: unknown): MarkupShape[] {
+     }
+     if (points.length !== POINTS[type]) continue;
+     const text = cleanText(s.text);
++    if (type === 'text' && !text) continue;
+     out.push({ type, points, ...(text && (type === 'text' || type === 'pin') ? { text } : {}) });
+   }
+   return out;

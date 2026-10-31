@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/docIssueModel.ts a/apps/viewer/src/aim/docIssueModel.ts
+index 5948cffc..4f645744 100644
+--- b/apps/viewer/src/aim/docIssueModel.ts
++++ a/apps/viewer/src/aim/docIssueModel.ts
+@@ -98,6 +98,7 @@ export function docSnapshotUrl(origin: string | null, t: DocIssueTarget): string
+   const q = new URLSearchParams({ page: String(t.page) });
+   if (t.region) q.set('region', [t.region.x, t.region.y, t.region.w, t.region.h].map(pct).join('_'));
+   // Značky do snímky (AIM #199); starší host parameter ignoruje a dá výrez bez nich.
++  if (t.markup?.length) q.set('markup', JSON.stringify(t.markup));
+   return `${origin.replace(/\/+$/, '')}/api/drawing/${t.docId}/snapshot?${q.toString()}`;
+ }
+ 
