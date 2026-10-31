@@ -11,9 +11,10 @@
  * entry does.
  */
 
-import type { BCFDocumentReference, BCFProject } from '@ifc-lite/bcf';
+import type { BCFProject } from '@ifc-lite/bcf';
 import type { BcfLoadMessage } from './bcf-protocol.js';
-import { mergeAimProject } from './docIssueModel.js';
+import { mergeAimProject, type AimDocumentReference } from './docIssueModel.js';
+import { normalizeMarkup } from './docMarkup.js';
 
 type BcfApi = Pick<typeof import('@ifc-lite/bcf-api'), 'BcfApiClient' | 'fetchProjectAsBCF'>;
 
@@ -46,10 +47,13 @@ async function attachDocumentReferences(project: BCFProject, msg: BcfLoadMessage
       if (!res.ok) return;
       const rows = (await res.json()) as unknown;
       if (!Array.isArray(rows)) return;
-      const refs: BCFDocumentReference[] = [];
+      const refs: AimDocumentReference[] = [];
       for (const r of rows as Record<string, unknown>[]) {
         if (typeof r?.url !== 'string') continue;
+        // AIM #199: značky z `model_task_documents.markup` (starší host pole nemá).
+        const markup = normalizeMarkup(r.markup);
         refs.push({
+          ...(markup.length ? { markup } : {}),
           ...(typeof r.guid === 'string' ? { guid: r.guid } : {}),
           url: r.url,
           referencedDocument: r.url,
