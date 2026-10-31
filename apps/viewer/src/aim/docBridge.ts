@@ -19,9 +19,24 @@ import { documentLayout } from './tabs-protocol.js';
 import { useAimViewTabs, withTabs } from './viewTabsStore.js';
 import { normalizeDocHighlights, normalizeDocRegion, regionApplied, useAimDocRegionStore } from './docRegion.js';
 import { listenDocLinks } from './docLinks.js';
+import {
+  combineSections, mergeSectionUnderlays, rememberSectionSave, sectionEntries, sectionEntry, sectionSave, setSectionRegistry,
+  type SectionEntry, type UnderlayLike,
+} from './sectionUnderlays.js';
 
 /** Výrez strany z chatu čaká na otvorenie PDF; dlhšie ako ACK by APPLIED len oneskorilo. */
 const REGION_WAIT_MS = 2200;
+
+/** Posledné UNDERLAYS_LOAD a rezy z oboch správ; každá z nich store poskladá nanovo (AIM #284). */
+let lastUnderlays: UnderlayLike[] = [];
+let underlaySections: SectionEntry[] = [];
+let documentSections: SectionEntry[] = [];
+
+function publishUnderlays(): void {
+  const sections = combineSections(underlaySections, documentSections);
+  setSectionRegistry(sections);
+  useViewerStore.getState().setUnderlayDrawings(mergeSectionUnderlays(lastUnderlays, sections));
+}
 
 /** Vybaví správu o dokumentoch; false = správa sem nepatrí. */
 export function handleDocumentMessage(msg: InboundMessage): boolean {
@@ -31,13 +46,15 @@ export function handleDocumentMessage(msg: InboundMessage): boolean {
       // dokumentov naviazaných na podlažia + perzistované _georef.
       // Placement JSON je untrusted — validuje ho parsePlacement;
       // nevalidný georef = výkres bez umiestnenia (kalibruje sa znova).
-      const drawings = msg.drawings.map((d) => ({
+      lastUnderlays = msg.drawings.map((d) => ({
         id: d.documentId,
         name: d.name,
         pdfUrl: d.pdfUrl,
         placement: d.georef !== undefined ? parsePlacement(d.georef) : null,
       }));
-      useViewerStore.getState().setUnderlayDrawings(drawings);
+      // Zvislé podklady rezov z georefV2 (AIM #284, D-179).
+      underlaySections = sectionEntries(msg.drawings);
+      publishUnderlays();
       return true;
     }
     case 'DOCUMENTS_LOAD': {
@@ -55,6 +72,10 @@ export function handleDocumentMessage(msg: InboundMessage): boolean {
         meta: d.meta,
       }));
       useViewerStore.getState().setViewerDocuments(docs);
+      // Rez s georefV2 len v knižnici (AIM #284): podklad aj bez UNDERLAYS_LOAD; PDF z url dokumentu.
+      const before = documentSections.length;
+      documentSections = sectionEntries(msg.documents.map((d) => ({ documentId: d.documentId, name: d.name, pdfUrl: d.url, georefV2: d.georefV2 })));
+      if (documentSections.length > 0 || before > 0) publishUnderlays();
       return true;
     }
     case 'DOCUMENT_OPEN': {
@@ -107,6 +128,14 @@ export function wireDocumentEvents(post: (msg: OutboundMessage) => void, selectP
   // Kalibrácia uložená vo viewri → host ju perzistuje do
   // documents.properties._georef (D-072). Session-only bez hosta.
   useViewerStore.getState().setUnderlaySaveHandler((documentId, placement) => {
+    // Rez (AIM #284, D-179): položka georefV2 so stranou a indexom; zmena polohy = source manual.
+    const entry = sectionEntry(documentId);
+    const save = entry ? sectionSave(entry, placement) : null;
+    if (entry && save) {
+      rememberSectionSave(entry.id, placement as typeof entry.placement, save.georef);
+      post({ source: SOURCE, type: 'UNDERLAY_SAVE', documentId: save.documentId, page: save.page, calibrationIndex: save.calibrationIndex, georef: save.georef });
+      return;
+    }
     post({ source: SOURCE, type: 'UNDERLAY_SAVE', documentId, georef: serializePlacement(placement) });
   });
 

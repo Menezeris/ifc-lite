@@ -112,6 +112,10 @@ describe('autoloadModels', () => {
     assert.deepEqual(first, { source: 'aim-bridge', type: 'FIRST_GEOMETRY', model: 'ASR.ifc', index: 0, total: 2 });
     // VZT sa nezaregistroval (addModel vrátil null): bez FIRST_GEOMETRY.
     assert.equal(h.posts.some((m) => m.type === 'FIRST_GEOMETRY' && m.model === 'VZT.ifc'), false);
+    // ... a ani "done 100": skončí chybou (follow-up #182).
+    const vzt = h.posts.filter((m) => m.model === 'VZT.ifc' && m.type === 'LOAD_PROGRESS').map((m) => (m.type === 'LOAD_PROGRESS' ? `${m.phase} ${m.percent}` : ''));
+    assert.equal(vzt.includes('done 100'), false);
+    assert.equal(vzt[vzt.length - 1], 'error 0');
   });
 });
 

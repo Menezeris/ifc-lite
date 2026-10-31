@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionUnderlays.ts a/apps/viewer/src/aim/sectionUnderlays.ts
+index f3a120b5..708bb54e 100644
+--- b/apps/viewer/src/aim/sectionUnderlays.ts
++++ a/apps/viewer/src/aim/sectionUnderlays.ts
+@@ -70,7 +70,7 @@ export function sectionEntries(docs: readonly SectionSourceDoc[]): SectionEntry[
+     sections.forEach(({ index, placement }, k) => {
+       const many = sections.length > 1;
+       out.push({
+-        id: d.documentId,
++        id: many ? `${d.documentId}#${index}` : d.documentId,
+         documentId: d.documentId,
+         index,
+         name: many ? `${d.name} (${k + 1}, s. ${placement.page})` : d.name,

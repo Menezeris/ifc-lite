@@ -13,6 +13,9 @@
  */
 
 import type { Affine2x3, CalibrationPair } from './similarity.js';
+// >>> AIM-FORK: vertical section underlays from georefV2 (AIM #284, D-179)
+import type { PageRegion, SectionPlane } from './section-plane.js';
+// <<< AIM-FORK
 
 /** One calibration correspondence in placement form (tuples, JSON-friendly). */
 export interface PlacementCalibrationPair {
@@ -52,6 +55,14 @@ export interface DrawingPlacement {
   discipline: string | null;
   /** ISO timestamp of the last (re)calibration. */
   calibratedAt: string | null;
+  // >>> AIM-FORK: vertical section underlays from georefV2 (AIM #284, D-179); absent on floor plans
+  /** Vertical plane of a section drawing; the affine then maps page -> (s, t) on it. */
+  plane?: SectionPlane;
+  /** Shown part of the page (fractions, top-left); null/absent = whole page. */
+  region?: PageRegion | null;
+  /** Host calibration source (`auto` | `manual`), kept for the save. */
+  source?: string | null;
+  // <<< AIM-FORK
 }
 
 /** Inputs for creating a fresh placement; presentation fields get defaults. */

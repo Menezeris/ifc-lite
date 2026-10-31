@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionUnderlays.ts a/apps/viewer/src/aim/sectionUnderlays.ts
+index c1d8e726..708bb54e 100644
+--- b/apps/viewer/src/aim/sectionUnderlays.ts
++++ a/apps/viewer/src/aim/sectionUnderlays.ts
+@@ -126,7 +126,7 @@ export function sectionSave(entry: SectionEntry, placement: DrawingPlacement): S
+     documentId: entry.documentId,
+     page: placement.page,
+     calibrationIndex: entry.index,
+-    georef: serializeSectionCalibration(placement, entry.raw, undefined && moved),
++    georef: serializeSectionCalibration(placement, entry.raw, moved ? 'manual' : undefined),
+   };
+ }
+ 

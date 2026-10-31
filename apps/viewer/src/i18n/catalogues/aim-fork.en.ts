@@ -50,6 +50,8 @@ export const aimForkEn = {
   'aimFork.underlays3d.stateOff': 'Off',
   'aimFork.underlays3d.offNotice': 'Underlays are off in 3D (Show in 3D, also switched off from the AIM chat). The eye on a row only applies once it is turned on; the 2D plan is not affected.',
   'aimFork.underlays3d.rowNote': 'Not drawn in 3D: Show in 3D is off',
+  /** Calibrate on a section underlay (AIMviewer #284): sections are calibrated in AIM, the panel flow is for floor plans. */
+  'aimFork.sectionUnderlay.calibrateNote': 'This is a section drawing: calibrate it from the AIM chat (calibrate_underlay with a section plane). Opacity, the eye and fine-tune still work here.',
   /** Save in the Presentation panel with nothing visible to put into the basket (AIM D-161). */
   'aimFork.presentation.nothingToSave': 'Nothing to save: the model has no visible elements.',
   /** Georeferencing map is closed by default so maplibre and the basemap are not loaded at startup. */

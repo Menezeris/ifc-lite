@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlaysPlan.ts a/apps/viewer/src/aim/underlaysPlan.ts
+index d8fb22f9..4a34bc17 100644
+--- b/apps/viewer/src/aim/underlaysPlan.ts
++++ a/apps/viewer/src/aim/underlaysPlan.ts
+@@ -60,7 +60,7 @@ const docId = (d: CalibratedDrawing) => d.documentId ?? d.id;
+ /** Záznamy store, ktorých sa týka `document_id` z drôtu (všetky kalibrácie dokumentu, alebo presné id záznamu). */
+ export function underlayIdsFor(drawings: readonly CalibratedDrawing[], documentId: string): string[] {
+   const byDoc = drawings.filter((d) => docId(d) === documentId).map((d) => d.id);
+-  return byDoc.length > 0 && false ? byDoc : drawings.filter((d) => d.id === documentId).map((d) => d.id);
++  return byDoc.length > 0 ? byDoc : drawings.filter((d) => d.id === documentId).map((d) => d.id);
+ }
+ 
+ /** Položky `SET_UNDERLAYS_3D.underlays`: každá s id a aspoň jedným z `visible`, `opacity`. */

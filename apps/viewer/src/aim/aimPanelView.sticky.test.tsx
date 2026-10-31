@@ -103,6 +103,7 @@ describe('zvýraznená vlastnosť z chatu (AIM #168)', () => {
     initialState ??= useViewerStore.getState();
     const { partial, full } = await parseLikeTheLoader();
     seedModel(MODEL_ID, ID_OFFSET, partial, WALL);
+    useViewerStore.setState({ loading: true }); // loader ešte beží, plný store príde neskôr
     render(<PropertiesPanel />);
     await advance(0);
     const issues: string[] = [];
@@ -126,5 +127,22 @@ describe('zvýraznená vlastnosť z chatu (AIM #168)', () => {
     await applyPanelView({ section: 'properties', focus: { pset: 'Custom_B', property: 'Neexistuje' } }, target, (t) => issues.push(t));
     assert.deepEqual(marked(), []);
     assert.match(issues[0] ?? '', /vlastnosť Custom_B\.Neexistuje na prvku v IFC paneli nie je/);
+  });
+
+  it('loader dobehol a store nemá žiadne vlastnosti: skončí hneď s "nie je", nie po 10 s s "nenačítali" (follow-up #176)', async () => {
+    initialState ??= useViewerStore.getState();
+    const { partial } = await parseLikeTheLoader(); // bez tabuľky vlastností, ako model bez psetov
+    seedModel(MODEL_ID, ID_OFFSET, partial, WALL);
+    useViewerStore.setState({ loading: false });
+    render(<PropertiesPanel />);
+    await advance(0);
+    const issues: string[] = [];
+    let settled = false;
+    void applyPanelView({ section: 'properties', focus: { pset: 'Custom_B', property: 'B1' } }, target, (t) => issues.push(t)).then(() => { settled = true; });
+    await advance(600);
+    assert.equal(settled, true, 'nečaká na LOAD_PATIENCE_MS');
+    assert.equal(issues.length, 1);
+    assert.match(issues[0], /vlastnosť Custom_B\.B1 na prvku v IFC paneli nie je/);
+    assert.doesNotMatch(issues[0], /nenačítali/);
   });
 });

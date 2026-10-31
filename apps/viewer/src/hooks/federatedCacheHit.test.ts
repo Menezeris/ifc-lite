@@ -53,6 +53,14 @@ describe('instancing-only elements across a federated hit', () => {
     await deleteCached('ifc-8-x-v13-g6');
   });
 
+  it('persist only the three maps even when handed a whole GeometryResult (follow-up #182)', async () => {
+    const whole = { ...maps, meshes: [{ expressId: 1, positions: new Float32Array(9), indices: new Uint32Array(3) }], totalVertices: 3 } as unknown as typeof maps;
+    await setCached('ifc-8-y-v13-g6', new ArrayBuffer(8), 'ASR.ifc', 8, undefined, { lastModified: 78, instancedGeometry: whole });
+    const back = await getCached('ifc-8-y-v13-g6');
+    assert.deepEqual(Object.keys(back?.instancedGeometry ?? {}).sort(), ['instancedGeometryAabbs', 'instancedGeometryHashes', 'instancedGeometryVolumes']);
+    await deleteCached('ifc-8-y-v13-g6');
+  });
+
   it('reach the model the hit publishes, beside the decoded meshes', () => {
     const hit = createFederatedCacheHit();
     const mesh = { expressId: 7, positions: new Float32Array(9), indices: new Uint32Array(3) } as unknown as MeshData;

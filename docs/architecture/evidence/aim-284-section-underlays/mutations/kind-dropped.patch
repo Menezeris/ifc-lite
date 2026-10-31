@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlaysPlan.ts a/apps/viewer/src/aim/underlaysPlan.ts
+index bd543b12..4a34bc17 100644
+--- b/apps/viewer/src/aim/underlaysPlan.ts
++++ a/apps/viewer/src/aim/underlaysPlan.ts
+@@ -116,7 +116,7 @@ export function describeUnderlays(drawings: readonly CalibratedDrawing[], overri
+       document_id: docId(d),
+       name: d.name,
+       page: p.page,
+-      kind: 'plan' as const,
++      kind: p.plane ? 'section' as const : 'plan' as const,
+       storey_guid: p.storeyGuid || null,
+       storey_z: p.storeyZ,
+       discipline: p.discipline,

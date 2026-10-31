@@ -6,7 +6,8 @@
  * Jednotlivé PDF podklady v 3D (AIM #323) a ich stav v uloženom pohľade (AIM #325). Čisté funkcie bez
  * store. Prepis (`UnderlayOverride`) je stav viewera nad uloženou kalibráciou: zapne alebo vypne jeden
  * podklad v 3D a zmení jeho priehľadnosť bez zápisu do `_georef` (poloha kalibrácie sa nedotkne).
- * Kľúčom je id výkresu z `UNDERLAYS_LOAD` (`documentId`).
+ * Kľúčom prepisu je id záznamu store; na drôte je `document_id` skutočné id dokumentu (`documentId`).
+ * Rez s viacerými kalibráciami (AIM #284) má viac záznamov jedného dokumentu: položka drôtu platí pre všetky.
  */
 
 export interface UnderlayOverride {
@@ -31,8 +32,12 @@ export interface UnderlaysViewWire {
 /** Kalibrovaný výkres, ako ho pozná store (`underlayDrawings` s `placement`). */
 export interface CalibratedDrawing {
   id: string;
+  /** Id dokumentu na drôte; chýba = `id` (pôdorys, rez s jednou kalibráciou). */
+  documentId?: string;
   name: string;
   placement: {
+    /** Zvislá rovina rezu (AIM #284); chýba = pôdorys. */
+    plane?: unknown;
     visible: boolean;
     opacity: number;
     page: number;
@@ -50,6 +55,13 @@ const isId = (v: unknown): v is string => typeof v === 'string' && v.length > 0 
 const isOpacity = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1;
 const optional = (v: unknown, ok: (x: unknown) => boolean) => v === undefined || ok(v);
 const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
+const docId = (d: CalibratedDrawing) => d.documentId ?? d.id;
+
+/** Záznamy store, ktorých sa týka `document_id` z drôtu (všetky kalibrácie dokumentu, alebo presné id záznamu). */
+export function underlayIdsFor(drawings: readonly CalibratedDrawing[], documentId: string): string[] {
+  const byDoc = drawings.filter((d) => docId(d) === documentId).map((d) => d.id);
+  return byDoc.length > 0 ? byDoc : drawings.filter((d) => d.id === documentId).map((d) => d.id);
+}
 
 /** Položky `SET_UNDERLAYS_3D.underlays`: každá s id a aspoň jedným z `visible`, `opacity`. */
 export function isUnderlayItems(v: unknown): v is UnderlayItemWire[] {
@@ -76,18 +88,20 @@ export function underlayIn3d<T extends { visible: boolean; opacity: number }>(pl
 export function planUnderlaySet(
   drawings: readonly CalibratedDrawing[], current: UnderlayOverrides, items: readonly UnderlayItemWire[], only: boolean,
 ): { overrides: Record<string, UnderlayOverride>; unknown: string[] } {
-  const known = new Set(drawings.map((d) => d.id));
   const next: Record<string, UnderlayOverride> = { ...current };
   const unknown: string[] = [];
   const named = new Set<string>();
   for (const it of items) {
-    if (!known.has(it.document_id)) { unknown.push(it.document_id); continue; }
-    named.add(it.document_id);
-    next[it.document_id] = {
-      ...next[it.document_id],
-      ...(it.visible !== undefined ? { visible: it.visible } : {}),
-      ...(it.opacity !== undefined ? { opacity: it.opacity } : {}),
-    };
+    const ids = underlayIdsFor(drawings, it.document_id);
+    if (ids.length === 0) { unknown.push(it.document_id); continue; }
+    for (const id of ids) {
+      named.add(id);
+      next[id] = {
+        ...next[id],
+        ...(it.visible !== undefined ? { visible: it.visible } : {}),
+        ...(it.opacity !== undefined ? { opacity: it.opacity } : {}),
+      };
+    }
   }
   if (only) for (const d of drawings) if (!named.has(d.id)) next[d.id] = { ...next[d.id], visible: false };
   return { overrides: next, unknown };
@@ -99,10 +113,11 @@ export function describeUnderlays(drawings: readonly CalibratedDrawing[], overri
     const o = overrides[d.id];
     const p = d.placement;
     return {
-      document_id: d.id,
+      document_id: docId(d),
       name: d.name,
       page: p.page,
-      storey_guid: p.storeyGuid,
+      kind: p.plane ? 'section' as const : 'plan' as const,
+      storey_guid: p.storeyGuid || null,
       storey_z: p.storeyZ,
       discipline: p.discipline,
       calibrated_at: p.calibratedAt,
@@ -116,26 +131,41 @@ export function describeUnderlays(drawings: readonly CalibratedDrawing[], overri
 
 /** Stav podkladov do uloženého pohľadu: každý kalibrovaný s účinnou viditeľnosťou a priehľadnosťou. */
 export function snapshotUnderlays(drawings: readonly CalibratedDrawing[], overrides: UnderlayOverrides, shown: boolean): UnderlaysViewWire {
-  return {
-    show: shown,
-    items: drawings.slice(0, MAX_UNDERLAY_ITEMS).map((d) => ({
-      document_id: d.id,
+  // Jedna položka na dokument: kalibrácie jedného rezu sa zapínajú spolu (stav prvej).
+  const seen = new Set<string>();
+  const items: UnderlaysViewWire['items'] = [];
+  for (const d of drawings) {
+    if (seen.has(docId(d)) || items.length >= MAX_UNDERLAY_ITEMS) continue;
+    seen.add(docId(d));
+    items.push({
+      document_id: docId(d),
       visible: overrides[d.id]?.visible ?? d.placement.visible,
       opacity: overrides[d.id]?.opacity ?? d.placement.opacity,
-    })),
-  };
+    });
+  }
+  return { show: shown, items };
 }
 
 /** Obnova z pohľadu: prepisy sa nahradia celé, podklad kalibrovaný až po uložení pohľadu ostane podľa kalibrácie. */
-export function restoreUnderlays(w: UnderlaysViewWire): { shown: boolean; overrides: Record<string, UnderlayOverride> } {
+export function restoreUnderlays(w: UnderlaysViewWire, drawings: readonly CalibratedDrawing[] = []): { shown: boolean; overrides: Record<string, UnderlayOverride> } {
   const overrides: Record<string, UnderlayOverride> = {};
-  for (const it of w.items) overrides[it.document_id] = { visible: it.visible, opacity: it.opacity };
+  for (const it of w.items) {
+    const ids = underlayIdsFor(drawings, it.document_id);
+    for (const id of ids.length > 0 ? ids : [it.document_id]) overrides[id] = { visible: it.visible, opacity: it.opacity };
+  }
   return { shown: w.show, overrides };
 }
 
 /** Kalibrované výkresy zo store (`underlayDrawings`) v poradí vloženia. */
-export function calibratedDrawings(map: ReadonlyMap<string, { id: string; name: string; placement: CalibratedDrawing['placement'] | null }>): CalibratedDrawing[] {
+export function calibratedDrawings(
+  map: ReadonlyMap<string, { id: string; name: string; placement: CalibratedDrawing['placement'] | null }>,
+  documentOf: (id: string) => string = (id) => id,
+): CalibratedDrawing[] {
   const out: CalibratedDrawing[] = [];
-  for (const d of map.values()) if (d.placement) out.push({ id: d.id, name: d.name, placement: d.placement });
+  for (const d of map.values()) {
+    if (!d.placement) continue;
+    const doc = documentOf(d.id);
+    out.push({ id: d.id, ...(doc !== d.id ? { documentId: doc } : {}), name: d.name, placement: d.placement });
+  }
   return out;
 }

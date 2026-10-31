@@ -55,14 +55,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/toast';
 import { useViewerStore, type UnderlayDrawing } from '@/store';
 import { useFloorplanView } from '@/hooks/useFloorplanView';
-import { CalibrationPdfSurface } from './CalibrationPdfSurface'; import { AimUnderlayRowNoteLive } from '@/aim/AimUnderlayRowNoteLive'; // >>> AIM-FORK (#280): row note when Show in 3D is off <<< AIM-FORK
+import { CalibrationPdfSurface } from './CalibrationPdfSurface'; import { AimUnderlayRowNoteLive } from '@/aim/AimUnderlayRowNoteLive'; import { useSectionCalibrateGuard } from '@/aim/sectionCalibrateNote'; // >>> AIM-FORK (#280, #284): row note when Show in 3D is off; section underlays calibrate in AIM <<< AIM-FORK
 
 interface DrawingUnderlayPanelProps {
   onClose: () => void;
 }
 
 export function DrawingUnderlayPanel({ onClose }: DrawingUnderlayPanelProps) {
-  const drawings = useViewerStore((s) => s.underlayDrawings);
+  const drawings = useViewerStore((s) => s.underlayDrawings); const aimSectionGuard = useSectionCalibrateGuard(); // >>> AIM-FORK (#284): Calibrate on a section underlay shows a note <<< AIM-FORK
   const calibration = useViewerStore((s) => s.underlayCalibration);
   const startCalibration = useViewerStore((s) => s.startUnderlayCalibration);
   const setCalibrationMode = useViewerStore((s) => s.setUnderlayCalibrationMode);
@@ -422,7 +422,7 @@ export function DrawingUnderlayPanel({ onClose }: DrawingUnderlayPanelProps) {
               key={d.id}
               drawing={d}
               calibrating={calibration?.drawingId === d.id}
-              onCalibrate={() => {
+              onCalibrate={() => { if (aimSectionGuard(d.placement)) return; // >>> AIM-FORK (#284): the storey flow would turn a section into a plan <<< AIM-FORK
                 // Recalibration edits the drawing's OWN storey — preselect it
                 // so Save can't silently move the drawing to whatever level
                 // happened to be picked in the dropdown.

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlayAtCut.ts a/apps/viewer/src/aim/underlayAtCut.ts
+index 8e5cd85e..c2877095 100644
+--- b/apps/viewer/src/aim/underlayAtCut.ts
++++ a/apps/viewer/src/aim/underlayAtCut.ts
+@@ -43,7 +43,7 @@ export function underlaysAtCut<T extends { placement: { storeyZ: number; plane?:
+   all: readonly T[], cutZ: number | null, flipped: boolean,
+ ): T[] {
+   const draw = storeyZToDraw(all.filter((e) => !e.placement.plane).map((e) => e.placement.storeyZ), cutZ, flipped);
+-  return all.filter((e) => (e.placement.plane ? true : underlayAtLevel(e.placement.storeyZ, draw)));
++  return all.filter((e) => (e.placement.plane ? cutZ === null : underlayAtLevel(e.placement.storeyZ, draw)));
+ }
+ 
+ /** Výška aktívneho vodorovného rezu v IFC Z (m) z polohy v % obálky a posunu rámca; null pre iný rez alebo bez obálky. */

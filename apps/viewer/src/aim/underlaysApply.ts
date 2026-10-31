@@ -12,7 +12,9 @@ import { useAimUnderlays3d } from './aimUnderlays3d.js';
 import {
   calibratedDrawings, describeUnderlays, planUnderlaySet, restoreUnderlays, snapshotUnderlays,
   type UnderlayItemWire, type UnderlaysViewWire,
+  underlayIdsFor,
 } from './underlaysPlan.js';
+import { documentOf } from './sectionUnderlays.js';
 
 interface UnderlaySetMessage {
   show?: boolean;
@@ -21,7 +23,7 @@ interface UnderlaySetMessage {
   persist?: boolean;
 }
 
-const drawings = () => calibratedDrawings(useViewerStore.getState().underlayDrawings);
+const drawings = () => calibratedDrawings(useViewerStore.getState().underlayDrawings, documentOf);
 
 /**
  * `SET_UNDERLAYS_3D`: prepínač 3D a prepisy jednotlivých podkladov. `persist` zapíše `visible` a `opacity`
@@ -35,16 +37,18 @@ export function applyUnderlaySet(msg: UnderlaySetMessage, noteIssue: (text: stri
   if (unknown.length > 0) noteIssue(`SET_UNDERLAYS_3D: podklad ${unknown.join(', ')} nie je medzi kalibrovanými vo vieweri`);
   if (msg.persist) {
     const store = useViewerStore.getState();
-    for (const it of msg.underlays) {
-      const placement = store.underlayDrawings.get(it.document_id)?.placement;
+    const list = drawings();
+    // Rez s viacerými kalibráciami (AIM #284): položka dokumentu sa uloží do každej z nich.
+    for (const it of msg.underlays) for (const id of underlayIdsFor(list, it.document_id)) {
+      const placement = store.underlayDrawings.get(id)?.placement;
       if (!placement) continue;
       // Do kalibrácie ide len to, čo položka nesie; ostatné pole prepisu (napr. z pohľadu) ostane prepisom.
-      store.updateUnderlayPlacementLive(it.document_id, { ...placement, visible: it.visible ?? placement.visible, opacity: it.opacity ?? placement.opacity });
-      store.commitUnderlayPlacement(it.document_id);
-      const { visible, opacity, ...rest } = overrides[it.document_id] ?? {};
+      store.updateUnderlayPlacementLive(id, { ...placement, visible: it.visible ?? placement.visible, opacity: it.opacity ?? placement.opacity });
+      store.commitUnderlayPlacement(id);
+      const { visible, opacity, ...rest } = overrides[id] ?? {};
       const left = { ...(it.visible === undefined && visible !== undefined ? { visible } : {}), ...(it.opacity === undefined && opacity !== undefined ? { opacity } : {}), ...rest };
-      if (Object.keys(left).length > 0) overrides[it.document_id] = left;
-      else delete overrides[it.document_id];
+      if (Object.keys(left).length > 0) overrides[id] = left;
+      else delete overrides[id];
     }
   }
   u.setOverrides(overrides);
@@ -65,7 +69,7 @@ export function captureUnderlays(): UnderlaysViewWire | undefined {
 
 /** Obnova stavu podkladov z uloženého pohľadu. */
 export function restoreUnderlaysView(w: UnderlaysViewWire): void {
-  const { shown, overrides } = restoreUnderlays(w);
+  const { shown, overrides } = restoreUnderlays(w, drawings());
   const u = useAimUnderlays3d.getState();
   u.setOverrides(overrides);
   u.setShown(shown);
