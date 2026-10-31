@@ -40,7 +40,7 @@ import { useAimDerivationsStore } from './aimDerivationsStore';
 import { safeManageUrl } from './derivations';
 import type { DerivationsRibbonUi } from './DerivationsRibbonGroup';
 import type { IcddRibbonUi } from './AimIcddRibbonGroup';
-import { icddHostAvailable, requestIcddCheck, requestIcddExport, useAimIcdd } from './aimIcddStore';
+import { requestIcddCheck, requestIcddExport, useAimIcdd } from './aimIcddStore';
 import { isBusy } from './icddPlan';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -72,6 +72,7 @@ export function DocumentsRibbonTab() {
   const documentsPanelVisible = useViewerStore((s) => s.documentsPanelVisible);
   const underlayPanelVisible = useViewerStore((s) => s.underlayPanelVisible);
 
+  const icddHostReady = useAimIcdd((st) => st.hostReady);
   const icddBusy = useAimIcdd((st) => isBusy(st.run));
   const derivationsLayer = useAimDerivationsStore((s) => s.layer);
   const relationsVisible = useAimDerivationsStore((s) => s.relationsVisible);
@@ -123,7 +124,7 @@ export function DocumentsRibbonTab() {
       <Suspense fallback={null}>
         <AimIcddRibbonGroup
           ui={ICDD_UI}
-          hostAvailable={icddHostAvailable()}
+          hostAvailable={icddHostReady}
           busy={icddBusy}
           onExport={requestIcddExport}
           onCheck={requestIcddCheck}

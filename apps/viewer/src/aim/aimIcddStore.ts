@@ -17,12 +17,15 @@ interface IcddState {
   run: IcddRun | null;
   /** Dialóg s výsledkom je otvorený (zavrie ho používateľ). */
   open: boolean;
+  /** Most je pripojený a host je dosiahnuteľný (reaktívne pre ribbon). */
+  hostReady: boolean;
   dismiss: () => void;
 }
 
 export const useAimIcdd = create<IcddState>((set) => ({
   run: null,
   open: false,
+  hostReady: false,
   dismiss: () => set({ open: false }),
 }));
 
@@ -33,6 +36,7 @@ let seq = 0;
 /** `AimBridge` nastaví kanál pri pripojení mosta a zruší ho pri odpojení. */
 export function setIcddHostPost(next: Post | null): void {
   post = next;
+  useAimIcdd.setState({ hostReady: next !== null });
   if (!next) {
     if (timer) clearTimeout(timer);
     timer = null;
@@ -40,7 +44,6 @@ export function setIcddHostPost(next: Post | null): void {
   }
 }
 
-export const icddHostAvailable = (): boolean => post !== null;
 export const icddBusy = (): boolean => isBusy(useAimIcdd.getState().run);
 
 function begin(op: 'export' | 'check', send: (id: string) => void): void {
