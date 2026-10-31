@@ -26,7 +26,7 @@
  */
 
 import { lazy, Suspense } from 'react';
-import { Files, Map as MapIcon } from 'lucide-react';
+import { Files, Map as MapIcon, Package } from 'lucide-react';
 import { DisplayAll, HideSelected, List, Refresh } from '@/icons';
 import { useViewerStore } from '@/store';
 import {
@@ -39,12 +39,26 @@ import type { SurfaceCommandContext } from '@/components/viewer/surface-commands
 import { useAimDerivationsStore } from './aimDerivationsStore';
 import { safeManageUrl } from './derivations';
 import type { DerivationsRibbonUi } from './DerivationsRibbonGroup';
+import type { IcddRibbonUi } from './AimIcddRibbonGroup';
+import { icddHostAvailable, requestIcddCheck, requestIcddExport, useAimIcdd } from './aimIcddStore';
+import { isBusy } from './icddPlan';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 // Lazy: the Derivations group (D-089) loads when the AIM tab is first opened.
 // It gets the entry-chunk primitives and icons from here, not by import.
 const DerivationsRibbonGroup = lazy(() =>
   import('./DerivationsRibbonGroup').then((m) => ({ default: m.DerivationsRibbonGroup })),
 );
+// Lazy: the ICDD group (D-181) with its menu primitives from the entry chunk.
+const AimIcddRibbonGroup = lazy(() =>
+  import('./AimIcddRibbonGroup').then((m) => ({ default: m.AimIcddRibbonGroup })),
+);
+const ICDD_UI: IcddRibbonUi = {
+  Group: RibbonGroup,
+  Button: RibbonContentLargeButton,
+  menu: { Menu: DropdownMenu, Trigger: DropdownMenuTrigger, Content: DropdownMenuContent, Item: DropdownMenuItem } as IcddRibbonUi['menu'],
+  icon: Package,
+};
 const DERIVATIONS_UI: DerivationsRibbonUi = {
   Group: RibbonGroup,
   Button: RibbonContentLargeButton,
@@ -58,6 +72,7 @@ export function DocumentsRibbonTab() {
   const documentsPanelVisible = useViewerStore((s) => s.documentsPanelVisible);
   const underlayPanelVisible = useViewerStore((s) => s.underlayPanelVisible);
 
+  const icddBusy = useAimIcdd((st) => isBusy(st.run));
   const derivationsLayer = useAimDerivationsStore((s) => s.layer);
   const relationsVisible = useAimDerivationsStore((s) => s.relationsVisible);
   // AIM layers are a workspace panel of the AIM rail group (D-104), toggled like the library panels.
@@ -100,6 +115,18 @@ export function DocumentsRibbonTab() {
           layersOpen={layersOpen}
           onToggleRelations={() => useAimDerivationsStore.getState().toggleRelationsVisible()}
           onToggleLayers={toggleLayers}
+        />
+      </Suspense>
+
+      <RibbonGroupDivider />
+
+      <Suspense fallback={null}>
+        <AimIcddRibbonGroup
+          ui={ICDD_UI}
+          hostAvailable={icddHostAvailable()}
+          busy={icddBusy}
+          onExport={requestIcddExport}
+          onCheck={requestIcddCheck}
         />
       </Suspense>
     </>
