@@ -15,13 +15,16 @@
  * Rendered only inside the AIM host and only for the host's documents.
  */
 
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { ArrowUpRight, Check, Cloud, MapPin, MessageSquarePlus, Square, Type, type LucideIcon } from 'lucide-react';
 import { useViewerStore } from '@/store';
 import { useAimPanelStore } from './aimPanelStore';
 import { syncIssueLayers, useAimDocIssueStore, type DocIssueTool } from './docIssues';
-import { AimDocumentEntities } from './AimDocumentEntities';
 import { attachIssueDrawing, finishIssueDraft } from './docIssueDraw';
+
+// Lenivo: karta výberu prvkov ťahá docEntitiesScene (useBCF a spol.), ktoré nepatria do chunku okna pripomienky
+// (E2E mobile-journey:174, check-aim-doc-lazy-imports.mjs).
+const AimDocumentEntities = lazy(() => import('./AimDocumentEntities').then((m) => ({ default: m.AimDocumentEntities })));
 
 const HINT: Record<'form' | 'entities' | DocIssueTool, string> = {
   region: 'Ťahaj obdĺžnik na strane (klik = celá strana, Esc zruší)',
@@ -98,7 +101,7 @@ export function AimDocumentIssue({ docId }: { docId: string }) {
       <MessageSquarePlus className="size-3" aria-hidden />
       {busy ? hint : 'Pripomienka'}
     </button>
-    {phase === 'entities' && <AimDocumentEntities docId={docId} />}
+    {phase === 'entities' && <Suspense fallback={null}><AimDocumentEntities docId={docId} /></Suspense>}
     {phase === 'drawing' && (
       <div role="toolbar" aria-label="Nástroj pripomienky" className="flex shrink-0 items-center gap-0.5" data-aim-document-issue-tools>
         {TOOLS.map(({ tool: t, label, Icon }) => (
