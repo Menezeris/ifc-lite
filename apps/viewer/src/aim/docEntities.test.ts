@@ -3,12 +3,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
 import {
   boxOverlapsPolygon,
   countByClass,
   entitiesUnderRegion,
+  isPickableClass,
   mergeGuids,
   preselected,
   regionToIfcPolygon,
@@ -120,4 +122,43 @@ describe('výber', () => {
     assert.deepEqual(mergeGuids(['a', 'b'], ['b', 'c', ''], 10), ['a', 'b', 'c']);
     assert.deepEqual(mergeGuids(['a', 'b'], ['c'], 2), ['a', 'b']);
   });
+});
+
+describe('neznáma výška podlažia a nerozpoznaný typ (minor nálezy review #190)', () => {
+  const poly = regionToIfcPolygon(placement, { x: 0.1, y: 0.2, w: 0.2, h: 0.4 })!;
+
+  it('storeyBand bez Z podlažia nevráti NaN a z návrhu nepustí nič', () => {
+    for (const z of [NaN, Infinity, -Infinity]) {
+      const band = storeyBand(z, [0, 3, 7]);
+      assert.ok(!band.some(Number.isNaN), `pásmo pre ${z} nesmie obsahovať NaN`);
+      const { candidates, total } = entitiesUnderRegion([box('a', 'IfcWall', 30, 45), box('b', 'IfcWall', 30, 45, -50, 90)], poly, band);
+      assert.equal(total, 0);
+      assert.equal(candidates.length, 0);
+    }
+  });
+
+  it('storeyBand preskočí nekonečné Z iných podlaží', () => {
+    assert.deepEqual(storeyBand(3, [NaN, 7]), [3, 7]);
+  });
+
+  it('prvok s prázdnym typom ostane v zozname aj v počte, vynechané triedy nie', () => {
+    assert.equal(isPickableClass(''), true);
+    assert.equal(isPickableClass(undefined), true);
+    assert.equal(isPickableClass('IfcSpace'), false);
+    const { candidates, total } = entitiesUnderRegion([box('x', '', 30, 45), box('s', 'IfcSpace', 30, 45)], poly, [3, 7]);
+    assert.equal(total, 1);
+    assert.deepEqual(candidates.map((c) => c.guid), ['x']);
+  });
+});
+
+describe('lenivé súbory pripomienky nezdieľajú modul s eager kódom (E2E mobile-journey:174)', () => {
+  // #190 importoval z lenivej karty `aimMultiSelect.js`, ktorý používa aj eager `visibility-commands.ts`:
+  // bundler z neho spravil samostatný chunk s top-level await, ktorý vstup importuje, a tap vo 3D
+  // prestal vyberať prvok. Karta použije akcie store, nie tento modul.
+  for (const file of ['docEntitiesScene.ts', 'docIssues.ts', 'AimDocumentEntities.tsx', 'AimDocumentIssue.tsx', 'docIssueDraw.ts']) {
+    it(`${file} neimportuje aimMultiSelect`, () => {
+      const source = readFileSync(new URL(`./${file}`, import.meta.url), 'utf8');
+      assert.ok(!/from\s+['"][^'"]*aimMultiSelect/.test(source));
+    });
+  }
 });

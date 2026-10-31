@@ -62,7 +62,8 @@ const SKIP_CLASSES = new Set([
   'IFCGRID', 'IFCANNOTATION', 'IFCVIRTUALELEMENT', 'IFCZONE', 'IFCSPATIALZONE',
 ]);
 
-export const isPickableClass = (ifcType: string | undefined): boolean => !!ifcType && !SKIP_CLASSES.has(ifcType.toUpperCase());
+/** Prvok s nerozpoznanym typom (prazdny retazec) ostava v zozname: vyradit ho ticho by ho skryl aj z poctu. */
+export const isPickableClass = (ifcType: string | undefined): boolean => !SKIP_CLASSES.has((ifcType ?? '').toUpperCase());
 
 /** Oblasť strany v zlomkoch (vľavo hore) -> štyri rohy v pôdoryse IFC (m); null = neplatné umiestnenie. */
 export function regionToIfcPolygon(placement: EntityPlacement, region: IssueRegion | null): PlanePoint[] | null {
@@ -111,8 +112,10 @@ export function boxOverlapsPolygon(box: EntityBox, poly: readonly PlanePoint[]):
 
 /** Pásmo výšok podlažia: od podlahy po ďalšie vyššie podlažie (alebo štandardnú výšku). */
 export function storeyBand(storeyZ: number, otherStoreyZs: readonly number[]): [number, number] {
+  // Neznama vyska podlazia = prazdne pasmo (nic neprejde), nie [NaN, NaN], ktore by nevylucilo nic.
+  if (!Number.isFinite(storeyZ)) return [Infinity, -Infinity];
   let next = Infinity;
-  for (const z of otherStoreyZs) if (z > storeyZ + 0.5 && z < next) next = z;
+  for (const z of otherStoreyZs) if (Number.isFinite(z) && z > storeyZ + 0.5 && z < next) next = z;
   return [storeyZ, Number.isFinite(next) ? next : storeyZ + DEFAULT_STOREY_HEIGHT];
 }
 

@@ -15,7 +15,6 @@ import { resolveEntityRef } from '@/store/resolveEntityRef';
 import { getGlobalRenderer } from '@/hooks/useBCF';
 import { bcfWorldOffset } from '@/hooks/bcf/viewpoint-world-frame';
 import { guidForEntity, resolveGuids } from './bridge-protocol.js';
-import { addGlobalIdsToSelection } from './aimMultiSelect.js';
 import { renderBoxToIfc } from './viewFrame.js';
 import {
   entitiesUnderRegion,
@@ -95,6 +94,8 @@ export function proposeEntities(target: DocIssueTarget): EntityProposal {
   if (!placement) return { status: 'no-calibration' };
   const poly = regionToIfcPolygon(placement, target.region);
   if (!poly) return { status: 'no-calibration' };
+  // Z podlazia sa nezistilo: pasmo vysok by nevylucilo nic a do navrhu by prenikli prvky cudzich podlazi.
+  if (!Number.isFinite(placement.storeyZ)) return { status: 'no-calibration' };
   const boxes = elementBoxes(state);
   if (!boxes || boxes.length === 0) return { status: 'no-model' };
   const others = [...state.underlayDrawings.values()].flatMap((d) => (d.placement && !d.placement.plane ? [d.placement.storeyZ] : []));
@@ -124,8 +125,14 @@ export function selectedGuids(): string[] {
 export function selectGuidsIn3d(guids: readonly string[]): string[] {
   const state = useViewerStore.getState();
   const refs = resolveGuids(state.models, guids);
+  // Existujuce akcie store, nie `aimMultiSelect.js`: ten importuje aj eager `visibility-commands`, takze
+  // import z lenivej karty by z neho spravil spolocny chunk (s top-level await) a zmenil poradie
+  // inicializacie vstupu (E2E mobile-journey: tap nevyberie prvok).
   state.clearSelection();
-  addGlobalIdsToSelection(refs.map((r) => toGlobalIdFromModels(state.models, r.modelId, r.expressId)));
+  if (refs.length) {
+    state.addEntitiesToSelection(refs);
+    state.setSelectedEntityIds(refs.map((r) => toGlobalIdFromModels(state.models, r.modelId, r.expressId)));
+  }
   return refs.flatMap((r) => guidForEntity(state.models, r) ?? []);
 }
 

@@ -20,7 +20,11 @@ const BTN = 'min-h-6 rounded border px-2 py-0.5 text-2xs';
 export function AimDocumentEntities({ docId }: { docId: string }) {
   const pending = useAimDocIssueStore((s) => (s.docId === docId ? s.pending : null));
   // Počet vybraných v 3D sa mení za chodu: karta ho ukazuje a pri pokračovaní zoberie aktuálny.
-  const manual = useViewerStore((s) => Math.max(s.selectedEntitiesSet.size, s.selectedEntity ? 1 : 0));
+  const selSet = useViewerStore((s) => s.selectedEntitiesSet);
+  const selOne = useViewerStore((s) => s.selectedEntity);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedGuids cita store; prepocet pri zmene vyberu
+  const manualGuids = useMemo(() => selectedGuids(), [selSet, selOne]);
+  const manual = manualGuids.length;
   const proposal = useMemo(() => (pending ? proposeEntities(pending.target) : null), [pending]);
   const candidates = proposal?.status === 'ok' ? proposal.candidates : [];
   const [checked, setChecked] = useState<Set<string> | null>(null);
@@ -33,18 +37,20 @@ export function AimDocumentEntities({ docId }: { docId: string }) {
     setChecked(next);
   };
   const go = (withEntities: boolean) => {
-    const guids = withEntities ? mergeGuids([...on], selectedGuids(), MAX_TOPIC_COMPONENTS) : [];
+    const guids = withEntities ? mergeGuids([...on], manualGuids, MAX_TOPIC_COMPONENTS) : [];
     void openIssueForm(pending.target, pending.docName, guids);
   };
   const cancel = () => useAimDocIssueStore.getState().set({ phase: 'idle', docId: null, note: null, draftCount: 0, pending: null });
-  const classes = countByClass(candidates).slice(0, 4).map((c) => `${c.count} ${c.ifcType.replace(/^Ifc/, '')}`).join(', ');
+  const classes = countByClass(candidates).slice(0, 4).map((c) => `${c.count} ${c.ifcType.replace(/^Ifc/, '') || 'neznámy typ'}`).join(', ');
   const total = proposal.status === 'ok' ? proposal.total : 0;
+  // Zaskrtnute a vybrane v 3D sa mozu prekryvat: do temy ide ich zjednotenie.
+  const count = mergeGuids([...on], manualGuids, MAX_TOPIC_COMPONENTS).length;
 
   return (
-    <div
-      role="dialog"
+    <dialog
+      open
       aria-label="IFC prvky pod oblasťou"
-      className="fixed right-3 top-24 z-50 flex max-h-[60vh] w-80 flex-col gap-1 rounded border bg-background p-2 text-2xs shadow-lg"
+      className="fixed left-auto right-3 top-24 z-50 m-0 flex max-h-[60vh] w-80 flex-col gap-1 rounded border bg-background p-2 text-2xs text-foreground shadow-lg"
       data-aim-document-entities
     >
       <div className="font-semibold">IFC prvky pripomienky</div>
@@ -70,7 +76,7 @@ export function AimDocumentEntities({ docId }: { docId: string }) {
                 <label className="flex cursor-pointer items-center gap-1 py-0.5 hover:bg-muted">
                   <input type="checkbox" checked={on.has(c.guid)} onChange={() => toggle(c.guid)} data-aim-entity={c.guid} />
                   <span className="min-w-0 flex-1 truncate" title={c.name}>{c.name || c.guid}</span>
-                  <span className="shrink-0 text-muted-foreground">{c.ifcType.replace(/^Ifc/, '')}</span>
+                  <span className="shrink-0 text-muted-foreground">{c.ifcType.replace(/^Ifc/, '') || 'neznámy typ'}</span>
                 </label>
               </li>
             ))}
@@ -82,9 +88,9 @@ export function AimDocumentEntities({ docId }: { docId: string }) {
         <button type="button" className={BTN} onClick={cancel}>Zrušiť</button>
         <button type="button" className={BTN} onClick={() => go(false)} data-aim-entities-skip>Bez prvkov</button>
         <button type="button" className={`${BTN} border-red-600 bg-red-600 text-white`} onClick={() => go(true)} data-aim-entities-continue>
-          Pokračovať ({on.size + manual})
+          Pokračovať ({count})
         </button>
       </div>
-    </div>
+    </dialog>
   );
 }
