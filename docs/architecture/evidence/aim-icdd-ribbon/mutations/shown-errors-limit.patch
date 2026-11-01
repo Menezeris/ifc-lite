@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/icddPlan.ts a/apps/viewer/src/aim/icddPlan.ts
+index 337318a2..4693b25c 100644
+--- b/apps/viewer/src/aim/icddPlan.ts
++++ a/apps/viewer/src/aim/icddPlan.ts
+@@ -13,7 +13,7 @@ import type { IcddCheckResult, IcddExportResult, IcddOp, IcddStatusMessage } fro
+ export const ICDD_HOST_TIMEOUT_MS = 5000;
+ export const ICDD_NO_HOST = 'host nepodporuje ICDD';
+ /** Koľko prvých chýb dialóg ukáže. */
+-export const ICDD_MAX_SHOWN = 10;
++export const ICDD_MAX_SHOWN = 5;
+ 
+ export interface IcddRun {
+   id: string;

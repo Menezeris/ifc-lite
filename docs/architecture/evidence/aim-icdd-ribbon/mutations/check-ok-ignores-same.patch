@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/icddPlan.ts a/apps/viewer/src/aim/icddPlan.ts
+index b2b7c770..4693b25c 100644
+--- b/apps/viewer/src/aim/icddPlan.ts
++++ a/apps/viewer/src/aim/icddPlan.ts
+@@ -74,5 +74,5 @@ export function summarize(run: IcddRun): IcddSummary {
+     lines.push(`Prepojenia len v kontajneri: ${r.links_only_in_container}`, `Prepojenia len v AIM: ${r.links_only_in_aim}`, `Zmenený obsah: ${r.payloads_changed}`);
+   }
+   if (r.version_id) lines.push(`Verzia: ${r.version_id}`);
+-  return { title: r.ok ? 'ICDD je v poriadku' : 'ICDD má chyby', lines, errors: firstLines(r.errors), ok: r.ok };
++  return { title: r.ok ? 'ICDD je v poriadku' : 'ICDD má chyby', lines, errors: firstLines(r.errors), ok: r.ok && r.same };
+ }
