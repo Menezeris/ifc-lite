@@ -7,7 +7,7 @@
  * Beh po snímkoch a zastavenie pri zásahu používateľa je v `autoRotate.ts`.
  *
  * Otáča sa kamera okolo zvislej osi (render rámec, Y hore) cez `target` aktuálneho pohľadu, rovnako ako
- * ťah myšou vodorovne. (Kontrola šumu E2E 1: komentár.) Smer `left` zodpovedá kladnému `orbit_h_deg` hosta: kamera obieha cieľ doľava
+ * ťah myšou vodorovne. (Kontrola šumu E2E 1: komentár, beh s labelmi.) Smer `left` zodpovedá kladnému `orbit_h_deg` hosta: kamera obieha cieľ doľava
  * (zhora v smere hodinových ručičiek).
  */
 
