@@ -37,7 +37,7 @@ import {
   createBCFComment,
 } from '@ifc-lite/bcf';
 import { useBCF } from '@/hooks/useBCF';
-import { BCFTopicList } from './bcf/BCFTopicList';
+import { BCFTopicList, type BCFTopicListProps } from './bcf/BCFTopicList';
 import { BCFTopicDetail } from './bcf/BCFTopicDetail';
 import { BCFCreateTopicForm } from './bcf/BCFCreateTopicForm';
 import { BCFServerControl } from './bcf/BCFServerControl';
@@ -48,6 +48,10 @@ import { bcfExportFilename, sanitizeFilename } from '@/lib/export/download';
 import { publishBcfArchive } from '@/lib/bcf-drafts/archive-activity';
 import { readBCFWithDiagnostics, warnIfNoModelLoaded, warnIfImportTruncated, warnIfUnsupportedVersion } from './bcf/bcfImportGuidance';
 import { useSectionViewpointCapture } from '@/hooks/bcf/useSectionViewpointCapture';
+// >>> AIM-FORK: topic list with 3D / PDF / entity / project / document filters, lazy and only inside the AIM host (AIM #199)
+import { useAimPanelStore } from '@/aim/aimPanelStore';
+const AimTopicList = React.lazy(() => import('@/aim/AimTopicList').then((m) => ({ default: m.AimTopicList }))) as typeof import('@/aim/AimTopicList').AimTopicList;
+// <<< AIM-FORK
 // ============================================================================
 // Main BCF Panel Component
 // ============================================================================
@@ -57,6 +61,7 @@ interface BCFPanelProps {
 
 export function BCFPanel({ onClose }: BCFPanelProps) {
   const { t } = useTranslation();
+  const aimEmbedded = useAimPanelStore((s) => s.embedded); // AIM-FORK: AIM #199
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Store state
   const bcfProject = useViewerStore((s) => s.bcfProject);
@@ -493,6 +498,25 @@ export function BCFPanel({ onClose }: BCFPanelProps) {
             hasHiddenEntities={hasHiddenEntities}
           />
         ) : (
+          /* >>> AIM-FORK: the same list wrapped with the AIM filter bar inside the host (AIM #199) */
+          (aimEmbedded ? (
+            <React.Suspense fallback={null}>
+              <AimTopicList<BCFTopicListProps>
+                ListComponent={BCFTopicList}
+                applyViewpoint={handleActivateViewpoint}
+                listProps={{
+                  projectName: bcfProject?.name,
+                  topics,
+                  onSelectTopic: setActiveTopic,
+                  onCreateTopic: () => setShowCreateForm(true),
+                  statusFilter,
+                  onStatusFilterChange: setStatusFilter,
+                  author: bcfAuthor,
+                  onSetAuthor: setBcfAuthor,
+                }}
+              />
+            </React.Suspense>
+          ) : (
           <BCFTopicList
             projectName={bcfProject?.name}
             topics={topics}
@@ -503,6 +527,8 @@ export function BCFPanel({ onClose }: BCFPanelProps) {
             author={bcfAuthor}
             onSetAuthor={setBcfAuthor}
           />
+          ))
+          /* <<< AIM-FORK */
         )}
 
         {/* Author Dialog */}
