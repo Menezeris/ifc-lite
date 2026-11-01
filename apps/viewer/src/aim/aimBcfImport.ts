@@ -9,19 +9,23 @@
 
 import { SOURCE } from './bridge-core.js';
 import { idsHostPost } from './idsHost.js';
-import { checkImportFile, parseBcfImported, type BcfImportedMessage, type BcfImportMessage } from './bcf-import-protocol.js';
+import { checkImportFile, parseBcfImported, type BcfImportedMessage, type BcfImportMessage, type BcfImportSummary } from './bcf-import-protocol.js';
 
 /** Host odpovie po zápise celého súboru; po tomto čase viewer vzdá čakanie. */
 export const IMPORT_TIMEOUT_MS = 120_000;
 
 export type BcfImportOutcome =
-  | { kind: 'done'; created: number; unchanged: number; updated: number; errors: string[] }
+  | { kind: 'done'; summary: BcfImportSummary }
   | { kind: 'rejected'; error: string }
   | { kind: 'invalid'; reason: 'extension' | 'empty' | 'tooLarge' | 'notConnected' | 'busy' | 'timeout' };
 
 let waiting: { id: string; resolve: (o: BcfImportOutcome) => void; timer: ReturnType<typeof setTimeout> } | null = null;
 
-export async function sendBcfImport(file: { name: string; size: number; arrayBuffer: () => Promise<ArrayBuffer> }): Promise<BcfImportOutcome> {
+/** Pošle súbor hostu (`dry_run`: len súhrn bez zápisu) a počká na `BCF_IMPORTED`. */
+export async function sendBcfImport(
+  file: { name: string; size: number; arrayBuffer: () => Promise<ArrayBuffer> },
+  dryRun: boolean,
+): Promise<BcfImportOutcome> {
   const post = idsHostPost();
   if (!post) return { kind: 'invalid', reason: 'notConnected' };
   if (waiting) return { kind: 'invalid', reason: 'busy' };
@@ -34,7 +38,7 @@ export async function sendBcfImport(file: { name: string; size: number; arrayBuf
     const timer = setTimeout(() => { waiting = null; resolve({ kind: 'invalid', reason: 'timeout' }); }, IMPORT_TIMEOUT_MS);
     waiting = { id, resolve, timer };
   });
-  const msg: BcfImportMessage = { source: SOURCE, type: 'BCF_IMPORT', requestId: id, filename: file.name, bytes };
+  const msg: BcfImportMessage = { source: SOURCE, type: 'BCF_IMPORT', id, name: file.name, bytes, dry_run: dryRun };
   post(msg as unknown as Record<string, unknown>);
   return outcome;
 }
@@ -42,11 +46,9 @@ export async function sendBcfImport(file: { name: string; size: number; arrayBuf
 /** Odpoveď hosta z mosta (`BCF_IMPORTED`); overí sa tu, mimo vstupného balíka. */
 export function handleBcfImported(raw: unknown): void {
   const msg: BcfImportedMessage | null = parseBcfImported(raw);
-  if (!msg || !waiting || waiting.id !== msg.requestId) return;
+  if (!msg || !waiting || waiting.id !== msg.id) return;
   const { resolve, timer } = waiting;
   clearTimeout(timer);
   waiting = null;
-  resolve(msg.ok
-    ? { kind: 'done', created: msg.created, unchanged: msg.unchanged, updated: msg.updated, errors: msg.errors }
-    : { kind: 'rejected', error: msg.error });
+  resolve(msg.ok ? { kind: 'done', summary: msg.summary } : { kind: 'rejected', error: msg.error });
 }

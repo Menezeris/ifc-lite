@@ -191,7 +191,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
         if (aimTyped(raw, 'CLASH_LOAD')) command(run); else run();
         return;
       }
-      if (aimTyped(e.data, 'BCF_IMPORTED')) {
+      if (!!e.data && typeof e.data === 'object' && (e.data as { type?: unknown }).type === 'BCF_IMPORTED') { // host môže `source` vynechať; rodič a origin sú overené vyššie
         const raw: unknown = e.data; // Výsledok importu .bcfzip do DB AIM; odpoveď ide hneď, bez brány
         void loadBcfImport().then((m) => m.handleBcfImported(raw)).catch((err) => console.warn('[aim-bridge] BCF_IMPORTED failed', err));
         return;
