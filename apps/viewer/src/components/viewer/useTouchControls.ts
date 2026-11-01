@@ -22,7 +22,7 @@ import { resolve as translate } from '@/i18n/registry';
 import { routeMeasureTap } from './touchRouting.js';
 import { openContextMenuAt } from './contextMenuSelection.js';
 import { createTouchLongPress } from './touchLongPress.js';
-import { inputStamp, tapDurationMs } from '@/aim/tapTiming'; // >>> AIM-FORK: tap length from the input time, not from when the handler ran <<< AIM-FORK
+import { TAP_MAX_MS, inputStamp, tapDurationMs } from '@/aim/tapTiming'; // >>> AIM-FORK: tap length from the input time, not from when the handler ran <<< AIM-FORK
 
 /** Locked gesture mode for 2-finger interactions */
 type TwoFingerGesture = 'none' | 'pinch' | 'pan';
@@ -307,7 +307,7 @@ export function useTouchControls(params: UseTouchControlsParams): void {
           previousTouchCount === 1 &&
           !wasMultiTouch &&
           !wasLongPress &&
-          tapDuration < 300 &&
+          tapDuration < TAP_MAX_MS && // >>> AIM-FORK: was the literal 300 <<< AIM-FORK
           !touchState.didMove &&
           tool !== 'pan' &&
           tool !== 'walk'
