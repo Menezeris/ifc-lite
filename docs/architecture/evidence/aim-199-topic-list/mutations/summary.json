@@ -1,0 +1,29 @@
+{
+  "base": "origin/main",
+  "results": {
+    "context-both-as-or.patch": {
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    "context-none-inverted.patch": {
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    "document-filter-ignored.patch": {
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    "entity-filter-inverted.patch": {
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    "open-pdf-before-3d.patch": {
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    },
+    "project-only-ignored.patch": {
+      "verdict": "OBSERVED",
+      "restoration": "verified"
+    }
+  }
+}

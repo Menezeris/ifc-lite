@@ -1,0 +1,14 @@
+diff --git b/apps/viewer/src/aim/topicListModel.ts a/apps/viewer/src/aim/topicListModel.ts
+index f1a0cb9f..c935ce26 100644
+--- b/apps/viewer/src/aim/topicListModel.ts
++++ a/apps/viewer/src/aim/topicListModel.ts
+@@ -87,7 +87,7 @@ export type TopicOpenAction =
+ /** Čo otvorí klik na tému: 3D pohľad (prvý s kamerou), inak strana dokumentu s výrezom, inak nič. */
+ export function topicOpenAction(topic: BCFTopic): TopicOpenAction {
+   const vp = topic.viewpoints.find((v) => v.perspectiveCamera || v.orthogonalCamera);
++  if (vp) return { kind: '3d', viewpointGuid: vp.guid };
+   const target = topicDocTargets(topic)[0];
+-  if (target) return { kind: 'pdf', target };
+-  return vp ? { kind: '3d', viewpointGuid: vp.guid } : null;
++  return target ? { kind: 'pdf', target } : null;
+ }

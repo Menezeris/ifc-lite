@@ -48,6 +48,9 @@ import { bcfExportFilename, sanitizeFilename } from '@/lib/export/download';
 import { publishBcfArchive } from '@/lib/bcf-drafts/archive-activity';
 import { readBCFWithDiagnostics, warnIfNoModelLoaded, warnIfImportTruncated, warnIfUnsupportedVersion } from './bcf/bcfImportGuidance';
 import { useSectionViewpointCapture } from '@/hooks/bcf/useSectionViewpointCapture';
+// >>> AIM-FORK: topic list filters (AIM #199)
+import { AimTopicListLazy } from '@/aim/AimTopicListLazy';
+// <<< AIM-FORK
 // ============================================================================
 // Main BCF Panel Component
 // ============================================================================
@@ -493,16 +496,11 @@ export function BCFPanel({ onClose }: BCFPanelProps) {
             hasHiddenEntities={hasHiddenEntities}
           />
         ) : (
-          <BCFTopicList
-            projectName={bcfProject?.name}
-            topics={topics}
-            onSelectTopic={setActiveTopic}
-            onCreateTopic={() => setShowCreateForm(true)}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-            author={bcfAuthor}
-            onSetAuthor={setBcfAuthor}
-          />
+          /* >>> AIM-FORK: filters 3D / PDF / document / entity / project inside the AIM host (AIM #199); the old line is the upstream list */
+          <AimTopicListLazy ListComponent={BCFTopicList} applyViewpoint={handleActivateViewpoint}
+            projectName={bcfProject?.name} topics={topics} onSelectTopic={setActiveTopic} onCreateTopic={() => setShowCreateForm(true)}
+            statusFilter={statusFilter} onStatusFilterChange={setStatusFilter} author={bcfAuthor} onSetAuthor={setBcfAuthor} />
+          /* <<< AIM-FORK */
         )}
 
         {/* Author Dialog */}
