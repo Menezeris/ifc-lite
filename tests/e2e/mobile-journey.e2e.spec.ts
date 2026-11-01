@@ -14,6 +14,10 @@ import { watchGpuDeviceLoss } from './gpu-device-loss';
 declare global {
   var __ifc_lite_viewer_store__: { getState(): ViewerState };
   var __ifc_lite_scene_face_hits__: (globalId: number) => SceneFaceHitSnapshot[];
+  var __ifc_lite_render_stats__: () => {
+    frame: { timestamp: number; drawCalls: number; batchesNotResident: number } | null;
+    gpu: { total: number };
+  };
 }
 
 test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
@@ -33,6 +37,22 @@ async function loadAuthoredModel(page: Page): Promise<void> {
       [...state.models.values()].every((model) => model.ifcDataStore && (model.geometryResult?.meshes.length ?? 0) > 0) &&
       typeof globalThis.__ifc_lite_scene_face_hits__ === 'function';
   }, undefined, { timeout: 180_000 });
+}
+
+/**
+ * The first tap picks through the GPU (`renderer.pick`), which needs resident geometry and a
+ * frame drawn for the final camera. `visibleFaces` projects on the CPU and proves neither, so
+ * wait for both before tapping (the tap itself is NOT retried: a user tapping right after load
+ * must still get the selection, see the PR for the candidate product finding).
+ */
+async function waitForDrawnFrame(page: Page): Promise<void> {
+  const settledAt = await page.evaluate(() => performance.now());
+  await expect.poll(() => page.evaluate((since) => {
+    const stats = globalThis.__ifc_lite_render_stats__?.();
+    const frame = stats?.frame;
+    return !!stats && !!frame && stats.gpu.total > 0 && frame.drawCalls > 0 &&
+      frame.batchesNotResident === 0 && frame.timestamp > since;
+  }, settledAt), { message: 'a frame with resident geometry drawn after the last camera move', timeout: 30_000 }).toBe(true);
 }
 
 type TouchPoint = { x: number; y: number; id: number };
@@ -164,6 +184,7 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
     expect(distance(await viewpoint(page))).toBeLessThan(distance(beforePinch));
     expect(await page.evaluate(() => window.visualViewport?.scale)).toBe(1);
 
+    await requireRenderer('drawn frame after camera moves', () => waitForDrawnFrame(page));
     const faces = await requireRenderer('visible-face projection', () => visibleFaces(page));
     const first = faces[0];
     const second = faces.find((face) => Math.hypot(face.x - first.x, face.y - first.y) > 25);
