@@ -33,24 +33,53 @@ const FILES = [
   'apps/viewer/src/aim/docIssueDraw.ts',
 ];
 
-// static `import ... from '...aimMultiSelect...'`, side-effect `import '...'`,
-// dynamic `import('...')` and `export ... from '...'`
-const FORBIDDEN = /(?:\bfrom\s+|\bimport\s*\(?\s*)['"][^'"]*aimMultiSelect[^'"]*['"]/;
-
 /**
  * Lazy-chunk hygiene (E2E mobile-journey:174). Two rules:
- *  1. none of FILES may import `aimMultiSelect` in any form (see above);
+ *  1. none of FILES may mention `aimMultiSelect` in any import form (static, side-effect,
+ *     dynamic, re-export), see above;
  *  2. the files that live in the pencil-window chunk (EAGER_SIDE) may import
  *     `docEntitiesScene`, `AimDocumentEntities` and `useBCF` only dynamically
  *     (`import('...')` / React.lazy). A static import pulls `useBCF` and the store helpers
  *     shared with the eager graph into that chunk and changes the bundler's chunk split
  *     and initialisation order, after which the tap in 3D stopped selecting.
+ *
+ * The scan runs over the WHOLE text of a file (comments removed), not line by line, because a
+ * formatter wraps long imports (`import {\n  a,\n  b,\n} from '...'`) and a per-line pattern
+ * then matches nothing while the gate still prints "0 violations". Every run first proves the
+ * detectors fire on known-bad samples and stay quiet on known-good ones (self-check below).
  */
+
+/** Source without comments, so a comment that talks about an import is not an import. */
+const stripComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' ')).replace(/^\s*\/\/.*$/gm, (m) => ' '.repeat(m.length));
+
+/**
+ * Module specifiers that are STATICALLY loaded: `import x from 's'` / `import {..} from 's'` /
+ * `export {..} from 's'` / `export * from 's'` (any number of lines, `import type` included) and
+ * the side-effect form `import 's'`. `import('s')` and `lazy(() => import('s'))` are not listed.
+ */
+function staticSpecifiers(text) {
+  const src = stripComments(text);
+  const found = [];
+  const re = /(?:\b(?:import|export)\b(?:[^'";()]|\([^)]*\))*?\bfrom\s*|\bimport\s*)(['"])([^'"\n]+)\1/g;
+  for (const m of src.matchAll(re)) found.push({ spec: m[2], index: m.index });
+  return found;
+}
+
+/** Any string literal naming aimMultiSelect (static or dynamic import, re-export, require). */
+function aimMultiSelectMentions(text) {
+  const src = stripComments(text);
+  return [...src.matchAll(/(['"])[^'"\n]*aimMultiSelect[^'"\n]*\1/g)].map((m) => ({ spec: m[0], index: m.index }));
+}
+
 const STATIC_ONLY_FORBIDDEN = [
-  { name: 'docEntitiesScene', re: /^\s*(?:import|export)\b[^;]*\bfrom\s+['"][^'"]*docEntitiesScene[^'"]*['"]/ },
-  { name: 'AimDocumentEntities', re: /^\s*(?:import|export)\b[^;]*\bfrom\s+['"][^'"]*AimDocumentEntities[^'"]*['"]/ },
-  { name: 'useBCF', re: /^\s*(?:import|export)\b[^;]*\bfrom\s+['"][^'"]*hooks\/useBCF[^'"]*['"]/ },
+  { name: 'docEntitiesScene', test: (spec) => /docEntitiesScene/.test(spec) },
+  { name: 'AimDocumentEntities', test: (spec) => /AimDocumentEntities/.test(spec) },
+  { name: 'useBCF', test: (spec) => /hooks\/useBCF/.test(spec) },
 ];
+const staticViolations = (text) =>
+  staticSpecifiers(text).flatMap(({ spec, index }) =>
+    STATIC_ONLY_FORBIDDEN.filter((f) => f.test(spec)).map((f) => ({ name: f.name, index })));
+
 // Files that must reach the entities scene only lazily. AimDocumentEntities.tsx and
 // docEntitiesScene.ts themselves are the lazy chunk and may import it.
 const EAGER_SIDE = [
@@ -60,21 +89,58 @@ const EAGER_SIDE = [
   'apps/viewer/src/components/documents/DocumentPane.tsx',
 ];
 
+// Self-check: the detectors must flag these and must not flag the good ones. A regex that
+// silently stops matching (the failure this gate exists to prevent) breaks the check itself.
+const BAD = [
+  ["import { a } from './docEntitiesScene.js';", 'docEntitiesScene'],
+  ["import {\n  proposeEntities,\n  selectedGuids,\n} from './docEntitiesScene.js';", 'docEntitiesScene'],
+  ["import type {\n  A,\n} from '../aim/docEntitiesScene';", 'docEntitiesScene'],
+  ["export {\n  a,\n} from './AimDocumentEntities';", 'AimDocumentEntities'],
+  ["export * from './docEntitiesScene.js';", 'docEntitiesScene'],
+  ["import './docEntitiesScene.js';", 'docEntitiesScene'],
+  ["import Default, {\n  a,\n} from '@/hooks/useBCF';", 'useBCF'],
+  ["import { x } from '@/hooks/useBCF';", 'useBCF'],
+];
+const GOOD = [
+  "const scene = await import('./docEntitiesScene.js');",
+  "const E = lazy(() => import('./AimDocumentEntities').then((m) => ({ default: m.AimDocumentEntities })));",
+  "// import { a } from './docEntitiesScene.js';\nconst x = 1;",
+  "/* import {\n a,\n} from '@/hooks/useBCF'; */\nconst x = 1;",
+  "import { y } from './docIssues.js';",
+];
+for (const [text, name] of BAD) {
+  if (!staticViolations(text).some((v) => v.name === name)) {
+    console.error(`check-aim-doc-lazy-imports: self-check failed, ${name} not detected in:\n${text}`);
+    process.exit(2);
+  }
+}
+for (const text of GOOD) {
+  if (staticViolations(text).length) {
+    console.error(`check-aim-doc-lazy-imports: self-check failed, false positive on:\n${text}`);
+    process.exit(2);
+  }
+}
+for (const text of ["import { a } from './aimMultiSelect.js';", "import {\n  a,\n} from './aimMultiSelect';", "const m = await import('./aimMultiSelect.js');", "export * from '../aim/aimMultiSelect.js';"]) {
+  if (!aimMultiSelectMentions(text).length) {
+    console.error(`check-aim-doc-lazy-imports: self-check failed, aimMultiSelect not detected in:\n${text}`);
+    process.exit(2);
+  }
+}
+if (aimMultiSelectMentions('// from ./aimMultiSelect.js, not used\nconst x = 1;').length) {
+  console.error('check-aim-doc-lazy-imports: self-check failed, aimMultiSelect flagged in a comment');
+  process.exit(2);
+}
+
+const lineOf = (text, index) => text.slice(0, index).split('\n').length;
 const violations = [];
 for (const rel of FILES) {
   // Fail closed: a renamed file must break this check, not silently stop being scanned.
-  const lines = readFileSync(join(ROOT, rel), 'utf8').split('\n');
-  lines.forEach((line, i) => {
-    if (FORBIDDEN.test(line)) violations.push(`${rel}:${i + 1}: ${line.trim()}`);
-  });
+  const text = readFileSync(join(ROOT, rel), 'utf8');
+  for (const { spec, index } of aimMultiSelectMentions(text)) violations.push(`${rel}:${lineOf(text, index)}: ${spec}`);
 }
 for (const rel of EAGER_SIDE) {
-  const lines = readFileSync(join(ROOT, rel), 'utf8').split('\n');
-  lines.forEach((line, i) => {
-    for (const { name, re } of STATIC_ONLY_FORBIDDEN) {
-      if (re.test(line)) violations.push(`${rel}:${i + 1}: static import of ${name}: ${line.trim()}`);
-    }
-  });
+  const text = readFileSync(join(ROOT, rel), 'utf8');
+  for (const { name, index } of staticViolations(text)) violations.push(`${rel}:${lineOf(text, index)}: static import of ${name}`);
 }
 
 if (violations.length > 0) {
