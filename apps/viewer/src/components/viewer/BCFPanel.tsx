@@ -37,7 +37,7 @@ import {
   createBCFComment,
 } from '@ifc-lite/bcf';
 import { useBCF } from '@/hooks/useBCF';
-import { BCFTopicList, type BCFTopicListProps } from './bcf/BCFTopicList';
+import { BCFTopicList } from './bcf/BCFTopicList';
 import { BCFTopicDetail } from './bcf/BCFTopicDetail';
 import { BCFCreateTopicForm } from './bcf/BCFCreateTopicForm';
 import { BCFServerControl } from './bcf/BCFServerControl';
@@ -50,6 +50,7 @@ import { readBCFWithDiagnostics, warnIfNoModelLoaded, warnIfImportTruncated, war
 import { useSectionViewpointCapture } from '@/hooks/bcf/useSectionViewpointCapture';
 // >>> AIM-FORK: topic list with 3D / PDF / entity / project / document filters, lazy and only inside the AIM host (AIM #199)
 import { useAimPanelStore } from '@/aim/aimPanelStore';
+import type { BCFTopicListProps } from './bcf/BCFTopicList';
 const AimTopicList = React.lazy(() => import('@/aim/AimTopicList').then((m) => ({ default: m.AimTopicList }))) as typeof import('@/aim/AimTopicList').AimTopicList;
 // <<< AIM-FORK
 // ============================================================================
@@ -61,7 +62,9 @@ interface BCFPanelProps {
 
 export function BCFPanel({ onClose }: BCFPanelProps) {
   const { t } = useTranslation();
-  const aimEmbedded = useAimPanelStore((s) => s.embedded); // AIM-FORK: AIM #199
+  // >>> AIM-FORK: inside the AIM host (AIM #199)
+  const aimEmbedded = useAimPanelStore((s) => s.embedded);
+  // <<< AIM-FORK
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Store state
   const bcfProject = useViewerStore((s) => s.bcfProject);
