@@ -93,6 +93,8 @@ function fakeRenderer(state: FakeRendererState): Renderer {
     consumeRenderRequest: () => { state.renderRequested = false; },
     requestRender: () => { state.renderRequested = true; },
     clearCaches: () => {},
+    // The loop installs the pick preflight on mount and clears it on unmount (pickPreflight.ts).
+    setPickPreflight: () => {},
     getModelBounds: () => null,
     render: (options: RenderOptions) => {
       state.frames?.push(options);
