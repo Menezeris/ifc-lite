@@ -62,7 +62,7 @@ export function filterTopics(topics: readonly BCFTopic[], f: TopicFilter): BCFTo
   const entity = f.entity.trim().toLowerCase();
   return topics.filter((t) => {
     if (!contextMatches(t, f.context)) return false;
-    if (f.document && !topicDocTargets(t).some((d) => d.docId === f.document.toLowerCase())) return false;
+    if (f.document && !topicDocTargets(t).some((d) => d.docId.toLowerCase() === f.document.toLowerCase())) return false;
     const guids = topicEntityGuids(t);
     if (entity && !guids.some((g) => g.toLowerCase().startsWith(entity))) return false;
     if (f.projectOnly && guids.length > 0) return false;

@@ -12,7 +12,8 @@
  */
 
 import { useMemo, useState, type ComponentType } from 'react';
-import type { BCFTopic, BCFViewpoint } from '@ifc-lite/bcf';
+import type { BCFViewpoint } from '@ifc-lite/bcf';
+import type { BCFTopicListProps } from '../components/viewer/bcf/BCFTopicList.js';
 import { useViewerStore } from '../store/index.js';
 import {
   EMPTY_TOPIC_FILTER,
@@ -34,18 +35,13 @@ const CONTEXTS: { value: TopicContext; label: string }[] = [
 
 const field = 'h-7 min-w-0 rounded border border-border bg-background px-1.5 text-xs';
 
-interface ListProps {
-  topics: BCFTopic[];
-  onSelectTopic: (topicId: string) => void;
-}
-
-export interface AimTopicListProps<P extends ListProps> {
-  ListComponent: ComponentType<P>;
-  listProps: P;
+export interface AimTopicListProps {
+  ListComponent: ComponentType<BCFTopicListProps>;
+  listProps: BCFTopicListProps;
   applyViewpoint: (vp: BCFViewpoint) => void;
 }
 
-export function AimTopicList<P extends ListProps>({ ListComponent, listProps, applyViewpoint }: AimTopicListProps<P>) {
+export function AimTopicList({ ListComponent, listProps, applyViewpoint }: AimTopicListProps) {
   const [filter, setFilter] = useState<TopicFilter>(EMPTY_TOPIC_FILTER);
   const docs = useViewerStore((s) => s.viewerDocuments);
   const { topics, onSelectTopic } = listProps;
@@ -68,7 +64,7 @@ export function AimTopicList<P extends ListProps>({ ListComponent, listProps, ap
         <select className={field} aria-label="Dokument" value={filter.document} onChange={(e) => patch({ document: e.target.value })}>
           <option value="">Všetky dokumenty</option>
           {options.map((o) => (
-            <option key={o.docId} value={o.docId}>{docs.get(o.docId)?.name ?? o.docId.slice(0, 8)} ({o.count})</option>
+            <option key={o.docId} value={o.docId}>{docs.get(o.docId)?.name || o.docId.slice(0, 8)} ({o.count})</option>
           ))}
         </select>
         <input
