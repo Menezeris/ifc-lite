@@ -36,7 +36,9 @@ import { openPdfDocument, rasterizePdfPage } from '@/lib/pdf/rasterize';
 import { useAimUnderlays3d, underlaysHiddenIn3d, skipUnderlayRaster } from '@/aim/aimUnderlays3d';
 import { underlayIn3d } from '@/aim/underlaysPlan';
 import { aimHorizontalCutZ } from '@/aim/underlayCutZ';
-import { underlaysAtCut } from '@/aim/underlayAtCut';
+import { underlaysVisibleAtCut } from '@/aim/underlayAtCut';
+// One rasterization per underlay, kept across cut changes (AIMviewer #376)
+import { UnderlayRasterGate } from '@/aim/underlayRasterGate';
 import { isSectionPlacement, SECTION_BACK_OPACITY } from '@ifc-lite/drawing-underlay';
 // <<< AIM-FORK
 
@@ -50,7 +52,23 @@ const RASTER_TARGET_PX = 4096;
 export interface UseDrawingUnderlayParams {
   rendererRef: MutableRefObject<Renderer | null>;
   isInitialized: boolean;
+  // >>> AIM-FORK: page raster source, pdf.js by default; a test passes its own (AIMviewer #376)
+  rasterize?: RasterizeUnderlayPage;
+  // <<< AIM-FORK
 }
+// >>> AIM-FORK: the pdf.js raster of one page as its own function, so the sync can be driven in a test (AIMviewer #376)
+/** Rasterize one PDF page for the GPU; the caller closes the bitmap. */
+export type RasterizeUnderlayPage = (pdfUrl: string, page: number, maxTextureDimension: number) => Promise<ImageBitmap>;
+
+const rasterizeWithPdfjs: RasterizeUnderlayPage = async (pdfUrl, page, maxTextureDimension) => {
+  const doc = await openPdfDocument(pdfUrl);
+  try {
+    return (await rasterizePdfPage(doc, page, RASTER_TARGET_PX, maxTextureDimension)).image;
+  } finally {
+    void doc.loadingTask.destroy();
+  }
+};
+// <<< AIM-FORK
 
 /** Signature of the parts of a placement that force a texture re-upload. */
 function textureKey(drawingId: string, pdfUrl: string, page: number): string {
@@ -76,7 +94,9 @@ interface RenderEntry {
 /** Ghost preview opacity while calibrating (before Save). */
 const PREVIEW_OPACITY = 0.45;
 
-export function useDrawingUnderlay({ rendererRef, isInitialized }: UseDrawingUnderlayParams): void {
+// >>> AIM-FORK: injectable page raster (AIMviewer #376)
+export function useDrawingUnderlay({ rendererRef, isInitialized, rasterize = rasterizeWithPdfjs }: UseDrawingUnderlayParams): void {
+// <<< AIM-FORK
   const drawings = useViewerStore((s) => s.underlayDrawings);
   const models = useViewerStore((s) => s.models);
   const calibration = useViewerStore((s) => s.underlayCalibration);
@@ -97,22 +117,26 @@ export function useDrawingUnderlay({ rendererRef, isInitialized }: UseDrawingUnd
   const uploadedTexturesRef = useRef(new Map<string, string>());
   /** drawingId → placement signature last applied. */
   const appliedPlacementsRef = useRef(new Map<string, string>());
-  /** Monotonic token — invalidates in-flight rasterizations on change. */
-  const syncTokenRef = useRef(0);
+  // >>> AIM-FORK: a cut change neither drops nor restarts a rasterization still wanted (AIMviewer #376)
+  /** drawingId -> texture signature being rasterized right now. */
+  const rasterGateRef = useRef(new UnderlayRasterGate());
+  /** drawingId -> entry of the latest sync and the frame offset: an async raster lands with these, not with its stale closure. */
+  const latestRef = useRef({ entries: new Map<string, RenderEntry>(), offset: totalYupOffset(undefined) });
+  // <<< AIM-FORK
 
   useEffect(() => {
     if (!isInitialized) return;
     const renderer = rendererRef.current;
     if (!renderer) return;
 
-    const token = ++syncTokenRef.current;
-
+    // >>> AIM-FORK: no sync token; `rasterGateRef` decides which raster still lands (AIMviewer #376)
+    // <<< AIM-FORK
     // >>> AIM-FORK: placement copy with the 3D overrides and `visible: false` while the underlays are off in 3D
     const aimEntries: RenderEntry[] = [...drawings.values()]
       .filter((d) => d.placement !== null)
       .map((d) => ({ id: d.id, pdfUrl: d.pdfUrl, name: d.name, placement: underlayIn3d(d.placement!, aimViewLocked ? undefined : aimOverrides[d.id], aimHide3d) }));
     // Not while calibrating or under the drawing-view cut, which have their own storey (D-072); a section only without a horizontal cut (AIM #284)
-    const entries: RenderEntry[] = calibration !== null || underlayCut !== null ? aimEntries : underlaysAtCut(aimEntries, aimCutZ, aimCutFlipped);
+    const entries: RenderEntry[] = calibration !== null || underlayCut !== null ? aimEntries : underlaysVisibleAtCut(aimEntries, aimCutZ, aimCutFlipped);
     // <<< AIM-FORK
 
     // Live ghost preview (Dalux-style "combined view"): once the mode's
@@ -171,6 +195,9 @@ export function useDrawingUnderlay({ rendererRef, isInitialized }: UseDrawingUnd
         pipelineRef.current = null;
         uploadedTexturesRef.current.clear();
         appliedPlacementsRef.current.clear();
+        // >>> AIM-FORK: rasterizations for the destroyed pipeline are void (AIMviewer #376)
+        rasterGateRef.current.clear();
+        // <<< AIM-FORK
       }
       return;
     }
@@ -189,6 +216,9 @@ export function useDrawingUnderlay({ rendererRef, isInitialized }: UseDrawingUnd
     // geometry is representative.
     const firstModel = [...models.values()].find((m) => m.geometryResult?.coordinateInfo);
     const offset = totalYupOffset(firstModel?.geometryResult?.coordinateInfo);
+    // >>> AIM-FORK: what an in-flight raster applies when it lands (AIMviewer #376)
+    latestRef.current = { entries: new Map(entries.map((e) => [e.id, e])), offset };
+    // <<< AIM-FORK
 
     // Drop planes whose drawing disappeared, lost its placement, or whose
     // calibration ghost ended.
@@ -229,44 +259,37 @@ export function useDrawingUnderlay({ rendererRef, isInitialized }: UseDrawingUnd
         continue;
       }
 
-      // New or re-paged drawing — rasterize async, then upload if still current.
+      // >>> AIM-FORK: one raster per drawing and page; it lands with the latest placement unless superseded (AIMviewer #376)
+      const gate = rasterGateRef.current;
+      if (!gate.begin(drawing.id, texKey)) continue;
       void (async () => {
+        let image: ImageBitmap | null = null;
         try {
-          const doc = await openPdfDocument(drawing.pdfUrl);
-          try {
-            const raster = await rasterizePdfPage(
-              doc,
-              placement.page,
-              RASTER_TARGET_PX,
-              descriptor.device.limits.maxTextureDimension2D,
-            );
-            if (syncTokenRef.current !== token || pipelineRef.current !== pipeline) {
-              raster.image.close();
-              return;
-            }
-            pipeline.upsertPlane(drawing.id, {
-              corners,
-              image: raster.image,
-              opacity: placement.opacity,
-              visible: placement.visible,
-              // >>> AIM-FORK: fainter back side of a section underlay (AIM #284)
-              backOpacity: isSectionPlacement(placement) ? SECTION_BACK_OPACITY : 1,
-              // <<< AIM-FORK
-            });
-            raster.image.close(); // GPU copy done; release CPU-side bitmap
-            uploadedTexturesRef.current.set(drawing.id, texKey);
-            appliedPlacementsRef.current.set(drawing.id, posKey);
-            renderer.requestRender();
-          } finally {
-            void doc.loadingTask.destroy();
-          }
+          image = await rasterize(drawing.pdfUrl, placement.page, descriptor.device.limits.maxTextureDimension2D);
+          const latest = latestRef.current.entries.get(drawing.id);
+          if (!gate.settle(drawing.id, texKey) || pipelineRef.current !== pipeline || !latest
+            || textureKey(latest.id, latest.pdfUrl, latest.placement.page) !== texKey) return;
+          pipeline.upsertPlane(drawing.id, {
+            corners: placementWorldCorners(latest.placement, latestRef.current.offset),
+            image,
+            opacity: latest.placement.opacity,
+            visible: latest.placement.visible,
+            backOpacity: isSectionPlacement(latest.placement) ? SECTION_BACK_OPACITY : 1,
+          });
+          uploadedTexturesRef.current.set(drawing.id, texKey);
+          appliedPlacementsRef.current.set(drawing.id, placementKey(latest.placement));
+          renderer.requestRender();
         } catch (err) {
+          gate.fail(drawing.id, texKey);
           console.error(`drawing-underlay: failed to rasterize "${drawing.name}"`, err);
+        } finally {
+          image?.close(); // GPU copy done (or dropped); release the CPU-side bitmap
         }
       })();
+      // <<< AIM-FORK
     }
   // >>> AIM-FORK: re-sync when the 3D switch or a per-underlay override changes
-  }, [drawings, models, calibration, isInitialized, rendererRef, aimHide3d, aimOverrides, aimViewLocked, aimCutZ, aimCutFlipped, underlayCut]);
+  }, [drawings, models, calibration, isInitialized, rendererRef, aimHide3d, aimOverrides, aimViewLocked, aimCutZ, aimCutFlipped, underlayCut, rasterize]);
   // <<< AIM-FORK
 
   // Depth-always (no z-fight) while a storey cut is active — a top-down floor
@@ -282,7 +305,9 @@ export function useDrawingUnderlay({ rendererRef, isInitialized }: UseDrawingUnd
   useEffect(() => {
     const renderer = rendererRef.current;
     return () => {
-      syncTokenRef.current++;
+      // >>> AIM-FORK: in-flight rasterizations are void after unmount (AIMviewer #376)
+      rasterGateRef.current.clear();
+      // <<< AIM-FORK
       if (pipelineRef.current) {
         renderer?.unregisterExternalOverlay(UNDERLAY_OVERLAY_ID);
         pipelineRef.current.destroy();
