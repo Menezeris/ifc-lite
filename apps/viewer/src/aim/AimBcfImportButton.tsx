@@ -57,7 +57,7 @@ export default function AimBcfImportButton() {
         <CloudUpload className="h-4 w-4" />
       </IconButton>
       {pending && s && (
-        <div role="status" className="fixed right-4 top-16 z-50 flex max-w-xs flex-col gap-2 rounded-md border bg-popover p-3 text-xs shadow-md">
+        <output className="fixed right-4 top-16 z-50 flex max-w-xs flex-col gap-2 rounded-md border bg-popover p-3 text-xs shadow-md">
           <div className="font-medium">{pending.file.name}</div>
           <div>{t('aimFork.bcfImport.preview', { total: s.topics_in_file, created: s.created, updated: s.updated, unchanged: s.unchanged, conflicts: s.conflicts, skipped: s.skipped, failed: s.failed })}</div>
           {s.warnings.length > 0 && <div className="text-muted-foreground">{s.warnings.join(' ')}</div>}
@@ -65,7 +65,7 @@ export default function AimBcfImportButton() {
             <Button size="sm" disabled={busy || s.created + s.updated === 0} onClick={() => { void run(pending.file, false); }}>{t('aimFork.bcfImport.write')}</Button>
             <Button size="sm" variant="ghost" disabled={busy} onClick={() => setPending(null)}>{t('aimFork.bcfImport.cancel')}</Button>
           </div>
-        </div>
+        </output>
       )}
     </>
   );
