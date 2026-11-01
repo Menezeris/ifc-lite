@@ -36,7 +36,7 @@ import {
   createBCFTopic,
   createBCFComment,
 } from '@ifc-lite/bcf';
-import { useBCF } from '@/hooks/useBCF';
+import { useBCF } from '@/hooks/useBCF'; import { AimBcfImportLazy } from '@/aim/AimBcfImportLazy'; // >>> AIM-FORK: Import to AIM button, the host writes the .bcfzip (no viewer token) <<< AIM-FORK
 import { BCFTopicList } from './bcf/BCFTopicList';
 import { BCFTopicDetail } from './bcf/BCFTopicDetail';
 import { BCFCreateTopicForm } from './bcf/BCFCreateTopicForm';
@@ -419,7 +419,7 @@ export function BCFPanel({ onClose }: BCFPanelProps) {
             onClick={() => { void handleImportClick(); }}
           >
             <Upload className="h-4 w-4" />
-          </IconButton>
+          </IconButton> {/* >>> AIM-FORK: Import to AIM <<< AIM-FORK */}<AimBcfImportLazy />
           <AnalysisExportMenu
             compact
             disabled={!bcfProject || topics.length === 0}
