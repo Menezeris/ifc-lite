@@ -57,7 +57,7 @@ export function AimTopicList({ ListComponent, listProps, applyViewpoint }: AimTo
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-aim-topic-list>
-      <div className="flex flex-wrap items-center gap-1.5 border-b border-border px-3 py-1.5 text-xs" role="group" aria-label="Filtre tém AIM">
+      <fieldset className="m-0 flex min-w-0 flex-wrap items-center gap-1.5 border-0 border-b border-border px-3 py-1.5 text-xs" aria-label="Filtre tém AIM">
         <select className={field} aria-label="Kontext témy" value={filter.context} onChange={(e) => patch({ context: e.target.value as TopicContext })}>
           {CONTEXTS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
@@ -84,7 +84,7 @@ export function AimTopicList({ ListComponent, listProps, applyViewpoint }: AimTo
           </button>
         )}
         <span className="ml-auto text-muted-foreground" aria-live="polite">{shown.length} / {topics.length}</span>
-      </div>
+      </fieldset>
       <div className="min-h-0 flex-1">
         <ListComponent {...listProps} topics={shown} onSelectTopic={select} />
       </div>
