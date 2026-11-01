@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/topicListModel.ts a/apps/viewer/src/aim/topicListModel.ts
+index dc2b3cd1..c935ce26 100644
+--- b/apps/viewer/src/aim/topicListModel.ts
++++ a/apps/viewer/src/aim/topicListModel.ts
+@@ -54,7 +54,7 @@ function contextMatches(topic: BCFTopic, ctx: TopicContext): boolean {
+   const hasPdf = topicHasPdf(topic);
+   if (ctx === '3d') return has3d;
+   if (ctx === 'pdf') return hasPdf;
+-  if (ctx === 'both') return has3d || hasPdf;
++  if (ctx === 'both') return has3d && hasPdf;
+   return !has3d && !hasPdf;
+ }
+ 
