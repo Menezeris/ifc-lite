@@ -20,7 +20,6 @@ export function AimIcddDialog() {
   const tone = busy ? 'border-border' : sum?.ok ? 'border-green-600' : 'border-red-600';
   return (
     <div
-      role="status"
       aria-live="polite"
       data-testid="aim-icdd-dialog"
       className={`fixed bottom-4 right-4 z-[9000] w-80 rounded-md border bg-background p-3 text-xs shadow-lg ${tone}`}
