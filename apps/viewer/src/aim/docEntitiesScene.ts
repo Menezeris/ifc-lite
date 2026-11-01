@@ -18,12 +18,14 @@ import { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import { renderBoxToIfc } from './viewFrame.js';
 import {
   entitiesUnderRegion,
+  isSpatialRoot,
   mergeGuids,
   regionToIfcPolygon,
   storeyBand,
   type EntityBox,
   type EntityCandidate,
   type EntityPlacement,
+  type PickedEntity,
 } from './docEntities.js';
 import type { DocIssueTarget } from './docIssueModel.js';
 
@@ -118,13 +120,50 @@ export function selectedGuids(): string[] {
   return mergeGuids(guids, [], MAX_TOPIC_COMPONENTS);
 }
 
+/** Názov a trieda entity podľa GlobalId z načítaných modelov (prázdne, ak ju model nemá). */
+function describeGuid(state: State, guid: string): { name: string; ifcType: string } {
+  const ref = resolveGuids(state.models, [guid])[0];
+  const store = ref ? state.models.get(ref.modelId)?.ifcDataStore : undefined;
+  if (!ref || !store) return { name: '', ifcType: '' };
+  return { name: store.entities.getName(ref.expressId) ?? '', ifcType: store.entities.getTypeName(ref.expressId) ?? '' };
+}
+
+/** Výber z 3D ako zoznam položiek s názvom (tlačidlo "Pridať výber z 3D"). */
+export function selectionPicks(): PickedEntity[] {
+  const state = useViewerStore.getState();
+  return selectedGuids().map((guid) => ({ guid, label: describeGuid(state, guid).name || guid, kind: 'selection' as const }));
+}
+
+/** Podlažie kalibrovaného výkresu strany; null, ak strana nie je kalibrovaná na podlažie. */
+export function storeyPick(target: DocIssueTarget): PickedEntity | null {
+  const state = useViewerStore.getState();
+  const p = state.underlayDrawings.get(target.docId)?.placement ?? null;
+  if (!p || p.page !== target.page || p.plane || !p.storeyGuid) return null;
+  return { guid: p.storeyGuid, label: describeGuid(state, p.storeyGuid).name || 'Podlažie výkresu', kind: 'storey' };
+}
+
+/** IfcProject načítaného modelu (celý projekt); null, kým model nie je načítaný. */
+export function projectPick(): PickedEntity | null {
+  const state = useViewerStore.getState();
+  for (const model of state.models.values()) {
+    const store = model.ifcDataStore;
+    const id = store?.spatialHierarchy?.project?.expressId;
+    const guid = id != null ? store?.entities.getGlobalId(id) : '';
+    if (guid) return { guid, label: store?.entities.getName(id as number) || 'Celý projekt', kind: 'project' };
+  }
+  return null;
+}
+
 /**
  * Výber v 3D nahradí týmito prvkami: formulár "New topic" zachytí výber do pohľadu témy.
  * Vráti GlobalId, ktoré sa našli v načítaných modeloch.
  */
 export function selectGuidsIn3d(guids: readonly string[]): string[] {
   const state = useViewerStore.getState();
-  const refs = resolveGuids(state.models, guids);
+  // Podlažie a projekt nemajú geometriu: do komponentov témy idú cez ensureTopicComponents, nie cez výber.
+  const refs = resolveGuids(state.models, guids).filter(
+    (r) => !isSpatialRoot(state.models.get(r.modelId)?.ifcDataStore?.entities.getTypeName(r.expressId)),
+  );
   // Existujuce akcie store, nie `aimMultiSelect.js`: ten importuje aj eager `visibility-commands`, takze
   // import z lenivej karty by z neho spravil spolocny chunk (s top-level await) a zmenil poradie
   // inicializacie vstupu (E2E mobile-journey: tap nevyberie prvok).
