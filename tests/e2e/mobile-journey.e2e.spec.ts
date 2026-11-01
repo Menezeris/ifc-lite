@@ -202,7 +202,7 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
     const second = faces.find((face) => Math.hypot(face.x - first.x, face.y - first.y) > 25);
     if (!second) throw new Error('two distinct visible face points are required for Measure');
     await page.touchscreen.tap(first.x, first.y);
-    // TEMPORARY CATCH-ONLY DIAGNOSTICS (control branch, not for merge): nothing is installed before the tap.
+    // TEMPORARY CATCH-ONLY DIAGNOSTICS (control branch only, not for merge): nothing is installed before the tap.
     try {
       await requireRenderer('tap selection', () => expect.poll(
         () => page.evaluate(() => globalThis.__ifc_lite_viewer_store__.getState().selectedEntityId),
