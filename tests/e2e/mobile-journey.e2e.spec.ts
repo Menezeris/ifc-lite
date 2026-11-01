@@ -169,6 +169,25 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
   if (!box) throw new Error('mobile canvas is not laid out');
   const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   const device = await page.context().newCDPSession(page);
+  // TEMPORARY PASSIVE DIAGNOSTICS (control branch only, not for merge): installed early, no extra awaits before the tap.
+  await page.evaluate(() => {
+    const w = globalThis as unknown as { __tapLog: unknown[] };
+    w.__tapLog = [];
+    const describe = (t: EventTarget | null) => {
+      const el = t as Element | null;
+      return el && 'tagName' in el ? `${el.tagName.toLowerCase()}#${el.id}.${String(el.className).slice(0, 60)}[${el.getAttribute('aria-label') ?? ''}]` : String(t);
+    };
+    for (const type of ['touchstart', 'touchend', 'pointerdown', 'pointerup', 'pointercancel', 'click', 'contextmenu']) {
+      for (const capture of [true, false]) {
+        window.addEventListener(type, (e) => {
+          const ev = e as PointerEvent;
+          w.__tapLog.push({ type, capture, target: describe(e.target), x: Math.round(ev.clientX ?? -1), y: Math.round(ev.clientY ?? -1), dp: e.defaultPrevented, t: Math.round(performance.now()) });
+        }, { capture, passive: true });
+      }
+    }
+  });
+  const consoleLines: string[] = [];
+  page.on('console', (m) => { consoleLines.push(`${m.type()}: ${m.text().slice(0, 200)}`); });
   try {
     const beforeOrbit = await viewpoint(page);
     await touch(device, 'touchStart', [{ ...center, id: 1 }]);
@@ -201,37 +220,16 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
     const first = faces[0];
     const second = faces.find((face) => Math.hypot(face.x - first.x, face.y - first.y) > 25);
     if (!second) throw new Error('two distinct visible face points are required for Measure');
-    // TEMPORARY DIAGNOSTICS (control branch only, not for merge): what sits under the tap point and what events arrive.
-    await page.evaluate(() => {
-      const w = globalThis as unknown as { __tapLog: unknown[] };
-      w.__tapLog = [];
-      const describe = (t: EventTarget | null) => {
-        const el = t as Element | null;
-        return el && 'tagName' in el ? `${el.tagName.toLowerCase()}#${el.id}.${String(el.className).slice(0, 60)}[${el.getAttribute('aria-label') ?? ''}]` : String(t);
-      };
-      for (const type of ['touchstart', 'touchend', 'pointerdown', 'pointerup', 'pointercancel', 'click', 'contextmenu']) {
-        for (const capture of [true, false]) {
-          window.addEventListener(type, (e) => {
-            const ev = e as PointerEvent;
-            w.__tapLog.push({ type, capture, target: describe(e.target), x: Math.round(ev.clientX ?? -1), y: Math.round(ev.clientY ?? -1), dp: e.defaultPrevented, t: Math.round(performance.now()) });
-          }, { capture, passive: true });
-        }
-      }
-    });
-    const consoleLines: string[] = [];
-    page.on('console', (m) => { if (consoleLines.length < 60) consoleLines.push(`${m.type()}: ${m.text().slice(0, 200)}`); });
-    const diagPoint = await page.evaluate(({ x, y }) => {
-      return document.elementsFromPoint(x, y).slice(0, 6).map((el) => {
-        const r = el.getBoundingClientRect();
-        return `${el.tagName.toLowerCase()}#${el.id}.${String(el.className).slice(0, 50)} [${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)}x${Math.round(r.height)}]`;
-      });
-    }, { x: first.x, y: first.y });
     await page.touchscreen.tap(first.x, first.y);
     try {
       await requireRenderer('tap selection', () => expect.poll(
         () => page.evaluate(() => globalThis.__ifc_lite_viewer_store__.getState().selectedEntityId),
       ).toBe(first.globalId));
     } catch (error) {
+      const diagPoint = await page.evaluate(({ x, y }) => document.elementsFromPoint(x, y).slice(0, 6).map((el) => {
+        const r = el.getBoundingClientRect();
+        return `${el.tagName.toLowerCase()}#${el.id}.${String(el.className).slice(0, 50)} [${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)}x${Math.round(r.height)}]`;
+      }), { x: first.x, y: first.y });
       const after = await page.evaluate(() => {
         const w = globalThis as unknown as { __tapLog: unknown[] };
         const st = globalThis.__ifc_lite_viewer_store__.getState() as unknown as Record<string, unknown>;
@@ -243,7 +241,7 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
         const r = canvas?.getBoundingClientRect();
         const stats = globalThis.__ifc_lite_render_stats__?.();
         return {
-          tapLog: w.__tapLog.slice(0, 40),
+          tapLog: w.__tapLog.slice(-40),
           keys,
           canvas: r ? [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)] : null,
           inner: [window.innerWidth, window.innerHeight, window.devicePixelRatio, window.visualViewport?.scale, window.visualViewport?.offsetTop],
