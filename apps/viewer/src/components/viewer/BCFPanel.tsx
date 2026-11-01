@@ -48,10 +48,8 @@ import { bcfExportFilename, sanitizeFilename } from '@/lib/export/download';
 import { publishBcfArchive } from '@/lib/bcf-drafts/archive-activity';
 import { readBCFWithDiagnostics, warnIfNoModelLoaded, warnIfImportTruncated, warnIfUnsupportedVersion } from './bcf/bcfImportGuidance';
 import { useSectionViewpointCapture } from '@/hooks/bcf/useSectionViewpointCapture';
-// >>> AIM-FORK: topic list with 3D / PDF / entity / project / document filters, lazy and only inside the AIM host (AIM #199)
-import { useAimPanelStore } from '@/aim/aimPanelStore';
-import type { BCFTopicListProps } from './bcf/BCFTopicList';
-const AimTopicList = React.lazy(() => import('@/aim/AimTopicList').then((m) => ({ default: m.AimTopicList }))) as typeof import('@/aim/AimTopicList').AimTopicList;
+// >>> AIM-FORK: topic list filters (AIM #199)
+import { AimTopicListLazy } from '@/aim/AimTopicListLazy';
 // <<< AIM-FORK
 // ============================================================================
 // Main BCF Panel Component
@@ -62,9 +60,6 @@ interface BCFPanelProps {
 
 export function BCFPanel({ onClose }: BCFPanelProps) {
   const { t } = useTranslation();
-  // >>> AIM-FORK: inside the AIM host (AIM #199)
-  const aimEmbedded = useAimPanelStore((s) => s.embedded);
-  // <<< AIM-FORK
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Store state
   const bcfProject = useViewerStore((s) => s.bcfProject);
@@ -501,36 +496,10 @@ export function BCFPanel({ onClose }: BCFPanelProps) {
             hasHiddenEntities={hasHiddenEntities}
           />
         ) : (
-          /* >>> AIM-FORK: the same list wrapped with the AIM filter bar inside the host (AIM #199) */
-          (aimEmbedded ? (
-            <React.Suspense fallback={null}>
-              <AimTopicList<BCFTopicListProps>
-                ListComponent={BCFTopicList}
-                applyViewpoint={handleActivateViewpoint}
-                listProps={{
-                  projectName: bcfProject?.name,
-                  topics,
-                  onSelectTopic: setActiveTopic,
-                  onCreateTopic: () => setShowCreateForm(true),
-                  statusFilter,
-                  onStatusFilterChange: setStatusFilter,
-                  author: bcfAuthor,
-                  onSetAuthor: setBcfAuthor,
-                }}
-              />
-            </React.Suspense>
-          ) : (
-          <BCFTopicList
-            projectName={bcfProject?.name}
-            topics={topics}
-            onSelectTopic={setActiveTopic}
-            onCreateTopic={() => setShowCreateForm(true)}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-            author={bcfAuthor}
-            onSetAuthor={setBcfAuthor}
-          />
-          ))
+          /* >>> AIM-FORK: filters 3D / PDF / document / entity / project inside the AIM host (AIM #199); the old line is the upstream list */
+          <AimTopicListLazy ListComponent={BCFTopicList} applyViewpoint={handleActivateViewpoint}
+            projectName={bcfProject?.name} topics={topics} onSelectTopic={setActiveTopic} onCreateTopic={() => setShowCreateForm(true)}
+            statusFilter={statusFilter} onStatusFilterChange={setStatusFilter} author={bcfAuthor} onSetAuthor={setBcfAuthor} />
           /* <<< AIM-FORK */
         )}
 
