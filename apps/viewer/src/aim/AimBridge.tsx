@@ -60,6 +60,9 @@ const loadIds = () => (ids ??= import('./aimIds.js'));
 /** Clash z AIM (D-164): lenivý modul, overí tvar správ `CLASH_LOAD` a `CLASH_SAVED` až po načítaní. */
 let clash: Promise<typeof import('./aimClash.js')> | null = null;
 const loadClash = () => (clash ??= import('./aimClash.js'));
+/** Odpoveď hosta na import .bcfzip z BCF panela: lenivý modul, overí tvar `BCF_IMPORTED` až po načítaní. */
+let bcfImport: Promise<typeof import('./aimBcfImport.js')> | null = null;
+const loadBcfImport = () => (bcfImport ??= import('./aimBcfImport.js'));
 
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
@@ -186,6 +189,11 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
         const raw: unknown = e.data; // Test clash a stavy z AIM do panela clash (D-164); potvrdenie uloženia ide hneď
         const run = () => track(loadClash().then((m) => m.runClashMessage(raw, { noteIssue })));
         if (aimTyped(raw, 'CLASH_LOAD')) command(run); else run();
+        return;
+      }
+      if (!!e.data && typeof e.data === 'object' && (e.data as { type?: unknown }).type === 'BCF_IMPORTED') { // host môže `source` vynechať; rodič a origin sú overené vyššie
+        const raw: unknown = e.data; // Výsledok importu .bcfzip do DB AIM; odpoveď ide hneď, bez brány
+        void loadBcfImport().then((m) => m.handleBcfImported(raw)).catch((err) => console.warn('[aim-bridge] BCF_IMPORTED failed', err));
         return;
       }
       if (aimTyped(e.data, 'SET_SECTION_BOX')) {

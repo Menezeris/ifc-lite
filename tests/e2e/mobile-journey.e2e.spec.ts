@@ -201,10 +201,58 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
     const first = faces[0];
     const second = faces.find((face) => Math.hypot(face.x - first.x, face.y - first.y) > 25);
     if (!second) throw new Error('two distinct visible face points are required for Measure');
+    // TEMPORARY DIAGNOSTICS (control branch, not for merge): what sits under the tap point and what events arrive.
+    await page.evaluate(() => {
+      const w = globalThis as unknown as { __tapLog: unknown[] };
+      w.__tapLog = [];
+      const describe = (t: EventTarget | null) => {
+        const el = t as Element | null;
+        return el && 'tagName' in el ? `${el.tagName.toLowerCase()}#${el.id}.${String(el.className).slice(0, 60)}[${el.getAttribute('aria-label') ?? ''}]` : String(t);
+      };
+      for (const type of ['touchstart', 'touchend', 'pointerdown', 'pointerup', 'pointercancel', 'click', 'contextmenu']) {
+        for (const capture of [true, false]) {
+          window.addEventListener(type, (e) => {
+            const ev = e as PointerEvent;
+            w.__tapLog.push({ type, capture, target: describe(e.target), x: Math.round(ev.clientX ?? -1), y: Math.round(ev.clientY ?? -1), dp: e.defaultPrevented, t: Math.round(performance.now()) });
+          }, { capture, passive: true });
+        }
+      }
+    });
+    const consoleLines: string[] = [];
+    page.on('console', (m) => { if (consoleLines.length < 60) consoleLines.push(`${m.type()}: ${m.text().slice(0, 200)}`); });
+    const diagPoint = await page.evaluate(({ x, y }) => {
+      return document.elementsFromPoint(x, y).slice(0, 6).map((el) => {
+        const r = el.getBoundingClientRect();
+        return `${el.tagName.toLowerCase()}#${el.id}.${String(el.className).slice(0, 50)} [${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)}x${Math.round(r.height)}]`;
+      });
+    }, { x: first.x, y: first.y });
     await page.touchscreen.tap(first.x, first.y);
-    await requireRenderer('tap selection', () => expect.poll(
-      () => page.evaluate(() => globalThis.__ifc_lite_viewer_store__.getState().selectedEntityId),
-    ).toBe(first.globalId));
+    try {
+      await requireRenderer('tap selection', () => expect.poll(
+        () => page.evaluate(() => globalThis.__ifc_lite_viewer_store__.getState().selectedEntityId),
+      ).toBe(first.globalId));
+    } catch (error) {
+      const after = await page.evaluate(() => {
+        const w = globalThis as unknown as { __tapLog: unknown[] };
+        const st = globalThis.__ifc_lite_viewer_store__.getState() as unknown as Record<string, unknown>;
+        const keys: Record<string, unknown> = {};
+        for (const k of Object.keys(st)) {
+          if (/pick|hover|select|activeTool|tool|loading|streaming|mobile|panel/i.test(k) && ['string', 'number', 'boolean'].includes(typeof st[k]) || st[k] === null && /select|hover|tool/i.test(k)) keys[k] = st[k];
+        }
+        const canvas = document.querySelector<HTMLCanvasElement>('canvas[data-viewport="main"]');
+        const r = canvas?.getBoundingClientRect();
+        const stats = globalThis.__ifc_lite_render_stats__?.();
+        return {
+          tapLog: w.__tapLog.slice(0, 40),
+          keys,
+          canvas: r ? [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)] : null,
+          inner: [window.innerWidth, window.innerHeight, window.devicePixelRatio, window.visualViewport?.scale, window.visualViewport?.offsetTop],
+          frame: stats?.frame ?? null,
+          gpuTotal: stats?.gpu.total ?? null,
+        };
+      });
+      throw new Error(`${(error as Error).message}\nDIAG tap=(${first.x},${first.y}) id=${first.globalId} second=(${second.x},${second.y})\nelementsFromPoint=${JSON.stringify(diagPoint)}\nafter=${JSON.stringify(after)}\nconsole=${JSON.stringify(consoleLines.slice(-40))}`);
+    }
 
     await page.getByRole('button', { name: 'Measure', exact: true }).click();
     await page.touchscreen.tap(first.x, first.y);
