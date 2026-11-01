@@ -43,6 +43,7 @@ export class PickingManager {
     private canvas: HTMLCanvasElement;
     private createMeshFromDataFn: (meshData: MeshData) => GpuUploadOutcome<void>;
     private pointPickProvider: PointPickProvider | null = null;
+    private pickPreflight: (() => void) | null = null;
 
     constructor(
         camera: Camera,
@@ -80,6 +81,23 @@ export class PickingManager {
             && this.pickerEpoch === pickerEpoch && current !== null
             && current.width === viewport.width && current.height === viewport.height
             && current.scaleX === viewport.scaleX && current.scaleY === viewport.scaleY;
+    }
+
+    /**
+     * The host's hook that makes queued geometry pickable. Streaming meshes
+     * reach the scene (`addMeshData`, batches) only when the host drains the
+     * mesh queue, a few ms per frame, and that drain outlives
+     * `geometryStreamingActive`: a tap right after a load finishes finds part
+     * of the model still queued, so the GPU pick pass and the CPU raycast
+     * cannot see it and answer "nothing here" (AIM pick-before-render).
+     */
+    setPickPreflight(preflight: (() => void) | null): void {
+        this.pickPreflight = preflight;
+    }
+
+    /** Runs the host's preflight before any pick or raycast reads the scene. */
+    preparePick(): void {
+        this.pickPreflight?.();
     }
 
     /** Renderer wires this on init so the manager can fetch point nodes lazily. */
@@ -182,6 +200,7 @@ export class PickingManager {
             return null;
         }
 
+        this.preparePick();
         if (this.prepareBatchedPick(options) === 'cpu') {
             const ray = this.camera.unprojectToRay(scaledX, scaledY, viewport.width, viewport.height);
             const hit = this.scene.raycast(ray.origin, ray.direction, options?.hiddenIds, options?.isolatedIds, clip);
@@ -290,6 +309,7 @@ export class PickingManager {
         const sx1 = x1 * viewport.scaleX, sy1 = y1 * viewport.scaleY;
         if (options?.isStreaming) return new Set();
 
+        this.preparePick();
         if (this.prepareBatchedPick(options) === 'cpu') {
             const boxHits = this.scene.selectRect(
                 sx0, sy0, sx1, sy1,
