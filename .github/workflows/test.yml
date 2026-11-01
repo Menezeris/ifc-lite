@@ -3678,7 +3678,14 @@ jobs:
     # output is `true`. `noop` is not a path filter, and
     # scripts/lib/ci-path-coverage.mjs knows to read it as none.
     needs: changes
-    if: needs.changes.outputs.noop != 'true'
+    # >>> AIM-FORK: the fork never publishes ifc-lite-* to crates.io (upstream does),
+    # so the registry's version (27.1.0) is always ahead of the fork's (27.0.0) and
+    # the gate reports VERSION_NOT_ADVANCED on every fork PR. Bumping the crates to
+    # match would claim a parity the fork does not have. A skipped job passes the
+    # `test` aggregate, which still judges every other lane. See
+    # docs/FORK_MAINTENANCE.md.
+    if: needs.changes.outputs.noop != 'true' && github.repository == 'LTplus-AG/ifc-lite'
+    # <<< AIM-FORK
     runs-on: ${{ (vars.SELF_HOSTED_CI == 'true' && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'ci:hosted')))) && fromJSON('["self-hosted","linux","x64","ifclite"]') || 'ubuntu-latest' }}
     timeout-minutes: 30
     steps:

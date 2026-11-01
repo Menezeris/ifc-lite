@@ -1,0 +1,16 @@
+diff --git b/apps/viewer/src/aim/docEntities.ts a/apps/viewer/src/aim/docEntities.ts
+index 5a08eb86..e288972a 100644
+--- b/apps/viewer/src/aim/docEntities.ts
++++ a/apps/viewer/src/aim/docEntities.ts
+@@ -193,9 +193,8 @@ export function addPicked(list: readonly PickedEntity[], items: readonly PickedE
+   const out: PickedEntity[] = [];
+   const seen = new Set<string>();
+   for (const p of [...list, ...items]) {
+-    if (!p.guid) continue;
+-    const at = out.findIndex((o) => o.guid === p.guid);
+-    if (at >= 0) { out[at] = p; continue; }
++    if (!p.guid || seen.has(p.guid)) continue;
++    seen.add(p.guid);
+     out.push(p);
+     if (out.length >= max) break;
+   }

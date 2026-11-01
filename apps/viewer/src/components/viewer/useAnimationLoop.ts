@@ -25,6 +25,7 @@ import { projectToCssScreen } from '../../utils/projectScreen.js';
 import { getContributionCullConfig } from '../../utils/renderCullConfig.js';
 import { getLodScreenPx } from '../../utils/lodConfig.js';
 import { runGpuUpload } from './gpu-upload-guard';
+import { createPickPreflight } from './pickPreflight';
 import { registerViewportCapture, viewportCaptureOwnsFrame } from '@/lib/viewport-capture';
 import { viewportRenderOptions } from './viewport-render-options';
 import { fieldTelemetry } from '@/lib/perf/fieldTelemetryLoader';
@@ -117,6 +118,20 @@ export function useAnimationLoop(params: UseAnimationLoopParams): void {
     const camera = renderer.getCamera();
     const scene = renderer.getScene();
     let aborted = false;
+    // Picks upload what the loop's budgeted drain has not yet (see pickPreflight.ts).
+    renderer.setPickPreflight(createPickPreflight({
+      hasQueued: () => scene.hasQueuedMeshes(),
+      flushSlice: () => {
+        const device = renderer.getGPUDevice();
+        const pipeline = renderer.getPipeline();
+        if (!device || !pipeline) return false;
+        return runGpuUpload('flushPending:pick', () => flushPlacementGeometry(scene, device, pipeline, false)) ?? false;
+      },
+      onFlushed: () => {
+        renderer.clearCaches();
+        renderer.requestRender();
+      },
+    }));
     const unregisterCapture = registerViewportCapture(renderer, canvas, () => viewportRenderOptions(renderer, params, false));
 
     // Contribution culling + LOD (issue #1682): resolved once per session —
@@ -355,6 +370,7 @@ export function useAnimationLoop(params: UseAnimationLoopParams): void {
 
     return () => {
       aborted = true;
+      renderer.setPickPreflight(null);
       unregisterCapture();
       if (animationFrameRef.current !== null) {
         cancelAnimationFrame(animationFrameRef.current);

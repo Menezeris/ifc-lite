@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/docEntities.ts a/apps/viewer/src/aim/docEntities.ts
+index 12c9a956..e288972a 100644
+--- b/apps/viewer/src/aim/docEntities.ts
++++ a/apps/viewer/src/aim/docEntities.ts
+@@ -196,6 +196,7 @@ export function addPicked(list: readonly PickedEntity[], items: readonly PickedE
+     if (!p.guid || seen.has(p.guid)) continue;
+     seen.add(p.guid);
+     out.push(p);
++    if (out.length >= max) break;
+   }
+   return out;
+ }

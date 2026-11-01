@@ -172,3 +172,34 @@ export function mergeGuids(first: readonly string[], more: readonly string[], ma
   }
   return out;
 }
+
+/** Odkiaľ prvok v zozname pripomienky je: výber z 3D, podlažie výkresu alebo celý projekt. */
+export type PickKind = 'selection' | 'storey' | 'project';
+
+/** Ručne priradená entita pripomienky (okrem návrhu podľa obálok). */
+export interface PickedEntity {
+  guid: string;
+  /** Názov na zobrazenie (meno entity, inak GlobalId). */
+  label: string;
+  kind: PickKind;
+}
+
+/** Priestorové korene: do `components` témy idú ako GlobalId, ale v 3D sa nevyberajú (nemajú geometriu). */
+const SPATIAL_ROOTS = new Set(['IFCPROJECT', 'IFCSITE', 'IFCBUILDING', 'IFCBUILDINGSTOREY']);
+export const isSpatialRoot = (ifcType: string | undefined): boolean => SPATIAL_ROOTS.has((ifcType ?? '').toUpperCase());
+
+/** Pridá položky na koniec zoznamu bez duplicít podľa GlobalId (prvá vyhráva), najviac `max`. */
+export function addPicked(list: readonly PickedEntity[], items: readonly PickedEntity[], max: number): PickedEntity[] {
+  const out: PickedEntity[] = [];
+  const seen = new Set<string>();
+  for (const p of [...list, ...items]) {
+    if (!p.guid || seen.has(p.guid)) continue;
+    seen.add(p.guid);
+    out.push(p);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+/** Odstráni položku podľa GlobalId. */
+export const removePicked = (list: readonly PickedEntity[], guid: string): PickedEntity[] => list.filter((p) => p.guid !== guid);

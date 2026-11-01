@@ -655,4 +655,51 @@ describe('PickingManager', () => {
       assert.equal(h.calls.picker, 1);
     });
   });
+
+  // AIM pick-before-render: `geometryStreamingActive` goes false while part of
+  // the model is still in the scene's mesh queue. `Scene.addMeshData` runs at
+  // upload, so those elements are unknown to the pick until the host drains
+  // the queue; a tap in that window returned null.
+  it('uploads queued streaming geometry before it picks (preflight)', async () => {
+    const DOOR = 401;
+    let uploaded = false; // flips when the host drains the queue
+    const camera = {
+      unprojectToRay: () => ({ origin: { x: 0, y: 0, z: 0 }, direction: { x: 0, y: 0, z: -1 } }),
+      getViewProjMatrix: () => ({ m: new Float32Array(16) }),
+    };
+    const createdMeshes: Array<{ expressId: number }> = [];
+    const scene = {
+      getMeshes: () => createdMeshes,
+      getTexturedMeshes: () => [],
+      getBatchedMeshes: () => (uploaded ? [{ expressIds: [DOOR] }] : []),
+      isGeometryDataReleased: () => false,
+      getAllMeshDataExpressIds: () => (uploaded ? [DOOR] : []),
+      visibleMeshDataEntitiesExceed: (limit: number) => 1 > limit,
+      getMeshDataPieces: (expressId: number) => (uploaded && expressId === DOOR ? [{ expressId: DOOR }] : undefined),
+      getInstancedTemplates: () => undefined,
+      raycast: () => { throw new Error('unexpected CPU raycast'); },
+    };
+    const picker = {
+      pick: async (_x: number, _y: number, _w: number, _h: number, meshes: Array<{ expressId: number }>) =>
+        meshes.some((m) => m.expressId === DOOR) ? { expressId: DOOR, modelIndex: 0 } : null,
+    };
+    const canvas = { width: 100, height: 100, getBoundingClientRect: () => ({ width: 100, height: 100 }) };
+    const manager = new PickingManager(
+      camera as never, scene as never, picker as never, canvas as HTMLCanvasElement,
+      (piece) => { createdMeshes.push({ expressId: piece.expressId }); return { ok: true as const, value: undefined }; },
+    );
+
+    // Without a host drain the queued element is invisible to the pick: the bug.
+    assert.strictEqual(await manager.pick(50, 50), null);
+
+    let preflights = 0;
+    manager.setPickPreflight(() => { preflights += 1; uploaded = true; });
+    assert.deepStrictEqual(await manager.pick(50, 50), { expressId: DOOR, modelIndex: 0 });
+    assert.equal(preflights, 1);
+
+    // The streaming gate still short-circuits before any upload work.
+    manager.setPickPreflight(() => { preflights += 1; });
+    assert.strictEqual(await manager.pick(50, 50, { isStreaming: true }), null);
+    assert.equal(preflights, 1);
+  });
 });

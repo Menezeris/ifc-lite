@@ -3201,6 +3201,9 @@ export class Renderer {
         return this.pickingManager.pick(x, y, options, this.activePickClip());
     }
 
+    /** Host hook run before every pick, rect pick and scene raycast so queued streaming geometry is uploaded first (`PickingManager.setPickPreflight`). */
+    setPickPreflight(preflight: (() => void) | null): void { this.pickingManager.setPickPreflight(preflight); }
+
     /**
      * Whether the GPU pick path can still run — the same liveness contract
      * `render()` and `getGPUDevice()` apply, which the pick path used to skip.
@@ -3259,11 +3262,8 @@ export class Renderer {
     }
 
     /** Exact visible-surface raycast in CSS canvas coordinates. */
-    raycastScene(
-        x: number,
-        y: number,
-        options?: PickOptions & { snapOptions?: Partial<SnapOptions> }
-    ): { intersection: Intersection; snap?: SnapTarget } | null {
+    raycastScene(x: number, y: number, options?: PickOptions & { snapOptions?: Partial<SnapOptions> }): { intersection: Intersection; snap?: SnapTarget } | null {
+        if (!options?.isStreaming) this.pickingManager.preparePick(); // queued streaming geometry first (setPickPreflight)
         return this.raycastEngine.raycastScene(x, y, options, this.activePickClip());
     }
 

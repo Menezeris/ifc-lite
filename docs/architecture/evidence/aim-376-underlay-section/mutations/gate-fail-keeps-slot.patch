@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/underlayRasterGate.ts a/apps/viewer/src/aim/underlayRasterGate.ts
+index 1eac82f6..dd2b9f49 100644
+--- b/apps/viewer/src/aim/underlayRasterGate.ts
++++ a/apps/viewer/src/aim/underlayRasterGate.ts
+@@ -32,6 +32,7 @@ export class UnderlayRasterGate {
+ 
+   /** Rasterizácia `key` zlyhala: slot sa uvoľní, ak ho medzitým nezabrala novšia. */
+   fail(id: string, key: string): void {
++    if (this.pending.get(id) === key) this.pending.delete(id);
+   }
+ 
+   /** Zahodí všetko rozbehnuté (zánik pipeline, odpojenie hooku). */

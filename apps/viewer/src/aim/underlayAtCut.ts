@@ -46,6 +46,19 @@ export function underlaysAtCut<T extends { placement: { storeyZ: number; plane?:
   return all.filter((e) => (e.placement.plane ? cutZ === null : underlayAtLevel(e.placement.storeyZ, draw)));
 }
 
+/**
+ * To isté pravidlo ako `underlaysAtCut`, ale podklad mimo rezu sa nevyhodí, len dostane `visible: false`
+ * (AIMviewer #376): rovina s textúrou ostane v pipeline, takže zapnutie, posun aj vypnutie rezu ju
+ * len skryje alebo ukáže, bez novej rasterizácie PDF. Skrytý podklad bez textúry sa nerasterizuje
+ * (`skipUnderlayRaster`), kým ho rez neukáže.
+ */
+export function underlaysVisibleAtCut<T extends { placement: { storeyZ: number; plane?: unknown; visible: boolean } }>(
+  all: readonly T[], cutZ: number | null, flipped: boolean,
+): T[] {
+  const drawn = new Set(underlaysAtCut(all, cutZ, flipped));
+  return all.map((e) => (drawn.has(e) || !e.placement.visible ? e : { ...e, placement: { ...e.placement, visible: false } }));
+}
+
 /** Výška aktívneho vodorovného rezu v IFC Z (m) z polohy v % obálky a posunu rámca; null pre iný rez alebo bez obálky. */
 export function horizontalCutZ(
   plane: { axis: string; position: number; box?: unknown } | null,
