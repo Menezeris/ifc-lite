@@ -24,24 +24,35 @@ import {
   docSnapshotViewpoint,
   issuesOnPage,
   newTopicGuid,
-  regionFromDrag,
   type DocIssueTarget,
 } from './docIssueModel.js';
+import type { MarkupType } from './docMarkup.js';
+import { markupSvg, pageAspect } from './docMarkupSvg.js';
 
-export type DocIssuePhase = 'idle' | 'drawing' | 'form';
+export type DocIssuePhase = 'idle' | 'drawing' | 'entities' | 'form';
+/** Nástroj kreslenia: oblasť (obdĺžnik D-158, hneď otvorí formulár) alebo značka (AIM #199). */
+export type DocIssueTool = 'region' | MarkupType;
 
 interface DocIssueState {
   phase: DocIssuePhase;
   /** Dokument, nad ktorým sa kreslí alebo pre ktorý je otvorený formulár. */
   docId: string | null;
   note: string | null;
-  set: (s: Partial<Pick<DocIssueState, 'phase' | 'docId' | 'note'>>) => void;
+  tool: DocIssueTool;
+  /** Počet nakreslených, ešte neodoslaných značiek. */
+  draftCount: number;
+  /** Nakreslený cieľ čakajúci na výber IFC prvkov (AIM #199 bod 2), kým sa neotvorí formulár. */
+  pending: { target: DocIssueTarget; docName: string } | null;
+  set: (s: Partial<Pick<DocIssueState, 'phase' | 'docId' | 'note' | 'tool' | 'draftCount' | 'pending'>>) => void;
 }
 
 export const useAimDocIssueStore = create<DocIssueState>((set) => ({
   phase: 'idle',
   docId: null,
   note: null,
+  tool: 'region',
+  draftCount: 0,
+  pending: null,
   set: (s) => set(s),
 }));
 
@@ -68,15 +79,18 @@ let stopWatch: (() => void) | null = null;
 function finish(note: string | null): void {
   stopWatch?.();
   stopWatch = null;
-  useAimDocIssueStore.getState().set({ phase: 'idle', docId: null, note });
+  useAimDocIssueStore.getState().set({ phase: 'idle', docId: null, note, draftCount: 0, pending: null });
 }
 
 /**
  * Otvorí upstream "New topic" a téme, ktorú panel založí, pridá odkaz na PDF.
  * Zrušený formulár (zoznam tém je späť bez novej témy) pripomienku zahodí.
  */
-export async function openIssueForm(target: DocIssueTarget, docName: string): Promise<boolean> {
+export async function openIssueForm(target: DocIssueTarget, docName: string, entityGuids: readonly string[] = []): Promise<boolean> {
   stopWatch?.();
+  // Lenivo: docEntitiesScene ťahá useBCF a ďalšie moduly zdieľané s eager kódom; staticky ho sem nedávame
+  // (E2E mobile-journey:174, check-aim-doc-lazy-imports.mjs). Načíta sa len keď sú vybrané prvky.
+  const scene = entityGuids.length ? await import('./docEntitiesScene.js') : null;
   const store = useViewerStore.getState();
   store.showWorkspacePanel('bcf', 'programmatic');
   store.setActiveTopic(null);
@@ -86,7 +100,9 @@ export async function openIssueForm(target: DocIssueTarget, docName: string): Pr
     return false;
   }
   const before = new Set(useViewerStore.getState().bcfProject?.topics.keys() ?? []);
-  useAimDocIssueStore.getState().set({ phase: 'form', docId: target.docId, note: null });
+  // AIM #199 bod 2: vybrané prvky ako výber v 3D, formulár ich zachytí do pohľadu témy.
+  const inModel = scene ? scene.selectGuidsIn3d(entityGuids) : [];
+  useAimDocIssueStore.getState().set({ phase: 'form', docId: target.docId, note: null, pending: null });
   button.click();
   const ref = docIssueReference(aimBcfContext()?.origin ?? null, docName, target);
   const started = Date.now();
@@ -101,6 +117,11 @@ export async function openIssueForm(target: DocIssueTarget, docName: string): Pr
     const topic = useViewerStore.getState().bcfProject?.topics.get(guid);
     useViewerStore.getState().updateTopic(guid, { documentReferences: [...(topic?.documentReferences ?? []), ref] });
     void attachSnapshot(guid, target);
+    // Pohľad témy pridáva formulár hneď po založení; komponenty, ktoré nezachytil, sa doplnia.
+    if (scene) setTimeout(() => {
+      const ok = scene.ensureTopicComponents(guid, mergeWithModel(entityGuids, inModel));
+      if (!ok) useAimDocIssueStore.getState().set({ note: 'Téma nemá pohľad (bez snímky), IFC prvky sa neuložia.' });
+    }, 500);
     return true;
   };
   const unsubscribe = useViewerStore.subscribe((s, prev) => {
@@ -119,6 +140,9 @@ export async function openIssueForm(target: DocIssueTarget, docName: string): Pr
   }, POLL_MS);
   return true;
 }
+
+/** Prvky, ktoré nie sú v načítanom modeli, ostanú v komponentoch aj tak (návrh bol z modelu, ale model sa mohol zmeniť). */
+const mergeWithModel = (wanted: readonly string[], inModel: readonly string[]): string[] => [...new Set([...inModel, ...wanted])];
 
 const blobToDataUrl = (blob: Blob) =>
   new Promise<string>((resolve, reject) => {
@@ -155,7 +179,6 @@ export function openIssueTopic(guid: string): void {
 }
 
 const LAYER_ATTR = 'data-aim-doc-issues';
-const DRAFT_ATTR = 'data-aim-doc-issue-draft';
 
 /** Rámiky pripomienok nad stranami karty (imperatívna vrstva ako rámiky D-123). */
 export function syncIssueLayers(root: HTMLElement, docId: string): void {
@@ -163,7 +186,7 @@ export function syncIssueLayers(root: HTMLElement, docId: string): void {
   for (const pageEl of root.querySelectorAll<HTMLElement>('[data-page]')) {
     const page = Number(pageEl.dataset.page);
     const issues = issuesOnPage(project, docId, page);
-    const key = issues.map((i) => `${i.guid}:${i.label}:${JSON.stringify(i.region)}`).join('|');
+    const key = issues.map((i) => `${i.guid}:${i.label}:${JSON.stringify(i.region)}:${JSON.stringify(i.markup)}`).join('|');
     let layer = pageEl.querySelector<HTMLDivElement>(`:scope > [${LAYER_ATTR}]`);
     if (!issues.length) {
       layer?.remove();
@@ -174,6 +197,9 @@ export function syncIssueLayers(root: HTMLElement, docId: string): void {
     layer = document.createElement('div');
     layer.setAttribute(LAYER_ATTR, key);
     Object.assign(layer.style, { position: 'absolute', inset: '0', pointerEvents: 'none', zIndex: '4' });
+    // Značky pripomienok (AIM #199) pod rámikmi, aby rámik ostal klikateľný.
+    const markup = issues.filter((i) => i.markup.length);
+    for (const issue of markup) layer.appendChild(markupSvg(issue.markup, pageAspect(pageEl), !issue.saved));
     for (const issue of issues) {
       const box = document.createElement('div');
       const r = issue.region ?? { x: 0, y: 0, w: 0.04, h: 0.03 };
@@ -184,8 +210,9 @@ export function syncIssueLayers(root: HTMLElement, docId: string): void {
       Object.assign(box.style, {
         position: 'absolute',
         ...highlightStyle(r),
-        outline: `2px ${issue.saved ? 'solid' : 'dashed'} #dc2626`,
-        background: 'rgba(220, 38, 38, 0.08)',
+        // So značkami je rámik len tenký obrys klikateľnej plochy: kreslia ich značky.
+        outline: issue.markup.length ? '1px dotted rgba(220, 38, 38, 0.6)' : `2px ${issue.saved ? 'solid' : 'dashed'} #dc2626`,
+        background: issue.markup.length ? 'transparent' : 'rgba(220, 38, 38, 0.08)',
         pointerEvents: 'auto',
         cursor: 'pointer',
       });
@@ -208,55 +235,4 @@ export function syncIssueLayers(root: HTMLElement, docId: string): void {
     }
     pageEl.appendChild(layer);
   }
-}
-
-/**
- * Kreslenie obdĺžnika nad stranou: zachytí stlačenie skôr než posun ťahaním
- * (AIM #213), kreslí náhľad a po pustení vráti cieľ. Escape kreslenie zruší.
- */
-export function attachIssueDrawing(root: HTMLElement, docId: string, onDone: (t: DocIssueTarget | null) => void): () => void {
-  let start: { x: number; y: number; pageEl: HTMLElement; draft: HTMLDivElement } | null = null;
-  const prevCursor = root.style.cursor;
-  root.style.cursor = 'crosshair';
-  const onDown = (e: PointerEvent) => {
-    if (e.button !== 0) return;
-    const pageEl = (e.target as Element | null)?.closest?.<HTMLElement>('[data-page]');
-    if (!pageEl || !root.contains(pageEl)) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const draft = document.createElement('div');
-    draft.setAttribute(DRAFT_ATTR, '');
-    Object.assign(draft.style, { position: 'absolute', outline: '2px dashed #dc2626', background: 'rgba(220, 38, 38, 0.12)', pointerEvents: 'none', zIndex: '5' });
-    pageEl.appendChild(draft);
-    start = { x: e.clientX, y: e.clientY, pageEl, draft };
-  };
-  const onMove = (e: PointerEvent) => {
-    if (!start) return;
-    const region = regionFromDrag(start.pageEl.getBoundingClientRect(), start, { x: e.clientX, y: e.clientY });
-    Object.assign(start.draft.style, region ? highlightStyle(region) : { width: '0', height: '0' });
-  };
-  const onUp = (e: PointerEvent) => {
-    if (!start) return;
-    const { pageEl, draft } = start;
-    const region = regionFromDrag(pageEl.getBoundingClientRect(), start, { x: e.clientX, y: e.clientY });
-    draft.remove();
-    start = null;
-    // Klik bez ťahu = pripomienka na celú stranu.
-    onDone({ docId, page: Number(pageEl.dataset.page) || 1, region });
-  };
-  const onKey = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') onDone(null);
-  };
-  root.addEventListener('pointerdown', onDown, true);
-  window.addEventListener('pointermove', onMove);
-  window.addEventListener('pointerup', onUp);
-  window.addEventListener('keydown', onKey);
-  return () => {
-    root.style.cursor = prevCursor;
-    start?.draft.remove();
-    root.removeEventListener('pointerdown', onDown, true);
-    window.removeEventListener('pointermove', onMove);
-    window.removeEventListener('pointerup', onUp);
-    window.removeEventListener('keydown', onKey);
-  };
 }

@@ -9,19 +9,42 @@
  * opens the upstream BCF "New topic" form and the topic gets a document
  * reference to that page and region. The component also keeps the issue
  * frames on the pages of the open PDF in sync with the BCF project.
+ * While drawing, a tool row picks the region or a markup shape (AIM #199:
+ * cloud, arrow, text, pin); shapes collect on one page and "Hotovo" opens the
+ * form with them.
  * Rendered only inside the AIM host and only for the host's documents.
  */
 
-import { useEffect, useRef } from 'react';
-import { MessageSquarePlus } from 'lucide-react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
+import { ArrowUpRight, Check, Cloud, MapPin, MessageSquarePlus, Square, Type, type LucideIcon } from 'lucide-react';
 import { useViewerStore } from '@/store';
 import { useAimPanelStore } from './aimPanelStore';
-import { attachIssueDrawing, openIssueForm, syncIssueLayers, useAimDocIssueStore } from './docIssues';
+import { syncIssueLayers, useAimDocIssueStore, type DocIssueTool } from './docIssues';
+import { attachIssueDrawing, finishIssueDraft } from './docIssueDraw';
 
-const HINT: Record<'drawing' | 'form', string> = {
-  drawing: 'Ťahaj obdĺžnik na strane (klik = celá strana, Esc zruší)',
+// Lenivo: karta výberu prvkov ťahá docEntitiesScene (useBCF a spol.), ktoré nepatria do chunku okna pripomienky
+// (E2E mobile-journey:174, check-aim-doc-lazy-imports.mjs).
+const AimDocumentEntities = lazy(() => import('./AimDocumentEntities').then((m) => ({ default: m.AimDocumentEntities })));
+
+const HINT: Record<'form' | 'entities' | DocIssueTool, string> = {
+  region: 'Ťahaj obdĺžnik na strane (klik = celá strana, Esc zruší)',
+  cloud: 'Ťahaj obláčik okolo miesta (Esc zruší)',
+  arrow: 'Ťahaj šípku od chvosta k hrotu (Esc zruší)',
+  text: 'Klikni, kam patrí text, napíš ho a Enter',
+  pin: 'Klikni na miesto špendlíka',
+  entities: 'Vyber IFC prvky pripomienky',
   form: 'Dokonči tému v paneli BCF',
 };
+
+const TOOLS: Array<{ tool: DocIssueTool; label: string; Icon: LucideIcon }> = [
+  { tool: 'region', label: 'Oblasť', Icon: Square },
+  { tool: 'cloud', label: 'Obláčik', Icon: Cloud },
+  { tool: 'arrow', label: 'Šípka', Icon: ArrowUpRight },
+  { tool: 'text', label: 'Text', Icon: Type },
+  { tool: 'pin', label: 'Pin', Icon: MapPin },
+];
+
+const SMALL = 'my-0.5 flex min-h-6 shrink-0 items-center gap-1 self-center rounded border px-1 py-0.5 text-2xs';
 
 export function AimDocumentIssue({ docId }: { docId: string }) {
   const embedded = useAimPanelStore((s) => s.embedded);
@@ -29,6 +52,8 @@ export function AimDocumentIssue({ docId }: { docId: string }) {
   const project = useViewerStore((s) => s.bcfProject);
   const phase = useAimDocIssueStore((s) => (s.docId === docId ? s.phase : 'idle'));
   const note = useAimDocIssueStore((s) => s.note);
+  const tool = useAimDocIssueStore((s) => s.tool);
+  const draftCount = useAimDocIssueStore((s) => s.draftCount);
   const ref = useRef<HTMLButtonElement>(null);
   const enabled = embedded && !!doc && doc.kind !== 'image' && !docId.startsWith('local:');
 
@@ -52,26 +77,61 @@ export function AimDocumentIssue({ docId }: { docId: string }) {
     const root = paneRoot();
     if (!enabled || phase !== 'drawing' || !root) return;
     return attachIssueDrawing(root, docId, (target) => {
-      if (!target) return useAimDocIssueStore.getState().set({ phase: 'idle', docId: null, note: null });
-      void openIssueForm(target, doc?.name ?? 'Dokument');
+      if (!target) return useAimDocIssueStore.getState().set({ phase: 'idle', docId: null, note: null, draftCount: 0 });
+      // AIM #199 bod 2: najprv výber IFC prvkov, potom formulár témy.
+      useAimDocIssueStore.getState().set({ phase: 'entities', docId, pending: { target, docName: doc?.name ?? 'Dokument' } });
     });
   }, [enabled, phase, docId, doc?.name]);
 
   if (!enabled) return null;
   const busy = phase !== 'idle';
-  const toggle = () => useAimDocIssueStore.getState().set(busy ? { phase: 'idle', docId: null, note: null } : { phase: 'drawing', docId, note: null });
+  const toggle = () => useAimDocIssueStore.getState().set(busy ? { phase: 'idle', docId: null, note: null, draftCount: 0, pending: null } : { phase: 'drawing', docId, note: null });
+  const hint = HINT[phase === 'form' || phase === 'entities' ? phase : tool];
   return (
+    <>
     <button
       ref={ref}
       type="button"
       onClick={toggle}
       aria-pressed={busy}
-      title={busy ? `${HINT[phase]}. Klik zruší.` : (note ?? 'Pripomienka k miestu na strane: označ oblasť, téma vznikne v paneli BCF (uloží ju chat)')}
+      title={busy ? `${hint}. Klik zruší.` : (note ?? 'Pripomienka k miestu na strane: označ oblasť, téma vznikne v paneli BCF (uloží ju chat)')}
       className={`mx-1 my-0.5 flex min-h-6 shrink-0 items-center gap-1 self-center rounded border px-1.5 py-0.5 text-2xs ${busy ? 'border-red-600 text-red-700' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
       data-aim-document-issue
     >
       <MessageSquarePlus className="size-3" aria-hidden />
-      {busy ? HINT[phase] : 'Pripomienka'}
+      {busy ? hint : 'Pripomienka'}
     </button>
+    {phase === 'entities' && <Suspense fallback={null}><AimDocumentEntities docId={docId} /></Suspense>}
+    {phase === 'drawing' && (
+      <div role="toolbar" aria-label="Nástroj pripomienky" className="flex shrink-0 items-center gap-0.5" data-aim-document-issue-tools>
+        {TOOLS.map(({ tool: t, label, Icon }) => (
+          <button
+            key={t}
+            type="button"
+            aria-pressed={tool === t}
+            title={HINT[t]}
+            onClick={() => useAimDocIssueStore.getState().set({ tool: t })}
+            className={`${SMALL} ${tool === t ? 'border-red-600 bg-red-50 text-red-700' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+            data-aim-issue-tool={t}
+          >
+            <Icon className="size-3" aria-hidden />
+            {label}
+          </button>
+        ))}
+        {draftCount > 0 && (
+          <button
+            type="button"
+            onClick={finishIssueDraft}
+            title="Značky do novej témy v paneli BCF (Enter)"
+            className={`${SMALL} border-red-600 bg-red-600 text-white`}
+            data-aim-issue-finish
+          >
+            <Check className="size-3" aria-hidden />
+            Hotovo ({draftCount})
+          </button>
+        )}
+      </div>
+    )}
+    </>
   );
 }

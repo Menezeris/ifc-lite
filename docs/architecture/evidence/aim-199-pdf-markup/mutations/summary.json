@@ -1,0 +1,156 @@
+{
+  "arrow-wings-collapsed": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docMarkup.test.ts; that file has a green, attributable baseline.",
+    "base": "b9612f0af2828eb0f3d604e84a798580bdf9b2dc",
+    "head": "7d331db53b50539e9ebd5d5554b30ada9cd1a96f",
+    "production": [
+      "apps/viewer/src/aim/docMarkup.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docMarkup.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "bounds-without-pad": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docMarkup.test.ts; that file has a green, attributable baseline.",
+    "base": "b9612f0af2828eb0f3d604e84a798580bdf9b2dc",
+    "head": "7d331db53b50539e9ebd5d5554b30ada9cd1a96f",
+    "production": [
+      "apps/viewer/src/aim/docMarkup.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docMarkup.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "cloud-corners-unsorted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docMarkup.test.ts; that file has a green, attributable baseline.",
+    "base": "b9612f0af2828eb0f3d604e84a798580bdf9b2dc",
+    "head": "7d331db53b50539e9ebd5d5554b30ada9cd1a96f",
+    "production": [
+      "apps/viewer/src/aim/docMarkup.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docMarkup.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "cloud-scallops-inward": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docMarkup.test.ts; that file has a green, attributable baseline.",
+    "base": "b9612f0af2828eb0f3d604e84a798580bdf9b2dc",
+    "head": "7d331db53b50539e9ebd5d5554b30ada9cd1a96f",
+    "production": [
+      "apps/viewer/src/aim/docMarkup.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docMarkup.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "host-markup-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docMarkup.test.ts; that file has a green, attributable baseline.",
+    "base": "b9612f0af2828eb0f3d604e84a798580bdf9b2dc",
+    "head": "7d331db53b50539e9ebd5d5554b30ada9cd1a96f",
+    "production": [
+      "apps/viewer/src/aim/aimBcf.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docMarkup.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "markup-no-cap": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docMarkup.test.ts; that file has a green, attributable baseline.",
+    "base": "b9612f0af2828eb0f3d604e84a798580bdf9b2dc",
+    "head": "7d331db53b50539e9ebd5d5554b30ada9cd1a96f",
+    "production": [
+      "apps/viewer/src/aim/docMarkup.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docMarkup.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "markup-not-clamped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docMarkup.test.ts; that file has a green, attributable baseline.",
+    "base": "b9612f0af2828eb0f3d604e84a798580bdf9b2dc",
+    "head": "7d331db53b50539e9ebd5d5554b30ada9cd1a96f",
+    "production": [
+      "apps/viewer/src/aim/docMarkup.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docMarkup.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "reference-drops-markup": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docMarkup.test.ts; that file has a green, attributable baseline.",
+    "base": "b9612f0af2828eb0f3d604e84a798580bdf9b2dc",
+    "head": "7d331db53b50539e9ebd5d5554b30ada9cd1a96f",
+    "production": [
+      "apps/viewer/src/aim/docIssueModel.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docMarkup.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "snapshot-without-markup": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docMarkup.test.ts; that file has a green, attributable baseline.",
+    "base": "b9612f0af2828eb0f3d604e84a798580bdf9b2dc",
+    "head": "7d331db53b50539e9ebd5d5554b30ada9cd1a96f",
+    "production": [
+      "apps/viewer/src/aim/docIssueModel.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docMarkup.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "text-without-text-kept": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docMarkup.test.ts; that file has a green, attributable baseline.",
+    "base": "b9612f0af2828eb0f3d604e84a798580bdf9b2dc",
+    "head": "7d331db53b50539e9ebd5d5554b30ada9cd1a96f",
+    "production": [
+      "apps/viewer/src/aim/docMarkup.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docMarkup.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "view-state-drops-markup": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/docMarkup.test.ts; that file has a green, attributable baseline.",
+    "base": "b9612f0af2828eb0f3d604e84a798580bdf9b2dc",
+    "head": "7d331db53b50539e9ebd5d5554b30ada9cd1a96f",
+    "production": [
+      "apps/viewer/src/aim/docIssueModel.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/docMarkup.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

@@ -35,6 +35,17 @@ export function storeyZToDraw(storeyZs: readonly number[], cutZ: number | null, 
 /** Kreslí sa podklad s výškou `storeyZ`? `draw` = výsledok `storeyZToDraw`; null = bez filtra (kreslí sa všetko). */
 export const underlayAtLevel = (storeyZ: number, draw: number | null): boolean => draw === null || Math.abs(storeyZ - draw) <= SAME_LEVEL_M;
 
+/**
+ * Podklady na kreslenie pri vodorovnom reze (D-161) s rezmi (AIM #284): pôdorysy len podlažia pod rezom,
+ * zvislý podklad rezu (`plane`) len bez vodorovného rezu (v pôdorysnom pohľade by trčal nad rez).
+ */
+export function underlaysAtCut<T extends { placement: { storeyZ: number; plane?: unknown } }>(
+  all: readonly T[], cutZ: number | null, flipped: boolean,
+): T[] {
+  const draw = storeyZToDraw(all.filter((e) => !e.placement.plane).map((e) => e.placement.storeyZ), cutZ, flipped);
+  return all.filter((e) => (e.placement.plane ? cutZ === null : underlayAtLevel(e.placement.storeyZ, draw)));
+}
+
 /** Výška aktívneho vodorovného rezu v IFC Z (m) z polohy v % obálky a posunu rámca; null pre iný rez alebo bez obálky. */
 export function horizontalCutZ(
   plane: { axis: string; position: number; box?: unknown } | null,

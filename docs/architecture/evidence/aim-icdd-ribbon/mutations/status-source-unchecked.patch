@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/icdd-protocol.ts a/apps/viewer/src/aim/icdd-protocol.ts
+index 87901ac1..db987fc9 100644
+--- b/apps/viewer/src/aim/icdd-protocol.ts
++++ a/apps/viewer/src/aim/icdd-protocol.ts
+@@ -90,7 +90,7 @@ export function isCheckResult(v: unknown): v is IcddCheckResult {
+ export function isIcddStatusMessage(d: unknown): d is IcddStatusMessage {
+   if (!d || typeof d !== 'object') return false;
+   const m = d as Record<string, unknown>;
+-  if (m.type !== 'ICDD_STATUS') return false;
++  if (m.source !== SOURCE || m.type !== 'ICDD_STATUS') return false;
+   if (typeof m.id !== 'string' || m.id.length === 0 || typeof m.message !== 'string') return false;
+   if (m.op !== 'export' && m.op !== 'check') return false;
+   if (m.phase !== 'running' && m.phase !== 'done' && m.phase !== 'error') return false;

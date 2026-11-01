@@ -1,0 +1,11 @@
+--- a/apps/viewer/src/aim/docEntities.ts
++++ b/apps/viewer/src/aim/docEntities.ts	2026-10-31 20:12:25.623566109 +0000
+@@ -67,7 +67,7 @@
+ /** Oblasť strany v zlomkoch (vľavo hore) -> štyri rohy v pôdoryse IFC (m); null = neplatné umiestnenie. */
+ export function regionToIfcPolygon(placement: EntityPlacement, region: IssueRegion | null): PlanePoint[] | null {
+   const [w, h] = placement.pageSize;
+-  if (!(w > 0) || !(h > 0)) return null;
++  if (placement.plane || !(w > 0) || !(h > 0)) return null;
+   const r = region ?? { x: 0, y: 0, w: 1, h: 1 };
+   // Body PDF majú počiatok vľavo dole a y hore, zlomky regiónu vľavo hore.
+   const corner = (fx: number, fy: number) => applyAffine(placement.affine, { x: fx * w, y: (1 - fy) * h });

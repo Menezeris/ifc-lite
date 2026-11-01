@@ -19,6 +19,9 @@
 
 import type { DrawingPlacement } from './placement.js';
 import { applyAffine, invertAffine, type Affine2x3, type Point2 } from './similarity.js';
+// >>> AIM-FORK: vertical section underlays (AIM #284, D-179)
+import { isSectionPlacement, sectionWorldCorners } from './section-plane.js';
+// <<< AIM-FORK
 
 /** A 3D vector/point in the viewer's Y-up world frame. */
 export interface Vec3 {
@@ -95,6 +98,12 @@ export interface PlacementCorners {
   bl: Vec3;
   /** World Y the plane sits at (storey elevation − offset.y + lift). */
   planeY: number;
+  // >>> AIM-FORK: vertical section underlays (AIM #284, D-179)
+  /** World normal of the reading side; set = the back side is drawn fainter. */
+  normal?: Vec3;
+  /** Texture window (page region); absent = the whole page. */
+  uv?: { u0: number; v0: number; u1: number; v1: number };
+  // <<< AIM-FORK
 }
 
 /**
@@ -106,6 +115,9 @@ export function placementWorldCorners(
   offset: Vec3,
   lift: number = DEFAULT_PLANE_LIFT,
 ): PlacementCorners {
+  // >>> AIM-FORK: a section placement sits on its vertical plane (AIM #284, D-179)
+  if (isSectionPlacement(placement)) return sectionWorldCorners(placement, offset, lift);
+  // <<< AIM-FORK
   const [w, h] = placement.pageSize;
   const z = placement.storeyZ + lift;
   const corner = (u: number, v: number): Vec3 =>

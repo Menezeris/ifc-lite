@@ -42,6 +42,9 @@ import { dispatchLensMessage, isLensEnvelope, lensSettled, listSettled, resetLen
 import { appliedViewState, runSectionBox, runViewsMessage, setChangesProvider, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
 import { createViewChangeTracker } from './viewChanges.js';
 import { setIdsHostPost } from './idsHost.js';
+import { handleIcddStatus, setIcddHostPost } from './aimIcddStore.js';
+import { isIcddStatusMessage } from './icdd-protocol.js';
+import { AimIcddDialog } from './AimIcddDialog.js';
 import type { AutoloadLatch } from './autoloadLatch.js';
 import type { BridgeEntryDeps } from './AimBridgeMount.js';
 
@@ -206,6 +209,10 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
         if (msg.type === 'ACK_REQUEST') gate.run(() => void answerAck(msg.cmdId)); else command(() => runVisibility(msg));
         return;
       }
+      if (isIcddStatusMessage(e.data)) {
+        handleIcddStatus(e.data); // Stav exportu a kontroly ICDD z hosta (D-181)
+        return;
+      }
       if (isDerivationsMessage(e.data)) {
         // AIM layer over the models (D-089): rules + model revisions for the
         // AIM ribbon tab and the AIM layers panel (D-104).
@@ -245,6 +252,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
     }
 
     setIdsHostPost((msg) => window.parent.postMessage(msg, origin())); // tlačidlo "Uložiť do AIM" v paneloch IDS (D-162)
+    setIcddHostPost((msg, transfer) => window.parent.postMessage(msg, origin(), transfer ?? [])); // ribbon AIM, tlačidlo ICDD (D-181)
     wireDocumentEvents(post, selectPickedGlobalId); // kalibrácia podkladu a taby dokumentov -> host (docBridge.ts)
 
     // 3D -> host: a capture pin click opens its gallery/panorama host-side (D-073).
@@ -257,6 +265,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
     return () => {
       window.removeEventListener('message', onMessage);
       setIdsHostPost(null);
+      setIcddHostPost(null);
       void ids?.then((m) => m.stopIds());
       void clash?.then((m) => m.stopClash());
       useViewerStore.getState().setUnderlaySaveHandler(null);
@@ -369,5 +378,5 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
     }
   }, [selectedEntity]);
 
-  return null;
+  return <AimIcddDialog />;
 }

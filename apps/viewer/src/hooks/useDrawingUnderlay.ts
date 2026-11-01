@@ -36,7 +36,8 @@ import { openPdfDocument, rasterizePdfPage } from '@/lib/pdf/rasterize';
 import { useAimUnderlays3d, underlaysHiddenIn3d, skipUnderlayRaster } from '@/aim/aimUnderlays3d';
 import { underlayIn3d } from '@/aim/underlaysPlan';
 import { aimHorizontalCutZ } from '@/aim/underlayCutZ';
-import { storeyZToDraw, underlayAtLevel } from '@/aim/underlayAtCut';
+import { underlaysAtCut } from '@/aim/underlayAtCut';
+import { isSectionPlacement, SECTION_BACK_OPACITY } from '@ifc-lite/drawing-underlay';
 // <<< AIM-FORK
 
 export const UNDERLAY_OVERLAY_ID = 'drawing-underlay';
@@ -58,7 +59,9 @@ function textureKey(drawingId: string, pdfUrl: string, page: number): string {
 
 /** Placement geometry/presentation signature — cheap change detection. */
 function placementKey(p: DrawingPlacement): string {
-  return `${p.storeyZ}|${p.affine.join(',')}|${p.pageSize.join(',')}|${p.opacity}|${p.visible}`;
+  // >>> AIM-FORK: the plane and region of a section underlay move it too (AIM #284)
+  return `${p.storeyZ}|${p.affine.join(',')}|${p.pageSize.join(',')}|${p.opacity}|${p.visible}|${JSON.stringify(p.plane ?? null)}|${JSON.stringify(p.region ?? null)}`;
+  // <<< AIM-FORK
 }
 
 /** One plane to render: a saved placement or the live calibration ghost. */
@@ -104,14 +107,13 @@ export function useDrawingUnderlay({ rendererRef, isInitialized }: UseDrawingUnd
 
     const token = ++syncTokenRef.current;
 
-    const entries: RenderEntry[] = [...drawings.values()]
+    // >>> AIM-FORK: placement copy with the 3D overrides and `visible: false` while the underlays are off in 3D
+    const aimEntries: RenderEntry[] = [...drawings.values()]
       .filter((d) => d.placement !== null)
-      // >>> AIM-FORK: placement copy with the 3D overrides and `visible: false` while the underlays are off in 3D
-      .map((d) => ({ id: d.id, pdfUrl: d.pdfUrl, name: d.name, placement: underlayIn3d(d.placement!, aimViewLocked ? undefined : aimOverrides[d.id], aimHide3d) }))
-      // Not while calibrating or under the drawing-view cut, which have their own storey (D-072)
-      .filter((d, _i, all) => calibration !== null || underlayCut !== null
-        || underlayAtLevel(d.placement.storeyZ, storeyZToDraw(all.map((e) => e.placement.storeyZ), aimCutZ, aimCutFlipped)));
-      // <<< AIM-FORK
+      .map((d) => ({ id: d.id, pdfUrl: d.pdfUrl, name: d.name, placement: underlayIn3d(d.placement!, aimViewLocked ? undefined : aimOverrides[d.id], aimHide3d) }));
+    // Not while calibrating or under the drawing-view cut, which have their own storey (D-072); a section only without a horizontal cut (AIM #284)
+    const entries: RenderEntry[] = calibration !== null || underlayCut !== null ? aimEntries : underlaysAtCut(aimEntries, aimCutZ, aimCutFlipped);
+    // <<< AIM-FORK
 
     // Live ghost preview (Dalux-style "combined view"): once the mode's
     // point pairs are picked, the drawing shows up immediately as a
@@ -218,6 +220,9 @@ export function useDrawingUnderlay({ rendererRef, isInitialized }: UseDrawingUnd
           corners,
           opacity: placement.opacity,
           visible: placement.visible,
+          // >>> AIM-FORK: fainter back side of a section underlay (AIM #284)
+          backOpacity: isSectionPlacement(placement) ? SECTION_BACK_OPACITY : 1,
+          // <<< AIM-FORK
         });
         appliedPlacementsRef.current.set(drawing.id, posKey);
         renderer.requestRender();
@@ -244,6 +249,9 @@ export function useDrawingUnderlay({ rendererRef, isInitialized }: UseDrawingUnd
               image: raster.image,
               opacity: placement.opacity,
               visible: placement.visible,
+              // >>> AIM-FORK: fainter back side of a section underlay (AIM #284)
+              backOpacity: isSectionPlacement(placement) ? SECTION_BACK_OPACITY : 1,
+              // <<< AIM-FORK
             });
             raster.image.close(); // GPU copy done; release CPU-side bitmap
             uploadedTexturesRef.current.set(drawing.id, texKey);

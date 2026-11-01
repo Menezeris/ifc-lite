@@ -1,0 +1,11 @@
+diff --git b/packages/drawing-underlay/src/section-plane.ts a/packages/drawing-underlay/src/section-plane.ts
+index a93fe2a3..b9edcb32 100644
+--- b/packages/drawing-underlay/src/section-plane.ts
++++ a/packages/drawing-underlay/src/section-plane.ts
+@@ -229,5 +229,5 @@ export function windingFlip(c: PlacementCorners): number {
+   const a = [c.tr.x - c.tl.x, c.tr.y - c.tl.y, c.tr.z - c.tl.z];
+   const b = [c.bl.x - c.tl.x, c.bl.y - c.tl.y, c.bl.z - c.tl.z];
+   const n = cross(a, b);
+-  return n[0] * c.normal.x + n[1] * c.normal.y + n[2] * c.normal.z > 0 ? 1 : 0;
++  return n[0] * c.normal.x + n[1] * c.normal.y + n[2] * c.normal.z < 0 ? 1 : 0;
+ }

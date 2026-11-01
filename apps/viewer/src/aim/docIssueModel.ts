@@ -11,6 +11,7 @@
  */
 
 import type { BCFDocumentReference, BCFProject, BCFTopic, BCFViewpoint } from '@ifc-lite/bcf';
+import { normalizeMarkup, type MarkupShape } from './docMarkup.js';
 
 /** Oblasť strany v zlomkoch (0-1), počiatok vľavo hore (ako `DocRegion`). */
 export interface IssueRegion {
@@ -24,7 +25,16 @@ export interface DocIssueTarget {
   docId: string;
   page: number;
   region: IssueRegion | null;
+  /** Značky na strane (AIM #199); v URL odkazu nie sú, nesie ich odkaz ako pole `markup`. */
+  markup?: MarkupShape[];
 }
+
+/**
+ * DocumentReference pripomienky AIM so značkami (AIM #199). `markup` je mimo BCF:
+ * export .bcfzip ho nenesie, chat ho pošle hostovi v `bcf_local` a host ho vráti
+ * v riadkoch `document_references`.
+ */
+export type AimDocumentReference = BCFDocumentReference & { markup?: MarkupShape[] };
 
 /** Ťah menší než toto (zlomok strany) je klik, nie oblasť. */
 export const MIN_DRAG = 0.005;
@@ -87,6 +97,8 @@ export function docSnapshotUrl(origin: string | null, t: DocIssueTarget): string
   if (!origin) return null;
   const q = new URLSearchParams({ page: String(t.page) });
   if (t.region) q.set('region', [t.region.x, t.region.y, t.region.w, t.region.h].map(pct).join('_'));
+  // Značky do snímky (AIM #199); starší host parameter ignoruje a dá výrez bez nich.
+  if (t.markup?.length) q.set('markup', JSON.stringify(t.markup));
   return `${origin.replace(/\/+$/, '')}/api/drawing/${t.docId}/snapshot?${q.toString()}`;
 }
 
@@ -119,9 +131,10 @@ export function docIssueLabel(docName: string, t: DocIssueTarget): string {
 }
 
 /** BCF DocumentReference pre 2.1 (`referencedDocument`, externý) aj 3.0 (`url`). */
-export function docIssueReference(origin: string | null, docName: string, t: DocIssueTarget): BCFDocumentReference {
+export function docIssueReference(origin: string | null, docName: string, t: DocIssueTarget): AimDocumentReference {
   const url = docIssueUrl(origin, t);
-  return { url, referencedDocument: url, isExternal: true, description: docIssueLabel(docName, t) };
+  const markup = normalizeMarkup(t.markup);
+  return { url, referencedDocument: url, isExternal: true, description: docIssueLabel(docName, t), ...(markup.length ? { markup } : {}) };
 }
 
 /** Odkazy témy na dokument AIM. */
@@ -129,7 +142,9 @@ export function topicDocTargets(topic: BCFTopic): DocIssueTarget[] {
   const out: DocIssueTarget[] = [];
   for (const ref of topic.documentReferences ?? []) {
     const t = parseDocIssueUrl(ref.url ?? ref.referencedDocument);
-    if (t) out.push(t);
+    if (!t) continue;
+    const markup = normalizeMarkup((ref as AimDocumentReference).markup);
+    out.push(markup.length ? { ...t, markup } : t);
   }
   return out;
 }
@@ -141,6 +156,7 @@ export interface PageIssue {
   title: string;
   region: IssueRegion | null;
   saved: boolean;
+  markup: MarkupShape[];
 }
 
 /** Pripomienky na strane dokumentu (rámiky nad stranou). */
@@ -153,7 +169,7 @@ export function issuesOnPage(project: BCFProject | null, docId: string, page: nu
     if (!saved) local += 1;
     for (const t of topicDocTargets(topic)) {
       if (t.docId !== docId.toLowerCase() || t.page !== page) continue;
-      out.push({ guid: topic.guid, label: saved ? `#${topic.index}` : `N${local}`, title: topic.title, region: t.region, saved });
+      out.push({ guid: topic.guid, label: saved ? `#${topic.index}` : `N${local}`, title: topic.title, region: t.region, saved, markup: t.markup ?? [] });
     }
   }
   return out;
@@ -221,10 +237,15 @@ export function describeLocalTopics(project: BCFProject | null, aimProjectId: st
       creation_date: t.creationDate ?? null,
       comments: t.comments.map((c) => ({ author: c.author ?? null, date: c.date ?? null, comment: c.comment })),
       viewpoint: t.viewpoints[0] ? viewpointDto(t.viewpoints[0]) : null,
-      document_references: (t.documentReferences ?? []).map((d) => ({
-        url: d.url ?? d.referencedDocument ?? null,
-        description: d.description ?? null,
-      })),
+      document_references: (t.documentReferences ?? []).map((d) => {
+        // AIM #199: značky idú hostovi do `model_task_documents.markup` (body v % strany).
+        const markup = normalizeMarkup((d as AimDocumentReference).markup);
+        return {
+          url: d.url ?? d.referencedDocument ?? null,
+          description: d.description ?? null,
+          ...(markup.length ? { markup } : {}),
+        };
+      }),
     })),
   };
 }

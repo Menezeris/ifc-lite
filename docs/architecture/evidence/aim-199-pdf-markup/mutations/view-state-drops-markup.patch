@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/docIssueModel.ts a/apps/viewer/src/aim/docIssueModel.ts
+index bf1d1f25..4f645744 100644
+--- b/apps/viewer/src/aim/docIssueModel.ts
++++ a/apps/viewer/src/aim/docIssueModel.ts
+@@ -243,6 +243,7 @@ export function describeLocalTopics(project: BCFProject | null, aimProjectId: st
+         return {
+           url: d.url ?? d.referencedDocument ?? null,
+           description: d.description ?? null,
++          ...(markup.length ? { markup } : {}),
+         };
+       }),
+     })),

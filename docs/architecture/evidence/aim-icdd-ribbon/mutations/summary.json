@@ -1,0 +1,106 @@
+{
+  "timeout-5s-to-15s": {
+    "verdict": "RED_LOCAL",
+    "reason": "mutation applied to the tree, apps/viewer/src/aim/icdd.test.ts went RED under tsx, file restored. The CI revert oracle was NOT run here (pnpm install blocked by the private design-kit dependency).",
+    "base": "f5fb43f40e0b1d5c04254d05be1824ec0626ff08",
+    "head": "48038d898db542ea5e531acfd97220289470f3c3",
+    "production": [
+      "apps/viewer/src/aim/icddPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/icdd.test.ts"
+    ],
+    "restoration": "verified (git checkout, clean tree)"
+  },
+  "timeout-overrides-running": {
+    "verdict": "RED_LOCAL",
+    "reason": "mutation applied to the tree, apps/viewer/src/aim/icdd.test.ts went RED under tsx, file restored. The CI revert oracle was NOT run here (pnpm install blocked by the private design-kit dependency).",
+    "base": "f5fb43f40e0b1d5c04254d05be1824ec0626ff08",
+    "head": "48038d898db542ea5e531acfd97220289470f3c3",
+    "production": [
+      "apps/viewer/src/aim/icddPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/icdd.test.ts"
+    ],
+    "restoration": "verified (git checkout, clean tree)"
+  },
+  "terminal-state-overwritten": {
+    "verdict": "RED_LOCAL",
+    "reason": "mutation applied to the tree, apps/viewer/src/aim/icdd.test.ts went RED under tsx, file restored. The CI revert oracle was NOT run here (pnpm install blocked by the private design-kit dependency).",
+    "base": "f5fb43f40e0b1d5c04254d05be1824ec0626ff08",
+    "head": "48038d898db542ea5e531acfd97220289470f3c3",
+    "production": [
+      "apps/viewer/src/aim/icddPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/icdd.test.ts"
+    ],
+    "restoration": "verified (git checkout, clean tree)"
+  },
+  "status-other-run-applied": {
+    "verdict": "RED_LOCAL",
+    "reason": "mutation applied to the tree, apps/viewer/src/aim/icdd.test.ts went RED under tsx, file restored. The CI revert oracle was NOT run here (pnpm install blocked by the private design-kit dependency).",
+    "base": "f5fb43f40e0b1d5c04254d05be1824ec0626ff08",
+    "head": "48038d898db542ea5e531acfd97220289470f3c3",
+    "production": [
+      "apps/viewer/src/aim/icddPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/icdd.test.ts"
+    ],
+    "restoration": "verified (git checkout, clean tree)"
+  },
+  "shown-errors-limit": {
+    "verdict": "RED_LOCAL",
+    "reason": "mutation applied to the tree, apps/viewer/src/aim/icdd.test.ts went RED under tsx, file restored. The CI revert oracle was NOT run here (pnpm install blocked by the private design-kit dependency).",
+    "base": "f5fb43f40e0b1d5c04254d05be1824ec0626ff08",
+    "head": "48038d898db542ea5e531acfd97220289470f3c3",
+    "production": [
+      "apps/viewer/src/aim/icddPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/icdd.test.ts"
+    ],
+    "restoration": "verified (git checkout, clean tree)"
+  },
+  "check-ok-ignores-same": {
+    "verdict": "RED_LOCAL",
+    "reason": "mutation applied to the tree, apps/viewer/src/aim/icdd.test.ts went RED under tsx, file restored. The CI revert oracle was NOT run here (pnpm install blocked by the private design-kit dependency).",
+    "base": "f5fb43f40e0b1d5c04254d05be1824ec0626ff08",
+    "head": "48038d898db542ea5e531acfd97220289470f3c3",
+    "production": [
+      "apps/viewer/src/aim/icddPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/icdd.test.ts"
+    ],
+    "restoration": "verified (git checkout, clean tree)"
+  },
+  "result-checked-by-wrong-op": {
+    "verdict": "RED_LOCAL",
+    "reason": "mutation applied to the tree, apps/viewer/src/aim/icdd.test.ts went RED under tsx, file restored. The CI revert oracle was NOT run here (pnpm install blocked by the private design-kit dependency).",
+    "base": "f5fb43f40e0b1d5c04254d05be1824ec0626ff08",
+    "head": "48038d898db542ea5e531acfd97220289470f3c3",
+    "production": [
+      "apps/viewer/src/aim/icdd-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/icdd.test.ts"
+    ],
+    "restoration": "verified (git checkout, clean tree)"
+  },
+  "status-source-unchecked": {
+    "verdict": "RED_LOCAL",
+    "reason": "mutation applied to the tree, apps/viewer/src/aim/icdd.test.ts went RED under tsx, file restored. The CI revert oracle was NOT run here (pnpm install blocked by the private design-kit dependency).",
+    "base": "f5fb43f40e0b1d5c04254d05be1824ec0626ff08",
+    "head": "48038d898db542ea5e531acfd97220289470f3c3",
+    "production": [
+      "apps/viewer/src/aim/icdd-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/icdd.test.ts"
+    ],
+    "restoration": "verified (git checkout, clean tree)"
+  }
+}
