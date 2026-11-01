@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/icddPlan.ts a/apps/viewer/src/aim/icddPlan.ts
+index d61c80a8..4693b25c 100644
+--- b/apps/viewer/src/aim/icddPlan.ts
++++ a/apps/viewer/src/aim/icddPlan.ts
+@@ -35,7 +35,7 @@ export function applyStatus(run: IcddRun | null, msg: IcddStatusMessage): IcddRu
+ 
+ /** Uplynul limit bez stavu hosta: len ak beh stále čaká. */
+ export function applyTimeout(run: IcddRun | null, id: string): IcddRun | null {
+-  if (!run || run.id !== id) return run;
++  if (!run || run.id !== id || run.phase !== 'waiting') return run;
+   return { ...run, phase: 'error', message: ICDD_NO_HOST };
+ }
+ 

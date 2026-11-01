@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/icddPlan.ts a/apps/viewer/src/aim/icddPlan.ts
+index dbed38f3..4693b25c 100644
+--- b/apps/viewer/src/aim/icddPlan.ts
++++ a/apps/viewer/src/aim/icddPlan.ts
+@@ -28,7 +28,7 @@ export const startRun = (id: string, op: IcddOp): IcddRun => ({ id, op, phase: '
+ 
+ /** Stav hosta pre iný beh ako aktuálny (oneskorená odpoveď staršieho behu) sa ignoruje. */
+ export function applyStatus(run: IcddRun | null, msg: IcddStatusMessage): IcddRun | null {
+-  if (!run) return run;
++  if (!run || run.id !== msg.id || run.op !== msg.op) return run;
+   if (run.phase === 'done' || run.phase === 'error') return run; // koncový stav sa nemení
+   return { id: run.id, op: run.op, phase: msg.phase, message: msg.message, ...(msg.result ? { result: msg.result } : {}) };
+ }

@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/icdd-protocol.ts a/apps/viewer/src/aim/icdd-protocol.ts
+index 4542da72..db987fc9 100644
+--- b/apps/viewer/src/aim/icdd-protocol.ts
++++ a/apps/viewer/src/aim/icdd-protocol.ts
+@@ -95,5 +95,5 @@ export function isIcddStatusMessage(d: unknown): d is IcddStatusMessage {
+   if (m.op !== 'export' && m.op !== 'check') return false;
+   if (m.phase !== 'running' && m.phase !== 'done' && m.phase !== 'error') return false;
+   if (m.result === undefined) return true;
+-  return m.op === 'export' ? isCheckResult(m.result) : isExportResult(m.result);
++  return m.op === 'export' ? isExportResult(m.result) : isCheckResult(m.result);
+ }
