@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { horizontalCutZ, storeyZToDraw, underlayAtLevel } from './underlayAtCut.js';
+import { horizontalCutZ, storeyZToDraw, underlayAtLevel, underlaysVisibleAtCut } from './underlayAtCut.js';
 
 const LEVELS = [0, 3.2, 6.4];
 
@@ -52,5 +52,16 @@ describe('PDF podklad pod vodorovným rezom (AIM D-161)', () => {
     assert.equal(horizontalCutZ({ axis: 'down', position: 50, box: {} }, bounds, 1), null);
     assert.equal(horizontalCutZ({ axis: 'down', position: 50 }, null, 1), null);
     assert.equal(horizontalCutZ(null, bounds, 1), null);
+  });
+
+  it('podklad mimo rezu sa skryje, nevyhodí (AIMviewer #376)', () => {
+    const at = (storeyZ: number, visible = true, plane?: unknown) => ({ id: `${storeyZ}`, placement: { storeyZ, visible, plane } });
+    const all = [at(0), at(3.2), at(6.4, false), at(0, true, {})];
+    const cut = underlaysVisibleAtCut(all, 4.4, false);
+    assert.equal(cut.length, all.length);
+    assert.deepEqual(cut.map((e) => e.placement.visible), [false, true, false, false]);
+    assert.equal(cut[1], all[1], 'kreslený podklad ostane ten istý objekt');
+    assert.equal(cut[2], all[2], 'už skrytý sa nekopíruje');
+    assert.deepEqual(underlaysVisibleAtCut(all, null, false), all);
   });
 });
