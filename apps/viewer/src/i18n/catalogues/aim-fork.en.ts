@@ -4,7 +4,7 @@
 
 /**
  * AIM fork: strings for the fork-only workspace panels (D-072 drawing
- * underlays, D-075 project documents). A separate catalogue so upstream
+ * underlays, D-075 project documents; control B1 run with labels). A separate catalogue so upstream
  * catalogues stay untouched (docs/FORK_MAINTENANCE.md).
  */
 export const aimForkEn = {
