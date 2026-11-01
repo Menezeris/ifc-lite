@@ -14,6 +14,10 @@ import { watchGpuDeviceLoss } from './gpu-device-loss';
 declare global {
   var __ifc_lite_viewer_store__: { getState(): ViewerState };
   var __ifc_lite_scene_face_hits__: (globalId: number) => SceneFaceHitSnapshot[];
+  var __ifc_lite_render_stats__: () => {
+    frame: { timestamp: number; drawCalls: number; batchesNotResident: number } | null;
+    gpu: { total: number };
+  };
 }
 
 test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
@@ -33,6 +37,32 @@ async function loadAuthoredModel(page: Page): Promise<void> {
       [...state.models.values()].every((model) => model.ifcDataStore && (model.geometryResult?.meshes.length ?? 0) > 0) &&
       typeof globalThis.__ifc_lite_scene_face_hits__ === 'function';
   }, undefined, { timeout: 180_000 });
+}
+
+/**
+ * The first tap picks through the GPU (`renderer.pick`), which needs resident geometry and a
+ * frame drawn for the final camera. `visibleFaces` projects on the CPU and proves neither, so
+ * wait for both before tapping (the tap itself is NOT retried: a user tapping right after load
+ * must still get the selection, see the PR for the candidate product finding).
+ *
+ * `since` is a page `performance.now()` taken BEFORE the last camera input was dispatched. The
+ * renderer draws on demand, so a frame stamped after the input is the one that carries the
+ * final camera; a stamp taken after the input settled could never be beaten by an idle scene.
+ */
+async function waitForDrawnFrame(page: Page, since: number): Promise<void> {
+  await expect.poll(() => page.evaluate((from) => {
+    const stats = globalThis.__ifc_lite_render_stats__?.();
+    const frame = stats?.frame ?? null;
+    return {
+      ready: !!stats && !!frame && stats.gpu.total > 0 && frame.drawCalls > 0 &&
+        frame.batchesNotResident === 0 && frame.timestamp > from,
+      gpuTotal: stats?.gpu.total ?? null,
+      drawCalls: frame?.drawCalls ?? null,
+      batchesNotResident: frame?.batchesNotResident ?? null,
+      frameMsAfterInput: frame ? Math.round(frame.timestamp - from) : null,
+    };
+  }, since), { message: 'a frame with resident geometry drawn after the last camera input', timeout: 30_000 })
+    .toMatchObject({ ready: true });
 }
 
 type TouchPoint = { x: number; y: number; id: number };
@@ -155,7 +185,9 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
     await touch(device, 'touchStart', [
       { x: center.x - 20, y: center.y, id: 1 }, { x: center.x + 20, y: center.y, id: 2 },
     ]);
+    let lastInputAt = 0;
     for (let spread = 40; spread <= 100; spread += 20) {
+      if (spread === 100) lastInputAt = await page.evaluate(() => performance.now());
       await touch(device, 'touchMove', [
         { x: center.x - spread, y: center.y, id: 1 }, { x: center.x + spread, y: center.y, id: 2 },
       ]);
@@ -164,6 +196,7 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
     expect(distance(await viewpoint(page))).toBeLessThan(distance(beforePinch));
     expect(await page.evaluate(() => window.visualViewport?.scale)).toBe(1);
 
+    await requireRenderer('drawn frame after camera moves', () => waitForDrawnFrame(page, lastInputAt));
     const faces = await requireRenderer('visible-face projection', () => visibleFaces(page));
     const first = faces[0];
     const second = faces.find((face) => Math.hypot(face.x - first.x, face.y - first.y) > 25);
