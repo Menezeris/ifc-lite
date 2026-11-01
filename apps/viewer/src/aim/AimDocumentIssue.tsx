@@ -15,19 +15,24 @@
  * Rendered only inside the AIM host and only for the host's documents.
  */
 
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { ArrowUpRight, Check, Cloud, MapPin, MessageSquarePlus, Square, Type, type LucideIcon } from 'lucide-react';
 import { useViewerStore } from '@/store';
 import { useAimPanelStore } from './aimPanelStore';
-import { openIssueForm, syncIssueLayers, useAimDocIssueStore, type DocIssueTool } from './docIssues';
+import { syncIssueLayers, useAimDocIssueStore, type DocIssueTool } from './docIssues';
 import { attachIssueDrawing, finishIssueDraft } from './docIssueDraw';
 
-const HINT: Record<'form' | DocIssueTool, string> = {
+// Lenivo: karta výberu prvkov ťahá docEntitiesScene (useBCF a spol.), ktoré nepatria do chunku okna pripomienky
+// (E2E mobile-journey:174, check-aim-doc-lazy-imports.mjs).
+const AimDocumentEntities = lazy(() => import('./AimDocumentEntities').then((m) => ({ default: m.AimDocumentEntities })));
+
+const HINT: Record<'form' | 'entities' | DocIssueTool, string> = {
   region: 'Ťahaj obdĺžnik na strane (klik = celá strana, Esc zruší)',
   cloud: 'Ťahaj obláčik okolo miesta (Esc zruší)',
   arrow: 'Ťahaj šípku od chvosta k hrotu (Esc zruší)',
   text: 'Klikni, kam patrí text, napíš ho a Enter',
   pin: 'Klikni na miesto špendlíka',
+  entities: 'Vyber IFC prvky pripomienky',
   form: 'Dokonči tému v paneli BCF',
 };
 
@@ -73,14 +78,15 @@ export function AimDocumentIssue({ docId }: { docId: string }) {
     if (!enabled || phase !== 'drawing' || !root) return;
     return attachIssueDrawing(root, docId, (target) => {
       if (!target) return useAimDocIssueStore.getState().set({ phase: 'idle', docId: null, note: null, draftCount: 0 });
-      void openIssueForm(target, doc?.name ?? 'Dokument');
+      // AIM #199 bod 2: najprv výber IFC prvkov, potom formulár témy.
+      useAimDocIssueStore.getState().set({ phase: 'entities', docId, pending: { target, docName: doc?.name ?? 'Dokument' } });
     });
   }, [enabled, phase, docId, doc?.name]);
 
   if (!enabled) return null;
   const busy = phase !== 'idle';
-  const toggle = () => useAimDocIssueStore.getState().set(busy ? { phase: 'idle', docId: null, note: null, draftCount: 0 } : { phase: 'drawing', docId, note: null });
-  const hint = HINT[phase === 'form' ? 'form' : tool];
+  const toggle = () => useAimDocIssueStore.getState().set(busy ? { phase: 'idle', docId: null, note: null, draftCount: 0, pending: null } : { phase: 'drawing', docId, note: null });
+  const hint = HINT[phase === 'form' || phase === 'entities' ? phase : tool];
   return (
     <>
     <button
@@ -95,6 +101,7 @@ export function AimDocumentIssue({ docId }: { docId: string }) {
       <MessageSquarePlus className="size-3" aria-hidden />
       {busy ? hint : 'Pripomienka'}
     </button>
+    {phase === 'entities' && <Suspense fallback={null}><AimDocumentEntities docId={docId} /></Suspense>}
     {phase === 'drawing' && (
       <div role="toolbar" aria-label="Nástroj pripomienky" className="flex shrink-0 items-center gap-0.5" data-aim-document-issue-tools>
         {TOOLS.map(({ tool: t, label, Icon }) => (

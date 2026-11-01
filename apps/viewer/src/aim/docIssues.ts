@@ -29,7 +29,7 @@ import {
 import type { MarkupType } from './docMarkup.js';
 import { markupSvg, pageAspect } from './docMarkupSvg.js';
 
-export type DocIssuePhase = 'idle' | 'drawing' | 'form';
+export type DocIssuePhase = 'idle' | 'drawing' | 'entities' | 'form';
 /** Nástroj kreslenia: oblasť (obdĺžnik D-158, hneď otvorí formulár) alebo značka (AIM #199). */
 export type DocIssueTool = 'region' | MarkupType;
 
@@ -41,7 +41,9 @@ interface DocIssueState {
   tool: DocIssueTool;
   /** Počet nakreslených, ešte neodoslaných značiek. */
   draftCount: number;
-  set: (s: Partial<Pick<DocIssueState, 'phase' | 'docId' | 'note' | 'tool' | 'draftCount'>>) => void;
+  /** Nakreslený cieľ čakajúci na výber IFC prvkov (AIM #199 bod 2), kým sa neotvorí formulár. */
+  pending: { target: DocIssueTarget; docName: string } | null;
+  set: (s: Partial<Pick<DocIssueState, 'phase' | 'docId' | 'note' | 'tool' | 'draftCount' | 'pending'>>) => void;
 }
 
 export const useAimDocIssueStore = create<DocIssueState>((set) => ({
@@ -50,6 +52,7 @@ export const useAimDocIssueStore = create<DocIssueState>((set) => ({
   note: null,
   tool: 'region',
   draftCount: 0,
+  pending: null,
   set: (s) => set(s),
 }));
 
@@ -76,15 +79,18 @@ let stopWatch: (() => void) | null = null;
 function finish(note: string | null): void {
   stopWatch?.();
   stopWatch = null;
-  useAimDocIssueStore.getState().set({ phase: 'idle', docId: null, note, draftCount: 0 });
+  useAimDocIssueStore.getState().set({ phase: 'idle', docId: null, note, draftCount: 0, pending: null });
 }
 
 /**
  * Otvorí upstream "New topic" a téme, ktorú panel založí, pridá odkaz na PDF.
  * Zrušený formulár (zoznam tém je späť bez novej témy) pripomienku zahodí.
  */
-export async function openIssueForm(target: DocIssueTarget, docName: string): Promise<boolean> {
+export async function openIssueForm(target: DocIssueTarget, docName: string, entityGuids: readonly string[] = []): Promise<boolean> {
   stopWatch?.();
+  // Lenivo: docEntitiesScene ťahá useBCF a ďalšie moduly zdieľané s eager kódom; staticky ho sem nedávame
+  // (E2E mobile-journey:174, check-aim-doc-lazy-imports.mjs). Načíta sa len keď sú vybrané prvky.
+  const scene = entityGuids.length ? await import('./docEntitiesScene.js') : null;
   const store = useViewerStore.getState();
   store.showWorkspacePanel('bcf', 'programmatic');
   store.setActiveTopic(null);
@@ -94,7 +100,9 @@ export async function openIssueForm(target: DocIssueTarget, docName: string): Pr
     return false;
   }
   const before = new Set(useViewerStore.getState().bcfProject?.topics.keys() ?? []);
-  useAimDocIssueStore.getState().set({ phase: 'form', docId: target.docId, note: null });
+  // AIM #199 bod 2: vybrané prvky ako výber v 3D, formulár ich zachytí do pohľadu témy.
+  const inModel = scene ? scene.selectGuidsIn3d(entityGuids) : [];
+  useAimDocIssueStore.getState().set({ phase: 'form', docId: target.docId, note: null, pending: null });
   button.click();
   const ref = docIssueReference(aimBcfContext()?.origin ?? null, docName, target);
   const started = Date.now();
@@ -109,6 +117,11 @@ export async function openIssueForm(target: DocIssueTarget, docName: string): Pr
     const topic = useViewerStore.getState().bcfProject?.topics.get(guid);
     useViewerStore.getState().updateTopic(guid, { documentReferences: [...(topic?.documentReferences ?? []), ref] });
     void attachSnapshot(guid, target);
+    // Pohľad témy pridáva formulár hneď po založení; komponenty, ktoré nezachytil, sa doplnia.
+    if (scene) setTimeout(() => {
+      const ok = scene.ensureTopicComponents(guid, mergeWithModel(entityGuids, inModel));
+      if (!ok) useAimDocIssueStore.getState().set({ note: 'Téma nemá pohľad (bez snímky), IFC prvky sa neuložia.' });
+    }, 500);
     return true;
   };
   const unsubscribe = useViewerStore.subscribe((s, prev) => {
@@ -127,6 +140,9 @@ export async function openIssueForm(target: DocIssueTarget, docName: string): Pr
   }, POLL_MS);
   return true;
 }
+
+/** Prvky, ktoré nie sú v načítanom modeli, ostanú v komponentoch aj tak (návrh bol z modelu, ale model sa mohol zmeniť). */
+const mergeWithModel = (wanted: readonly string[], inModel: readonly string[]): string[] => [...new Set([...inModel, ...wanted])];
 
 const blobToDataUrl = (blob: Blob) =>
   new Promise<string>((resolve, reject) => {

@@ -1,0 +1,11 @@
+--- a/apps/viewer/src/aim/docEntities.ts
++++ b/apps/viewer/src/aim/docEntities.ts	2026-10-31 20:12:25.623566109 +0000
+@@ -70,7 +70,7 @@
+   if (placement.plane || !(w > 0) || !(h > 0)) return null;
+   const r = region ?? { x: 0, y: 0, w: 1, h: 1 };
+   // Body PDF majú počiatok vľavo dole a y hore, zlomky regiónu vľavo hore.
+-  const corner = (fx: number, fy: number) => applyAffine(placement.affine, { x: fx * w, y: fy * h });
++  const corner = (fx: number, fy: number) => applyAffine(placement.affine, { x: fx * w, y: (1 - fy) * h });
+   const poly = [corner(r.x, r.y), corner(r.x + r.w, r.y), corner(r.x + r.w, r.y + r.h), corner(r.x, r.y + r.h)];
+   return poly.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y)) ? poly : null;
+ }
