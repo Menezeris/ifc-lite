@@ -37,6 +37,8 @@ function rig() {
     raycastScene: () => null,
   } as unknown as Renderer;
   let selections = 0;
+  // One stable object: the selection contract compares pick options by identity between capture and completion.
+  const pickOptions = { isStreaming: false, hiddenIds: new Set<number>(), isolatedIds: null };
   const params: UseTouchControlsParams = {
     canvasRef: ref(canvas), rendererRef: ref(renderer), isInitialized: true, activeToolRef: ref('select'),
     hiddenEntitiesRef: ref(new Set<number>()), isolatedEntitiesRef: ref(null), selectedEntityIdRef: ref(null),
@@ -44,7 +46,7 @@ function rig() {
     sectionRangeRef: ref(null), geometryRef: ref(null), isInteractingRef: ref(false),
     handlePickForSelection: () => { selections++; },
     openContextMenu: noop,
-    getPickOptions: () => ({ isStreaming: false, hiddenIds: new Set<number>(), isolatedIds: null }),
+    getPickOptions: () => pickOptions,
     touchStateRef: ref({ touches: [], lastDistance: 0, lastCenter: { x: 0, y: 0 }, tapStartTime: 0,
       tapStartPos: { x: 0, y: 0 }, didMove: false, multiTouch: false, twoFingerGesture: 'none' as const,
       gestureDistanceAccum: 0, gesturePanAccum: 0 }),
@@ -63,6 +65,13 @@ function touchEvent(kind: string, canvas: HTMLCanvasElement, points: Array<[numb
   return event;
 }
 
+/** Let the async touchend handler (pick, then selection) finish: macrotask turns, not a fixed microtask depth. */
+async function settle(selectionCount: () => number): Promise<void> {
+  for (let turn = 0; turn < 20 && selectionCount() === 0; turn++) {
+    await act(async () => { await new Promise<void>((resolve) => setTimeout(resolve, 0)); });
+  }
+}
+
 afterEach(() => {
   mock.restoreAll();
   cleanup();
@@ -76,14 +85,16 @@ describe('tap length comes from the input time', () => {
     const { canvas, selectionCount } = rig();
     act(() => canvas.dispatchEvent(touchEvent('touchstart', canvas, [[200, 300]], 1000)));
     handlerClock += 400; // the main thread was blocked; Date.now() moves, the input stamps do not
-    await act(async () => { canvas.dispatchEvent(touchEvent('touchend', canvas, [], 1050)); await Promise.resolve(); });
+    act(() => canvas.dispatchEvent(touchEvent('touchend', canvas, [], 1050)));
+    await settle(selectionCount);
     assert.equal(selectionCount(), 1);
   });
 
   it('still ignores a slow press (input stamps 400 ms apart)', async () => {
     const { canvas, selectionCount } = rig();
     act(() => canvas.dispatchEvent(touchEvent('touchstart', canvas, [[200, 300]], 1000)));
-    await act(async () => { canvas.dispatchEvent(touchEvent('touchend', canvas, [], 1400)); await Promise.resolve(); });
+    act(() => canvas.dispatchEvent(touchEvent('touchend', canvas, [], 1400)));
+    await settle(selectionCount);
     assert.equal(selectionCount(), 0);
   });
 });
