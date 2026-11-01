@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/underlayRasterGate.ts a/apps/viewer/src/aim/underlayRasterGate.ts
+index 5878e5d6..dd2b9f49 100644
+--- b/apps/viewer/src/aim/underlayRasterGate.ts
++++ a/apps/viewer/src/aim/underlayRasterGate.ts
+@@ -25,6 +25,7 @@ export class UnderlayRasterGate {
+ 
+   /** Rasterizácia `key` dobehla: true = je stále želaná (slot sa uvoľní), false = zahodiť. */
+   settle(id: string, key: string): boolean {
++    if (this.pending.get(id) !== key) return false;
+     this.pending.delete(id);
+     return true;
+   }

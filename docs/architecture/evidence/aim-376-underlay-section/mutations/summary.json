@@ -1,0 +1,72 @@
+{
+  "cut-drops-plane": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlaySectionSync.test.ts; that file has a green, attributable baseline.",
+    "base": "947168e05418a22f2f8b983cf0e06ab0756bed70",
+    "head": "9a37fc2ac32de2422114448687590f5d5f90d89f",
+    "production": [
+      "apps/viewer/src/hooks/useDrawingUnderlay.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlaySectionSync.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "gate-restarts-raster": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayRasterGate.test.ts; that file has a green, attributable baseline.",
+    "base": "947168e05418a22f2f8b983cf0e06ab0756bed70",
+    "head": "f00033778b55df492aa5a1998b84858a60020415",
+    "production": [
+      "apps/viewer/src/aim/underlayRasterGate.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayRasterGate.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "gate-fail-keeps-slot": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayRasterGate.test.ts; that file has a green, attributable baseline.",
+    "base": "947168e05418a22f2f8b983cf0e06ab0756bed70",
+    "head": "f00033778b55df492aa5a1998b84858a60020415",
+    "production": [
+      "apps/viewer/src/aim/underlayRasterGate.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayRasterGate.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "gate-settles-superseded": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayRasterGate.test.ts; that file has a green, attributable baseline.",
+    "base": "947168e05418a22f2f8b983cf0e06ab0756bed70",
+    "head": "f00033778b55df492aa5a1998b84858a60020415",
+    "production": [
+      "apps/viewer/src/aim/underlayRasterGate.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayRasterGate.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "visible-at-cut-keeps-all": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayAtCut.test.ts; that file has a green, attributable baseline.",
+    "base": "947168e05418a22f2f8b983cf0e06ab0756bed70",
+    "head": "9a37fc2ac32de2422114448687590f5d5f90d89f",
+    "production": [
+      "apps/viewer/src/aim/underlayAtCut.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayAtCut.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}
