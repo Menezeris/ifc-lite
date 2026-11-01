@@ -202,9 +202,37 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
     const second = faces.find((face) => Math.hypot(face.x - first.x, face.y - first.y) > 25);
     if (!second) throw new Error('two distinct visible face points are required for Measure');
     await page.touchscreen.tap(first.x, first.y);
-    await requireRenderer('tap selection', () => expect.poll(
-      () => page.evaluate(() => globalThis.__ifc_lite_viewer_store__.getState().selectedEntityId),
-    ).toBe(first.globalId));
+    // TEMPORARY CATCH-ONLY DIAGNOSTICS (control branch, not for merge): nothing is installed before the tap.
+    try {
+      await requireRenderer('tap selection', () => expect.poll(
+        () => page.evaluate(() => globalThis.__ifc_lite_viewer_store__.getState().selectedEntityId),
+      ).toBe(first.globalId));
+    } catch (error) {
+      const diag = await page.evaluate(({ x, y }) => {
+        const st = globalThis.__ifc_lite_viewer_store__.getState() as unknown as Record<string, unknown>;
+        const keys: Record<string, unknown> = {};
+        for (const k of Object.keys(st)) {
+          const v = st[k];
+          if (/pick|hover|select|tool|loading|stream|mobile|panel/i.test(k) && (v === null || ['string', 'number', 'boolean'].includes(typeof v))) keys[k] = v;
+        }
+        const canvas = document.querySelector<HTMLCanvasElement>('canvas[data-viewport="main"]');
+        const r = canvas?.getBoundingClientRect();
+        const stats = globalThis.__ifc_lite_render_stats__?.();
+        const top = document.elementsFromPoint(x, y).slice(0, 8).map((el) => {
+          const b = el.getBoundingClientRect();
+          return `${el.tagName.toLowerCase()}#${el.id}.${String(el.className).slice(0, 50)} [${Math.round(b.left)},${Math.round(b.top)},${Math.round(b.width)}x${Math.round(b.height)}]`;
+        });
+        return {
+          elementsFromPoint: top,
+          keys,
+          canvas: r ? [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)] : null,
+          inner: [window.innerWidth, window.innerHeight, window.devicePixelRatio, window.visualViewport?.scale, window.visualViewport?.offsetTop],
+          active: (document.activeElement as Element | null)?.tagName ?? null,
+          frame: stats?.frame ?? null,
+        };
+      }, { x: first.x, y: first.y });
+      throw new Error(`${(error as Error).message}\nDIAG tap=(${first.x},${first.y}) id=${first.globalId}\n${JSON.stringify(diag)}`);
+    }
 
     await page.getByRole('button', { name: 'Measure', exact: true }).click();
     await page.touchscreen.tap(first.x, first.y);
