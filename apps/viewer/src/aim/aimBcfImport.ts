@@ -4,7 +4,7 @@
 
 /**
  * "Importovať do AIM" v BCF paneli (lenivý modul): pošle súbor hostu (`BCF_IMPORT`) a čaká na `BCF_IMPORTED`.
- * Jedna požiadavka naraz; odpoveď bez zodpovedajúceho `requestId` sa zahodí.
+ * Kontrola B3 (s labelmi). Jedna požiadavka naraz; odpoveď bez zodpovedajúceho `requestId` sa zahodí.
  */
 
 import { SOURCE } from './bridge-core.js';
