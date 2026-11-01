@@ -22,6 +22,7 @@ import { resolve as translate } from '@/i18n/registry';
 import { routeMeasureTap } from './touchRouting.js';
 import { openContextMenuAt } from './contextMenuSelection.js';
 import { createTouchLongPress } from './touchLongPress.js';
+import { inputStamp, tapDurationMs } from '@/aim/tapTiming'; // >>> AIM-FORK: tap length from the input time, not from when the handler ran <<< AIM-FORK
 
 /** Locked gesture mode for 2-finger interactions */
 type TwoFingerGesture = 'none' | 'pinch' | 'pan';
@@ -156,7 +157,7 @@ export function useTouchControls(params: UseTouchControlsParams): void {
           y: touchState.touches[0].clientY,
         };
         // Record tap start for tap-to-select detection
-        touchState.tapStartTime = Date.now();
+        touchState.tapStartTime = inputStamp(e); // >>> AIM-FORK: input time (Event.timeStamp), a blocked main thread must not turn a tap into a long press <<< AIM-FORK
         touchState.tapStartPos = {
           x: touchState.touches[0].clientX,
           y: touchState.touches[0].clientY,
@@ -294,7 +295,7 @@ export function useTouchControls(params: UseTouchControlsParams): void {
         camera.stopInertia();
 
         // Tap-to-select: detect quick tap without significant movement
-        const tapDuration = Date.now() - touchState.tapStartTime;
+        const tapDuration = tapDurationMs(touchState.tapStartTime, inputStamp(e)); // >>> AIM-FORK: was `Date.now() - tapStartTime` <<< AIM-FORK
         const tool = activeToolRef.current;
 
         // Only select if:
