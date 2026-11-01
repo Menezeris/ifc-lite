@@ -1,0 +1,10 @@
+diff --git b/apps/viewer/src/aim/docEntities.ts a/apps/viewer/src/aim/docEntities.ts
+index 985521ac..e288972a 100644
+--- b/apps/viewer/src/aim/docEntities.ts
++++ a/apps/viewer/src/aim/docEntities.ts
+@@ -202,4 +202,4 @@ export function addPicked(list: readonly PickedEntity[], items: readonly PickedE
+ }
+ 
+ /** Odstráni položku podľa GlobalId. */
+-export const removePicked = (list: readonly PickedEntity[], guid: string): PickedEntity[] => list.filter(() => true);
++export const removePicked = (list: readonly PickedEntity[], guid: string): PickedEntity[] => list.filter((p) => p.guid !== guid);

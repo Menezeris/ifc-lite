@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/docEntities.ts a/apps/viewer/src/aim/docEntities.ts
+index 6cbc07e7..e288972a 100644
+--- b/apps/viewer/src/aim/docEntities.ts
++++ a/apps/viewer/src/aim/docEntities.ts
+@@ -185,7 +185,7 @@ export interface PickedEntity {
+ }
+ 
+ /** Priestorové korene: do `components` témy idú ako GlobalId, ale v 3D sa nevyberajú (nemajú geometriu). */
+-const SPATIAL_ROOTS = new Set(['IFCPROJECT', 'IFCSITE', 'IFCBUILDING', 'IFCBUILDINGSTOREY', 'IFCSPACE']);
++const SPATIAL_ROOTS = new Set(['IFCPROJECT', 'IFCSITE', 'IFCBUILDING', 'IFCBUILDINGSTOREY']);
+ export const isSpatialRoot = (ifcType: string | undefined): boolean => SPATIAL_ROOTS.has((ifcType ?? '').toUpperCase());
+ 
+ /** Pridá položky na koniec zoznamu bez duplicít podľa GlobalId (prvá vyhráva), najviac `max`. */

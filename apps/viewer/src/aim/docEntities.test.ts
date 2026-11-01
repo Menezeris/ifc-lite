@@ -6,12 +6,15 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import {
+  addPicked,
   boxOverlapsPolygon,
   countByClass,
   entitiesUnderRegion,
   isPickableClass,
+  isSpatialRoot,
   mergeGuids,
   preselected,
+  removePicked,
   regionToIfcPolygon,
   storeyBand,
   type EntityBox,
@@ -147,5 +150,27 @@ describe('neznáma výška podlažia a nerozpoznaný typ (minor nálezy review #
     const { candidates, total } = entitiesUnderRegion([box('x', '', 30, 45), box('s', 'IfcSpace', 30, 45)], poly, [3, 7]);
     assert.equal(total, 1);
     assert.deepEqual(candidates.map((c) => c.guid), ['x']);
+  });
+});
+
+describe('priradené entity pripomienky', () => {
+  const pick = (guid: string, kind: 'selection' | 'storey' | 'project' = 'selection') => ({ guid, label: guid, kind });
+
+  it('addPicked pridá na koniec, bez duplicít (prvá vyhráva) a po strop', () => {
+    const list = addPicked([pick('a')], [pick('b'), { ...pick('a'), label: 'iné' }, pick('c')], 3);
+    assert.deepEqual(list.map((p) => p.guid), ['a', 'b', 'c']);
+    assert.equal(list[0].label, 'a');
+    assert.deepEqual(addPicked([], [pick('a'), pick('b'), pick('c')], 2).map((p) => p.guid), ['a', 'b']);
+    assert.deepEqual(addPicked([], [pick('')], 5), []);
+  });
+
+  it('removePicked odstráni len danú položku', () => {
+    assert.deepEqual(removePicked([pick('a'), pick('b', 'project')], 'a').map((p) => p.guid), ['b']);
+    assert.equal(removePicked([pick('a')], 'x').length, 1);
+  });
+
+  it('isSpatialRoot pozná projekt, areál, budovu a podlažie, nie priestor ani prvok', () => {
+    for (const t of ['IfcProject', 'IFCSITE', 'IfcBuilding', 'IfcBuildingStorey']) assert.equal(isSpatialRoot(t), true, t);
+    for (const t of ['IfcSpace', 'IfcWall', '', undefined]) assert.equal(isSpatialRoot(t), false, String(t));
   });
 });
