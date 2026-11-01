@@ -61,18 +61,20 @@ export function summarize(run: IcddRun): IcddSummary {
   if (run.phase === 'error') return { title: run.op === 'export' ? 'Export ICDD zlyhal' : 'Kontrola ICDD zlyhala', lines: [run.message], errors: [], ok: false };
   if (run.op === 'export') {
     const r = run.result as IcddExportResult | undefined;
-    if (!r) return { title: 'Export ICDD', lines: [run.message], errors: [], ok: run.phase === 'done' };
+    // `done` bez výsledku je porušenie protokolu hosta, nie úspech: dialóg nesmie ukázať zelený export bez dát.
+    if (!r) return { title: run.phase === 'done' ? 'Export ICDD bez výsledku' : 'Export ICDD', lines: [run.message], errors: [], ok: false };
     const lines = [`${r.filename} (${kb(r.size_bytes)})`, `Obsah: ${r.payloads}, prepojenia: ${r.links}`];
     if (r.warnings.length) lines.push(`Upozornení: ${r.warnings.length}`);
     if (r.skipped.length) lines.push(`Vynechané: ${r.skipped.length}`);
     return { title: r.ok ? 'ICDD exportované' : 'ICDD exportované s chybami', lines, errors: firstLines(r.errors), ok: r.ok };
   }
   const r = run.result as IcddCheckResult | undefined;
-  if (!r) return { title: 'Kontrola ICDD', lines: [run.message], errors: [], ok: run.phase === 'done' };
+  if (!r) return { title: run.phase === 'done' ? 'Kontrola ICDD bez výsledku' : 'Kontrola ICDD', lines: [run.message], errors: [], ok: false };
   const lines = [r.same ? 'Kontajner sa zhoduje s AIM' : 'Kontajner sa líši od AIM'];
   if (!r.same) {
     lines.push(`Prepojenia len v kontajneri: ${r.links_only_in_container}`, `Prepojenia len v AIM: ${r.links_only_in_aim}`, `Zmenený obsah: ${r.payloads_changed}`);
   }
-  if (r.version_id) lines.push(`Verzia: ${r.version_id}`);
+  // Prázdny reťazec je platná (hoci divná) verzia od hosta: ukáže sa, nie je to "bez verzie" (null / chýba).
+  if (r.version_id !== undefined && r.version_id !== null) lines.push(`Verzia: ${r.version_id === '' ? '(prázdna)' : r.version_id}`);
   return { title: r.ok ? 'ICDD je v poriadku' : 'ICDD má chyby', lines, errors: firstLines(r.errors), ok: r.ok && r.same };
 }

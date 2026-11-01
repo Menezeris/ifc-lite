@@ -92,6 +92,31 @@ describe('text výsledku', () => {
     assert.deepEqual(diff.lines.slice(0, 4), ['Kontajner sa líši od AIM', 'Prepojenia len v kontajneri: 0', 'Prepojenia len v AIM: 2', 'Zmenený obsah: 1']);
   });
 
+  it('done bez výsledku nie je úspech (export aj kontrola)', () => {
+    for (const op of ['export', 'check'] as const) {
+      const s = summarize({ ...startRun('x', op), phase: 'done' as const, message: 'hotovo' });
+      assert.equal(s.ok, false, op);
+      assert.match(s.title, /bez výsledku/, op);
+      assert.deepEqual(s.lines, ['hotovo'], op);
+      assert.deepEqual(s.errors, [], op);
+    }
+  });
+
+  it('beh bez výsledku, ktorý ešte nie je hotový, nie je úspech', () => {
+    for (const phase of ['waiting', 'running'] as const) {
+      assert.equal(summarize({ ...startRun('x', 'export'), phase, message: 'beží' }).ok, false, phase);
+      assert.equal(summarize({ ...startRun('x', 'check'), phase, message: 'beží' }).ok, false, phase);
+    }
+  });
+
+  it('verzia: prázdny reťazec sa ukáže, null a chýbajúca sa vynechá', () => {
+    const base = { ...startRun('x', 'check'), phase: 'done' as const, message: '' };
+    assert.deepEqual(summarize({ ...base, result: { ...checkResult, version_id: '' } }).lines, ['Kontajner sa zhoduje s AIM', 'Verzia: (prázdna)']);
+    assert.deepEqual(summarize({ ...base, result: { ...checkResult, version_id: null } }).lines, ['Kontajner sa zhoduje s AIM']);
+    const { version_id: _omit, ...withoutVersion } = checkResult;
+    assert.deepEqual(summarize({ ...base, result: withoutVersion as never }).lines, ['Kontajner sa zhoduje s AIM']);
+  });
+
   it('chyba hosta ukáže jeho správu', () => {
     const s = summarize({ ...startRun('x', 'check'), phase: 'error', message: 'zlý súbor' });
     assert.equal(s.title, 'Kontrola ICDD zlyhala');
