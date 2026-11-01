@@ -115,6 +115,7 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/components/viewer/tools/SectionBoxVisualization.tsx` | 1 | no box faces or handles while the section widget is hidden (`showGizmo` false, D-101, AIMviewer#322) |
 | `apps/viewer/src/hooks/useLens.ts` | 2 | rooms of the AIM chat lens are left out of the renderer colours (`aim/aimLensPaint.ts`, AIM D-125 / #175): the renderer paints an alpha-0.3 override opaque and 70 % the room's own colour, so the room stays natively translucent and its floor fill carries the Lens colour |
 | `apps/viewer/src/components/viewer/useViewportSymbolicUploads.ts` | 2 | AIM room floor fills in 3D (`aim/aimRoomFill3dStore.ts`, AIM D-125 / #175) appended to the IfcAnnotation fills: the renderer has one fill channel |
+| `apps/viewer/src/components/viewer/useTouchControls.ts` | 3 | tap-to-select measures a tap from `Event.timeStamp` (`aim/tapTiming.ts`) instead of `Date.now()` in the handlers: a blocked main thread between touchstart and touchend no longer turns a 50 ms tap into a dropped one (AIM tap timestamp) |
 | `scripts/lib/presentation-channel-allowlist.mjs` | 1 | `aim/aimLens.ts` in `REQUIRES_ROUTING_MARKER`: AIM chat isolation routes through `resolvePresentationIds` (D-096) |
 
 If you resolve a conflict here, grep for `AIM-FORK` to confirm you kept all our
