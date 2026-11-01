@@ -169,7 +169,7 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
   if (!box) throw new Error('mobile canvas is not laid out');
   const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   const device = await page.context().newCDPSession(page);
-  // TEMPORARY PASSIVE DIAGNOSTICS (control branch only, not for merge): installed early, no extra awaits before the tap.
+  // TEMPORARY PASSIVE DIAGNOSTICS (control branch, not for merge): installed early, no extra awaits before the tap.
   await page.evaluate(() => {
     const w = globalThis as unknown as { __tapLog: unknown[] };
     w.__tapLog = [];
