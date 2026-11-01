@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/topicListModel.ts a/apps/viewer/src/aim/topicListModel.ts
+index 14dd0b44..c935ce26 100644
+--- b/apps/viewer/src/aim/topicListModel.ts
++++ a/apps/viewer/src/aim/topicListModel.ts
+@@ -65,7 +65,7 @@ export function filterTopics(topics: readonly BCFTopic[], f: TopicFilter): BCFTo
+     if (f.document && !topicDocTargets(t).some((d) => d.docId === f.document.toLowerCase())) return false;
+     const guids = topicEntityGuids(t);
+     if (entity && !guids.some((g) => g.toLowerCase().startsWith(entity))) return false;
+-    if (f.projectOnly && guids.length < 0) return false;
++    if (f.projectOnly && guids.length > 0) return false;
+     return true;
+   });
+ }
