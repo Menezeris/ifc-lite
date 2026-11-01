@@ -201,7 +201,7 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
     const first = faces[0];
     const second = faces.find((face) => Math.hypot(face.x - first.x, face.y - first.y) > 25);
     if (!second) throw new Error('two distinct visible face points are required for Measure');
-    // TEMPORARY DIAGNOSTICS (control branch, not for merge): what sits under the tap point and what events arrive.
+    // TEMPORARY DIAGNOSTICS (control branch only, not for merge): what sits under the tap point and what events arrive.
     await page.evaluate(() => {
       const w = globalThis as unknown as { __tapLog: unknown[] };
       w.__tapLog = [];
