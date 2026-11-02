@@ -27,7 +27,7 @@ function formatDate(iso: string): string {
 
 function HowItWorks({ helpHref }: { helpHref?: string }) {
   return (
-    <div data-aim-verify-help className="mt-1.5 border border-zinc-200 bg-white p-2 text-[11px] leading-snug text-zinc-700 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
+    <div data-aim-verify-help className="mt-1.5 border border-zinc-200 bg-white p-2 text-2xs leading-snug text-zinc-700 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
       <p className="mb-1">Pri každej veličine, pre ktorú má AIM <b>recept</b>, sa hodnota vypočíta z geometrie modelu a porovná s hodnotou, ktorú do súboru zapísal autor.</p>
       <ul className="mb-1 list-disc pl-4">
         <li><b>Recept</b> je pomenovaný postup: ktoré prvky hľadá (doska nad, doska pod, podlahovina, podhľad) a ako z nich počíta. Vstupy sú bunky s hodnotou a prvkom, z ktorého pochádzajú.</li>
@@ -57,7 +57,7 @@ export function AimVerifyBarBody({ globalId }: { globalId: string }) {
   const counts = countByStatus(st.data);
   const busy = st.status === 'loading' || st.status === 'running';
   return (
-    <div data-aim-verify-bar className="mb-3 text-[11px] text-zinc-500 dark:text-zinc-400">
+    <div data-aim-verify-bar className="mb-3 text-2xs text-zinc-500 dark:text-zinc-400">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         {busy && <span>{st.status === 'running' ? 'Overujem výmery z geometrie...' : 'Načítavam overenie výmer...'}</span>}
         {st.status === 'error' && <span className="text-red-600 dark:text-red-400">Overenie výmer: {st.error}</span>}
