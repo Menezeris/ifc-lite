@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/reqlibPlan.ts a/apps/viewer/src/aim/reqlibPlan.ts
+index 120c937f..33d4d3fb 100644
+--- b/apps/viewer/src/aim/reqlibPlan.ts
++++ a/apps/viewer/src/aim/reqlibPlan.ts
+@@ -97,7 +97,7 @@ export function saveRunOutcome(out: unknown): { ok: boolean; text: string } {
+     ? saved.filter((s): s is { model: string; revision: number; warning?: string } =>
+       !!s && typeof s === 'object' && typeof (s as { model?: unknown }).model === 'string' && typeof (s as { revision?: unknown }).revision === 'number')
+     : [];
+-  if (rows.length !== (saved as unknown[] ?? []).length) return { ok: false, text: 'AIM nevrátil uložené modely; výsledok sa neuložil.' };
++  if (rows.length === 0 || rows.length !== (saved as unknown[]).length) return { ok: false, text: 'AIM nevrátil uložené modely; výsledok sa neuložil.' };
+   const warn = rows.map((s) => s.warning).filter(Boolean).join(' ');
+   return { ok: true, text: `Výsledok uložený do AIM (${rows.map((s) => `${s.model} v${s.revision}`).join(', ')}).${warn ? ` ${warn}` : ''}` };
+ }

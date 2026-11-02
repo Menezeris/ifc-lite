@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/reqlibPlan.ts a/apps/viewer/src/aim/reqlibPlan.ts
+index d0a7e581..33d4d3fb 100644
+--- b/apps/viewer/src/aim/reqlibPlan.ts
++++ a/apps/viewer/src/aim/reqlibPlan.ts
+@@ -87,7 +87,7 @@ export function assignOutcome(out: Record<string, unknown> | null | undefined):
+       if (!code || version === null) break;
+       return { kind: 'ok', text: `Nová verzia ${code} v${version}${typeof out.renamed_from === 'string' ? ` (predtým ${out.renamed_from})` : ''}.` };
+   }
+-  return { kind: 'ok', text: 'AIM nevrátil výsledok priradenia; obnov knižnicu a skontroluj, či sa IDS priradilo.' };
++  return { kind: 'error', text: 'AIM nevrátil výsledok priradenia; obnov knižnicu a skontroluj, či sa IDS priradilo.' };
+ }
+ 
+ /** Odpoveď hosta na `save_run`: úspech len so zoznamom uložených modelov. */
