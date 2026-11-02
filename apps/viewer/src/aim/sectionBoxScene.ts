@@ -28,7 +28,6 @@ type State = ReturnType<typeof useViewerStore.getState>;
 type Scene = NonNullable<ReturnType<NonNullable<ReturnType<typeof getGlobalRenderer>>['getScene']>>;
 
 const toFit = (b: { min: { x: number; y: number; z: number }; max: { x: number; y: number; z: number } }): FitBox => ({ min: { ...b.min }, max: { ...b.max } });
-const toTuple = (b: FitBox): SectionBox => ({ min: [b.min.x, b.min.y, b.min.z], max: [b.max.x, b.max.y, b.max.z] });
 type Bounds = (id: number) => FitBox | null;
 
 /**
@@ -50,9 +49,12 @@ function boundsLookup(state: State, scene: Scene | undefined): Bounds {
 function collectCandidates(state: State, boundsOf: Bounds, modelId: string): FitCandidate[] {
   const store = modelId === 'legacy' ? state.ifcDataStore : state.models.get(modelId)?.ifcDataStore;
   if (!store) return [];
+  const view = state.mutationViews.get(modelId);
   const out: FitCandidate[] = [];
   for (const [type, kind] of TYPES) {
+    // @raw-entity-enumeration-ok parsed slabs and walls of the file, deleted ones skipped through the mutation view; a candidate also needs drawn geometry (boundsOf), and products authored in the session carry no file index entry
     for (const expressId of store.entityIndex.byType.get(type) ?? []) {
+      if (view?.isDeleted(expressId)) continue;
       const b = boundsOf(toGlobalIdFromModels(state.models, modelId, expressId));
       if (b) out.push({ kind, ...b });
     }
