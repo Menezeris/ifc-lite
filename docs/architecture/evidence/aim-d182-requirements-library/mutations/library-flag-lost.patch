@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/viewTabsLayout.ts a/apps/viewer/src/aim/viewTabsLayout.ts
+index b34cc810..0808b438 100644
+--- b/apps/viewer/src/aim/viewTabsLayout.ts
++++ a/apps/viewer/src/aim/viewTabsLayout.ts
+@@ -64,6 +64,6 @@ export function centerLayout(s: ViewTabsState, tiled = false): CenterLayout {
+     collapse3d: isPaneTab(active) && !beside,
+     docPane: !!pane,
+     docId: pane?.kind === 'doc' ? pane.docId ?? null : null,
+-    library: false,
++    library: pane?.kind === 'req',
+   };
+ }

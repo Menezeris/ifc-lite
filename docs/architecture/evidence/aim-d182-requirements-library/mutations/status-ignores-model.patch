@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/reqlibPlan.ts a/apps/viewer/src/aim/reqlibPlan.ts
+index 1bf96026..1b5611ba 100644
+--- b/apps/viewer/src/aim/reqlibPlan.ts
++++ a/apps/viewer/src/aim/reqlibPlan.ts
+@@ -45,7 +45,7 @@ export function runsByModel(specs: readonly ReportSpecLike[], modelIds: readonly
+     model_name: nameOf(modelId),
+     specs: specs.map((s) => {
+       const entities = s.entityResults.filter((e) => (e.modelId ?? modelIds[0]) === modelId);
+-      const status = s.status;
++      const status = entities.length === 0 ? s.status : entities.some((e) => !e.passed) ? 'fail' : 'pass';
+       return {
+         specification: { ...s.specification },
+         status,
