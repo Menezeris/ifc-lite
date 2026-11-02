@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { idsEngineVersion, libraryStateText, runStateText, runsByModel, sha256Hex, type ReportSpecLike } from './reqlibPlan.js';
+import { assignOutcome, idsEngineVersion, libraryStateText, runStateText, runsByModel, saveRunOutcome, sha256Hex, type ReportSpecLike } from './reqlibPlan.js';
 import { buildReqlibRequest, isReqlibResult } from './reqlib-protocol.js';
 
 const spec = (status: string, entities: ReportSpecLike['entityResults']): ReportSpecLike => ({
@@ -35,6 +35,33 @@ describe('knižnica požiadaviek: výsledok po modeloch (AIM D-182)', () => {
     const [run] = runsByModel([spec('fail', [])], ['A'], (id) => id);
     assert.equal(run.specs[0].status, 'fail');
     assert.deepEqual(run.specs[0].entityResults, []);
+  });
+
+  it('prvok bez modelu: pri jedinom modeli patrí jemu, pri viacerých sa výsledok neuloží', () => {
+    const untagged = [spec('fail', [{ globalId: 'G1', passed: false, requirementResults: [{ status: 'fail', failureReason: 'x' }] }])];
+    const [only] = runsByModel(untagged, ['A'], (id) => id);
+    assert.equal(only.specs[0].applicableCount, 1);
+    assert.equal(only.specs[0].status, 'fail');
+    assert.throws(() => runsByModel(untagged, ['A', 'B'], (id) => id), /bez modelu/);
+  });
+
+  it('odpoveď hosta na priradenie: známy stav je úspech, prázdna alebo neúplná odpoveď je chyba', () => {
+    assert.deepEqual(assignOutcome({ status: 'created', code: 'ER', version: 1 }), { kind: 'ok', text: 'Priradené k projektu ako ER v1.' });
+    assert.deepEqual(assignOutcome({ status: 'new_version', code: 'ER2', version: 2, renamed_from: 'ER' }), { kind: 'ok', text: 'Nová verzia ER2 v2 (predtým ER).' });
+    assert.deepEqual(assignOutcome({ status: 'choice_required', code: 'ER2', candidates: ['ER', 3], message: 'm' }), { kind: 'choice', code: 'ER2', candidates: ['ER'], message: 'm' });
+    assert.equal(assignOutcome({}).kind, 'error');
+    assert.equal(assignOutcome(null).kind, 'error');
+    assert.equal(assignOutcome({ status: 'created' }).kind, 'error');
+    assert.equal(assignOutcome({ ok: true, status: 'iný' }).kind, 'error');
+  });
+
+  it('odpoveď hosta na uloženie výsledku: úspech len so zoznamom uložených modelov', () => {
+    assert.deepEqual(saveRunOutcome({ saved: [{ model: 'ASR', revision: 79 }] }), { ok: true, text: 'Výsledok uložený do AIM (ASR v79).' });
+    assert.deepEqual(saveRunOutcome({ saved: [{ model: 'ASR', revision: 78, warning: 'stará revízia' }] }), { ok: true, text: 'Výsledok uložený do AIM (ASR v78). stará revízia' });
+    assert.equal(saveRunOutcome({ saved: [] }).ok, false);
+    assert.equal(saveRunOutcome({}).ok, false);
+    assert.equal(saveRunOutcome(undefined).ok, false);
+    assert.equal(saveRunOutcome({ saved: [{ model: 'ASR' }] }).ok, false);
   });
 
   it('verzia nástroja z balíkov forku; sha256 rovnako ako host', async () => {
