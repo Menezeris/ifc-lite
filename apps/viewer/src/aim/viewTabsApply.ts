@@ -19,7 +19,7 @@
 
 import { useViewerStore } from '@/store';
 import {
-  REQ_TAB, activateTab, besideRefusal, closeAll, closeTab, docTabId, dropViewTabs, isSceneTab, openTab, resolveTabRef, setBeside, syncDocTabs,
+  activateTab, besideRefusal, closeAll, closeTab, docTabId, dropViewTabs, isSceneTab, resolveTabRef, setBeside, syncDocTabs,
   syncViewTabs, viewTabId, type ViewTabsState,
 } from './viewTabsPlan.js';
 import { runTopView, useAimViewTabs } from './viewTabsStore.js';
@@ -256,15 +256,6 @@ export function close(id: string): void {
   const tab = s.tabs.find((t) => t.id === id);
   if (tab?.docId) useViewerStore.getState().closeDocTab(tab.docId);
   commit(closeTab(current(), id));
-}
-
-/**
- * Karta knižnice požiadaviek (AIM D-182) z tlačidla v ribbone AIM: otvorí sa (alebo prepne) na celú plochu.
- * Do dlaždíc nepatrí, preto pri dlaždiciach sa plocha vráti na jedno okno.
- */
-export function openRequirementsLibrary(): void {
-  const tiled = useAimViewTabs.getState().layout !== 'single';
-  commit(openTab(current(), REQ_TAB), tiled ? singleTiles() : undefined);
 }
 
 /**

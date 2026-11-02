@@ -47,8 +47,7 @@ import { BottomStrip } from './BottomStrip';
 import { loadBottomStripOrientation, persistBottomStripOrientation } from '@/lib/panels/bottom-strip-persistence';
 import { LEFT_PANEL_DEFAULT_SIZE } from '@/store/layoutReset';
 import { useOverlayCompositor } from './schedule/useOverlayCompositor';
-// >>> AIM-FORK: D-075 document tabs pane in the center split (D-182: or the requirements library tab)
-// Lazy: the document pane (pdf.js surface) and the library card are off the boot path.
+// >>> AIM-FORK: D-075 document pane in the center split, D-182 library tab (both lazy, off the boot path)
 const DocumentPane = lazy(() => import('@/components/documents/DocumentPane').then((m) => ({ default: m.DocumentPane })));
 const AimCenterPane = lazy(() => import('@/aim/AimCenterPane').then((m) => ({ default: m.AimCenterPane })));
 const AimViewTabsBar = lazy(() => import('@/aim/AimViewTabsBar').then((m) => ({ default: m.AimViewTabsBar })));

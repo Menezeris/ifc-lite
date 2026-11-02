@@ -113,7 +113,7 @@ export function DocumentsRibbonTab() {
           contentId="aim-requirements-library"
           tooltip="Requirements library: IDS from the library, assigned to the project, into IDS Studio and Data validation"
           active={reqTabActive}
-          onClick={() => void import('./viewTabsApply').then((m) => m.openRequirementsLibrary())}
+          onClick={() => void import('./reqlibTab').then((m) => m.openRequirementsLibrary())}
         />
       </RibbonGroup>
 
