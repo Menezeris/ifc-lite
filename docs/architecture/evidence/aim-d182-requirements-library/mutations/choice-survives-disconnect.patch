@@ -1,0 +1,9 @@
+diff --git a/apps/viewer/src/aim/aimReqlib.ts b/apps/viewer/src/aim/aimReqlib.ts
+--- a/apps/viewer/src/aim/aimReqlib.ts
++++ b/apps/viewer/src/aim/aimReqlib.ts
+@@ -91,4 +91,5 @@ export function stopReqlib(): void {
+     p.reject(new Error('Spojenie s AIM sa prerušilo.'));
+   }
+   pending.clear();
++  useAimReqlib.setState({ choice: null, busy: null });
+ }
