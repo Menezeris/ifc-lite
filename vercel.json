@@ -1,5 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "**": false,
+      "production": true
+    }
+  },
   "buildCommand": "bash scripts/vercel-build.sh '@ifc-lite/viewer...'",
   "outputDirectory": "apps/viewer/dist",
   "installCommand": "bash scripts/vercel-install.sh",
@@ -62,8 +68,16 @@
       "destination": "https://api.bsdd.buildingsmart.org/:path*"
     },
     {
+      "source": "/api/bimcollab/:path*",
+      "destination": "/api/bimcollab?path=:path*"
+    },
+    {
       "source": "/api/dalux/:path*",
       "destination": "/api/dalux?path=:path*"
+    },
+    {
+      "source": "/api/buildagil/:path*",
+      "destination": "/api/buildagil?path=:path*"
     },
     {
       "source": "/oauth/dropbox/callback",

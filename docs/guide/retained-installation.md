@@ -43,8 +43,32 @@ ifc-lite export model.ifc --format obj --kernel retained \
 The native standalone worker uses the ordinary CMake build instead of
 `emcmake`; `cmake --install` places the binary in `bin/` and notices in
 `share/licenses/ifclite-smlib/`. It is a separate executable from the CLI's
-Node/Emscripten engine. Archive both installation directories together and add
-the final platform-specific runtime notices after the linked-artifact review.
+Node/Emscripten engine. Native worker binaries are not distributed in this release; users build them
+from the pinned SDK. Before any future native binary distribution, archive both
+installation directories together and complete the platform-specific link/runtime
+review described in the licensing record.
+
+## Source availability and notices
+
+IFC-Lite covered source is available under MPL-2.0 at
+`https://github.com/LTplus-AG/ifc-lite/tree/<tag>`. Before release staging, replace
+`<tag>` in the distributed THIRD_PARTY_NOTICES header with the exact root
+`v<version>` tag for the release source commit (`release.yml` resolves that
+commit explicitly). Verify the URL and keep that covered source available;
+linking to `main` does not identify the distributed build. Fill the notice copies
+used for staging before producing the final hash manifests; the committed notice
+template and its CI drift check retain the placeholder.
+
+Serve the notices with the assets: `/smlib/LICENSE` and
+`/smlib/THIRD_PARTY_NOTICES.md` are the original SDK texts;
+`/smlib/IFC_LITE_LICENSE.txt` and `/smlib/IFC_LITE_THIRD_PARTY_NOTICES.txt` carry
+IFC-Lite's MPL and combined notice. The retained Rust package build copies
+`IFC_LITE_LICENSE.txt` and `THIRD_PARTY_NOTICES.txt` alongside its JS/WASM;
+the complete staged engine also has `LICENSES/ifc-lite/LICENSE` and
+`THIRD_PARTY_NOTICES.txt` at its root. Deploy these inventoried files together,
+including the filled source URL. Staging manifests still say
+`buildAttestation: false`: source-to-binary attestation is recommended evidence,
+not a licence obligation. See the [licensing review record](../architecture/retained-licensing.md#review-record).
 
 ## URL layout and headers
 
@@ -99,3 +123,20 @@ silently execute exact. Repeat after downloading/installing the actual release
 artifact rather than serving a developer checkout. Use the existing
 `geometry-platform.yml` real Worker and `viewer-retained` tests as the executable
 smoke recipe; this document is a draft, not a claim that a release was hosted.
+
+## Exports from the retained viewer
+
+A model the viewer holds from the retained kernel (`?kernel=retained`) exports the geometry on screen or refuses.
+
+- **GLB** takes the meshes the viewer holds, GPU-instanced occurrences included; it never re-meshes the file with the
+  exact engine, so products the retained kernel refused are absent from the GLB exactly as they are absent from the
+  viewport. (The GLB writer gives every material the same default metallic/roughness, on both kernels.)
+- **USD, Cesium ion and the energy models (HBJSON, DFJSON)** rebuild their geometry from the file with the exact
+  engine (Cesium ion uploads the model's STEP for Cesium to re-mesh). While any loaded model is retained their commands
+  are disabled with a reason; reload the model with the exact kernel to use them.
+- **KMZ and the IFC5 output** are built from the held meshes and are refused while the retained model is incomplete
+  or shape-only. IFC4 STEP export and IFC5 changes-only and geometry-disabled exports remain available.
+- **Unsectioned IFC (STEP), CSV and JSON** need no geometry kernel and work unchanged. Sectioned STEP export
+  rebuilds exact tessellation, including its outside test, and is refused when an exported model is retained.
+  The IFC ribbon still opens the dialog with section planes visible: keep **Export Visible Only** off for
+  unsectioned STEP, or choose geometry-disabled IFC5. Reload with the exact kernel to export a section.

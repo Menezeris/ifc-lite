@@ -22,7 +22,7 @@ import { resolve as translate } from '@/i18n/registry';
 import { registerEnglish, type TranslationKey } from '@/i18n';
 import { retainedGeometryEn } from '@/i18n/catalogues/retained-geometry.en';
 import { chooseGeometryKernel, requestedGeometryKernel } from '@/store/geometryKernel';
-import { hasRetainedShapeOnlyModel } from '@/store/retainedGeometry';
+import { hasRetainedGeometryModel } from '@/store/retainedGeometry';
 import { memoryAccounting } from '@/lib/perf/memoryAccounting';
 import type { GeometryEventRequest, GeometryKernelLoad } from '@/hooks/ingest/geometryEventSource';
 import { RETAINED_MAX_SOURCE_BYTES } from './retained-protocol';
@@ -62,7 +62,7 @@ function phaseText(phase: RetainedPhase): { phase: string; percent: number } {
 const RETAINED_POLICY: GeometryKernelLoad = {
   kind: 'retained',
   serverEnabled: false,
-  cachePlan: (plan) => ({ ...plan, tier: 'none', shouldCache: false, persistSource: false }),
+  cachePlan: (plan) => ({ ...plan, tier: 'none', shouldCache: false }),
   refuseSource: () => true,
 };
 
@@ -77,7 +77,7 @@ export function beginRetainedLoad(
   retry: () => void,
 ): GeometryKernelLoad | null {
   const name = { file: file.name };
-  if (target.kind === 'federated' && hasRetainedShapeOnlyModel(useViewerStore.getState().models)) {
+  if (target.kind === 'federated' && hasRetainedGeometryModel(useViewerStore.getState().models)) {
     // The open model is retained; an exact add would mix kernels in one view.
     return refusedLoad(translate('retainedGeometry.scope.federatedOnRetained', name), null);
   }

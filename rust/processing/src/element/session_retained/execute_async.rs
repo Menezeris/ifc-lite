@@ -36,7 +36,18 @@ impl<R: NumericalReceipt> RuntimeIssued<R> {
                 self.cancellation.stage.store(SETTLED_FAULT, Ordering::Release);
                 let contract = matches!(&reason, RetainedExecutionError::Runtime(fault)
                     if fault.kind == RuntimeFaultKind::Contract);
-                if !reason.controller_cancelled() && !contract {
+                // #7955: a failed band is still atomic, but a synchronized
+                // transactional refusal must not consume the host model's
+                // restart budget. Native and browser executors preserve their
+                // domain only for known pre-copy statuses 1..7. Unknown status,
+                // transport loss, and other faults retain fault recovery. #8291: a
+                // face-set operation gets the same treatment, because real coverings
+                // refuse cuts routinely and each must not cost later products a restart.
+                let synchronized_refusal = (self.layer_phase || self.touches_face_set())
+                    && self.cancellation.owner.incarnation().is_some()
+                    && matches!(&reason, RetainedExecutionError::Runtime(fault)
+                        if matches!(fault.kind, RuntimeFaultKind::Kernel { status: 1..=7 }));
+                if !reason.controller_cancelled() && !contract && !synchronized_refusal {
                     // Fault recovery, never a controller-owned cancellation.
                     self.cancellation.owner.retire();
                 }
@@ -45,6 +56,14 @@ impl<R: NumericalReceipt> RuntimeIssued<R> {
         };
         self.armed = false;
         Ok(completed)
+    }
+
+    fn touches_face_set(&self) -> bool {
+        self.operations.iter().any(|operation| match operation {
+            IssuedRetainedOperation::Boolean { inputs, .. } => inputs.iter().any(|input| input.realization.has_face_set()),
+            IssuedRetainedOperation::Affine { input, .. } => input.has_face_set(),
+            IssuedRetainedOperation::Construction { .. } => false,
+        })
     }
 
     async fn execute_started_async(

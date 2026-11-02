@@ -1,5 +1,26 @@
 # @ifc-lite/export
 
+## 4.13.3
+
+### Patch Changes
+
+- [#8455](https://github.com/LTplus-AG/ifc-lite/pull/8455) [`5943cc2`](https://github.com/LTplus-AG/ifc-lite/commit/5943cc28d1b3725ca84dd4d9e7f3e60e867f9fac) Thanks [@ionuting](https://github.com/ionuting)! - `editOwnershipRefusal` decodes an edited source record through `source.decodeUtf8` instead of `TextDecoder` over `source.slice()`. A resident source's slice is a view over its buffer, usually a `SharedArrayBuffer`, which browsers' `TextDecoder` rejects, so every in-place edit that re-read a changed source record threw.
+
+- [#8349](https://github.com/LTplus-AG/ifc-lite/pull/8349) [`54ae125`](https://github.com/LTplus-AG/ifc-lite/commit/54ae125d1664c97dbd3f75c24be2b1b0a604c243) Thanks [@louistrue](https://github.com/louistrue)! - Scaled map-conversion normalization (the Cesium ion compatibility export) now accepts a bare `IfcTypeProduct.RepresentationMaps` reference (`#n`) and wraps that map exactly as the list form `(#n)`, matching how geometry and EntityRows already read it. It used to refuse the whole normalization with "type RepresentationMaps is not a list". Typed wrappers such as `IFCREPRESENTATIONMAP(#n)` and lists with non-reference members are still refused atomically, with no patches.
+- Updated dependencies [[`58442c2`](https://github.com/LTplus-AG/ifc-lite/commit/58442c2da84df10227f79d7b2d2c08a7327bebd2), [`de4c89b`](https://github.com/LTplus-AG/ifc-lite/commit/de4c89b83d8c1b5aa0b6e1c589368e80a3de7c31), [`377aad0`](https://github.com/LTplus-AG/ifc-lite/commit/377aad056d5bcaeec5f760d07d9b1afbc2574ca0), [`f7330db`](https://github.com/LTplus-AG/ifc-lite/commit/f7330db71ccf3b3bce6cf690fe17b2660827c650)]:
+  - @ifc-lite/geometry@8.1.0
+  - @ifc-lite/parser@9.9.0
+
+## 4.13.2
+
+### Patch Changes
+
+- [#8300](https://github.com/LTplus-AG/ifc-lite/pull/8300) [`d3eb48a`](https://github.com/LTplus-AG/ifc-lite/commit/d3eb48a12d3b5982603e023961e0709c5933429d) Thanks [@louistrue](https://github.com/louistrue)! - Accept bare `IfcTypeProduct.RepresentationMaps` references in browser geometry discovery and in exported EntityRows, matching native geometry. Typed wrappers remain refused. Tabular and semantic exports now include orphan type rows for bare map references.
+
+- [#8343](https://github.com/LTplus-AG/ifc-lite/pull/8343) [`68c8f8f`](https://github.com/LTplus-AG/ifc-lite/commit/68c8f8fed82fb903b26d45f059e8e1b0a09f0eaf) Thanks [@louistrue](https://github.com/louistrue)! - A `{ typed: { type, value } }` attribute value now takes its inner encoding from the defined type's EXPRESS base however the type name is spelled: `IFCLENGTHMEASURE`, `LengthMeasure` and `IfcLengthMeasure` all write `IFCLENGTHMEASURE(3.)`. Upper-case and prefix-less names used to fall back to the JSON value's shape, writing e.g. `IFCLENGTHMEASURE(3)`. Both STEP writers (TS and Rust) agree.
+- Updated dependencies [[`7d391e2`](https://github.com/LTplus-AG/ifc-lite/commit/7d391e2ad2e449c9713a02113c0a81a8381673af)]:
+  - @ifc-lite/geometry@8.0.2
+
 ## 4.13.1
 
 ### Patch Changes

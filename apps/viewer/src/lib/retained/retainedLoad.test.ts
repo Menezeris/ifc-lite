@@ -50,6 +50,19 @@ describe('#7955 M2-C retained scope', () => {
     assert.equal(harness().begin(stepFile()), null);
   });
 
+  it('#8415: load admission does not exclude an exact add before the retained summary is published', () => {
+    chooseGeometryKernel('retained');
+    const load = harness();
+    const primary = load.begin(stepFile('primary.ifc'));
+    assert.equal(primary?.kind, 'retained');
+    assert.equal(primary?.refused, undefined);
+    // The canonical loader reads the source before opening this event stream,
+    // which is where the first retained summary becomes visible to admission.
+    chooseGeometryKernel('exact');
+    assert.equal(load.begin(stepFile('exact-add.ifc'), 'federated'), null,
+      'an in-flight retained request is not a fence: export gates must scope their own model IDs');
+  });
+
   for (const [title, file, kind, message] of [
     ['a federated add', stepFile('second.ifc'), 'federated', /one model at a time/],
     ['a non-STEP input', stepFile('site.xml'), 'primary', /IFC \(STEP\) files only/],
@@ -90,7 +103,7 @@ describe('#7955 M2-C retained scope', () => {
     assert.equal(load.spawned(), 0);
   });
 
-  it('nothing is federated onto an open retained model, not even with the exact kernel', async () => {
+  it('M11-Z keeps federation refused for an open final retained model, including an exact add', async () => {
     useViewerStore.getState().addModel({
       id: 'r', name: 'r.ifc', ifcDataStore: null, geometryResult: null, visible: true, collapsed: false,
       schemaVersion: 'IFC4', loadedAt: 0, fileSize: 0, idOffset: 0, maxExpressId: 0, loadState: 'complete',

@@ -20,7 +20,12 @@
 export interface CacheEntryMeta {
   lastModified?: number;
   fullSourceHash?: string;
+<<<<<<< HEAD
   instancedGeometry?: import('./ifc-cache.js').InstancedGeometryMaps; // AIM-FORK (AIM #308): next 0 lines
+=======
+  /** The source's `IfcSourceBytes.contentKey` at write, so a hit need not re-hash the source on the main thread. */
+  sourceContentKey?: string;
+>>>>>>> upstream/main
 }
 
 /**
@@ -37,7 +42,17 @@ export interface CacheResult {
   lastModified?: number;
   /** True full-file content hash (SHA-256 hex) stored at write; mesh-only revalidation. */
   fullSourceHash?: string;
+<<<<<<< HEAD
   instancedGeometry?: import('./ifc-cache.js').InstancedGeometryMaps; // AIM-FORK (AIM #308): next 0 lines
+=======
+  /** The source's `IfcSourceBytes.contentKey` at write, so a hit need not re-hash the source on the main thread. */
+  sourceContentKey?: string;
+  /** When this entry was written; a scene snapshot only attaches to the same write. */
+  createdAt?: number;
+  /** The finished scene (`encodeSceneSnapshot`), with the renderer policy it was built under. */
+  sceneSnapshot?: Blob;
+  sceneSnapshotKey?: string;
+>>>>>>> upstream/main
 }
 
 /**
@@ -62,6 +77,21 @@ export type SetCachedFn = (
  */
 export type DeleteCachedFn = (key: string) => Promise<void>;
 
+/** Identifies one write of a cache entry. */
+export interface SceneSnapshotWrite {
+  createdAt: number;
+  fullSourceHash?: string;
+}
+
+/**
+ * Attach a finished scene to the entry from this write; a purged or replaced
+ * entry stays as it is. Resolves whether it was stored.
+ */
+export type PutSceneSnapshotFn = (key: string, write: SceneSnapshotWrite, snapshot: Blob, snapshotKey: string) => Promise<boolean>;
+
+/** Remove a scene snapshot from the entry from this write. Resolves whether one was removed. */
+export type ClearSceneSnapshotFn = (key: string, write: SceneSnapshotWrite) => Promise<boolean>;
+
 /**
  * Cache service interface
  */
@@ -69,6 +99,8 @@ export interface ICacheService {
   getCached: GetCachedFn;
   setCached: SetCachedFn;
   deleteCached: DeleteCachedFn;
+  putSceneSnapshot: PutSceneSnapshotFn;
+  clearSceneSnapshot: ClearSceneSnapshotFn;
 }
 
 // ============================================================================
@@ -90,6 +122,8 @@ export async function getCacheService(): Promise<ICacheService> {
     getCached: mod.getCached,
     setCached: mod.setCached,
     deleteCached: mod.deleteCached,
+    putSceneSnapshot: mod.putSceneSnapshot,
+    clearSceneSnapshot: mod.clearSceneSnapshot,
   };
 
   return cacheService;
@@ -136,6 +170,18 @@ export async function setCached(
 export async function deleteCached(key: string): Promise<void> {
   const service = await getCacheService();
   return service.deleteCached(key);
+}
+
+/** See {@link PutSceneSnapshotFn}. */
+export async function putSceneSnapshot(key: string, write: SceneSnapshotWrite, snapshot: Blob, snapshotKey: string): Promise<boolean> {
+  const service = await getCacheService();
+  return service.putSceneSnapshot(key, write, snapshot, snapshotKey);
+}
+
+/** See {@link ClearSceneSnapshotFn}. */
+export async function clearSceneSnapshot(key: string, write: SceneSnapshotWrite): Promise<boolean> {
+  const service = await getCacheService();
+  return service.clearSceneSnapshot(key, write);
 }
 
 /**
