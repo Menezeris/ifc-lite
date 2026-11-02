@@ -10,7 +10,9 @@
  * pôdorysný pohľad (kamera zhora, `underlayViewLocked`) ostávajú, lebo to je 2D.
  * Hook `useDrawingUnderlay` číta `hidden` a pre uložené podklady prepíše `visible`.
  * `overrides` (AIM #323, #325) sú prepisy jednotlivých podkladov v 3D (viditeľnosť, priehľadnosť)
- * z chatu alebo z uloženého pohľadu, tiež bez zápisu kalibrácie (`underlaysPlan.ts`).
+ * z chatu alebo z uloženého pohľadu, tiež bez zápisu kalibrácie (`underlaysPlan.ts`). Pri štarte je
+ * každý podklad v 3D vypnutý bez ohľadu na uložené `visible`; zapína ho len prepis (oko v paneli,
+ * chat, uložený pohľad), takže sa PDF sťahuje a rasterizuje až pri prvom zapnutí.
  */
 
 import { create } from 'zustand';
@@ -23,6 +25,8 @@ interface AimUnderlays3dStore {
   overrides: UnderlayOverrides;
   setShown: (show: boolean) => void;
   setOverrides: (overrides: UnderlayOverrides) => void;
+  /** Oko v paneli Underlays: zapne alebo vypne jeden podklad v 3D (prepis relácie, bez zápisu do DB). */
+  setUnderlayOn: (id: string, on: boolean) => void;
 }
 
 const NO_OVERRIDES: UnderlayOverrides = {};
@@ -34,6 +38,11 @@ export const useAimUnderlays3d = create<AimUnderlays3dStore>((set) => ({
   overrides: NO_OVERRIDES,
   setShown: (show) => set({ hidden: !show }),
   setOverrides: (overrides) => set({ overrides }),
+  // Turning one underlay on also turns the 3D switch on: the click asked to see it
+  setUnderlayOn: (id, on) => set((s) => ({
+    overrides: { ...s.overrides, [id]: { ...s.overrides[id], visible: on } },
+    ...(on ? { hidden: false } : {}),
+  })),
 }));
 
 /** Podklady sa v 3D plátne nekreslia: vypnuté a nejde o zamknutý pôdorysný pohľad (2D). */

@@ -43,7 +43,7 @@ describe('podklady PDF v 3D (AIM D-133 doplnok, #170)', () => {
     assert.equal(hiddenCopy.visible, false);
     assert.deepEqual(hiddenCopy.affine, placement.affine);
     assert.equal(placement.visible, true);
-    assert.equal(underlayIn3d(placement, undefined, false), placement);
+    assert.equal(underlayIn3d(placement, { visible: true }, false).visible, true);
   });
 
   it('podklad vypnutý okom (visible kalibrácie) ostane vypnutý aj po zapnutí v 3D', () => {

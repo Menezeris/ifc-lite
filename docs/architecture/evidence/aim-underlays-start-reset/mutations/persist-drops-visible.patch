@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlaysApply.ts a/apps/viewer/src/aim/underlaysApply.ts
+index e5046efc..2c50f0d5 100644
+--- b/apps/viewer/src/aim/underlaysApply.ts
++++ a/apps/viewer/src/aim/underlaysApply.ts
+@@ -47,7 +47,7 @@ export function applyUnderlaySet(msg: UnderlaySetMessage, noteIssue: (text: stri
+       store.updateUnderlayPlacementLive(id, { ...placement, visible: it.visible ?? placement.visible, opacity: it.opacity ?? placement.opacity });
+       store.commitUnderlayPlacement(id);
+       // Viditeľnosť v 3D ostane prepisom aj po uložení: uložené `visible` podklad v 3D nezapne (štart = vypnuté).
+-      const { visible: _v, opacity, ...rest } = overrides[id] ?? {};
++      const { opacity, ...rest } = overrides[id] ?? {};
+       const left = { ...rest, ...(it.opacity === undefined && opacity !== undefined ? { opacity } : {}) };
+       if (Object.keys(left).length > 0) overrides[id] = left;
+       else delete overrides[id];

@@ -27,7 +27,8 @@ const drawings = () => calibratedDrawings(useViewerStore.getState().underlayDraw
 
 /**
  * `SET_UNDERLAYS_3D`: prepínač 3D a prepisy jednotlivých podkladov. `persist` zapíše `visible` a `opacity`
- * do kalibrácie cez uloženie hostovi (celý doterajší placement, poloha ostane) a prepis toho podkladu zruší.
+ * do kalibrácie cez uloženie hostovi (celý doterajší placement, poloha ostane) a prepis priehľadnosti zruší;
+ * prepis viditeľnosti ostane, lebo v 3D zapína podklad len prepis relácie.
  */
 export function applyUnderlaySet(msg: UnderlaySetMessage, noteIssue: (text: string) => void): void {
   const u = useAimUnderlays3d.getState();
@@ -45,8 +46,9 @@ export function applyUnderlaySet(msg: UnderlaySetMessage, noteIssue: (text: stri
       // Do kalibrácie ide len to, čo položka nesie; ostatné pole prepisu (napr. z pohľadu) ostane prepisom.
       store.updateUnderlayPlacementLive(id, { ...placement, visible: it.visible ?? placement.visible, opacity: it.opacity ?? placement.opacity });
       store.commitUnderlayPlacement(id);
-      const { visible, opacity, ...rest } = overrides[id] ?? {};
-      const left = { ...(it.visible === undefined && visible !== undefined ? { visible } : {}), ...(it.opacity === undefined && opacity !== undefined ? { opacity } : {}), ...rest };
+      // Viditeľnosť v 3D ostane prepisom aj po uložení: uložené `visible` podklad v 3D nezapne (štart = vypnuté).
+      const { opacity, ...rest } = overrides[id] ?? {};
+      const left = { ...rest, ...(it.opacity === undefined && opacity !== undefined ? { opacity } : {}) };
       if (Object.keys(left).length > 0) overrides[id] = left;
       else delete overrides[id];
     }

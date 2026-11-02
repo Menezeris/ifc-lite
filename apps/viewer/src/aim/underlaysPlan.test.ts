@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import {
-  describeUnderlays, isUnderlaysViewWire, planUnderlaySet, restoreUnderlays, snapshotUnderlays, underlayIn3d,
+  describeUnderlays, isUnderlaysViewWire, planUnderlaySet, restoreUnderlays, snapshotUnderlays, underlayIn3d, underlayOn,
   type CalibratedDrawing,
 } from './underlaysPlan.js';
 
@@ -32,9 +32,26 @@ describe('jednotlivé podklady v 3D (AIM #323)', () => {
   });
 
   it('bez prepisu a skrytia vráti ten istý objekt (renderer nič neprepočíta)', () => {
-    const p = { visible: true, opacity: 0.5 };
+    const p = { visible: false, opacity: 0.5 };
     assert.equal(underlayIn3d(p, undefined, false), p);
     assert.equal(underlayIn3d(p, {}, false), p);
+  });
+
+  it('štart: uložené visible podklad v 3D nezapne, kým ho nezapne prepis (nič sa nerasterizuje)', () => {
+    const p = { visible: true, opacity: 0.5 };
+    assert.equal(underlayIn3d(p, undefined, false).visible, false);
+    assert.equal(underlayIn3d(p, { opacity: 0.2 }, false).visible, false);
+    assert.equal(underlayIn3d(p, { visible: true }, false).visible, true);
+    assert.equal(underlayOn(undefined), false);
+  });
+
+  it('zamknutý pôdorys kreslí len podklad svojho podlažia (uložené visible alebo prepis)', () => {
+    const at = (storeyGuid: string, visible = true) => ({ visible, opacity: 0.5, storeyGuid });
+    assert.equal(underlayIn3d(at('G-1NP'), undefined, true, 'G-1NP').visible, true);
+    assert.equal(underlayIn3d(at('G-2NP'), undefined, true, 'G-1NP').visible, false);
+    assert.equal(underlayIn3d(at('G-1NP', false), undefined, true, 'G-1NP').visible, false);
+    assert.equal(underlayIn3d(at('G-1NP'), { visible: false }, true, 'G-1NP').visible, false);
+    assert.equal(underlayIn3d(at('G-1NP'), undefined, true, null).visible, false);
   });
 
   it('planUnderlaySet zlúči položku s doterajším prepisom, iné podklady nemení', () => {
@@ -55,8 +72,10 @@ describe('jednotlivé podklady v 3D (AIM #323)', () => {
   });
 
   it('describeUnderlays: účinný stav v 3D, uložené hodnoty a príznak prepisu', () => {
-    const [a, b] = describeUnderlays([D1, D2], { d2: { visible: false, opacity: 0.4 } });
-    assert.deepEqual([a.visible, a.opacity, a.overridden, a.saved], [true, 0.7, false, { visible: true, opacity: 0.7 }]);
+    const [a, b, c] = describeUnderlays([D1, D2, D3], { d2: { visible: false, opacity: 0.4 } });
+    // Bez prepisu je podklad v 3D vypnutý (štart), aj keď je v kalibrácii uložený ako viditeľný.
+    assert.deepEqual([a.visible, a.opacity, a.overridden, a.saved], [false, 0.7, true, { visible: true, opacity: 0.7 }]);
+    assert.deepEqual([c.visible, c.overridden], [false, false]);
     assert.deepEqual([b.document_id, b.page, b.storey_guid, b.storey_z], ['d2', 2, 'G-2NP', 3.2]);
     assert.deepEqual([b.visible, b.opacity, b.overridden, b.saved.visible], [false, 0.4, true, true]);
   });
@@ -64,7 +83,7 @@ describe('jednotlivé podklady v 3D (AIM #323)', () => {
 
 describe('podklady v uloženom pohľade (AIM #325)', () => {
   it('snímka nesie prepínač 3D a účinný stav každého kalibrovaného podkladu', () => {
-    const w = snapshotUnderlays([D1, D2, D3], { d1: { visible: false }, d2: { opacity: 0.5 } }, true);
+    const w = snapshotUnderlays([D1, D2, D3], { d1: { visible: false }, d2: { visible: true, opacity: 0.5 } }, true);
     assert.deepEqual(w, {
       show: true,
       items: [
@@ -74,6 +93,8 @@ describe('podklady v uloženom pohľade (AIM #325)', () => {
       ],
     });
     assert.equal(isUnderlaysViewWire(w), true);
+    // D1 uložený ako viditeľný bez prepisu ide do pohľadu vypnutý (v 3D ho nikto nezapol).
+    assert.equal(snapshotUnderlays([D1], {}, true).items[0].visible, false);
   });
 
   it('obnova nahradí prepisy celé: izolované 2NP ukáže len podklad 2NP', () => {
