@@ -1,0 +1,156 @@
+{
+  "auto-with-margin-accepted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionBox.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "8f61bc45cf0d91d65694822ca3fd33ddc13c63c3",
+    "production": [
+      "apps/viewer/src/aim/sectionBox.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionBox.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "box-missing-on-bar": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/components/viewer/tools/SectionToolbar.planes.test.tsx; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "8f61bc45cf0d91d65694822ca3fd33ddc13c63c3",
+    "production": [
+      "apps/viewer/src/components/viewer/tools/SectionAddMenu.tsx"
+    ],
+    "tests": [
+      "apps/viewer/src/components/viewer/tools/SectionToolbar.planes.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "fit-ignores-room-and-margin": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/components/viewer/tools/SectionToolbar.box.test.tsx; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "8f61bc45cf0d91d65694822ca3fd33ddc13c63c3",
+    "production": [
+      "apps/viewer/src/components/viewer/tools/SectionActivePlaneRow.tsx"
+    ],
+    "tests": [
+      "apps/viewer/src/components/viewer/tools/SectionToolbar.box.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "floor-slab-any-depth": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionBoxFit.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "8f61bc45cf0d91d65694822ca3fd33ddc13c63c3",
+    "production": [
+      "apps/viewer/src/aim/sectionBoxFit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionBoxFit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "ignores-clicked-entity": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/runBoxCut.test.tsx; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "8f61bc45cf0d91d65694822ca3fd33ddc13c63c3",
+    "production": [
+      "apps/viewer/src/aim/sectionBoxScene.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/runBoxCut.test.tsx"
+    ],
+    "restoration": "verified"
+  },
+  "margin-fraction-halved": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionBoxFit.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "8f61bc45cf0d91d65694822ca3fd33ddc13c63c3",
+    "production": [
+      "apps/viewer/src/aim/sectionBoxFit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionBoxFit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "margin-no-minimum": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionBoxFit.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "8f61bc45cf0d91d65694822ca3fd33ddc13c63c3",
+    "production": [
+      "apps/viewer/src/aim/sectionBoxFit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionBoxFit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "missing-side-no-margin": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionBoxFit.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "8f61bc45cf0d91d65694822ca3fd33ddc13c63c3",
+    "production": [
+      "apps/viewer/src/aim/sectionBoxFit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionBoxFit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "room-branch-disabled": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionBoxScene.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "8f61bc45cf0d91d65694822ca3fd33ddc13c63c3",
+    "production": [
+      "apps/viewer/src/aim/sectionBoxScene.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionBoxScene.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "wall-extends-along-its-length": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionBoxFit.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "8f61bc45cf0d91d65694822ca3fd33ddc13c63c3",
+    "production": [
+      "apps/viewer/src/aim/sectionBoxFit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionBoxFit.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "wall-thickness-uncapped": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/sectionBoxFit.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "8f61bc45cf0d91d65694822ca3fd33ddc13c63c3",
+    "production": [
+      "apps/viewer/src/aim/sectionBoxFit.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/sectionBoxFit.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}
