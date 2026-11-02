@@ -42,6 +42,7 @@ import { dispatchLensMessage, isLensEnvelope, lensSettled, listSettled, resetLen
 import { appliedViewState, runSectionBox, runViewsMessage, setChangesProvider, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
 import { createViewChangeTracker } from './viewChanges.js';
 import { setIdsHostPost } from './idsHost.js';
+import { hostReply, startHostReplies, stopHostReplies, verifySelected } from './hostReplies.js';
 import { handleIcddStatus, setIcddHostPost } from './aimIcddStore.js';
 import { isIcddStatusMessage } from './icdd-protocol.js';
 import { AimIcddDialog } from './AimIcddDialog.js';
@@ -63,9 +64,6 @@ const loadClash = () => (clash ??= import('./aimClash.js'));
 /** Odpoveď hosta na import .bcfzip z BCF panela: lenivý modul, overí tvar `BCF_IMPORTED` až po načítaní. */
 let bcfImport: Promise<typeof import('./aimBcfImport.js')> | null = null;
 const loadBcfImport = () => (bcfImport ??= import('./aimBcfImport.js'));
-/** Knižnica požiadaviek (D-182): odpoveď hosta `REQLIB_RESULT`, tvar overuje lenivý modul. */
-let reqlib: Promise<typeof import('./aimReqlib.js')> | null = null;
-const loadReqlib = () => (reqlib ??= import('./aimReqlib.js'));
 
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
@@ -188,11 +186,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
         if (aimTyped(raw, 'IDS_LOAD')) command(run); else run();
         return;
       }
-      if (aimTyped(e.data, 'REQLIB_RESULT')) {
-        const raw: unknown = e.data; // Knižnica požiadaviek (D-182): odpoveď na žiadosť karty alebo lišty IDS, hneď
-        void loadReqlib().then((m) => m.handleReqlibResult(raw)).catch((err) => console.warn('[aim-bridge] REQLIB_RESULT failed', err));
-        return;
-      }
+      if (hostReply(e.data)) return; // knižnica požiadaviek (D-182) a overenie výmer (D-185 UI): odpoveď hneď
       if (aimTyped(e.data, 'CLASH_LOAD') || aimTyped(e.data, 'CLASH_SAVED')) {
         const raw: unknown = e.data; // Test clash a stavy z AIM do panela clash (D-164); potvrdenie uloženia ide hneď
         const run = () => track(loadClash().then((m) => m.runClashMessage(raw, { noteIssue })));
@@ -268,6 +262,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
     }
 
     setIdsHostPost((msg) => window.parent.postMessage(msg, origin())); // tlačidlo "Uložiť do AIM" v paneloch IDS (D-162)
+    startHostReplies((guids) => runVisibility({ source: SOURCE, type: 'FOCUS', guids })); // detail overenia výmer (D-185 UI)
     setIcddHostPost((msg, transfer) => window.parent.postMessage(msg, origin(), transfer ?? [])); // ribbon AIM, tlačidlo ICDD (D-181)
     wireDocumentEvents(post, selectPickedGlobalId); // kalibrácia podkladu a taby dokumentov -> host (docBridge.ts)
 
@@ -284,7 +279,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
       setIcddHostPost(null);
       void ids?.then((m) => m.stopIds());
       void clash?.then((m) => m.stopClash());
-      void reqlib?.then((m) => m.stopReqlib());
+      stopHostReplies();
       void bcfImport?.then((m) => m.stopBcfImport());
       useViewerStore.getState().setUnderlaySaveHandler(null);
       useViewerStore.getState().setDocumentEventHandler(null);
@@ -372,6 +367,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
       if (!hadSelectionRef.current) return;
       hadSelectionRef.current = false;
       useAimPanelStore.getState().clear();
+      verifySelected(null);
       window.parent.postMessage({ source: SOURCE, type: 'ENTITY_DESELECTED' } satisfies OutboundMessage, targetOrigin);
       return;
     }
@@ -386,6 +382,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
       if (store.isMobile && store.rightPanelCollapsed) store.setRightPanelCollapsed(false);
     }
     const guid = guidForEntity(useViewerStore.getState().models, selectedEntity);
+    verifySelected(guid ?? null); // fajočky výmer len pre tento prvok (D-185 UI)
     if (guid) {
       // AIM layer rows wait for the host's answer:
       // AIM_PANEL_DATA / AIM_PANEL_EMPTY (or the store times out quietly).

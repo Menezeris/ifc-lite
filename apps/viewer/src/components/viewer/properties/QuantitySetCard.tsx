@@ -18,6 +18,9 @@ import { PropertySearchHighlight } from './PropertySearchHighlight';
 import { usePersistentDisclosure } from './usePersistentDisclosure';
 import { quantityDisplayValue } from './propertyDisplayValue';
 import { CopyValueButton } from './CopyValueButton';
+// >>> AIM-FORK: D-185 UI, fajočka overenia výmer (docs/FORK_MAINTENANCE.md)
+import { AimQtoVerifyBadge, AimQtoVerifyDetail } from '@/aim/AimQtoVerify';
+// <<< AIM-FORK
 
 /** Maps quantity type to friendly name for tooltip */
 const QUANTITY_TYPE_KEYS: Record<number, TranslationKey> = {
@@ -37,9 +40,14 @@ export interface QuantitySetCardProps {
    *  `PropertySetCardProps.unitDisplayOverrides`. */
   unitDisplayOverrides?: Record<string, string>;
   searchQuery?: string;
+  // >>> AIM-FORK: D-185 UI, overenie len pri výmerach výskytu
+  aimVerify?: boolean;
+  // <<< AIM-FORK
 }
 
-export function QuantitySetCard({ qset, projectUnits, projectUnitsAvailable = true, unitDisplayOverrides, searchQuery }: QuantitySetCardProps) {
+// >>> AIM-FORK: D-185 UI, prop aimVerify
+export function QuantitySetCard({ qset, projectUnits, projectUnitsAvailable = true, unitDisplayOverrides, searchQuery, aimVerify }: QuantitySetCardProps) {
+// <<< AIM-FORK
   const { t, locale } = useTranslation();
   const [open, setOpen] = usePersistentDisclosure(`qset:${qset.name}`);
   return (
@@ -84,7 +92,9 @@ export function QuantitySetCard({ qset, projectUnits, projectUnitsAvailable = tr
                   <span className="font-mono text-blue-700 dark:text-blue-400 select-all break-words">
                     <PropertySearchHighlight text={display} query={searchQuery} />
                   </span>
+                  {/* >>> AIM-FORK: D-185 UI */}{aimVerify && <AimQtoVerifyDetail qset={qset.name} quantity={q.name} />}{/* <<< AIM-FORK */}
                 </div>
+                {/* >>> AIM-FORK: D-185 UI */}{aimVerify && <AimQtoVerifyBadge qset={qset.name} quantity={q.name} />}{/* <<< AIM-FORK */}
                 <CopyValueButton name={q.name} value={display} />
               </div>
             );

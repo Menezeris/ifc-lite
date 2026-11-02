@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/aimVerify.ts a/apps/viewer/src/aim/aimVerify.ts
+index 9696c1eb..6617cce1 100644
+--- b/apps/viewer/src/aim/aimVerify.ts
++++ a/apps/viewer/src/aim/aimVerify.ts
+@@ -118,6 +118,7 @@ export async function runAllVerification(check: VerifyCheckId): Promise<void> {
+       ? `${label}: overených ${result.elements} prvkov, sedí ${c.green}, upozornenie ${c.yellow}, nesedí ${c.red}, nedá sa overiť ${c.grey}.`
+       : `${label}: overenie dokončené.`);
+     const guid = useAimVerify.getState().guid;
++    if (guid) void loadVerification(guid, true);
+   } catch (e) {
+     useAimVerify.setState({ runAll: { check, busy: false, result: null, error: errText(e) } });
+     toast.error(`${label}: ${errText(e)}`);

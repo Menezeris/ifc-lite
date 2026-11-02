@@ -12,6 +12,7 @@
  *   · (the 3D | 2D | Split switch moved to the view tab bar above the center, AIM D-132)
  *   · Derivations: the AIM derivations layer (D-089, DerivationsRibbonGroup.tsx),
  *     whose rules open the `aim-layers` panel (D-104)
+ *   · Overovanie: model-wide verification checks (D-185 UI, AimVerifyRibbonGroup.tsx)
  *
  * Nothing new and nothing moved out from under anyone: every button drives
  * the same store action the classic toolbar and the sidebar rail already
@@ -26,7 +27,7 @@
  */
 
 import { lazy, Suspense } from 'react';
-import { BookCheck, Files, Map as MapIcon, Package } from 'lucide-react';
+import { BookCheck, Files, Map as MapIcon, Package, Ruler } from 'lucide-react';
 import { DisplayAll, HideSelected, List, Refresh } from '@/icons';
 import { useViewerStore } from '@/store';
 import {
@@ -41,6 +42,8 @@ import { useAimViewTabs } from './viewTabsStore';
 import { safeManageUrl } from './derivations';
 import type { DerivationsRibbonUi } from './DerivationsRibbonGroup';
 import type { IcddRibbonUi } from './AimIcddRibbonGroup';
+import type { VerifyRibbonUi } from './AimVerifyRibbonGroup';
+import { useAimVerify } from './aimVerifyStore';
 import { requestIcddCheck, requestIcddExport, useAimIcdd } from './aimIcddStore';
 import { isBusy } from './icddPlan';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -60,6 +63,11 @@ const ICDD_UI: IcddRibbonUi = {
   menu: { Menu: DropdownMenu, Trigger: DropdownMenuTrigger, Content: DropdownMenuContent, Item: DropdownMenuItem } as IcddRibbonUi['menu'],
   icon: Package,
 };
+// Lazy: the Overovanie group (D-185 UI), same menu primitives as ICDD.
+const AimVerifyRibbonGroup = lazy(() =>
+  import('./AimVerifyRibbonGroup').then((m) => ({ default: m.AimVerifyRibbonGroup })),
+);
+const VERIFY_UI: VerifyRibbonUi = { ...ICDD_UI, icon: Ruler };
 const DERIVATIONS_UI: DerivationsRibbonUi = {
   Group: RibbonGroup,
   Button: RibbonContentLargeButton,
@@ -76,6 +84,7 @@ export function DocumentsRibbonTab() {
   const icddHostReady = useAimIcdd((st) => st.hostReady);
   const reqTabActive = useAimViewTabs((s) => s.activeId === 'req' || s.besideId === 'req');
   const icddBusy = useAimIcdd((st) => isBusy(st.run));
+  const verifyBusy = useAimVerify((st) => (st.runAll?.busy ? st.runAll.check : null));
   const derivationsLayer = useAimDerivationsStore((s) => s.layer);
   const relationsVisible = useAimDerivationsStore((s) => s.relationsVisible);
   // AIM layers are a workspace panel of the AIM rail group (D-104), toggled like the library panels.
@@ -141,6 +150,16 @@ export function DocumentsRibbonTab() {
           busy={icddBusy}
           onExport={requestIcddExport}
           onCheck={requestIcddCheck}
+        />
+      </Suspense>
+
+      <RibbonGroupDivider />
+
+      <Suspense fallback={null}>
+        <AimVerifyRibbonGroup
+          ui={VERIFY_UI}
+          hostAvailable={icddHostReady}
+          busyCheck={verifyBusy}
         />
       </Suspense>
     </>

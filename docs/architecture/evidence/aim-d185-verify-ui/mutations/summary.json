@@ -1,0 +1,114 @@
+{
+  "href-protocol-relative": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimVerifyPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "ff6fdb23be5885ebadc7c9a5e1b51638790d0231",
+    "production": [
+      "apps/viewer/src/aim/verify-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimVerifyPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "length-diff-in-metres": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimVerifyPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "ff6fdb23be5885ebadc7c9a5e1b51638790d0231",
+    "production": [
+      "apps/viewer/src/aim/aimVerifyPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimVerifyPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "other-element-accepted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimVerify.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "ff6fdb23be5885ebadc7c9a5e1b51638790d0231",
+    "production": [
+      "apps/viewer/src/aim/aimVerify.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimVerify.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "result-ok-not-boolean": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimVerifyPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "ff6fdb23be5885ebadc7c9a5e1b51638790d0231",
+    "production": [
+      "apps/viewer/src/aim/verify-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimVerifyPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "run-all-no-reload": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimVerify.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "ff6fdb23be5885ebadc7c9a5e1b51638790d0231",
+    "production": [
+      "apps/viewer/src/aim/aimVerify.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimVerify.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "segments-host-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimVerifyPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "ff6fdb23be5885ebadc7c9a5e1b51638790d0231",
+    "production": [
+      "apps/viewer/src/aim/aimVerifyPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimVerifyPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "stale-not-rerun": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimVerifyPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "ff6fdb23be5885ebadc7c9a5e1b51638790d0231",
+    "production": [
+      "apps/viewer/src/aim/aimVerifyPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimVerifyPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "unit-unchecked": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimVerifyPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "ff6fdb23be5885ebadc7c9a5e1b51638790d0231",
+    "production": [
+      "apps/viewer/src/aim/verify-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimVerifyPlan.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}
