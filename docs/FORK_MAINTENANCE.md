@@ -118,7 +118,10 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/components/viewer/useViewportSymbolicUploads.ts` | 2 | AIM room floor fills in 3D (`aim/aimRoomFill3dStore.ts`, AIM D-125 / #175) appended to the IfcAnnotation fills: the renderer has one fill channel |
 | `apps/viewer/src/components/viewer/useTouchControls.ts` | 4 | tap-to-select measures a tap from `Event.timeStamp` (`aim/tapTiming.ts`) instead of `Date.now()` in the handlers: a blocked main thread between touchstart and touchend no longer turns a 50 ms tap into a dropped one (AIM tap timestamp) |
 | `apps/viewer/src/components/viewer/tools/SectionAddMenu.tsx` | 3 | Box cut: Box sits on the empty bar next to Face, and a selected element or room goes through `aim/sectionBoxScene.ts` (margin by size, room from floor to ceiling slab) before upstream's selection/model box |
-| `apps/viewer/src/components/viewer/EntityContextMenu.tsx` | 2 | "Box cut" item in the element menu (`aim/AimBoxCutMenuItem.tsx`) |
+| `apps/viewer/src/components/viewer/EntityContextMenu.tsx` | 2 | "Box cut" item in the element menu (`aim/runBoxCut.ts`) |
+| `apps/viewer/src/components/viewer/tools/SectionActivePlaneRow.tsx` | 2 | Fit refits to the same box as Add (`aim/sectionBoxScene.ts` `boxForSelection`), so a drag followed by Fit lands where Add did |
+| `apps/viewer/src/components/viewer/surface-commands-context.ts` | 2 | registry row `aim:box-cut` for the element menu (the context-command ownership guard #5878 demands every menu item be registered) |
+| `apps/viewer/src/components/viewer/tools/SectionToolbar.box.test.tsx` | 1 | expected box of the selection now carries the sized margin (20 % of the longest side, 0.5 m for a 2.5 m selection); outside a block: a test line cannot be bracketed |
 | `apps/viewer/src/components/viewer/tools/SectionToolbar.planes.test.tsx` | 1 | the empty bar now lists Box after Face (one expected label, outside a block: a test line cannot be bracketed) |
 | `scripts/lib/presentation-channel-allowlist.mjs` | 1 | `aim/aimLens.ts` in `REQUIRES_ROUTING_MARKER`: AIM chat isolation routes through `resolvePresentationIds` (D-096) |
 
