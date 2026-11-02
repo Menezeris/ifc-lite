@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerifyPlan.ts a/apps/viewer/src/aim/aimVerifyPlan.ts
+index 29e6865f..169a1320 100644
+--- b/apps/viewer/src/aim/aimVerifyPlan.ts
++++ a/apps/viewer/src/aim/aimVerifyPlan.ts
+@@ -64,7 +64,7 @@ export function countByStatus(el: VerifyElementWire | null | undefined): Record<
+ }
+ 
+ /** Uložený beh sa použije, keď je pre aktuálnu revíziu; inak sa prvok overí znova (D-185 UI, bod 3). */
+-export const needsRun = (el: VerifyElementWire | null): boolean => !el || el.targets.length === 0;
++export const needsRun = (el: VerifyElementWire | null): boolean => !el || el.stale || el.targets.length === 0;
+ 
+ /** Prvky, ktoré treba zvýrazniť pri rozbalení detailu: kotvy hlavného receptu a bunky s prvkom. */
+ export function anchorGuids(t: VerifyTargetWire): string[] {

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerifyPlan.ts a/apps/viewer/src/aim/aimVerifyPlan.ts
+index 431400da..169a1320 100644
+--- b/apps/viewer/src/aim/aimVerifyPlan.ts
++++ a/apps/viewer/src/aim/aimVerifyPlan.ts
+@@ -50,7 +50,7 @@ export function formatValue(v: number | null, unit: VerifyUnit | string): string
+ export function formatDifference(d: number | null, unit: VerifyUnit): string {
+   if (d === null) return '-';
+   if (unit === 'm') {
+-    const mm = Math.round(d);
++    const mm = Math.round(d * 1000);
+     return `${mm > 0 ? '+' : ''}${mm} mm`;
+   }
+   const s = formatValue(d, unit);

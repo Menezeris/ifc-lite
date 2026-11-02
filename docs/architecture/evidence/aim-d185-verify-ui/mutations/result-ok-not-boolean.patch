@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/verify-protocol.ts a/apps/viewer/src/aim/verify-protocol.ts
+index 03dcad30..650192c1 100644
+--- b/apps/viewer/src/aim/verify-protocol.ts
++++ a/apps/viewer/src/aim/verify-protocol.ts
+@@ -132,7 +132,7 @@ export function buildVerifyRequest(id: string, action: VerifyAction, payload: Ve
+ /** Odpoveď hosta (overí obálku, obsah overí `parseVerifyElement` / `parseRunAll`). */
+ export function isVerifyResult(data: unknown): data is VerifyResultMessage {
+   if (!isObj(data) || data.source !== SOURCE || data.type !== 'VERIFY_RESULT') return false;
+-  if (typeof data.id !== 'string' || !data.id || data.id.length > 100 ) return false;
++  if (typeof data.id !== 'string' || !data.id || data.id.length > 100 || typeof data.ok !== 'boolean') return false;
+   return data.error === undefined || (typeof data.error === 'string' && data.error.length <= 4000);
+ }
+ 

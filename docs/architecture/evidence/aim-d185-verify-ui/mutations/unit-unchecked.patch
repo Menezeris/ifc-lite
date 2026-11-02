@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/verify-protocol.ts a/apps/viewer/src/aim/verify-protocol.ts
+index 265bd163..650192c1 100644
+--- b/apps/viewer/src/aim/verify-protocol.ts
++++ a/apps/viewer/src/aim/verify-protocol.ts
+@@ -186,7 +186,7 @@ function parseTarget(raw: unknown): VerifyTargetWire | null {
+   const target = str(raw.target, 200);
+   const st = status(raw.status);
+   const unit = UNITS.includes(raw.unit as VerifyUnit) ? (raw.unit as VerifyUnit) : undefined;
+-  if (!target || !target.includes('.') || !st) return null;
++  if (!target || !target.includes('.') || !st || !unit) return null;
+   const recipes = (Array.isArray(raw.recipes) ? raw.recipes.slice(0, 8) : []).map(parseRecipe).filter((r): r is VerifyRecipeWire => r !== null);
+   if (recipes.length === 0) return null;
+   const tol = isObj(raw.tolerance) ? raw.tolerance : {};
