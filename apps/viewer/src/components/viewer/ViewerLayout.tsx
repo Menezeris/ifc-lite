@@ -47,9 +47,10 @@ import { BottomStrip } from './BottomStrip';
 import { loadBottomStripOrientation, persistBottomStripOrientation } from '@/lib/panels/bottom-strip-persistence';
 import { LEFT_PANEL_DEFAULT_SIZE } from '@/store/layoutReset';
 import { useOverlayCompositor } from './schedule/useOverlayCompositor';
-// >>> AIM-FORK: D-075 document tabs pane in the center split
-// Lazy: the document pane (pdf.js surface) is off the boot path.
+// >>> AIM-FORK: D-075 document tabs pane in the center split (D-182: or the requirements library tab)
+// Lazy: the document pane (pdf.js surface) and the library card are off the boot path.
 const DocumentPane = lazy(() => import('@/components/documents/DocumentPane').then((m) => ({ default: m.DocumentPane })));
+const AimCenterPane = lazy(() => import('@/aim/AimCenterPane').then((m) => ({ default: m.AimCenterPane })));
 const AimViewTabsBar = lazy(() => import('@/aim/AimViewTabsBar').then((m) => ({ default: m.AimViewTabsBar })));
 // <<< AIM-FORK
 import { CommandPalette } from './CommandPalette';
@@ -369,7 +370,7 @@ export function ViewerLayout() {
                           className={`w-1.5 bg-border hover:bg-primary/50 active:bg-primary/70 transition-colors cursor-col-resize ${docPaneVisible ? '' : 'hidden'}`}
                         />
                         <Panel id="document-pane-panel" defaultSize={0} minSize={20} collapsible collapsedSize={0} panelRef={docPanelRef} onResize={onDocPaneResize}>
-                          <Suspense fallback={null}><DocumentPane hideTabs /></Suspense>
+                          <Suspense fallback={null}><AimCenterPane /></Suspense>
                         </Panel>
                       </PanelGroup>
                       </div>

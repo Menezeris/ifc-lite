@@ -18,6 +18,9 @@ export interface IdsSlot {
   entryId?: string;
   /** XML v čase načítania alebo posledného uloženia; od neho sa počíta `dirty`. */
   baseline?: string;
+  /** D-182: kópia z knižnice (len na čítanie, úprava = pracovná kópia) a commit knižnice. */
+  origin?: 'library' | 'chat';
+  libraryCommit?: string;
 }
 
 /** Strop XML v `view_state` (nad ním len veľkosť; uloženie ide tlačidlom). */

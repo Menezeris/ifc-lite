@@ -65,7 +65,9 @@ export function useAimCenterPanes(isMobile: boolean) {
   }, []);
 
   // Panel dokumentu: otvorené karty mimo 2D na celú plochu a (D-132) aktívna alebo vedľa.
-  const docPaneOpen = useViewerStore((s) => s.docTabs.length > 0);
+  // D-182: záložka knižnice požiadaviek používa ten istý panel.
+  // Na mobile záložky nie sú (prekrytie D-075 je len pre dokumenty).
+  const docPaneOpen = useViewerStore((s) => s.docTabs.length > 0) || (!isMobile && tabs.some((t) => t.kind === 'req'));
   const docPaneVisible = docPaneOpen && (isMobile || layout.docPane);
   const docPaneVisibleRef = useRef(docPaneVisible);
   docPaneVisibleRef.current = docPaneVisible;

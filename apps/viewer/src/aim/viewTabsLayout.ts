@@ -8,7 +8,8 @@
  * ostatná logika záložiek (`viewTabsPlan.ts`) sa načíta lenivo s lištou.
  */
 
-export type ViewTabKind = '3d' | 'doc' | 'view';
+/** `req` = karta knižnice požiadaviek (D-182), plocha ako dokument, bez dlaždíc. */
+export type ViewTabKind = '3d' | 'doc' | 'view' | 'req';
 
 export interface ViewTab {
   id: string;
@@ -29,10 +30,15 @@ export interface ViewTabsState {
 
 export const TAB_3D: ViewTab = { id: '3d', kind: '3d', label: '3D' };
 
+/** Karta knižnice požiadaviek (D-182): jedna, otvára ju tlačidlo v ribbone AIM. */
+export const REQ_TAB: ViewTab = { id: 'req', kind: 'req', label: 'Requirements library' };
+
 export const initialTabs = (): ViewTabsState => ({ tabs: [TAB_3D], activeId: TAB_3D.id, besideId: null });
 
 /** 3D záložky (`3d`, pohľad z Presentation v dlaždici) zdieľajú jeden canvas. */
-export const isSceneTab = (t: ViewTab | undefined) => !!t && t.kind !== 'doc';
+export const isSceneTab = (t: ViewTab | undefined) => !!t && t.kind !== 'doc' && t.kind !== 'req';
+/** Záložka v paneli vedľa 3D (dokument alebo knižnica požiadaviek). */
+export const isPaneTab = (t: ViewTab | undefined) => !!t && (t.kind === 'doc' || t.kind === 'req');
 
 const byId = (s: ViewTabsState, id: string | null) => (id ? s.tabs.find((t) => t.id === id) : undefined);
 
@@ -44,17 +50,20 @@ export interface CenterLayout {
   docPane: boolean;
   /** Dokument, ktorý má panel ukázať. */
   docId: string | null;
+  /** Panel ukazuje knižnicu požiadaviek (D-182) namiesto dokumentu. */
+  library: boolean;
 }
 
 /** `tiled` (AIM D-157): pri dlaždiciach je 3D panel na celú plochu a dlaždice kreslí `AimTileGrid`. */
 export function centerLayout(s: ViewTabsState, tiled = false): CenterLayout {
-  if (tiled) return { collapse3d: false, docPane: false, docId: null };
+  if (tiled) return { collapse3d: false, docPane: false, docId: null, library: false };
   const active = byId(s, s.activeId);
   const beside = byId(s, s.besideId);
-  const doc = active?.kind === 'doc' ? active : beside?.kind === 'doc' ? beside : undefined;
+  const pane = isPaneTab(active) ? active : isPaneTab(beside) ? beside : undefined;
   return {
-    collapse3d: active?.kind === 'doc' && !beside,
-    docPane: !!doc,
-    docId: doc?.docId ?? null,
+    collapse3d: isPaneTab(active) && !beside,
+    docPane: !!pane,
+    docId: pane?.kind === 'doc' ? pane.docId ?? null : null,
+    library: pane?.kind === 'req',
   };
 }
