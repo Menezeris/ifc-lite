@@ -26,6 +26,9 @@ import { MAX_SECTION_PLANES } from '@/lib/section/section-plane-set';
 import { useSectionDistance } from './useSectionDistance';
 import { useLiveTestId } from './SectionBarMeasure';
 import type { SectionPlaneAxis } from '@/store/types';
+// >>> AIM-FORK: box cut with a margin by selection size and room envelopes with slabs and walls
+import { addBoxCut } from '@/aim/sectionBoxScene';
+// <<< AIM-FORK
 
 export type AddKind = SectionPlaneAxis | 'face' | 'box' | 'alignment';
 
@@ -44,6 +47,9 @@ export function useAddSectionPlane(): (kind: AddKind) => boolean {
       chooseAlignmentMode();
       return true;
     }
+    // >>> AIM-FORK: a selected element or room gets the sized margin / room envelope first
+    if (addBoxCut()) return true;
+    // <<< AIM-FORK
     // A box fits the selection when there is one (the bounds Frame uses), else the model;
     // with neither known there is nothing to cut with, so no plane is made.
     const selected = store.cameraCallbacks.selectionBounds?.() ?? null;
@@ -98,9 +104,11 @@ export function SectionEmptyAdd() {
   return (
     <span className="flex items-center gap-1" data-testid={testId}>
       <span className="whitespace-nowrap px-1 text-xs text-muted-foreground">{t('sectionPlanes.empty')}</span>
-      {ENTRIES.filter((e) => e.kind !== 'alignment' && e.kind !== 'box').map((e) => (
+      {/* >>> AIM-FORK: Box sits on the bar next to Face (Dalux "Box cut") */}
+      {ENTRIES.filter((e) => e.kind !== 'alignment').map((e) => (
         <button key={e.kind} type="button" className={ACTION} onClick={() => add(e.kind)}>{t(e.labelKey)}</button>
       ))}
+      {/* <<< AIM-FORK */}
     </span>
   );
 }

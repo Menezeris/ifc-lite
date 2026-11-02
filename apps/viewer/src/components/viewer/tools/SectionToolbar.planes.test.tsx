@@ -113,7 +113,7 @@ describe('with no plane yet (#7545)', () => {
     assert.ok(empty);
     assert.deepEqual(
       [...empty.querySelectorAll('button')].map((b) => b.textContent?.trim()),
-      ['Down (Z)', 'Front (Y)', 'Side (X)', 'Face…'],
+      ['Down (Z)', 'Front (Y)', 'Side (X)', 'Face…', 'Box'],
     );
     assert.match(hint(), /Add a plane to start cutting/);
     assert.equal(s().sectionPickMode, false, 'nothing is armed behind the user');

@@ -21,6 +21,12 @@ export interface SectionBoxMessage {
   /** Box okolo obálky týchto prvkov (+ `marginM` na každú stranu). */
   guids?: string[];
   marginM?: number;
+  /**
+   * Rozumný box ako "Box cut" v Daluxe: okraj 20 % najdlhšej strany (0,3 až 2 m),
+   * pre jednu miestnosť (IfcSpace) od podlahovej po stropnú dosku a s okolitými
+   * stenami. Vylučuje sa s `marginM`; bez oboch ostáva okraj 0,5 m (starý host).
+   */
+  auto?: boolean;
   /** Presná obálka v IFC svete (Z hore, m). */
   box?: { min: Vec3Wire; max: Vec3Wire };
 }
@@ -44,6 +50,7 @@ export function isSectionBoxMessage(data: unknown): data is SectionBoxMessage {
   const byBox = !!box && typeof box === 'object' && isVec(box.min) && isVec(box.max)
     && box.min.x < box.max.x && box.min.y < box.max.y && box.min.z < box.max.z;
   if (byGuids === byBox) return false; // práve jeden cieľ
+  if (m.auto !== undefined && (m.auto !== true || !byGuids || m.marginM !== undefined)) return false;
   return m.marginM === undefined || (byGuids && num(m.marginM, BOX_MARGIN_RANGE.min, BOX_MARGIN_RANGE.max));
 }
 
