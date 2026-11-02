@@ -69,6 +69,20 @@
     ],
     "restoration": "verified"
   },
+  "nan-revision-accepted": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/reqlibPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "a037dbc5276648d34b7b77900af29a49a068281c",
+    "head": "32a3b02fbd996d686352c17e11b1ac23754509a2",
+    "production": [
+      "apps/viewer/src/aim/reqlibPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/reqlibPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
   "null-origin-rejected": {
     "verdict": "OBSERVED",
     "exitCode": 0,

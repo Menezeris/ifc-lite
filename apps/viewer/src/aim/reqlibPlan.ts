@@ -67,12 +67,16 @@ export function runsByModel(specs: readonly ReportSpecLike[], modelIds: readonly
   }));
 }
 
+/** Verzia IDS (od 1) a revízia modelu (od 0, `model_revisions.revision`) v AIM: celé číslo; postMessage prenesie aj NaN. */
+const isVersionNo = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 1;
+const isRevisionNo = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 0;
+
 /** Odpoveď hosta na `assign`: známy stav, inak chyba (prázdna odpoveď sa nesmie tváriť ako úspech). */
 export function assignOutcome(out: Record<string, unknown> | null | undefined):
   | { kind: 'choice'; code: string; candidates: string[]; message: string }
   | { kind: 'ok' | 'error'; text: string } {
   const code = typeof out?.code === 'string' ? out.code : null;
-  const version = typeof out?.version === 'number' ? out.version : null;
+  const version = isVersionNo(out?.version) ? out.version : null;
   switch (out?.status) {
     case 'choice_required':
       if (!code) break;
@@ -95,7 +99,7 @@ export function saveRunOutcome(out: unknown): { ok: boolean; text: string } {
   const saved = (out as { saved?: unknown } | null | undefined)?.saved;
   const rows = Array.isArray(saved)
     ? saved.filter((s): s is { model: string; revision: number; warning?: string } =>
-      !!s && typeof s === 'object' && typeof (s as { model?: unknown }).model === 'string' && typeof (s as { revision?: unknown }).revision === 'number')
+      !!s && typeof s === 'object' && typeof (s as { model?: unknown }).model === 'string' && isRevisionNo((s as { revision?: unknown }).revision))
     : [];
   if (rows.length === 0 || rows.length !== (saved as unknown[]).length) return { ok: false, text: 'AIM nevrátil uložené modely; výsledok sa neuložil.' };
   const warn = rows.map((s) => s.warning).filter(Boolean).join(' ');
