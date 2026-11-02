@@ -7,7 +7,7 @@ import assert from 'node:assert';
 
 import {
   activateTab, besidePair, besideRefusal, centerLayout, closeAll, closeTab, describeTabs, initialTabs,
-  isSceneTab, openTab, REQ_TAB, resolveTabRef, setBeside, syncDocTabs, type ViewTab,
+  isSceneTab, isTiled, openTab, REQ_TAB, resolveTabRef, setBeside, syncDocTabs, type ViewTab,
 } from './viewTabsPlan.js';
 import { documentLayout, isTabsMessage } from './tabs-protocol.js';
 
@@ -84,6 +84,10 @@ describe('záložky viewera (AIM D-132, od D-161 len 3D a dokumenty)', () => {
     assert.deepStrictEqual(centerLayout(s), { collapse3d: false, docPane: true, docId: 'D1', library: false });
     assert.deepStrictEqual(centerLayout(setBeside(s, null)), { collapse3d: false, docPane: false, docId: null, library: false });
     assert.deepStrictEqual(centerLayout(s, true), { collapse3d: false, docPane: false, docId: null, library: false });
+    // Dlaždice platia len mimo mobilu: obe miesta stredu plochy berú `isTiled` (D-157, D-182).
+    assert.equal(isTiled('split_h', false), true);
+    assert.equal(isTiled('split_h', true), false);
+    assert.equal(isTiled('single', false), false);
   });
 
   it('knižnica požiadaviek (D-182): karta na celú plochu alebo vedľa 3D, nie vedľa dokumentu; zatvára sa ako dokument', () => {

@@ -17,7 +17,7 @@
 
 import { TAB_3D, isPaneTab, isSceneTab, type ViewTab, type ViewTabsState } from './viewTabsLayout.js';
 
-export { REQ_TAB, TAB_3D, centerLayout, initialTabs, isPaneTab, isSceneTab, type CenterLayout, type ViewTab, type ViewTabKind, type ViewTabsState } from './viewTabsLayout.js';
+export { REQ_TAB, TAB_3D, centerLayout, initialTabs, isPaneTab, isSceneTab, isTiled, type CenterLayout, type ViewTab, type ViewTabKind, type ViewTabsState } from './viewTabsLayout.js';
 
 export const docTabId = (docId: string) => `doc:${docId}`;
 export const viewTabId = (viewId: string) => `view:${viewId}`;

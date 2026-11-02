@@ -54,6 +54,9 @@ export interface CenterLayout {
   library: boolean;
 }
 
+/** Dlaždice (AIM D-157) platia mimo mobilu; jedno miesto pre `useAimCenterPanes` aj `AimCenterPane`. */
+export const isTiled = (layout: string, isMobile: boolean): boolean => layout !== 'single' && !isMobile;
+
 /** `tiled` (AIM D-157): pri dlaždiciach je 3D panel na celú plochu a dlaždice kreslí `AimTileGrid`. */
 export function centerLayout(s: ViewTabsState, tiled = false): CenterLayout {
   if (tiled) return { collapse3d: false, docPane: false, docId: null, library: false };
