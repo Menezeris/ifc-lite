@@ -139,3 +139,14 @@ export function runStateText(run: { stale: boolean | null; ids_stale: boolean })
 }
 
 export const shortSha = (sha: string | null | undefined) => (sha ? sha.slice(0, 7) : '');
+
+/**
+ * Adresa read-only prehliadača knižnice v hoste (AIM D-186, stránka `/kniznica`). S knižnicou a cestou poznámky
+ * (`release.library`, `path` položky katalógu z DB) otvorí priamo tú poznámku; inak celý prehliadač.
+ */
+export function libraryBrowserHref(item?: { path?: string | null; release?: { library?: string | null } | null }): string {
+  const library = item?.release?.library;
+  const path = item?.path;
+  if (!library || !path) return '/kniznica';
+  return `/kniznica?kniznica=${encodeURIComponent(library)}&cesta=${encodeURIComponent(path)}`;
+}
