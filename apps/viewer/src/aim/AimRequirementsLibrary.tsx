@@ -57,7 +57,7 @@ export function AimRequirementsLibrary() {
         <button type="button" className={BTN} disabled={loading} onClick={() => void loadCatalog()}>{loading ? 'Načítavam...' : 'Obnoviť'}</button>
       </div>
       {error && <p className="px-3 py-2 text-destructive">{error}</p>}
-      {notice && <p className={`px-3 py-2 ${notice.kind === 'error' ? 'text-destructive' : 'text-emerald-700 dark:text-emerald-400'}`} role="status">{notice.text}</p>}
+      {notice && <output className={`block px-3 py-2 ${notice.kind === 'error' ? 'text-destructive' : 'text-emerald-700 dark:text-emerald-400'}`}>{notice.text}</output>}
       {choice && (
         <div className="m-3 rounded border border-amber-500/60 p-2" data-testid="aim-reqlib-choice">
           <p className="mb-2">{choice.message}</p>
