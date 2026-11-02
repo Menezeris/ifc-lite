@@ -111,6 +111,7 @@ export function DocumentsRibbonTab() {
           contentLabel="Requirements library"
           contentSource="extension"
           contentId="aim-requirements-library"
+          data-ribbon-extension="aim-requirements-library"
           tooltip="Requirements library: IDS from the library, assigned to the project, into IDS Studio and Data validation"
           active={reqTabActive}
           onClick={() => void import('./reqlibTab').then((m) => m.openRequirementsLibrary())}
