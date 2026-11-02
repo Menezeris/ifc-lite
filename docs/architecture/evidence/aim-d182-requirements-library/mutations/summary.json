@@ -167,6 +167,20 @@
     ],
     "restoration": "verified"
   },
+  "tiled-ignores-mobile": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/viewTabsPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "a037dbc5276648d34b7b77900af29a49a068281c",
+    "head": "c17405071e6724d9197a9497becee384ed119371",
+    "production": [
+      "apps/viewer/src/aim/viewTabsLayout.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/viewTabsPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
   "untagged-multi-model-accepted": {
     "verdict": "OBSERVED",
     "exitCode": 0,
