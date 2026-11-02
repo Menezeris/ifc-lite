@@ -276,6 +276,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
       setIcddHostPost(null);
       void ids?.then((m) => m.stopIds());
       void clash?.then((m) => m.stopClash());
+      void bcfImport?.then((m) => m.stopBcfImport());
       useViewerStore.getState().setUnderlaySaveHandler(null);
       useViewerStore.getState().setDocumentEventHandler(null);
       useCapturePinsStore.getState().setEmitClick(null);
