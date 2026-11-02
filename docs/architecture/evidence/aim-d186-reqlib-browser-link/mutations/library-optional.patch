@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/reqlibPlan.ts a/apps/viewer/src/aim/reqlibPlan.ts
+index 6cf7d2cb..fdfa557a 100644
+--- b/apps/viewer/src/aim/reqlibPlan.ts
++++ a/apps/viewer/src/aim/reqlibPlan.ts
+@@ -147,6 +147,6 @@ export const shortSha = (sha: string | null | undefined) => (sha ? sha.slice(0,
+ export function libraryBrowserHref(item?: { path?: string | null; release?: { library?: string | null } | null }): string {
+   const library = item?.release?.library;
+   const path = item?.path;
+-  if (!path) return '/kniznica';
++  if (!library || !path) return '/kniznica';
+   return `/kniznica?kniznica=${encodeURIComponent(library)}&cesta=${encodeURIComponent(path)}`;
+ }

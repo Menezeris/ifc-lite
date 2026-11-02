@@ -1,0 +1,44 @@
+{
+  "always-root": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/reqlibPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "c160871d61f9551c9acbb36ffcf3bcdb0326a46d",
+    "production": [
+      "apps/viewer/src/aim/reqlibPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/reqlibPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "path-not-encoded": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/reqlibPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "c160871d61f9551c9acbb36ffcf3bcdb0326a46d",
+    "production": [
+      "apps/viewer/src/aim/reqlibPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/reqlibPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "library-optional": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/reqlibPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "c160871d61f9551c9acbb36ffcf3bcdb0326a46d",
+    "production": [
+      "apps/viewer/src/aim/reqlibPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/reqlibPlan.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}
