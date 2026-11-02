@@ -31,16 +31,16 @@ const focus = (guid: string) => void import('./aimVerify').then((m) => m.focusEl
 
 function Cells({ recipe, unit }: { recipe: VerifyRecipeWire; unit: string }) {
   if (recipe.cells.length === 0) {
-    return recipe.formula_text ? <div className="mb-2 border border-zinc-200 bg-zinc-50 px-2 py-1 font-mono text-[11px] dark:border-zinc-700 dark:bg-zinc-900">{recipe.formula_text}</div> : null;
+    return recipe.formula_text ? <div className="mb-2 border border-zinc-200 bg-zinc-50 px-2 py-1 font-mono text-2xs dark:border-zinc-700 dark:bg-zinc-900">{recipe.formula_text}</div> : null;
   }
   return (
     <>
       {recipe.expression && (
-        <div className="mb-1 border border-zinc-200 bg-zinc-50 px-2 py-1 font-mono text-[11px] dark:border-zinc-700 dark:bg-zinc-900">
-          <b className="mr-1.5 text-violet-600 dark:text-violet-400">fx</b>= {recipe.expression}
+        <div className="mb-1 border border-zinc-200 bg-zinc-50 px-2 py-1 font-mono text-2xs dark:border-zinc-700 dark:bg-zinc-900">
+          <b className="mr-1.5 text-sky-600 dark:text-sky-400">fx</b>= {recipe.expression}
         </div>
       )}
-      <table className="mb-2 w-full border-collapse text-[11px]">
+      <table className="mb-2 w-full border-collapse text-2xs">
         <tbody>
           {recipe.cells.map((c) => (
             <tr key={c.key}>
@@ -75,7 +75,7 @@ function Body({ t }: { t: VerifyTargetWire }) {
   return (
     <div data-aim-verify-detail={t.target} className="mt-1.5 border border-zinc-200 bg-white p-2 text-xs text-zinc-800 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
       <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className={`px-1.5 text-[11px] font-semibold ${PILL[t.status]}`}>{STATUS_LABEL[t.status]}</span>
+        <span className={`px-1.5 text-2xs font-semibold ${PILL[t.status]}`}>{STATUS_LABEL[t.status]}</span>
         <b>{quantity}</b>
         <span className="text-zinc-500">recept {main.recipe}</span>
       </div>
@@ -86,15 +86,15 @@ function Body({ t }: { t: VerifyTargetWire }) {
           ['Rozdiel', formatDifference(difference(t), t.unit)],
         ].map(([k, v]) => (
           <div key={k} className="border-l border-zinc-200 px-2 py-1 first:border-l-0 dark:border-zinc-700">
-            <small className="block text-[10px] uppercase tracking-wide text-zinc-500">{k}</small>
+            <small className="block text-2xs uppercase tracking-wide text-zinc-500">{k}</small>
             <span className="font-mono font-semibold">{v}</span>
           </div>
         ))}
       </div>
       <p className="mb-2"><span className="text-zinc-500">Ako sa počíta: </span>{main.explanation}</p>
-      {main.note && <p className="mb-2 border-l-[3px] border-zinc-400 bg-zinc-50 px-2 py-1 text-[11px] dark:bg-zinc-900">{main.note}</p>}
+      {main.note && <p className="mb-2 border-l-[3px] border-zinc-400 bg-zinc-50 px-2 py-1 text-2xs dark:bg-zinc-900">{main.note}</p>}
       <Cells recipe={main} unit={t.unit} />
-      <dl className="grid grid-cols-[96px_1fr] gap-x-2 gap-y-1 text-[11px]">
+      <dl className="grid grid-cols-[96px_1fr] gap-x-2 gap-y-1 text-2xs">
         <dt className="text-zinc-500">Tolerancia</dt>
         <dd>{t.tolerance.text || '-'}</dd>
         {t.definition && (
@@ -114,7 +114,7 @@ function Body({ t }: { t: VerifyTargetWire }) {
         </dd>
       </dl>
       {checks.map((r) => (
-        <div key={r.recipe} className="mt-2 border-t border-dashed border-zinc-200 pt-1.5 text-[11px] text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
+        <div key={r.recipe} className="mt-2 border-t border-dashed border-zinc-200 pt-1.5 text-2xs text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
           <div className="mb-1 flex flex-wrap items-center gap-2">
             <span>Kontrolný výpočet ({r.recipe}):</span>
             <span className={`px-1.5 font-semibold ${PILL[r.status]}`}>{STATUS_LABEL[r.status]}</span>
@@ -126,7 +126,7 @@ function Body({ t }: { t: VerifyTargetWire }) {
       <div className="mt-2 flex flex-wrap gap-1.5">
         <button
           type="button"
-          className="border border-zinc-300 px-2 py-0.5 text-[11px] hover:bg-zinc-100 dark:border-zinc-600 dark:hover:bg-zinc-800"
+          className="border border-zinc-300 px-2 py-0.5 text-2xs hover:bg-zinc-100 dark:border-zinc-600 dark:hover:bg-zinc-800"
           onClick={() => void navigator.clipboard?.writeText(calculationText(t)).then(() => setCopied(true), () => setCopied(false))}
         >
           {copied ? 'Skopírované' : 'Kopírovať výpočet'}
