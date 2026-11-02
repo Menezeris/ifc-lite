@@ -60,23 +60,27 @@ function collectCandidates(state: State, boundsOf: Bounds, modelId: string): Fit
   return out;
 }
 
-/** Box pre výber `ids` (globálne id): miestnosť so skladbami, inak obálka s okrajom podľa veľkosti. */
-export function sectionBoxForEntities(ids: readonly number[], fallback?: FitBox | null): SectionBox | null {
+/**
+ * Box pre výber `ids` (globálne id): jedna miestnosť so skladbami, inak obálka s okrajom podľa veľkosti.
+ * `selection` = obálka, ktorú dodá volajúci (Frame: zostavy rozložené na časti, zvýraznenie clashu);
+ * bez nej (undefined) sa obálka berie z renderera a sietí podľa `ids`, null = žiadna obálka.
+ */
+export function sectionBoxForEntities(ids: readonly number[], selection?: FitBox | null): SectionBox | null {
   const state = useViewerStore.getState();
   const boundsOf = boundsLookup(state, getGlobalRenderer()?.getScene());
   if (ids.length === 1) {
     const ref = resolveEntityRef(ids[0]);
     const store = ref.modelId === 'legacy' ? state.ifcDataStore : state.models.get(ref.modelId)?.ifcDataStore;
-    const space = store && store.entities.getTypeName(ref.expressId).toUpperCase() === 'IFCSPACE' ? boundsOf(ids[0]) : null;
+    // getTypeName returns null for an id the store does not know (a clash-only or overlay id).
+    const space = (store?.entities.getTypeName(ref.expressId) ?? '').toUpperCase() === 'IFCSPACE' ? boundsOf(ids[0]) : null;
     if (space) {
       const fit = sectionBoxForSpace(space, collectCandidates(state, boundsOf, ref.modelId));
-      const box = fit && sectionBoxFromBounds({ min: { x: fit.box.min.x, y: fit.box.min.y, z: fit.box.min.z }, max: { x: fit.box.max.x, y: fit.box.max.y, z: fit.box.max.z } });
+      const box = fit && sectionBoxFromBounds({ min: { ...fit.box.min }, max: { ...fit.box.max } });
       if (box) return box;
     }
   }
-  const bounds = ids.length > 0
-    ? union(ids.map(boundsOf).filter((b): b is FitBox => b !== null))
-    : fallback ?? null;
+  const bounds = selection !== undefined ? selection
+    : ids.length > 0 ? union(ids.map(boundsOf).filter((b): b is FitBox => b !== null)) : null;
   const around = bounds ? boxAround(bounds) : null;
   return around ? sectionBoxFromBounds(around) : null;
 }
@@ -97,15 +101,21 @@ function selectedIds(state: State): number[] {
   return state.selectedEntityId !== null ? [state.selectedEntityId] : [];
 }
 
-/**
- * Pridá rezný box okolo `ids` (alebo okolo výberu, a keď nič nie je vybrané,
- * okolo `fallback`, napr. obálky modelu). false = nebolo z čoho box spraviť
- * alebo je sada rezov plná.
- */
-export function addBoxCut(ids?: readonly number[], fallback?: FitBox | null): boolean {
+/** Box pre aktuálny výber viewera (rovnaké obálky ako Frame); null = nie je čo rezať. */
+export function boxForSelection(): SectionBox | null {
   const state = useViewerStore.getState();
-  const target = ids && ids.length > 0 ? ids : selectedIds(state);
-  const box = sectionBoxForEntities(target, fallback);
+  const ids = selectedIds(state);
+  const bounds = state.cameraCallbacks.selectionBounds?.() ?? null;
+  return sectionBoxForEntities(ids, bounds ? toFit(bounds) : null);
+}
+
+/**
+ * Pridá rezný box okolo `ids` (kontextové menu) alebo okolo výberu viewera (lišta rezu).
+ * false = nebolo z čoho box spraviť alebo je sada rezov plná.
+ */
+export function addBoxCut(ids?: readonly number[]): boolean {
+  const state = useViewerStore.getState();
+  const box = ids && ids.length > 0 ? sectionBoxForEntities(ids) : boxForSelection();
   if (!box) return false;
   leaveAlignmentMode();
   if (!state.prepareNewSectionPlane()) return false;

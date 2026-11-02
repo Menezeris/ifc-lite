@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/context-menu';
 import { CommandMenuItem, DuplicateItems, ExtensionContextItems } from './EntityContextMenuItems';
 // >>> AIM-FORK: Box cut in the element menu
-import { AimBoxCutMenuItem } from '@/aim/AimBoxCutMenuItem';
+import { runBoxCut } from '@/aim/runBoxCut';
 // <<< AIM-FORK
 import type { MutablePropertyView } from '@ifc-lite/mutations';
 import { effectiveContextType, sameEffectiveTypeIds } from './EntityContextMenu.effective-selection';
@@ -326,7 +326,7 @@ export function EntityContextMenu() {
           {contextItem('view:frame', handleFrameSelection)}
           {contextItem('vis:hide', handleHide)}
           {/* >>> AIM-FORK: Box cut around this element (room: floor to ceiling slab plus walls) */}
-          <AimBoxCutMenuItem entityId={contextMenu.entityId} />
+          {contextItem('aim:box-cut', () => runBoxCut(contextMenu.entityId!, t('aimFork.boxCut.failed')), { title: t('aimFork.boxCut.title') })}
           {/* <<< AIM-FORK */}
 
           <ContextMenuSeparator />
