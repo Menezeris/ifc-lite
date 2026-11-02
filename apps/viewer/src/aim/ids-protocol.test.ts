@@ -17,6 +17,13 @@ describe('správy o IDS z AIM (D-162)', () => {
     assert.ok(isIdsInbound(load({ spec: 'IU-O-space', run: true, title: 'Miestnosti' })));
   });
 
+  it('IDS_LOAD: pôvod z knižnice (D-182), aj ako null; neznámy pôvod sa zahodí', () => {
+    assert.ok(isIdsInbound(load({ origin: 'library', library_commit: 'abc1234' })));
+    assert.ok(isIdsInbound(load({ origin: null, library_commit: null })));
+    assert.ok(!isIdsInbound(load({ origin: 'git' })));
+    assert.ok(!isIdsInbound(load({ library_commit: '' })));
+  });
+
   it('IDS_LOAD: neplatný cieľ, verzia, kód alebo XML sa zahodí', () => {
     assert.ok(!isIdsInbound(load({ target: 'both' })));
     assert.ok(!isIdsInbound(load({ version: 0 })));

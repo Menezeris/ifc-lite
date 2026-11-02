@@ -18,7 +18,9 @@ export function AimCenterPane() {
   const tabs = useAimViewTabs((s) => s.tabs);
   const activeId = useAimViewTabs((s) => s.activeId);
   const besideId = useAimViewTabs((s) => s.besideId);
-  const library = useMemo(() => centerLayout({ tabs, activeId, besideId }).library, [tabs, activeId, besideId]);
+  // Rovnaký vstup ako `useAimCenterPanes`: pri dlaždiciach (D-157) panel vedľa 3D nie je ani pre knižnicu.
+  const tiled = useAimViewTabs((s) => s.layout !== 'single');
+  const library = useMemo(() => centerLayout({ tabs, activeId, besideId }, tiled).library, [tabs, activeId, besideId, tiled]);
   return (
     <Suspense fallback={null}>
       {library ? <AimRequirementsLibrary /> : <DocumentPane hideTabs />}
