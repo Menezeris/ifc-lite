@@ -17,6 +17,7 @@ import { activeIdsEntry, useAimIds } from './aimIdsStore.js';
 
 /** Host odpovedá z DB a GitHubu; dlhšie čakanie = host nereaguje (starší host bez D-182). */
 const TIMEOUT_MS = 60_000;
+const DISCONNECTED = 'Spojenie s AIM sa prerušilo; obnov knižnicu.';
 const AUTHOR_KEY = 'aim.reqlib.author';
 
 export interface ReqlibState {
@@ -82,16 +83,16 @@ export function handleReqlibResult(raw: unknown): void {
 }
 
 /**
- * Odpojenie mosta: čakajúce žiadosti zlyhajú hneď a otvorená voľba priradenia sa zahodí (nesie commit a sha
- * katalógu spred odpojenia; priradenie sa začne znova z karty).
+ * Odpojenie mosta: čakajúce žiadosti zlyhajú hneď a karta zahodí všetko zo starého spojenia (katalóg, hlásenie,
+ * voľbu priradenia s commitom a sha spred odpojenia). Ostane chyba, karta sa znova načíta cez "Obnoviť".
  */
 export function stopReqlib(): void {
   for (const [, p] of pending) {
     clearTimeout(p.timer);
-    p.reject(new Error('Spojenie s AIM sa prerušilo.'));
+    p.reject(new Error(DISCONNECTED));
   }
   pending.clear();
-  useAimReqlib.setState({ choice: null, busy: null });
+  useAimReqlib.setState({ data: null, notice: null, choice: null, busy: null, loading: false, error: DISCONNECTED });
 }
 
 const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
