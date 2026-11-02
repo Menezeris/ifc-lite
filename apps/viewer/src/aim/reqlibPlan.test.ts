@@ -53,10 +53,14 @@ describe('knižnica požiadaviek: výsledok po modeloch (AIM D-182)', () => {
     assert.equal(assignOutcome(null).kind, 'error');
     assert.equal(assignOutcome({ status: 'created' }).kind, 'error');
     assert.equal(assignOutcome({ ok: true, status: 'iný' }).kind, 'error');
+    assert.equal(assignOutcome({ status: 'created', code: 'ER', version: Number.NaN }).kind, 'error');
   });
 
   it('odpoveď hosta na uloženie výsledku: úspech len so zoznamom uložených modelov', () => {
     assert.deepEqual(saveRunOutcome({ saved: [{ model: 'ASR', revision: 79 }] }), { ok: true, text: 'Výsledok uložený do AIM (ASR v79).' });
+    assert.equal(saveRunOutcome({ saved: [{ model: 'ASR', revision: Number.NaN }] }).ok, false);
+    assert.equal(saveRunOutcome({ saved: [{ model: 'ASR', revision: 0 }] }).ok, true);
+    assert.equal(saveRunOutcome({ saved: [{ model: 'ASR', revision: -1 }] }).ok, false);
     assert.deepEqual(saveRunOutcome({ saved: [{ model: 'ASR', revision: 78, warning: 'stará revízia' }] }), { ok: true, text: 'Výsledok uložený do AIM (ASR v78). stará revízia' });
     assert.equal(saveRunOutcome({ saved: [] }).ok, false);
     assert.equal(saveRunOutcome({}).ok, false);
