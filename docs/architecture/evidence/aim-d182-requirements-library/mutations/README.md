@@ -6,10 +6,13 @@
 
 The change adds the "Requirements library" card to the AIM fork: a ribbon button in the AIM tab opens a view tab of the new kind `req` in the pane beside 3D (`AimCenterPane.tsx`), the card asks the host through one message pair (`REQLIB_REQUEST` / `REQLIB_RESULT`, `reqlib-protocol.ts`), and the IDS bar of Data validation saves the check result per federation model (`reqlibPlan.ts`). The tests (`reqlibPlan.test.ts`, the new case in `viewTabsPlan.test.ts`) import modules or exports that do not exist on `main` (`reqlibPlan.ts`, `reqlib-protocol.ts`, `REQ_TAB`, `isPaneTab`), so reverting production makes them fail to load and the CI revert oracle reports INCONCLUSIVE. Each main behavioural decision was instead checked with a surgical mutation.
 
-Each patch is written mutant->fixed (the orientation of `git diff base...head`); the oracle reverse-applies it. Every run ended `OBSERVED` (exit 0) with restoration verified, against base `origin/main`. The full records are in `summary.json`.
+Each patch is written mutant->fixed (the orientation of `git diff base...head`); the oracle reverse-applies it. The last three (fixes of Claude review findings on #221) were run against head `b66aa38a`. Every run ended `OBSERVED` (exit 0) with restoration verified, against base `origin/main`. The full records are in `summary.json`.
 
 | Patch | Module | Mutation | Test that went red |
 |---|---|---|---|
+| `untagged-multi-model-accepted.patch` | `reqlibPlan.ts` | an element without a model id is attributed to the first model of a multi-model run | `reqlibPlan.test.ts` |
+| `assign-empty-reads-success.patch` | `reqlibPlan.ts` | an empty or unknown host reply to "assign" reads as success | `reqlibPlan.test.ts` |
+| `save-empty-reads-success.patch` | `reqlibPlan.ts` | a host reply to "save_run" without saved models reads as success | `reqlibPlan.test.ts` |
 | `status-ignores-model.patch` | `reqlibPlan.ts` | a model's specification keeps the status of the whole federated run instead of its own elements | `reqlibPlan.test.ts` |
 | `passing-reasons-kept.patch` | `reqlibPlan.ts` | reasons of passing requirements are sent too (the host stores reasons only for failures) | `reqlibPlan.test.ts` |
 | `engine-version-any-package.patch` | `reqlibPlan.ts` | the tool version stamp takes the first fork package instead of `@ifc-lite/ids` | `reqlibPlan.test.ts` |

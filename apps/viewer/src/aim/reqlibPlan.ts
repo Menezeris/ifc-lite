@@ -40,6 +40,10 @@ export interface WireRun {
  * Dôvody len pri nesplnených požiadavkách (ako `etl.ids_check` a `ifc_ids_validate save`).
  */
 export function runsByModel(specs: readonly ReportSpecLike[], modelIds: readonly string[], nameOf: (id: string) => string): WireRun[] {
+  // Prvok bez modelu sa dá priradiť len vtedy, keď beh má jediný model; inak by sa pripísal zlému modelu.
+  if (modelIds.length !== 1 && specs.some((s) => s.entityResults.some((e) => !e.modelId))) {
+    throw new Error('Výsledok obsahuje prvok bez modelu a beh má viac modelov; neuložil sa (spusti kontrolu na jednom modeli).');
+  }
   return modelIds.map((modelId) => ({
     model_id: modelId,
     model_name: nameOf(modelId),
@@ -61,6 +65,41 @@ export function runsByModel(specs: readonly ReportSpecLike[], modelIds: readonly
       };
     }),
   }));
+}
+
+/** Odpoveď hosta na `assign`: známy stav, inak chyba (prázdna odpoveď sa nesmie tváriť ako úspech). */
+export function assignOutcome(out: Record<string, unknown> | null | undefined):
+  | { kind: 'choice'; code: string; candidates: string[]; message: string }
+  | { kind: 'ok' | 'error'; text: string } {
+  const code = typeof out?.code === 'string' ? out.code : null;
+  const version = typeof out?.version === 'number' ? out.version : null;
+  switch (out?.status) {
+    case 'choice_required':
+      if (!code) break;
+      return { kind: 'choice', code, candidates: Array.isArray(out.candidates) ? out.candidates.filter((c): c is string => typeof c === 'string') : [], message: String(out.message ?? '') };
+    case 'unchanged':
+      if (!code || version === null) break;
+      return { kind: 'ok', text: `Bez zmeny: ${code} v${version} už má tento obsah.` };
+    case 'created':
+      if (!code || version === null) break;
+      return { kind: 'ok', text: `Priradené k projektu ako ${code} v${version}.` };
+    case 'new_version':
+      if (!code || version === null) break;
+      return { kind: 'ok', text: `Nová verzia ${code} v${version}${typeof out.renamed_from === 'string' ? ` (predtým ${out.renamed_from})` : ''}.` };
+  }
+  return { kind: 'error', text: 'AIM nevrátil výsledok priradenia; obnov knižnicu a skontroluj, či sa IDS priradilo.' };
+}
+
+/** Odpoveď hosta na `save_run`: úspech len so zoznamom uložených modelov. */
+export function saveRunOutcome(out: unknown): { ok: boolean; text: string } {
+  const saved = (out as { saved?: unknown } | null | undefined)?.saved;
+  const rows = Array.isArray(saved)
+    ? saved.filter((s): s is { model: string; revision: number; warning?: string } =>
+      !!s && typeof s === 'object' && typeof (s as { model?: unknown }).model === 'string' && typeof (s as { revision?: unknown }).revision === 'number')
+    : [];
+  if (rows.length === 0 || rows.length !== (saved as unknown[]).length) return { ok: false, text: 'AIM nevrátil uložené modely; výsledok sa neuložil.' };
+  const warn = rows.map((s) => s.warning).filter(Boolean).join(' ');
+  return { ok: true, text: `Výsledok uložený do AIM (${rows.map((s) => `${s.model} v${s.revision}`).join(', ')}).${warn ? ` ${warn}` : ''}` };
 }
 
 /** Verzia nástroja do pečiatky výsledku: `@ifc-lite/ids` z balíkov forku. */

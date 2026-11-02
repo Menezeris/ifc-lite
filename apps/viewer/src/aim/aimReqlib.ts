@@ -12,7 +12,7 @@ import { create } from 'zustand';
 import { useViewerStore } from '../store/index.js';
 import { idsHostPost } from './idsHost.js';
 import { buildReqlibRequest, isReqlibResult, type ReqlibAction } from './reqlib-protocol.js';
-import { idsEngineVersion, runsByModel, sha256Hex, type ReportSpecLike } from './reqlibPlan.js';
+import { assignOutcome, idsEngineVersion, runsByModel, saveRunOutcome, sha256Hex, type ReportSpecLike } from './reqlibPlan.js';
 import { activeIdsEntry, useAimIds } from './aimIdsStore.js';
 
 /** Host odpovedá z DB a GitHubu; dlhšie čakanie = host nereaguje (starší host bez D-182). */
@@ -126,18 +126,12 @@ export async function assign(item: { path: string; commit: string; sha256: strin
   if (!author) return;
   const out = await act(item.path, 'assign', { ...item, author, ...opts });
   if (!out) return;
-  if (out.status === 'choice_required') {
-    useAimReqlib.setState({
-      choice: { ...item, code: String(out.code), candidates: (out.candidates as string[]) ?? [], message: String(out.message ?? '') },
-    });
+  const outcome = assignOutcome(out);
+  if (outcome.kind === 'choice') {
+    useAimReqlib.setState({ choice: { ...item, code: outcome.code, candidates: outcome.candidates, message: outcome.message } });
     return;
   }
-  const text = out.status === 'unchanged'
-    ? `Bez zmeny: ${out.code} v${out.version} už má tento obsah.`
-    : out.status === 'created'
-      ? `Priradené k projektu ako ${out.code} v${out.version}.`
-      : `Nová verzia ${out.code} v${out.version}${out.renamed_from ? ` (predtým ${out.renamed_from})` : ''}.`;
-  useAimReqlib.setState({ choice: null, notice: { kind: 'ok', text } });
+  useAimReqlib.setState({ choice: null, notice: outcome });
   await loadCatalog();
 }
 
@@ -171,20 +165,18 @@ export async function saveRunToAim(): Promise<{ ok: boolean; text: string }> {
   if (!author) return { ok: false, text: 'Zadaj svoje meno v karte Requirements library.' };
   const specs = report.specificationResults as unknown as ReportSpecLike[];
   const modelIds = [...new Set([...report.modelInfo.map((m) => m.modelId), ...specs.flatMap((s) => s.entityResults.map((e) => e.modelId ?? ''))].filter(Boolean))];
-  const runs = runsByModel(specs, modelIds, (id) => v.models.get(id)?.name ?? id);
   const packages = typeof __PACKAGE_VERSIONS__ !== 'undefined' ? __PACKAGE_VERSIONS__ : [];
   try {
-    const out = (await request('save_run', {
+    const runs = runsByModel(specs, modelIds, (id) => v.models.get(id)?.name ?? id);
+    const out = await request('save_run', {
       code: slot.code,
       version: slot.version,
       ids_sha256: await sha256Hex(entry.xml),
       engine_version: idsEngineVersion(packages),
       author,
       runs,
-    })) as { saved?: Array<{ model: string; revision: number; warning?: string }> } | null;
-    const saved = out?.saved ?? [];
-    const warn = saved.map((s) => s.warning).filter(Boolean).join(' ');
-    return { ok: true, text: `Výsledok uložený do AIM (${saved.map((s) => `${s.model} v${s.revision}`).join(', ') || slot.code}).${warn ? ` ${warn}` : ''}` };
+    });
+    return saveRunOutcome(out);
   } catch (e) {
     return { ok: false, text: errText(e) };
   }
