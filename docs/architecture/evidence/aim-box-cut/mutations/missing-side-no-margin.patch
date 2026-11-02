@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/sectionBoxFit.ts a/apps/viewer/src/aim/sectionBoxFit.ts
+index 324f31f2..949140de 100644
+--- b/apps/viewer/src/aim/sectionBoxFit.ts
++++ a/apps/viewer/src/aim/sectionBoxFit.ts
+@@ -109,6 +109,7 @@ export function sectionBoxForSpace(space: FitBox, candidates: readonly FitCandid
+ 
+   if (!found.minX) min.x -= margin;
+   if (!found.maxX) max.x += margin;
++  if (!found.minY) min.y -= margin;
+   if (!found.maxY) max.y += margin;
+   if (!found.minZ) min.z -= margin;
+   if (!found.maxZ) max.z += margin;

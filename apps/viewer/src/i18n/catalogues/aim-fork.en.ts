@@ -8,6 +8,9 @@
  * catalogues stay untouched (docs/FORK_MAINTENANCE.md).
  */
 export const aimForkEn = {
+  'aimFork.boxCut.label': 'Box cut',
+  'aimFork.boxCut.title': 'Cut a box around this element; for a room, from the floor slab to the ceiling slab including the walls',
+  'aimFork.boxCut.failed': 'Box cut failed: the element has no geometry or the limit of cutting planes is reached.',
   'aimFork.panel.drawingUnderlay': 'Drawing underlays',
   'aimFork.panel.documents': 'Documents',
   'aimFork.panel.aimLayers': 'AIM layers',
