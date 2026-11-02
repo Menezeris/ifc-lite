@@ -81,13 +81,17 @@ export function handleReqlibResult(raw: unknown): void {
   else p.reject(new Error(raw.error ?? 'AIM odmietol požiadavku'));
 }
 
-/** Odpojenie mosta: čakajúce žiadosti zlyhajú hneď. */
+/**
+ * Odpojenie mosta: čakajúce žiadosti zlyhajú hneď a otvorená voľba priradenia sa zahodí (nesie commit a sha
+ * katalógu spred odpojenia; priradenie sa začne znova z karty).
+ */
 export function stopReqlib(): void {
   for (const [, p] of pending) {
     clearTimeout(p.timer);
     p.reject(new Error('Spojenie s AIM sa prerušilo.'));
   }
   pending.clear();
+  useAimReqlib.setState({ choice: null, busy: null });
 }
 
 const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
