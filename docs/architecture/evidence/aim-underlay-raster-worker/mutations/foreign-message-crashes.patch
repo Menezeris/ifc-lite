@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/underlayRasterClient.ts a/apps/viewer/src/aim/underlayRasterClient.ts
+index f4644c5a..d85b0322 100644
+--- b/apps/viewer/src/aim/underlayRasterClient.ts
++++ a/apps/viewer/src/aim/underlayRasterClient.ts
+@@ -83,6 +83,7 @@ export function createUnderlayRasterClient(opts: UnderlayRasterClientOptions): R
+     worker.onmessage = (event) => {
+       const msg = event.data;
+       // pdf.js runs its own (fake) worker in this thread and talks on the same port: not ours
++      if (!msg || typeof msg !== 'object' || typeof msg.id !== 'number') return;
+       const p = pending.get(msg.id);
+       if (!p) {
+         if ('image' in msg) msg.image.close();

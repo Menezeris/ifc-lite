@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlayRasterClient.ts a/apps/viewer/src/aim/underlayRasterClient.ts
+index c0250846..d85b0322 100644
+--- b/apps/viewer/src/aim/underlayRasterClient.ts
++++ a/apps/viewer/src/aim/underlayRasterClient.ts
+@@ -119,7 +119,7 @@ export function createUnderlayRasterClient(opts: UnderlayRasterClientOptions): R
+       try {
+         return await job;
+       } catch (err) {
+-        throw err;
++        opts.onWorkerError?.(err instanceof Error ? err.message : String(err));
+       }
+     }
+     return opts.fallback(url, page, maxTextureDimension);
