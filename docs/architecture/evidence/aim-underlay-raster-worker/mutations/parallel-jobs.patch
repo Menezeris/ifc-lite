@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlayRasterClient.ts a/apps/viewer/src/aim/underlayRasterClient.ts
+index 873e4f3b..d85b0322 100644
+--- b/apps/viewer/src/aim/underlayRasterClient.ts
++++ a/apps/viewer/src/aim/underlayRasterClient.ts
+@@ -127,7 +127,7 @@ export function createUnderlayRasterClient(opts: UnderlayRasterClientOptions): R
+ 
+   // One page at a time: each raster holds a canvas of up to 4096 px on the CPU
+   return (url, page, maxTextureDimension) => {
+-    const result = run(url, page, maxTextureDimension);
++    const result = tail.then(() => run(url, page, maxTextureDimension));
+     tail = result.catch(() => undefined);
+     return result;
+   };

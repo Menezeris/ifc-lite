@@ -1,0 +1,15 @@
+diff --git b/apps/viewer/src/aim/underlayRasterClient.ts a/apps/viewer/src/aim/underlayRasterClient.ts
+index 1e6cdfa8..d85b0322 100644
+--- b/apps/viewer/src/aim/underlayRasterClient.ts
++++ a/apps/viewer/src/aim/underlayRasterClient.ts
+@@ -98,9 +98,7 @@ export function createUnderlayRasterClient(opts: UnderlayRasterClientOptions): R
+     };
+     worker.onerror = (event) => {
+       event.preventDefault?.();
+-      for (const p of pending.values()) p.reject(new Error('crash'));
+-      pending.clear();
+-      worker = null;
++      shutDown(`worker crashed: ${(event as ErrorEvent).message ?? 'error'}`);
+     };
+     return worker;
+   };

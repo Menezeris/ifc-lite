@@ -60,13 +60,21 @@ export interface UseDrawingUnderlayParams {
 /** Rasterize one PDF page for the GPU; the caller closes the bitmap. */
 export type RasterizeUnderlayPage = (pdfUrl: string, page: number, maxTextureDimension: number) => Promise<ImageBitmap>;
 
-const rasterizeWithPdfjs: RasterizeUnderlayPage = async (pdfUrl, page, maxTextureDimension) => {
+const rasterizeOnMainThread: RasterizeUnderlayPage = async (pdfUrl, page, maxTextureDimension) => {
   const doc = await openPdfDocument(pdfUrl);
   try {
     return (await rasterizePdfPage(doc, page, RASTER_TARGET_PX, maxTextureDimension)).image;
   } finally {
     void doc.loadingTask.destroy();
   }
+};
+// pdf.js in a Web Worker on an OffscreenCanvas, the main thread only as fallback (AIM: turning an underlay on must not freeze the page)
+let rasterizeOffThread: Promise<RasterizeUnderlayPage> | null = null;
+const rasterizeWithPdfjs: RasterizeUnderlayPage = async (pdfUrl, page, maxTextureDimension) => {
+  rasterizeOffThread ??= import('@/aim/underlayRasterClient')
+    .then((m) => m.underlayRasterInWorker(rasterizeOnMainThread, RASTER_TARGET_PX))
+    .catch(() => rasterizeOnMainThread);
+  return (await rasterizeOffThread)(pdfUrl, page, maxTextureDimension);
 };
 // <<< AIM-FORK
 
