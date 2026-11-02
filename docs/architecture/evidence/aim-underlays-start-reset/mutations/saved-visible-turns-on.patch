@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlaysPlan.ts a/apps/viewer/src/aim/underlaysPlan.ts
+index ebf16504..125f2462 100644
+--- b/apps/viewer/src/aim/underlaysPlan.ts
++++ a/apps/viewer/src/aim/underlaysPlan.ts
+@@ -77,7 +77,7 @@ export function isUnderlaysViewWire(v: unknown): v is UnderlaysViewWire {
+ }
+ 
+ /** Podklad je v 3D zapnutý len prepisom z tejto relácie; uložené `visible` ho nezapne (štart = všetko vypnuté). */
+-export const underlayOn = (override: UnderlayOverride | undefined): boolean => override?.visible ?? true;
++export const underlayOn = (override: UnderlayOverride | undefined): boolean => override?.visible ?? false;
+ 
+ /**
+  * Placement pre renderer: prepis podkladu, potom globálne skrytie; store ostáva nedotknutý (kópia).
