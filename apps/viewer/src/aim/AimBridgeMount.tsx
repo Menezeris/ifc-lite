@@ -7,11 +7,13 @@
  * Host posiela príkazy až po READY, ktoré most pošle po pripojení, takže lenivé načítanie
  * žiadny príkaz nestratí. Tu ostáva len to, čo musí platiť od prvého renderu: príznak
  * embedu, závoj počas `?models=` autoloadu a záchyt konca autoloadu (most sa môže
- * pripojiť až po ňom).
+ * pripojiť až po ňom). Štart v embede je vždy predvolený model (AIMviewer, 2. 11. 2026): viditeľnosť
+ * tried uložená v localStorage sa neobnovuje.
  */
 
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useViewerStore } from '../store/index.js';
+import { TYPE_VISIBILITY_SEMANTIC_DEFAULTS } from '../store/constants.js';
 import { AUTOLOAD_COMPLETE_EVENT, parseAutoloadUrls } from '../lib/autoload.js';
 import { useBim } from '../sdk/BimProvider.js';
 import { selectPickedGlobalId } from '../components/viewer/viewport-selection.js';
@@ -51,6 +53,8 @@ export function AimBridgeMount() {
     // This app is only ever embedded by the AIM host, so the referrer at
     // mount time IS the trusted origin — no build-time config needed.
     useAimPanelStore.getState().setEmbedded(true, document.referrer ? new URL(document.referrer).origin : null);
+    // Predvolené triedy (miestnosti, otvory, lokalita...) namiesto voľby z minulej relácie; nič sa nezapisuje.
+    useViewerStore.setState({ typeVisibility: { ...TYPE_VISIBILITY_SEMANTIC_DEFAULTS } });
     if (!latch.active) return;
     const onAutoloadComplete = () => {
       setAutoloadVeil(false);

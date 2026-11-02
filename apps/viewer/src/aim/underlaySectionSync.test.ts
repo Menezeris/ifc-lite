@@ -22,6 +22,7 @@ import { fixtureModel } from '@/test/store-fixture';
 import { cleanup, render } from '@/test/render';
 import { useDrawingUnderlay, type RasterizeUnderlayPage } from '@/hooks/useDrawingUnderlay';
 import { useAimUnderlays3d } from './aimUnderlays3d';
+import { applyUnderlaySet } from './underlaysApply';
 
 // WebGPU flag enums the pipeline reads at init; node has none.
 const g = globalThis as Record<string, unknown>;
@@ -110,7 +111,8 @@ function seedStore() {
   useViewerStore.getState().setUnderlayDrawings([0, 3, 6].map((z) => ({
     id: `d${z}`, name: `${z} m`, pdfUrl: `https://pdf.test/${z}.pdf`, placement: placement(z),
   })));
-  useAimUnderlays3d.setState({ hidden: false, overrides: {} });
+  // Všetky tri zapnuté v 3D (prepis relácie): uložené visible ich samo nezapne (štart = vypnuté).
+  useAimUnderlays3d.setState({ hidden: false, overrides: { d0: { visible: true }, d3: { visible: true }, d6: { visible: true } } });
 }
 
 const setCut = (position: number | null) => act(() => {
@@ -199,5 +201,62 @@ describe('PDF podklady a vodorovný rez (AIMviewer #376)', () => {
     } finally {
       console.error = errors;
     }
+  });
+});
+
+describe('štart: PDF podklady vypnuté, rasterizácia až pri zapnutí (AIMviewer, 2. 11. 2026)', () => {
+  beforeEach(() => {
+    seedStore();
+    // Ako po načítaní stránky: prepínač 3D vypnutý, žiadny prepis; kalibrácie sú uložené ako viditeľné.
+    useAimUnderlays3d.setState({ hidden: true, overrides: {} });
+  });
+  afterEach(cleanup);
+
+  it('podklady s uloženým visible sa pri štarte nestiahnu ani nerasterizujú, ani po zapnutí prepínača 3D', async () => {
+    const raster = deferredRaster();
+    const view = mount(raster.rasterize);
+    await flush();
+    assert.equal(raster.calls.length, 0);
+    act(() => useAimUnderlays3d.getState().setShown(true));
+    await flush();
+    assert.equal(raster.calls.length, 0, 'prepínač 3D sám uložené podklady nezapne');
+    assert.equal(view.drawnPlanes(), 0);
+  });
+
+  it('chat show_in_3d jedného podkladu (show + položka) rasterizuje len ten jeden', async () => {
+    const raster = deferredRaster();
+    const view = mount(raster.rasterize);
+    act(() => applyUnderlaySet({ show: true, underlays: [{ document_id: 'd3', visible: true }] }, () => {}));
+    assert.deepEqual(raster.calls.map((c) => c.url), ['https://pdf.test/3.pdf']);
+    raster.calls[0].resolve();
+    await flush();
+    assert.equal(view.drawnPlanes(), 1);
+  });
+
+  it('oko v paneli zapne jeden podklad aj prepínač 3D; uložená kalibrácia sa nemení', async () => {
+    const raster = deferredRaster();
+    mount(raster.rasterize);
+    act(() => useAimUnderlays3d.getState().setUnderlayOn('d6', true));
+    assert.equal(useAimUnderlays3d.getState().hidden, false);
+    assert.deepEqual(raster.calls.map((c) => c.url), ['https://pdf.test/6.pdf']);
+    assert.equal(useViewerStore.getState().underlayDrawings.get('d6')?.placement?.visible, true);
+  });
+
+  it('persist z chatu nechá podklad zapnutý (prepis viditeľnosti ostane po uložení)', async () => {
+    const raster = deferredRaster();
+    mount(raster.rasterize);
+    const saves: string[] = [];
+    useViewerStore.getState().setUnderlaySaveHandler((id) => { saves.push(id); });
+    act(() => applyUnderlaySet({ show: true, underlays: [{ document_id: 'd0', visible: true, opacity: 0.4 }], persist: true }, () => {}));
+    assert.deepEqual(saves, ['d0']);
+    assert.deepEqual(useAimUnderlays3d.getState().overrides.d0, { visible: true });
+    assert.deepEqual(raster.calls.map((c) => c.url), ['https://pdf.test/0.pdf']);
+  });
+
+  it('zamknutý pôdorys (kalibrácia) rasterizuje len podklad svojho podlažia', async () => {
+    const raster = deferredRaster();
+    mount(raster.rasterize);
+    act(() => useViewerStore.setState({ underlayViewLocked: true, underlayActiveStoreyGuid: 'S3', underlayCut: 4 }));
+    assert.deepEqual(raster.calls.map((c) => c.url), ['https://pdf.test/3.pdf']);
   });
 });

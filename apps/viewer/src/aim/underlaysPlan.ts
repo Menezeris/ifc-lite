@@ -8,6 +8,8 @@
  * podklad v 3D a zmení jeho priehľadnosť bez zápisu do `_georef` (poloha kalibrácie sa nedotkne).
  * Kľúčom prepisu je id záznamu store; na drôte je `document_id` skutočné id dokumentu (`documentId`).
  * Rez s viacerými kalibráciami (AIM #284) má viac záznamov jedného dokumentu: položka drôtu platí pre všetky.
+ * Základ v 3D je vypnuté (AIMviewer, 2. 11. 2026): uložené `visible` kalibrácie podklad v 3D nezapne, pri štarte
+ * je každý podklad vypnutý a nerasterizuje sa, kým ho nezapne prepis (panel, chat, uložený pohľad).
  */
 
 export interface UnderlayOverride {
@@ -74,9 +76,20 @@ export function isUnderlaysViewWire(v: unknown): v is UnderlaysViewWire {
     && v.items.every((x) => isObj(x) && isId(x.document_id) && isBool(x.visible) && isOpacity(x.opacity));
 }
 
-/** Placement pre renderer: prepis podkladu, potom globálne skrytie; store ostáva nedotknutý (kópia). */
-export function underlayIn3d<T extends { visible: boolean; opacity: number }>(placement: T, override: UnderlayOverride | undefined, hideAll: boolean): T {
-  const visible = !hideAll && (override?.visible ?? placement.visible);
+/** Podklad je v 3D zapnutý len prepisom z tejto relácie; uložené `visible` ho nezapne (štart = všetko vypnuté). */
+export const underlayOn = (override: UnderlayOverride | undefined): boolean => override?.visible ?? false;
+
+/**
+ * Placement pre renderer: prepis podkladu, potom globálne skrytie; store ostáva nedotknutý (kópia).
+ * `lockedStorey` = zamknutý pôdorysný pohľad (kalibrácia, 2D): kreslí sa len podklad jeho podlažia,
+ * podľa uloženého `visible` alebo prepisu; ostatné podlažia sa nerasterizujú.
+ */
+export function underlayIn3d<T extends { visible: boolean; opacity: number; storeyGuid?: string }>(
+  placement: T, override: UnderlayOverride | undefined, hideAll: boolean, lockedStorey?: string | null,
+): T {
+  const visible = lockedStorey !== undefined
+    ? lockedStorey !== null && placement.storeyGuid === lockedStorey && (override?.visible ?? placement.visible)
+    : !hideAll && underlayOn(override);
   const opacity = override?.opacity ?? placement.opacity;
   return visible === placement.visible && opacity === placement.opacity ? placement : { ...placement, visible, opacity };
 }
@@ -121,10 +134,10 @@ export function describeUnderlays(drawings: readonly CalibratedDrawing[], overri
       storey_z: p.storeyZ,
       discipline: p.discipline,
       calibrated_at: p.calibratedAt,
-      visible: o?.visible ?? p.visible,
+      visible: underlayOn(o),
       opacity: o?.opacity ?? p.opacity,
       saved: { visible: p.visible, opacity: p.opacity },
-      overridden: o !== undefined && (o.visible !== undefined || o.opacity !== undefined),
+      overridden: underlayOn(o) !== p.visible || (o?.opacity ?? p.opacity) !== p.opacity,
     };
   });
 }
@@ -139,14 +152,14 @@ export function snapshotUnderlays(drawings: readonly CalibratedDrawing[], overri
     seen.add(docId(d));
     items.push({
       document_id: docId(d),
-      visible: overrides[d.id]?.visible ?? d.placement.visible,
+      visible: underlayOn(overrides[d.id]),
       opacity: overrides[d.id]?.opacity ?? d.placement.opacity,
     });
   }
   return { show: shown, items };
 }
 
-/** Obnova z pohľadu: prepisy sa nahradia celé, podklad kalibrovaný až po uložení pohľadu ostane podľa kalibrácie. */
+/** Obnova z pohľadu: prepisy sa nahradia celé, podklad, ktorý pohľad nemá (kalibrovaný až po uložení), ostane vypnutý. */
 export function restoreUnderlays(w: UnderlaysViewWire, drawings: readonly CalibratedDrawing[] = []): { shown: boolean; overrides: Record<string, UnderlayOverride> } {
   const overrides: Record<string, UnderlayOverride> = {};
   for (const it of w.items) {
