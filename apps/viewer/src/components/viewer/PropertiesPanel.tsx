@@ -90,6 +90,7 @@ import { SelectionSummaryPanel } from './properties/SelectionSummaryPanel';
 import { AssistantAction } from './assistant/AssistantAction';
 // >>> AIM-FORK: AIM asset card, rendered only inside the AIM host (see docs/FORK_MAINTENANCE.md)
 import { AimInspectorTabs, isReadOnlyFocus, useAimNativeHidden } from '@/aim/AimInspectorTabs';
+import { AimVerifyBar } from '@/aim/AimVerifyBar';
 // <<< AIM-FORK
 
 // >>> AIM-FORK: mobile scroll host (bottom sheet owns the single scroll surface)
@@ -1729,6 +1730,7 @@ export function PropertiesPanel() {
             )}
           </TabsContent>
           <TabsContent value="quantities" className="m-0 p-3 overflow-hidden">
+            {/* >>> AIM-FORK: D-185 UI, lišta overenia výmer */}<AimVerifyBar entityType={entityType} globalId={entityGlobalId} />{/* <<< AIM-FORK */}
             {occurrenceQuantities.status === 'unavailable' ? <output className="block text-sm text-muted-foreground">{t('properties.panel.occurrenceUnavailable', { reason: occurrenceQuantities.reason ?? '' })}</output> : null}
             <div className="mb-3"><SweptDiskInspection enabled={propertiesActiveTab === 'quantities'} /></div>
             <div className="mb-3"><ExtrusionInspection enabled={propertiesActiveTab === 'quantities'} /></div>
@@ -1747,7 +1749,9 @@ export function PropertiesPanel() {
                   <section key={scope} aria-label={t(heading)} className="space-y-3">
                     <h3 className="text-sm font-medium">{t(heading)}</h3>
                     {sets.map((qset: QuantitySet, index: number) => (
-                      <QuantitySetCard key={`${scope}-${qset.name}-${index}`} qset={qset} projectUnits={renderedProjectUnits} projectUnitsAvailable={quantityUnitContext.status !== 'unavailable'} unitDisplayOverrides={unitDisplayOverrides} searchQuery={findQuery} />
+                      // >>> AIM-FORK: D-185 UI, fajočky overenia len pri výmerach výskytu
+                      <QuantitySetCard key={`${scope}-${qset.name}-${index}`} qset={qset} projectUnits={renderedProjectUnits} projectUnitsAvailable={quantityUnitContext.status !== 'unavailable'} unitDisplayOverrides={unitDisplayOverrides} searchQuery={findQuery} aimVerify={scope === 'occurrence'} />
+                      // <<< AIM-FORK
                     ))}
                   </section>
                 ) : null)}

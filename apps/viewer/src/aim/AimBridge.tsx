@@ -42,6 +42,7 @@ import { dispatchLensMessage, isLensEnvelope, lensSettled, listSettled, resetLen
 import { appliedViewState, runSectionBox, runViewsMessage, setChangesProvider, setFocusProvider, useAimViewCommands } from './useAimViewCommands.js';
 import { createViewChangeTracker } from './viewChanges.js';
 import { setIdsHostPost } from './idsHost.js';
+import { setVerifyFocus, useAimVerify } from './aimVerifyStore.js';
 import { handleIcddStatus, setIcddHostPost } from './aimIcddStore.js';
 import { isIcddStatusMessage } from './icdd-protocol.js';
 import { AimIcddDialog } from './AimIcddDialog.js';
@@ -66,6 +67,9 @@ const loadBcfImport = () => (bcfImport ??= import('./aimBcfImport.js'));
 /** Knižnica požiadaviek (D-182): odpoveď hosta `REQLIB_RESULT`, tvar overuje lenivý modul. */
 let reqlib: Promise<typeof import('./aimReqlib.js')> | null = null;
 const loadReqlib = () => (reqlib ??= import('./aimReqlib.js'));
+/** Overenie výmer (D-185 UI): odpoveď hosta `VERIFY_RESULT`, tvar overuje lenivý modul. */
+let verify: Promise<typeof import('./aimVerify.js')> | null = null;
+const loadVerify = () => (verify ??= import('./aimVerify.js'));
 
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
@@ -188,6 +192,11 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
         if (aimTyped(raw, 'IDS_LOAD')) command(run); else run();
         return;
       }
+      if (aimTyped(e.data, 'VERIFY_RESULT')) {
+        const raw: unknown = e.data; // Overenie výmer (D-185 UI): odpoveď na žiadosť panela alebo ribbonu, hneď
+        void loadVerify().then((m) => m.handleVerifyResult(raw)).catch((err) => console.warn('[aim-bridge] VERIFY_RESULT failed', err));
+        return;
+      }
       if (aimTyped(e.data, 'REQLIB_RESULT')) {
         const raw: unknown = e.data; // Knižnica požiadaviek (D-182): odpoveď na žiadosť karty alebo lišty IDS, hneď
         void loadReqlib().then((m) => m.handleReqlibResult(raw)).catch((err) => console.warn('[aim-bridge] REQLIB_RESULT failed', err));
@@ -268,6 +277,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
     }
 
     setIdsHostPost((msg) => window.parent.postMessage(msg, origin())); // tlačidlo "Uložiť do AIM" v paneloch IDS (D-162)
+    setVerifyFocus((guids) => runVisibility({ source: SOURCE, type: 'FOCUS', guids })); // detail overenia výmer (D-185 UI)
     setIcddHostPost((msg, transfer) => window.parent.postMessage(msg, origin(), transfer ?? [])); // ribbon AIM, tlačidlo ICDD (D-181)
     wireDocumentEvents(post, selectPickedGlobalId); // kalibrácia podkladu a taby dokumentov -> host (docBridge.ts)
 
@@ -285,6 +295,8 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
       void ids?.then((m) => m.stopIds());
       void clash?.then((m) => m.stopClash());
       void reqlib?.then((m) => m.stopReqlib());
+      setVerifyFocus(null);
+      void verify?.then((m) => m.stopVerify());
       void bcfImport?.then((m) => m.stopBcfImport());
       useViewerStore.getState().setUnderlaySaveHandler(null);
       useViewerStore.getState().setDocumentEventHandler(null);
@@ -372,6 +384,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
       if (!hadSelectionRef.current) return;
       hadSelectionRef.current = false;
       useAimPanelStore.getState().clear();
+      if (useAimVerify.getState().guid) void loadVerify().then((m) => m.forgetVerification()); // kóty a zvýraznenie z detailu
       window.parent.postMessage({ source: SOURCE, type: 'ENTITY_DESELECTED' } satisfies OutboundMessage, targetOrigin);
       return;
     }
