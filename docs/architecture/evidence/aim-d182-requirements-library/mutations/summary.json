@@ -18,7 +18,7 @@
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimReqlib.test.ts; that file has a green, attributable baseline.",
     "base": "a037dbc5276648d34b7b77900af29a49a068281c",
-    "head": "86d1dcedb5c1ebc678e998e3a50078337390dc07",
+    "head": "658e483d2795e0529a6a9789fc6e965fb6ac16b1",
     "production": [
       "apps/viewer/src/aim/aimReqlib.ts"
     ],

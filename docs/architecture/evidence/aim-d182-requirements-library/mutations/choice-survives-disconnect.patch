@@ -1,9 +1,13 @@
 diff --git a/apps/viewer/src/aim/aimReqlib.ts b/apps/viewer/src/aim/aimReqlib.ts
+index 4752b615..d638b835 100644
 --- a/apps/viewer/src/aim/aimReqlib.ts
 +++ b/apps/viewer/src/aim/aimReqlib.ts
-@@ -91,4 +91,5 @@ export function stopReqlib(): void {
-     p.reject(new Error('Spojenie s AIM sa prerušilo.'));
+@@ -92,7 +92,7 @@ export function stopReqlib(): void {
+     p.reject(new Error(DISCONNECTED));
    }
    pending.clear();
-+  useAimReqlib.setState({ choice: null, busy: null });
+-  // (mutant) stav starého spojenia ostane
++  useAimReqlib.setState({ data: null, notice: null, choice: null, busy: null, loading: false, error: DISCONNECTED });
  }
+ 
+ const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));

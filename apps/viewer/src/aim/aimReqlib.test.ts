@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/** Odpojenie mosta knižnice požiadaviek (AIM D-182): čakajúca žiadosť zlyhá a voľba priradenia neprežije. */
+/** Odpojenie mosta knižnice požiadaviek (AIM D-182): čakajúca žiadosť zlyhá a stav starého spojenia neprežije. */
 
 import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
@@ -21,7 +21,7 @@ describe('stopReqlib', () => {
   it('zahodí otvorenú voľbu priradenia a čakajúca žiadosť skončí chybou', async () => {
     const sent: Array<Record<string, unknown>> = [];
     setIdsHostPost((m) => sent.push(m));
-    useAimReqlib.setState({ choice: CHOICE, busy: 'ids/A.ids' });
+    useAimReqlib.setState({ choice: CHOICE, busy: 'ids/A.ids', notice: { kind: 'ok', text: 'Priradené.' } });
     const loading = loadCatalog();
     assert.equal(sent.length, 1);
 
@@ -31,7 +31,17 @@ describe('stopReqlib', () => {
     const s = useAimReqlib.getState();
     assert.equal(s.choice, null);
     assert.equal(s.busy, null);
+    assert.equal(s.notice, null);
     assert.equal(s.loading, false);
-    assert.equal(s.error, 'Spojenie s AIM sa prerušilo.');
+    assert.equal(s.error, 'Spojenie s AIM sa prerušilo; obnov knižnicu.');
+  });
+
+  it('zahodí katalóg starého spojenia aj bez čakajúcej žiadosti', () => {
+    useAimReqlib.setState({ data: { library: { configured: true, commit: 'c1', items: [] } }, notice: { kind: 'error', text: 'x' } });
+    stopReqlib();
+    const s = useAimReqlib.getState();
+    assert.equal(s.data, null);
+    assert.equal(s.notice, null);
+    assert.equal(s.error, 'Spojenie s AIM sa prerušilo; obnov knižnicu.');
   });
 });

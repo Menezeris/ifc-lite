@@ -6,7 +6,7 @@
 
 The change adds the "Requirements library" card to the AIM fork: a ribbon button in the AIM tab opens a view tab of the new kind `req` in the pane beside 3D (`AimCenterPane.tsx`), the card asks the host through one message pair (`REQLIB_REQUEST` / `REQLIB_RESULT`, `reqlib-protocol.ts`), and the IDS bar of Data validation saves the check result per federation model (`reqlibPlan.ts`). The tests (`reqlibPlan.test.ts`, the new case in `viewTabsPlan.test.ts`) import modules or exports that do not exist on `main` (`reqlibPlan.ts`, `reqlib-protocol.ts`, `REQ_TAB`, `isPaneTab`), so reverting production makes them fail to load and the CI revert oracle reports INCONCLUSIVE. Each main behavioural decision was instead checked with a surgical mutation.
 
-Each patch is written mutant->fixed (the orientation of `git diff base...head`); the oracle reverse-applies it. Three (fixes of Claude review findings on #221) were run against head `b66aa38a`, `choice-survives-disconnect` (a later finding) against `86d1dced`, `null-origin-rejected` (a finding on #222) against `e7ced17d`, `nan-revision-accepted` against `32a3b02f`. Every run ended `OBSERVED` (exit 0) with restoration verified, against base `origin/main`. The full records are in `summary.json`.
+Each patch is written mutant->fixed (the orientation of `git diff base...head`); the oracle reverse-applies it. Three (fixes of Claude review findings on #221) were run against head `b66aa38a`, `choice-survives-disconnect` (two later findings) against `658e483d`, `null-origin-rejected` (a finding on #222) against `e7ced17d`, `nan-revision-accepted` against `32a3b02f`. Every run ended `OBSERVED` (exit 0) with restoration verified, against base `origin/main`. The full records are in `summary.json`.
 
 | Patch | Module | Mutation | Test that went red |
 |---|---|---|---|
@@ -20,7 +20,7 @@ Each patch is written mutant->fixed (the orientation of `git diff base...head`);
 | `req-is-scene.patch` | `viewTabsLayout.ts` | the library tab counts as a 3D scene tab | `viewTabsPlan.test.ts` |
 | `library-flag-lost.patch` | `viewTabsLayout.ts` | the center layout never tells the pane to show the library | `viewTabsPlan.test.ts` |
 | `doc-beside-library.patch` | `viewTabsPlan.ts` | a document may sit beside the library (two panes, no 3D) | `viewTabsPlan.test.ts` |
-| `choice-survives-disconnect.patch` | `aimReqlib.ts` | a bridge disconnect leaves the open assign choice (old commit and sha) and the busy flag in the card store | `aimReqlib.test.ts` |
+| `choice-survives-disconnect.patch` | `aimReqlib.ts` | a bridge disconnect leaves the old connection's catalog, notice, open assign choice (old commit and sha) and busy flag in the card store | `aimReqlib.test.ts` |
 | `null-origin-rejected.patch` | `ids-protocol.ts` | an `IDS_LOAD` with `origin` or `library_commit` sent as `null` is dropped as a whole | `ids-protocol.test.ts` |
 | `nan-revision-accepted.patch` | `reqlibPlan.ts` | a host reply to "save_run" with a NaN model revision (postMessage carries it) reads as success | `reqlibPlan.test.ts` |
 
