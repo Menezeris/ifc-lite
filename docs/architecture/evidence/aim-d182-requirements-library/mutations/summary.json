@@ -1,4 +1,32 @@
 {
+  "assign-empty-reads-success": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/reqlibPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "a037dbc5276648d34b7b77900af29a49a068281c",
+    "head": "b66aa38a5eece69e5f10618d7c3315e087bb0aa4",
+    "production": [
+      "apps/viewer/src/aim/reqlibPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/reqlibPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "choice-survives-disconnect": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/aimReqlib.test.ts; that file has a green, attributable baseline.",
+    "base": "a037dbc5276648d34b7b77900af29a49a068281c",
+    "head": "86d1dcedb5c1ebc678e998e3a50078337390dc07",
+    "production": [
+      "apps/viewer/src/aim/aimReqlib.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/aimReqlib.test.ts"
+    ],
+    "restoration": "verified"
+  },
   "doc-beside-library": {
     "verdict": "OBSERVED",
     "exitCode": 0,
@@ -83,40 +111,26 @@
     ],
     "restoration": "verified"
   },
-  "status-ignores-model": {
-    "verdict": "OBSERVED",
-    "exitCode": 0,
-    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/reqlibPlan.test.ts; that file has a green, attributable baseline.",
-    "base": "a037dbc5276648d34b7b77900af29a49a068281c",
-    "head": "049ec7542c7dfc2f1a5b58e9df58a5cc651ea16b",
-    "production": [
-      "apps/viewer/src/aim/reqlibPlan.ts"
-    ],
-    "tests": [
-      "apps/viewer/src/aim/reqlibPlan.test.ts"
-    ],
-    "restoration": "verified"
-  },
-  "assign-empty-reads-success": {
-    "verdict": "OBSERVED",
-    "exitCode": 0,
-    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/reqlibPlan.test.ts; that file has a green, attributable baseline.",
-    "base": "a037dbc5276648d34b7b77900af29a49a068281c",
-    "head": "b66aa38a5eece69e5f10618d7c3315e087bb0aa4",
-    "production": [
-      "apps/viewer/src/aim/reqlibPlan.ts"
-    ],
-    "tests": [
-      "apps/viewer/src/aim/reqlibPlan.test.ts"
-    ],
-    "restoration": "verified"
-  },
   "save-empty-reads-success": {
     "verdict": "OBSERVED",
     "exitCode": 0,
     "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/reqlibPlan.test.ts; that file has a green, attributable baseline.",
     "base": "a037dbc5276648d34b7b77900af29a49a068281c",
     "head": "b66aa38a5eece69e5f10618d7c3315e087bb0aa4",
+    "production": [
+      "apps/viewer/src/aim/reqlibPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/reqlibPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "status-ignores-model": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/reqlibPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "a037dbc5276648d34b7b77900af29a49a068281c",
+    "head": "049ec7542c7dfc2f1a5b58e9df58a5cc651ea16b",
     "production": [
       "apps/viewer/src/aim/reqlibPlan.ts"
     ],
