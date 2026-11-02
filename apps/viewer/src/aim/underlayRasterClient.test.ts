@@ -74,8 +74,10 @@ describe('raster PDF podkladu mimo hlavného vlákna', () => {
     workers[0].answer({ id: 1, error: 'OffscreenCanvas unavailable in workers', unsupported: true });
     await first;
     assert.equal(workers[0].terminated, true);
-    await raster('b.pdf', 1, 4096);
+    const next = raster('b.pdf', 1, 4096);
+    await tick();
     assert.equal(workers.length, 1, 'nový worker sa nespúšťa');
+    await next;
     assert.deepEqual(fallbackCalls, ['a.pdf#1', 'b.pdf#1']);
 
     const crashed = setup();
@@ -83,8 +85,10 @@ describe('raster PDF podkladu mimo hlavného vlákna', () => {
     await tick();
     crashed.workers[0].crash();
     assert.equal((await job as unknown as { tag: string }).tag, 'main:c.pdf');
-    await crashed.raster('d.pdf', 1, 4096);
-    assert.equal(crashed.workers.length, 1);
+    const nextAfterCrash = crashed.raster('d.pdf', 1, 4096);
+    await tick();
+    assert.equal(crashed.workers.length, 1, 'po páde sa nový worker nespúšťa');
+    await nextAfterCrash;
     assert.deepEqual(crashed.fallbackCalls, ['c.pdf#1', 'd.pdf#1']);
   });
 
