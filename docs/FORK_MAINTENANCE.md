@@ -447,7 +447,7 @@ Generované z `git grep -n "AIM-FORK" -- .github scripts`; pri synchronizácii n
 |---|---|
 | `.github/workflows/test.yml` | `on.schedule` + `workflow_dispatch` (D-103); výstupy `changes` vypnuté pre rýchlu cestu (D-098, D-103, D-116); krok `aimonly` volá `check-aim-fork-only.mjs` so štítkami PR (D-103, D-116); krok `all` aj pre nočný / ručný beh (D-103); Plato aj v nočnom behu (D-103); brána neskorých changesetov len upstream; thin LTO pre wasm |
 | `.github/workflows/aim-fast.yml` | celý súbor: rýchla cesta, každý PR (D-098, D-103, D-116) |
-| `.github/workflows/test.yml` (job `typecheck`), `aim-fast.yml` (krok *Typecheck the viewer*), `report-service.yml` (`mounted-public-ui`) | `NODE_OPTIONS=--max-old-space-size=6144` pre `tsc` viewera: program s AIM vrstvou potrebuje asi 4,2 GB heapu, nad predvoleným stropom Node na `ubuntu-latest` (OOM, sync PR #157) |
+| `.github/workflows/test.yml` (job `typecheck` a krok `pnpm lint` v jobe `lint`, ratchet nepoužitých premenných), `aim-fast.yml` (krok *Typecheck the viewer*), `report-service.yml` (`mounted-public-ui`) | `NODE_OPTIONS=--max-old-space-size=6144` pre `tsc` viewera: program s AIM vrstvou potrebuje asi 4,2 GB heapu, nad predvoleným stropom Node na `ubuntu-latest` (OOM, sync PR #157; v Lint lane sa OOM tváril ako *does not compile standalone* a zhadzoval Lint náhodne, balík h 2026-11-01) |
 | `.github/workflows/aim-smoke.yml`, `scripts/aim-smoke.mjs` (+ test) | celý súbor: smoke po produkčnom nasadení (D-116) |
 | `.github/workflows/aim-release.yml` | celý súbor: tag balíka po zlúčení (D-116) |
 | `.github/workflows/aim-nightly-report.yml` | celý súbor: hlásenie červeného nočného behu (D-103) |
