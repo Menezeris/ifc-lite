@@ -1868,6 +1868,12 @@ jobs:
           name: build-output
           path: packages
       - run: pnpm lint
+        # >>> AIM-FORK: the unused-locals ratchet runs tsc over the viewer program (upstream plus the
+        # AIM layer), which needs about 4.2 GB of heap, over Node's default ceiling on ubuntu-latest;
+        # a heap OOM is read as "does not compile standalone" and fails Lint at random (release batch h).
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        # <<< AIM-FORK
       # THE ARTIFACT CLASS NOBODY REVIEWED. PR #3175 corrected twelve changesets
       # by hand that would have shipped breaking changes as `patch`, with the
       # release one command from publishing; its own body names the cause --
