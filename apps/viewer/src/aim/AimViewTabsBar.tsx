@@ -5,10 +5,11 @@
 /**
  * Lišta záložiek nad strednou plochou (AIM D-132, #165): 3D a otvorené dokumenty
  * (od D-161 bez pôdorysov a uložených pohľadov, tie sú v Presentation). Aktívna
- * záložka má celú plochu; "Vedľa" dá k nej dokument. Lenivo z `ViewerLayout.tsx`;
+ * záložka má celú plochu; dokument vedľa nej dá hostový príkaz `set_view_mode` (`beside`,
+ * logika `besideId` ostáva), v lište na to už nie je výber. Lenivo z `ViewerLayout.tsx`;
  * na mobile sa neukazuje (dokument tam je prekrytie D-075).
- * Prepínač "Rozloženie" rozdelí plochu na 2 až 4 dlaždice (D-157); "Vedľa" pre dvojicu,
- * ktorú plocha bez dlaždíc nevie (dve 3D, dva dokumenty), prepne na dve dlaždice vedľa seba.
+ * Prepínač "Rozloženie" rozdelí plochu na 2 až 4 dlaždice (D-157), čo je cesta aj pre dvojicu,
+ * ktorú plocha bez dlaždíc nevie (dve 3D, dva dokumenty).
  */
 
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
@@ -18,7 +19,7 @@ import { cn } from '@/lib/utils';
 import { useViewerStore } from '@/store';
 import type { ViewTabKind } from './viewTabsPlan.js';
 import { useAimViewTabs } from './viewTabsStore.js';
-import { activate, beside, close, setLayout, syncDocs, syncViews } from './viewTabsApply.js';
+import { activate, close, setLayout, syncDocs, syncViews } from './viewTabsApply.js';
 import { TILE_LAYOUTS, TILE_LAYOUT_LABELS, isTileLayout } from './viewTilesPlan.js';
 import { fitTabs } from './viewTabsFit.js';
 
@@ -61,8 +62,6 @@ export function AimViewTabsBar() {
   // Dlaždice (D-157) kreslí lenivá mriežka v obale 3D panela, nie vstupný `ViewerLayout`.
   const [tilesHost, setTilesHost] = useState<HTMLElement | null>(null);
   useEffect(() => setTilesHost(document.querySelector<HTMLElement>('[data-aim-tiles]')), []);
-  // Vedľa ide každá dvojica: čo nevie plocha bez dlaždíc, rieši rozloženie dvoch dlaždíc (D-157).
-  const pairable = useMemo(() => tabs.filter((t) => t.id !== activeId), [tabs, activeId]);
   // Pretek (#240): namiesto posuvníka zoznam ostatných záložiek na konci lišty.
   const areaRef = useRef<HTMLDivElement>(null);
   const [areaWidth, setAreaWidth] = useState<number | null>(null);
@@ -195,18 +194,6 @@ export function AimViewTabsBar() {
       )}
       </div>
       <div className="flex shrink-0 items-center gap-1 px-1">
-        {layout === 'single' && (
-          <select
-            aria-label="Vedľa aktívnej záložky"
-            className={SELECT}
-            value={besideId ?? ''}
-            disabled={pairable.length === 0 && besideId === null}
-            onChange={(e) => { void beside(e.target.value || null, warn); }}
-          >
-            <option value="">Vedľa: nič</option>
-            {pairable.map((t) => <option key={t.id} value={t.id}>{`Vedľa: ${t.label}`}</option>)}
-          </select>
-        )}
         <select
           aria-label="Rozloženie dlaždíc"
           className={SELECT}
