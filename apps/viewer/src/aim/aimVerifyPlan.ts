@@ -9,9 +9,6 @@
 
 import type { VerifyElementWire, VerifyRecipeWire, VerifyStatus, VerifyTargetWire, VerifyUnit } from './verify-protocol.js';
 
-export type Vec3 = { x: number; y: number; z: number };
-export interface Box3 { min: Vec3; max: Vec3 }
-
 /** Kľúč riadku: `Qto_SpaceBaseQuantities.Height`. */
 export const targetKey = (qset: string, quantity: string): string => `${qset}.${quantity}`;
 
@@ -20,6 +17,18 @@ export function findTarget(el: VerifyElementWire | null | undefined, qset: strin
   const key = targetKey(qset, quantity);
   return el.targets.find((t) => t.target === key) ?? null;
 }
+
+export const STATUS_LABEL: Record<VerifyStatus, string> = {
+  green: 'Sedí',
+  yellow: 'Upozornenie',
+  red: 'Nesedí',
+  grey: 'Nedá sa overiť',
+};
+
+export const STATUS_GLYPH: Record<VerifyStatus, string> = { green: '✓', yellow: '!', red: '✗', grey: '?' };
+
+export type Vec3 = { x: number; y: number; z: number };
+export interface Box3 { min: Vec3; max: Vec3 }
 
 /** Rozdiel geometria - súbor, keď sú obe hodnoty. */
 export function difference(t: Pick<VerifyTargetWire, 'file_value' | 'computed_value'>): number | null {
@@ -47,15 +56,6 @@ export function formatDifference(d: number | null, unit: VerifyUnit): string {
   const s = formatValue(d, unit);
   return d > 0 && !s.startsWith('0,0000') ? `+${s}` : s;
 }
-
-export const STATUS_LABEL: Record<VerifyStatus, string> = {
-  green: 'Sedí',
-  yellow: 'Upozornenie',
-  red: 'Nesedí',
-  grey: 'Nedá sa overiť',
-};
-
-export const STATUS_GLYPH: Record<VerifyStatus, string> = { green: '✓', yellow: '!', red: '✗', grey: '?' };
 
 export function countByStatus(el: VerifyElementWire | null | undefined): Record<VerifyStatus, number> {
   const out: Record<VerifyStatus, number> = { green: 0, yellow: 0, red: 0, grey: 0 };

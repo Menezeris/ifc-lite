@@ -160,7 +160,6 @@ export function DocumentsRibbonTab() {
           ui={VERIFY_UI}
           hostAvailable={icddHostReady}
           busyCheck={verifyBusy}
-          onRun={(check) => void import('./aimVerify').then((m) => m.runAllVerification(check))}
         />
       </Suspense>
     </>

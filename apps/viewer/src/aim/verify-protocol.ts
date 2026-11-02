@@ -20,11 +20,8 @@ import { SOURCE } from './bridge-core.js';
 export const VERIFY_ACTIONS = ['latest', 'run', 'run_all'] as const;
 export type VerifyAction = (typeof VERIFY_ACTIONS)[number];
 
-/** Kontroly v ribbone (skupina Overovanie); ďalšie sa pridajú sem a do registra hosta. */
-export const VERIFY_CHECKS = [
-  { id: 'space_quantities', label: 'Výmery miestností (IfcSpace)', ifcTypes: ['IFCSPACE'] },
-] as const;
-export type VerifyCheckId = (typeof VERIFY_CHECKS)[number]['id'];
+export { VERIFY_CHECKS, type VerifyCheckId } from './aimVerifyStore.js';
+import type { VerifyCheckId } from './aimVerifyStore.js';
 
 export type VerifyStatus = 'green' | 'yellow' | 'red' | 'grey';
 export type VerifyUnit = 'm' | 'm2' | 'm3';

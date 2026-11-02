@@ -11,7 +11,7 @@
 
 import type { ElementType } from 'react';
 import type { IcddRibbonUi } from './AimIcddRibbonGroup';
-import { VERIFY_CHECKS, type VerifyCheckId } from './verify-protocol';
+import { VERIFY_CHECKS, type VerifyCheckId } from './aimVerifyStore';
 
 export interface VerifyRibbonUi extends Omit<IcddRibbonUi, 'icon'> {
   icon: ElementType;
@@ -22,10 +22,11 @@ export interface AimVerifyRibbonGroupProps {
   hostAvailable: boolean;
   /** Práve bežiaca kontrola (tlačidlá sa vypnú). */
   busyCheck: string | null;
-  onRun: (check: VerifyCheckId) => void;
 }
 
-export function AimVerifyRibbonGroup({ ui, hostAvailable, busyCheck, onRun }: AimVerifyRibbonGroupProps) {
+const run = (check: VerifyCheckId) => void import('./aimVerify').then((m) => m.runAllVerification(check));
+
+export function AimVerifyRibbonGroup({ ui, hostAvailable, busyCheck }: AimVerifyRibbonGroupProps) {
   const { Group, Button, menu, icon } = ui;
   const busyLabel = VERIFY_CHECKS.find((c) => c.id === busyCheck)?.label;
   const tooltip = !hostAvailable
@@ -50,7 +51,7 @@ export function AimVerifyRibbonGroup({ ui, hostAvailable, busyCheck, onRun }: Ai
         </menu.Trigger>
         <menu.Content align="start">
           {VERIFY_CHECKS.map((c) => (
-            <menu.Item key={c.id} disabled={!hostAvailable || busyCheck !== null} onSelect={() => onRun(c.id)}>
+            <menu.Item key={c.id} disabled={!hostAvailable || busyCheck !== null} onSelect={() => run(c.id)}>
               {c.label}
             </menu.Item>
           ))}

@@ -10,6 +10,18 @@
 import { create } from 'zustand';
 import type { VerifyElementWire, VerifyRunAllWire } from './verify-protocol.js';
 
+/** Kontroly v ribbone (skupina Overovanie); ďalšie sa pridajú sem a do registra hosta. Tu, nie v protokole,
+ *  aby vstupný balík nenesol overovanie tvaru správ. */
+export const VERIFY_CHECKS = [
+  { id: 'space_quantities', label: 'Výmery miestností (IfcSpace)', ifcTypes: ['IFCSPACE'] },
+] as const;
+export type VerifyCheckId = (typeof VERIFY_CHECKS)[number]['id'];
+
+/** Prvok, ktorý pokrýva niektorá kontrola (IFC trieda bez ohľadu na veľkosť písmen). */
+export const isVerifiable = (entityType: string | undefined): boolean =>
+  !!entityType && VERIFY_CHECKS.some((c) => (c.ifcTypes as readonly string[]).includes(entityType.toUpperCase()));
+
+
 export interface AimVerifyState {
   /** GlobalId prvku, ku ktorému patrí výsledok (alebo prebiehajúca žiadosť). */
   guid: string | null;
@@ -32,9 +44,5 @@ let focus: Focus | null = null;
 export const setVerifyFocus = (next: Focus | null): void => { focus = next; };
 export const verifyFocus = (): Focus | null => focus;
 
-/** Prepne rozbalený detail riadku; kóty a zvýraznenie robí lenivý modul. */
-export function toggleVerifyDetail(key: string): void {
-  const open = useAimVerify.getState().open === key ? null : key;
-  useAimVerify.setState({ open });
-  void import('./aimVerify.js').then((m) => (open ? m.showTarget(open) : m.clearShown()));
-}
+/** Riadok `Qto_X.Name` má výsledok overenia (len vtedy sa načíta lenivá fajočka). */
+export const hasTarget = (s: AimVerifyState, key: string): boolean => !!s.data?.targets.some((t) => t.target === key);
