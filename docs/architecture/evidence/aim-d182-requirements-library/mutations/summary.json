@@ -69,6 +69,20 @@
     ],
     "restoration": "verified"
   },
+  "null-origin-rejected": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/ids-protocol.test.ts; that file has a green, attributable baseline.",
+    "base": "a037dbc5276648d34b7b77900af29a49a068281c",
+    "head": "e7ced17d8b5a98a3aea4a1ec2f1cf8afb89f0fd5",
+    "production": [
+      "apps/viewer/src/aim/ids-protocol.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/ids-protocol.test.ts"
+    ],
+    "restoration": "verified"
+  },
   "passing-reasons-kept": {
     "verdict": "OBSERVED",
     "exitCode": 0,

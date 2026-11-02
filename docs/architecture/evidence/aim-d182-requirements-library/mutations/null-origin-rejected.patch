@@ -1,0 +1,8 @@
+diff --git a/apps/viewer/src/aim/ids-protocol.ts b/apps/viewer/src/aim/ids-protocol.ts
+--- a/apps/viewer/src/aim/ids-protocol.ts
++++ b/apps/viewer/src/aim/ids-protocol.ts
+@@ -71,3 +71,3 @@ const optional = (v: unknown, ok: (x: unknown) => boolean) => v === undefined || ok(v);
+ /** Pôvod IDS (D-182) môže host poslať aj ako `null` (IDS mimo knižnice); nemá kvôli tomu zahodiť celé `IDS_LOAD`. */
+-const absentOr = optional;
++const absentOr = (v: unknown, ok: (x: unknown) => boolean) => v === null || optional(v, ok);
+ 
