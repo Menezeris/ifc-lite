@@ -57,6 +57,8 @@ describe('SceneOverlayRoot', () => {
     const svgs = root.querySelectorAll('svg');
     assert.equal(svgs.length, 1);
     assert.equal(svgs[0]!.querySelectorAll('filter').length, 1, 'one shared glow filter, not one per primitive');
+    const glow = svgs[0]!.querySelector('filter')!;
+    assert.equal(glow.getAttribute('filterUnits'), 'userSpaceOnUse', 'bbox-relative region makes axis-aligned (zero-width) lines vanish, #391');
     assert.equal(svgs[0]!.querySelectorAll('marker').length, 2, 'accent + ink arrowheads, defined once');
     const domLayers = root.querySelectorAll(':scope > div');
     assert.equal(domLayers.length, 1);
