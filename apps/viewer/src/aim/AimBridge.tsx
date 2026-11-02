@@ -384,6 +384,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
       if (!hadSelectionRef.current) return;
       hadSelectionRef.current = false;
       useAimPanelStore.getState().clear();
+      useAimVerify.setState({ panelGuid: null });
       if (useAimVerify.getState().guid) void loadVerify().then((m) => m.forgetVerification()); // kóty a zvýraznenie z detailu
       window.parent.postMessage({ source: SOURCE, type: 'ENTITY_DESELECTED' } satisfies OutboundMessage, targetOrigin);
       return;
@@ -399,6 +400,8 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
       if (store.isMobile && store.rightPanelCollapsed) store.setRightPanelCollapsed(false);
     }
     const guid = guidForEntity(useViewerStore.getState().models, selectedEntity);
+    useAimVerify.setState({ panelGuid: guid ?? null }); // fajočky výmer len pre tento prvok (D-185 UI)
+    if (useAimVerify.getState().open) void loadVerify().then((m) => m.closeDetailUnless(guid ?? null));
     if (guid) {
       // AIM layer rows wait for the host's answer:
       // AIM_PANEL_DATA / AIM_PANEL_EMPTY (or the store times out quietly).

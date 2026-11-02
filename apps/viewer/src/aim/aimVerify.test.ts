@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
 
 import { setIdsHostPost } from './idsHost.js';
-import { useAimVerify } from './aimVerifyStore.js';
+import { hasTarget, useAimVerify } from './aimVerifyStore.js';
 import { forgetVerification, handleVerifyResult, loadVerification, runAllVerification, stopVerify } from './aimVerify.js';
 
 type Sent = { id: string; action: string; payload: Record<string, unknown> };
@@ -55,6 +55,17 @@ describe('overenie výmer: žiadosti na hosta (AIM D-185 UI)', () => {
     const none = fakeHost((r) => ({ ok: true, data: r.action === 'latest' ? null : element('G3', false) }));
     await loadVerification('G3');
     assert.deepEqual(none.map((s) => s.action), ['latest', 'run']);
+  });
+
+  it('fajočka len pri prvku, ktorého výmery panel ukazuje (stena má tiež BaseQuantities.Height)', async () => {
+    fakeHost(() => ({ ok: true, data: element('SPACE', false) }));
+    await loadVerification('SPACE');
+    useAimVerify.setState({ panelGuid: 'SPACE' });
+    assert.equal(hasTarget(useAimVerify.getState(), 'Qto_SpaceBaseQuantities.Height'), true);
+    assert.equal(hasTarget(useAimVerify.getState(), 'Qto_SpaceBaseQuantities.NetVolume'), false);
+    useAimVerify.setState({ panelGuid: 'WALL' });
+    assert.equal(hasTarget(useAimVerify.getState(), 'Qto_SpaceBaseQuantities.Height'), false);
+    useAimVerify.setState({ panelGuid: null });
   });
 
   it('ten istý prvok druhýkrát nežiada; odpoveď pre iný prvok sa zahodí', async () => {

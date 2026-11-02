@@ -105,6 +105,14 @@ export function forgetVerification(): void {
   if (hadOpen) clearShown();
 }
 
+/** Výber sa zmenil: rozbalený detail iného prvku sa zavrie aj s kótami a zvýraznením; výsledok ostane. */
+export function closeDetailUnless(guid: string | null): void {
+  const st = useAimVerify.getState();
+  if (!st.open || st.guid === guid) return;
+  useAimVerify.setState({ open: null });
+  clearShown();
+}
+
 /** Ribbon: overiť naraz všetky prvky kontroly v modeli; beh uloží host k revízii. */
 export async function runAllVerification(check: VerifyCheckId): Promise<void> {
   if (useAimVerify.getState().runAll?.busy) return;

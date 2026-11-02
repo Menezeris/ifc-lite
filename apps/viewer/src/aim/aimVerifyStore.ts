@@ -25,6 +25,8 @@ export const isVerifiable = (entityType: string | undefined): boolean =>
 export interface AimVerifyState {
   /** GlobalId prvku, ku ktorému patrí výsledok (alebo prebiehajúca žiadosť). */
   guid: string | null;
+  /** Vybraný prvok, ktorého výmery ukazuje panel (nastaví most pri výbere); fajočky len keď sa zhoduje s `guid`. */
+  panelGuid: string | null;
   status: 'idle' | 'loading' | 'running' | 'ready' | 'error';
   data: VerifyElementWire | null;
   error: string | null;
@@ -35,7 +37,7 @@ export interface AimVerifyState {
 }
 
 export const useAimVerify = create<AimVerifyState>()(() => ({
-  guid: null, status: 'idle', data: null, error: null, open: null, runAll: null,
+  guid: null, panelGuid: null, status: 'idle', data: null, error: null, open: null, runAll: null,
 }));
 
 type Focus = (guids: string[]) => void;
@@ -45,4 +47,5 @@ export const setVerifyFocus = (next: Focus | null): void => { focus = next; };
 export const verifyFocus = (): Focus | null => focus;
 
 /** Riadok `Qto_X.Name` má výsledok overenia (len vtedy sa načíta lenivá fajočka). */
-export const hasTarget = (s: AimVerifyState, key: string): boolean => !!s.data?.targets.some((t) => t.target === key);
+export const hasTarget = (s: AimVerifyState, key: string): boolean =>
+  s.panelGuid !== null && s.data?.global_id === s.panelGuid && s.data.targets.some((t) => t.target === key);

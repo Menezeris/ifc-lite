@@ -40,3 +40,18 @@ node scripts/check-test-revert-oracle.mjs --base origin/main \
 Patche `verify-protocol.ts` s `--only apps/viewer/src/aim/verify-protocol.ts` a testom `aimVerifyPlan.test.ts`,
 patche `aimVerify.ts` s `--only apps/viewer/src/aim/aimVerify.ts --test apps/viewer/src/aim/aimVerify.test.ts`.
 Patche skopíruj mimo stromu, oracle odmietne nečistý strom.
+
+## Živá skúška (2. 11. 2026)
+
+Lokálny viewer (`vite --port 3000`) vložený do hostovej stránky, model `AC20-FZK-Haus.ifc`, Playwright. Host na
+`VERIFY_REQUEST` odpovedal testovacími dátami (`latest` = zastaraný beh, `run` = aktuálny). Výsledok:
+
+- výber miestnosti `347jFE2yX7IhCEIALmupEH` cez `SELECT`: viewer poslal `latest`, potom `run`; fajočky pri
+  `BaseQuantities.Height` (sedí), `FinishCeilingHeight` (nedá sa overiť), `FinishFloorHeight` (upozornenie);
+  veličina, ktorú súbor nemá, sa nezobrazila;
+- klik na fajočku: detail s vysvetlením, bunkami A, B, výsledkom, definíciou s odkazom a kontrolným výpočtom,
+  vo vieweri kóta 2,500 m (`1 measured`), viď `../live-panel.png` a `../live-kota-help.png`;
+- "Ako to funguje?" a odkaz na D-185: host dostal `AIM_NAVIGATE` s `help_href`;
+- ribbon AIM, Overovanie > Výmery miestností (IfcSpace): `run_all`, toast so súhrnom, potom znova `latest` + `run`
+  pre vybraný prvok (`../live-ribbon.png`);
+- výber steny (má tiež `BaseQuantities.Height`): žiadna žiadosť, žiadna fajočka.
