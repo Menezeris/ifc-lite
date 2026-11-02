@@ -102,7 +102,7 @@
     },
     "test": {
       "dependsOn": ["build"],
-      "passThroughEnv": ["IFC_LITE_CURRENT_MAIN_DIFF_ORACLE"],
+      "passThroughEnv": ["IFC_LITE_CURRENT_MAIN_DIFF_ORACLE", "GITHUB_*", "RUNNER_*", "MERGIFY_*"],
       "cache": false,
       "env": [
         "TEST_PATTERN",
@@ -114,7 +114,7 @@
       "dependsOn": ["build"],
       "cache": false,
       "env": ["TEST_PATTERN", "TEST_SHARD", "TEST_SHARDS"],
-      "passThroughEnv": ["IFC_LITE_SECTION_EVIDENCE_DIR"]
+      "passThroughEnv": ["IFC_LITE_SECTION_EVIDENCE_DIR", "GITHUB_*", "RUNNER_*", "MERGIFY_*"]
     },
     "lint": {
       "dependsOn": ["build"],

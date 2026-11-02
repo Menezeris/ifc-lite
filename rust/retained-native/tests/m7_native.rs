@@ -21,8 +21,10 @@ const SOURCE: &str =
     include_str!("../../../tests/fixtures/synthetic-retained/f-e-mapped-booleans.ifc");
 const ADVERSARIAL: &str =
     include_str!("../../../tests/fixtures/synthetic-retained/f-e-mapped-booleans-adversarial.ifc");
-const POSITIVE: [(u32, f64); 10] = [
+const POSITIVE: [(u32, f64); 12] = [
     (38, 5.25),
+    (133, 5.25),
+    (141, 42.),
     (46, 5.25),
     (54, 5.25),
     (65, 5.25),
@@ -142,16 +144,17 @@ fn m7_sdk_oracle_closed_shapes() {
     assert!(metrics::relative(actual.volume, 3.) <= clip_tolerance["clipSectionVolumeRelative"]["linear"].as_f64().unwrap());
     assert_eq!(actual.defects, 0);
     reference.push(serde_json::json!({"expressId":156,"code":"published","volume":actual.volume}));
-    for (id, code) in [
-        (133, "incomplete"),
-        (141, "incomplete"),
-        (173, "operation_unsupported"),
-        (202, "empty_result"),
-        (231, "operation_unsupported"),
-    ] {
-        assert_eq!(refusal(&outcomes, id).code(), code, "#{id}");
-        reference.push(serde_json::json!({"expressId":id,"code":code}));
+    // #7955 M6 × M7: e12 (#173) and e16 (#231) clip the 2x1x3 box with a PBHS whose
+    // boundary [-1,3]x[-1,2] covers the whole footprint, so each removes z<1.5 like
+    // e11's plain halfspace and keeps 2*1*1.5 = 3.
+    for id in [173, 231] {
+        let actual = geometry_assertions::measured(shape(&outcomes, id));
+        assert!(metrics::relative(actual.volume, 3.) <= clip_tolerance["clipSectionVolumeRelative"]["linear"].as_f64().unwrap(), "#{id}: {actual:?}");
+        assert_eq!(actual.defects, 0, "#{id}");
+        reference.push(serde_json::json!({"expressId":id,"code":"published","volume":actual.volume}));
     }
+    assert_eq!(refusal(&outcomes, 202).code(), "empty_result", "#202");
+    reference.push(serde_json::json!({"expressId":202,"code":"empty_result"}));
     assert_eq!(outcomes.len(), 16);
     // Non-schema inputs are explicitly outside coverage qualification. Pin only
     // controller outcomes and parity, never include them in published deltas.
@@ -297,11 +300,8 @@ fn m7_sdk_affine_boundary_and_authenticated_empty() {
     if worker_path().is_none() {
         return;
     }
-    for id in [133, 141] {
-        let (outcomes, counts) = counted(id).unwrap();
-        assert_eq!(refusal(&outcomes, id).code(), "incomplete");
-        assert_eq!(counts.calls.get(), 0);
-    }
+    // M10: e9/e10 (#133/#141) are affine finals that now publish; their
+    // source-oracle volumes are gated in m7_sdk_oracle_closed_shapes.
     let (outcomes, counts) = counted(202).unwrap();
     assert_eq!(refusal(&outcomes, 202).code(), "empty_result");
     assert_eq!(counts.booleans.get(), 1);

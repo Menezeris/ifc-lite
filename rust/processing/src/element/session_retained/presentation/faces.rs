@@ -56,14 +56,14 @@ const IDENTITY: [f64; 16] = [1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0.,
 /// own sealed frames (operand evaluation frames at its issuance; later
 /// placements move the whole result rigidly). Subtracted leaves are reversed;
 /// an M3 cut's sealed opening is the `via` of its cutter subtree.
-pub(in super::super) fn sources<R: NumericalReceipt>(root: &Arc<RuntimeRealization<R>>)
+pub(in super::super) fn sources<R: NumericalReceipt>(root: &Arc<RuntimeRealization<R>>, layered: bool)
     -> Result<FaceSources, RetainedExecutionError> {
     let unattributed = |entity| Ok(Err(Unproven::Unattributed { entity }));
     let mut operands = Vec::new();
-    // (node, node evaluation <- part, orientation, via)
-    let mut stack = vec![(root, IDENTITY, 1., 0)];
+    // (node, node evaluation <- part, orientation, via, removed material)
+    let mut stack = vec![(root, IDENTITY, 1., 0, false)];
     let mut visits = 0;
-    while let Some((node, from_part, sign, via)) = stack.pop() {
+    while let Some((node, from_part, sign, via, subtracted)) = stack.pop() {
         // Shared operands (`A ∪ A`) expand a DAG into a tree: bound the expansion.
         visits += 1;
         if visits > MAX_LINEAGE_NODES { return unattributed(None); }
@@ -71,6 +71,11 @@ pub(in super::super) fn sources<R: NumericalReceipt>(root: &Arc<RuntimeRealizati
         match node.kind.evidence() {
             ReceiptEvidence::Construction(completion) => {
                 let request = completion.request();
+                // M4 removes every interface cap before attribution. Derived
+                // band cutters supply NO final source surface: every survivor
+                // must still match the host/opening lineage below.
+                if layered && matches!(request.recipe(), ifc_lite_geometry::document::RetainedRecipe::Prism(p)
+                    if p.role == ifc_lite_geometry::document::PrismRole::LayerRegion) { continue; }
                 let item = request.recipe().solid_id();
                 let (faces, region) = match face_surfaces::faces(request.recipe(), request.payload()) {
                     Ok(faces) => faces,
@@ -79,11 +84,14 @@ pub(in super::super) fn sources<R: NumericalReceipt>(root: &Arc<RuntimeRealizati
                     Err(NoFaces::Malformed) => return unattributed(Some(item)),
                 };
                 let setup: usize = faces.iter().map(|f| match &f.support { Support::Tube { curve, .. } => curve.setup_cost(), _ => 1 }).sum();
-                charge(setup, std::mem::size_of::<Operand>()
+                let pieces: usize = faces.iter().map(|f| match &f.extent { super::face_attribution::Extent::Row { triangles, .. } => triangles.len(), _ => 0 }).sum();
+                charge(setup, std::mem::size_of::<Operand>() + pieces * std::mem::size_of::<[[f64; 3]; 3]>()
                     + faces.len() * std::mem::size_of::<super::face_attribution::SourceFace>())?;
                 let stretch = stretch(&from_part);
                 if !stretch.is_finite() { return unattributed(Some(item)); }
-                operands.push(Operand { item, via, from_part, sign, stretch, faces, region });
+                let rows_identify_faces = Arc::ptr_eq(node, root) && face_surfaces::is_face_set(request.recipe());
+                let request = face_surfaces::is_face_set(request.recipe()).then(|| request.clone());
+                operands.push(Operand { item, via, from_part, sign, stretch, faces, region, rows_identify_faces, request, subtracted });
             }
             ReceiptEvidence::Boolean { operation, world_from_left, world_from_right, world_from_evaluation, .. } => {
                 let [Some(left), Some(right)] = &node._inputs else { return unattributed(None) };
@@ -91,13 +99,13 @@ pub(in super::super) fn sources<R: NumericalReceipt>(root: &Arc<RuntimeRealizati
                 let (Ok(left_frame), Ok(right_frame)) = (place(world_from_left), place(world_from_right))
                     else { return unattributed(None) };
                 let flip = if operation == BoolOp::Difference { -sign } else { sign };
-                stack.push((right, right_frame, flip, node.opening.unwrap_or(via)));
-                stack.push((left, left_frame, sign, via));
+                stack.push((right, right_frame, flip, node.opening.unwrap_or(via), subtracted || operation == BoolOp::Difference));
+                stack.push((left, left_frame, sign, via, subtracted));
             }
             // A sealed affine copy keeps its input's surfaces, mapped by its matrix (mirrors reverse them).
             ReceiptEvidence::Affine { column_major, .. } => {
                 let ([Some(input), None], Some(back)) = (&node._inputs, inverse(column_major)) else { return unattributed(None) };
-                stack.push((input, compose(&back, &from_part), sign * determinant(column_major).signum(), via));
+                stack.push((input, compose(&back, &from_part), sign * determinant(column_major).signum(), via, subtracted));
             }
         }
     }
@@ -140,22 +148,34 @@ pub(super) fn apply(product: &mut ShapeOnlyProduct, context: &Context<'_>) -> Re
             while end < order.len() && part.revision_local_faces[order[end]] == id { end += 1; }
             let face = &order[start..end];
             start = end;
-            let mut lists = Vec::with_capacity(face.len());
-            charge(face.len(), face.len() * std::mem::size_of::<super::face_attribution::Candidates>())?;
-            for &t in face {
-                charge(work, 0)?;
-                let corner = |i: u32| -> Option<[f64; 3]> {
-                    let at = (i as usize).checked_mul(3)?;
-                    part.positions.get(at..at + 3).map(|p| [p[0], p[1], p[2]])
-                };
-                let (Some(a), Some(b), Some(c)) = (corner(part.indices[3 * t]), corner(part.indices[3 * t + 1]),
-                    corner(part.indices[3 * t + 2])) else { return Err(refuse(Unproven::Unattributed { entity: None })) };
-                lists.push(candidates(operands, &[a, b, c], chord).map_err(halt)?);
-            }
-            let key = resolve(operands, &lists, chord).map_err(refuse)?;
+            let key = if let [Operand { rows_identify_faces: true, faces, item, .. }] = operands.as_slice() {
+                charge(face.len(), 0)?;
+                if id as usize >= faces.len() { return Err(refuse(Unproven::Unattributed { entity: Some(*item) })); }
+                (0, id as usize)
+            } else {
+                let mut lists = Vec::with_capacity(face.len());
+                charge(face.len(), face.len() * std::mem::size_of::<super::face_attribution::Candidates>())?;
+                for &t in face {
+                    charge(work, 0)?;
+                    let corner = |i: u32| -> Option<[f64; 3]> {
+                        let at = (i as usize).checked_mul(3)?;
+                        part.positions.get(at..at + 3).map(|p| [p[0], p[1], p[2]])
+                    };
+                    let (Some(a), Some(b), Some(c)) = (corner(part.indices[3 * t]), corner(part.indices[3 * t + 1]),
+                        corner(part.indices[3 * t + 2])) else { return Err(refuse(Unproven::Unattributed { entity: None })) };
+                    lists.push(candidates(operands, &[a, b, c], chord).map_err(halt)?);
+                }
+                resolve(operands, &lists, chord).map_err(refuse)?
+            };
             if let Support::Plane { origin, normal } = operands[key.0].faces[key.1].support {
-                *normal_planar_fallbacks += usize::from(super::normals::apply_plane(
-                    part,&operands[key.0].from_part,origin,normal,face,context.resources)?);
+                let fell_back = super::normals::apply_plane(
+                    part,&operands[key.0].from_part,origin,normal,face,context.resources)?;
+                *normal_planar_fallbacks += usize::from(fell_back);
+                // An authored row has no kernel face to smooth over: a warped row keeps its
+                // facets, and a sliver with no facet of its own takes the row's plane.
+                if fell_back && operands[key.0].rows_identify_faces {
+                    super::normals::apply_row_facets(part,normal,face,context.resources)?;
+                }
             }
             for &t in face { choices[t] = key; }
         }
@@ -167,7 +187,8 @@ pub(super) fn apply(product: &mut ShapeOnlyProduct, context: &Context<'_>) -> Re
         let mut table = Vec::new();
         storage.reserve(context.resources, &mut table, used.len())?;
         for &(o, f) in &used {
-            let role = operands[o].faces[f].role.to_string();
+            let mut role = operands[o].faces[f].role.to_string();
+            if let Some(layer) = part.layer { role = format!("{role};band({})", layer.index); }
             charge(1, role.len())?;
             table.push(FaceKey { item: operands[o].item, via: operands[o].via, role });
         }

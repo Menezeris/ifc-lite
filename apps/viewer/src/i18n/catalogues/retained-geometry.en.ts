@@ -13,18 +13,24 @@ import type { TranslationValue } from '../types';
  * of these strings.
  */
 export const retainedGeometryEn = {
-  'retainedGeometry.shapeOnlyReason': 'Unavailable on a Retained · shape-only model: its meshes have no material layers yet. Reload it with the exact kernel to use this.',
+  'retainedGeometry.shapeOnlyReason': 'Unavailable while retained geometry or presentation is incomplete. Reload it with the exact kernel to use this.',
+  'retainedGeometry.exactOnlyExportReason': 'This export rebuilds its geometry from the file with the exact engine, so it cannot export the retained geometry of a loaded model. Reload that model with the exact kernel to use it.',
 
-  'retainedGeometry.chip.starting': 'Retained · shape-only · starting engine',
-  'retainedGeometry.chip.running': 'Retained · shape-only · {done}/{candidates} products',
-  'retainedGeometry.chip.label': 'Retained · shape-only · {published}/{candidates} products · {refused} refused',
-  'retainedGeometry.chip.labelCancelled': 'Retained · shape-only · {published}/{candidates} products · {refused} refused · {cancelled} cancelled',
+  'retainedGeometry.final': 'final',
+  'retainedGeometry.shapeOnly': 'shape-only',
+  'retainedGeometry.chip.titleFinal': 'Retained geometry is final: all presentation obligations are discharged. Open the Retained geometry panel.',
+  'retainedGeometry.panel.final': 'Published products are final: all presentation obligations are discharged.',
+
+  'retainedGeometry.chip.starting': 'Retained · {presentation} · starting engine',
+  'retainedGeometry.chip.running': 'Retained · {presentation} · {done}/{candidates} products',
+  'retainedGeometry.chip.label': 'Retained · {presentation} · {published}/{candidates} products · {refused} refused',
+  'retainedGeometry.chip.labelCancelled': 'Retained · {presentation} · {published}/{candidates} products · {refused} refused · {cancelled} cancelled',
   'retainedGeometry.chip.state.running': 'running',
   'retainedGeometry.chip.state.complete': 'complete',
   'retainedGeometry.chip.state.incomplete': 'incomplete',
   'retainedGeometry.chip.state.stopped': 'stopped',
   'retainedGeometry.chip.title': 'Retained geometry is shape-only. Not applied: {obligations}. Open the Retained geometry panel.',
-  'retainedGeometry.chip.titleNone': 'Retained geometry is shape-only. Open the Retained geometry panel.',
+  'retainedGeometry.chip.titleNone': 'Retained geometry. Open the Retained geometry panel.',
   'retainedGeometry.chip.aria': 'Open the Retained geometry panel',
 
   'retainedGeometry.obligation.ProductPlacement': 'product placement',
@@ -41,7 +47,7 @@ export const retainedGeometryEn = {
   'retainedGeometry.faces.column.area': 'Area (m²)',
 
   'retainedGeometry.panel.title': 'Retained geometry',
-  'retainedGeometry.panel.description': 'Shape-only geometry from the retained kernel. Products listed below have no geometry in the viewport, and no exact geometry stands in for them.',
+  'retainedGeometry.panel.description': 'Geometry from the retained kernel. Products listed below have no geometry in the viewport, and no exact geometry stands in for them.',
   'retainedGeometry.panel.counts': '{published} of {candidates} products published · {refused} refused · {cancelled} cancelled',
   'retainedGeometry.panel.state.running': 'Running: products are still arriving.',
   'retainedGeometry.panel.state.complete': 'Complete: every product has retained geometry.',
@@ -77,7 +83,7 @@ export const retainedGeometryEn = {
   'retainedGeometry.panel.close': 'Close',
 
   'retainedGeometry.code.opening_strategy': 'Openings are not supported by the retained kernel yet.',
-  'retainedGeometry.code.material_layer_strategy': 'Material layers are not supported by the retained kernel yet.',
+  'retainedGeometry.code.material_layer_strategy': 'Uses a material-layer family the retained kernel does not support yet.',
   'retainedGeometry.code.operation_unsupported': 'Uses a geometry operation the retained kernel does not support yet.',
   'retainedGeometry.code.source_invalid': 'The source geometry is invalid.',
   'retainedGeometry.code.source_changed': 'The source changed while the product was computed.',
@@ -99,7 +105,7 @@ export const retainedGeometryEn = {
   'retainedGeometry.setting.title': 'Geometry kernel',
   'retainedGeometry.setting.hint': 'Applies to the next load in this tab. A new tab starts with Exact again.',
   'retainedGeometry.setting.exact': 'Exact (default)',
-  'retainedGeometry.setting.retained': 'Retained (experimental, shape-only)',
+  'retainedGeometry.setting.retained': 'Retained (experimental)',
 
   'retainedGeometry.progress.starting': 'Starting retained engine',
   'retainedGeometry.progress.products': 'Retained geometry: {done}/{candidates} products ({refused} refused)',

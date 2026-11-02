@@ -204,13 +204,14 @@ export type RetainedSessionEvent =
 | (RetainedShapeProduct & { kind: 'published' })
 | (RetainedProductRefusal & { kind: 'refused' })
 | { kind: 'published'; expressId: number; ifcType: string;
-marker: 'PresentationObligationsUnmet';
+marker: 'final' | 'PresentationObligationsUnmet';
 obligationsUnmet: RetainedShapeProduct['obligationsUnmet']; cuts?: number; consumedParts?: number;
 meshes: MeshCollection; faces?: { table: string[]; triangles: Uint32Array }[]; instanceKey?: string;
 instanceWorldFromObject?: Float64Array };
 export interface RetainedRunSummary {
     candidates: number; published: number; refused: number; restarts: number;
     workersAcquired: number; productMs: number; acquireMs: number;
+    layeredProducts?: number; bands?: number;
 }
 
 
@@ -230,19 +231,30 @@ export interface RetainedShapePart {
     geometryItemId?: number;
     materialId?: number;
     faces?: { table: string[]; triangles: Uint32Array };
+    /** Authored IfcIndexedColourMap: four floats per colour, one entry per triangle (0xFFFFFFFF: none). */
+    palette?: { mapId: number; colors: Float32Array; triangles: Uint32Array };
+    /** Authored texture: source (u, v), six per triangle, not V-flipped; `textured` is one flag per triangle. */
+    texture?: { textureId: number; uvs: Float64Array; textured: Uint8Array };
     instanceKey?: string;
+    /** Open material band; closure is validated across the product. */
+    layer?: { index: number; materialId: number };
+    /** Closed band volume before interface caps are removed, in cubic metres. */
+    cappedVolumeM3?: number;
 }
 export interface RetainedShapeProduct {
     status: 'published';
     /** Opening cuts applied (M3). Always set by retainedModel/RetainedModelSession;
      * optional so consumer-built literals stay valid across minor versions. */
     cuts?: number;
+    bandMs?: number;
+    capMs?: number;
+    maxSnapMetres?: number;
     /** Host parts consumed by a cut; always 0 on a published product. */
     consumedParts?: number;
     expressId: number;
     ifcType: string;
     parts: RetainedShapePart[];
-    marker: 'PresentationObligationsUnmet';
+    marker: 'final' | 'PresentationObligationsUnmet';
     obligationsUnmet: Array<'ProductPlacement' | 'OpeningClosure' | 'MaterialLayers' | 'IfcAppearance' | 'PersistentFaces' | 'SurfaceNormals'>;
     instanceKey?: string;
 }
@@ -251,7 +263,7 @@ export interface RetainedProductRefusal {
     expressId: number;
     ifcType: string;
     code: 'opening_strategy' | 'opening_unsupported' | 'material_layer_strategy' | 'operation_unsupported'
-    | 'source_invalid' | 'source_changed' | 'incomplete' | 'empty_result'
+    | 'layer_caps_unresolved' | 'source_invalid' | 'source_changed' | 'incomplete' | 'empty_result'
     | 'family_unqualified' | 'kernel_failure' | 'worker_fault' | 'worker_retired'
     | 'resource_exhausted' | 'deadline_exceeded' | 'cancelled' | 'contract_breach'
     | 'appearance_unsupported' | 'face_provenance_unproven';
@@ -603,17 +615,11 @@ export class IfcAPI {
      *   1. Builds the entity index incrementally from the same scan that
      *      collects geometry jobs (a separate index scan would double
      *      wall-clock).
-     *   2. As soon as `IFCPROJECT` has been seen, the unit scale and the
-     *      first ~50 geometry jobs have been collected, resolves
-     *      `unitScale` + `rtcOffset` and emits a `meta` callback so the
-     *      JS host can spin up geometry process workers.
-     *   3. Emits `jobs` callbacks every `chunk_size` jobs (or fewer if
-     *      the meta phase already buffered some).
-     *   4. Emits `complete` with the total job count at end of scan.
-     *
-     * On a 986 MB / 14 M-entity file this drops time-to-first-geometry
-     * from ~17 s (full pre-pass + worker spawn + first batch) to ~3 s
-     * (first 100 K bytes scanned + meta + first chunk).
+     *   2. At the 50th accepted geometry job, resolves unit scale + RTC
+     *      (including a project not yet scanned) and emits `meta`.
+     *   3. After scan completion, emits the complete entity index, styles,
+     *      worker columns and chunked jobs with affinity keys.
+     *   4. Emits `complete` with the total job count.
      *
      * The callback receives a single `JsValue` argument shaped as one of:
      *   `{ type: "meta", unitScale, rtcOffset: [x,y,z], needsShift, buildingRotation? }`
@@ -988,8 +994,11 @@ export class IfcAPI {
     /**
      * Structured pipeline diagnostics accumulated across every
      * `processGeometryBatch*` call since the last load reset
-     * (`clearPrePassCache` / `setEntityIndex`), as a JS object with a
-     * `schemaVersion` field — or `undefined` when no batch has run yet.
+     * (`buildPrePassOnce` / streaming prepass / `setEntityIndex` /
+     * `setSourceBytes`), as a plain JS object with a `schemaVersion` field.
+     * Returns `undefined` until a batch runs or a prepass refusal or omitted
+     * type record (`omittedTypeRecords`, #8341) is recorded;
+     * `clearPrePassCache` preserves the report for post-load inspection.
      * Includes per-batch summed geometry wall time, mesh/triangle counts,
      * the degenerate-backstop drop count, and the CSG failure aggregates.
      */
@@ -1389,15 +1398,14 @@ export class IfcAPI {
     /**
      * Install the pre-computed set of type ids that an `IfcRelDefinesByType`
      * instantiates (#957 follow-up), so the worker's first type-product batch
-     * skips the per-worker [`Self::get_or_build_instantiated_type_ids`]
-     * full-file walk. Same injection contract as [`Self::set_referenced_repmaps`].
+     * skips the full-file walk once both precomputed sets are installed. Same injection contract as [`Self::set_referenced_repmaps`].
      */
     setInstantiatedTypeIds(ids: Uint32Array): void;
     /**
      * Install the pre-computed #1623 Phase 3 don't-bake plan: the flat list of
      * `IfcRepresentationMap` ids that an `IfcMappedItem` instantiates >= 2 times.
      * The streaming pre-pass tallies it in the SAME scan that builds the referenced-
-     * repmap set (`styling::build_mapped_instance_plan_from_spans`) and ships the id
+     * repmap set and ships the id
      * list here. The batch path arms its router with it (batch-local template mode),
      * so a repeated single-solid mapped source materializes ONCE per batch and the
      * rest ride as instances in the IFNS shard.
@@ -1463,10 +1471,8 @@ export class IfcAPI {
     /**
      * Install the pre-computed set of `IfcRepresentationMap` ids referenced by
      * an `IfcMappedItem` (issue #957), so the worker's first type-product batch
-     * SKIPS the per-worker [`Self::get_or_build_referenced_repmaps`] full-file
-     * walk. The streaming pre-pass built the same set once from the
-     * `IfcMappedItem` spans it already scanned (see
-     * `styling::build_referenced_representation_maps_from_spans`) and ships the
+     * skips the full-file walk once [`Self::set_instantiated_type_ids`] is also installed. The streaming pre-pass built
+     * the same set once from its `IfcMappedItem` spans and ships the
      * id list here — bit-identical to what each worker would compute, since a
      * set's membership is order-invariant and consumers only call `.contains`.
      *
@@ -2081,7 +2087,7 @@ export class RetainedModelRun {
     free(): void;
     [Symbol.dispose](): void;
     /**
-     * Returns one atomic shape-only product or typed refusal, undefined at end.
+     * Returns one atomic final or shape-only product or typed refusal, undefined at end.
      */
     next(): RetainedProductOutcome | undefined;
 }

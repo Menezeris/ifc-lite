@@ -47,11 +47,13 @@ const NIGHT_TONE = { fg: '#ede4d3', dim: '#9c9486' } as const;
 
 const CHUNK_LABEL_KEYS = {
   'Compare models': 'comparePanel.panel.title',
+  'Clash panel': 'clashPanel.title',
   'Linked records panel': 'semantic.title',
   'Appearance panel': 'viewerShell.chunkLabel.appearancePanel',
   'Charts panel': 'viewerShell.chunkLabel.chartsPanel',
   'Assistant panel': 'assistant.title',
   'Point cloud panel': 'pointCloudPanel.title',
+  'Load report panel': 'loadReportPanel.title',
   'Review panel': 'reviewWorkspace.title',
   'IDS Studio panel': 'idsStudio.title',
   'Script panel': 'scriptPanel.header.defaultTitle',

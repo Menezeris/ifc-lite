@@ -22,6 +22,17 @@ pub struct ClipPart {
     pub section_volume: Option<f64>,
     pub curved: bool,
     pub mixed: bool,
+    /// Why `section_volume` is `None` for a part that is not mixed (#7955).
+    pub section_gap: Option<String>,
+}
+impl ClipPart {
+    /// Independent host section with additional source-derived constraints (M4).
+    pub fn volume_with_planes(&self, extra: &[([f64; 3], f64)]) -> Option<f64> {
+        if self.mixed { return None; }
+        let mut planes: Vec<_> = self.planes.iter().map(Plane::equation).collect();
+        planes.extend_from_slice(extra);
+        section_volume(self.host.as_ref()?, &planes)
+    }
 }
 pub struct ClipExpectation { pub parts: Vec<ClipPart> }
 impl ClipExpectation {
@@ -71,7 +82,7 @@ fn part(mut current: DecodedEntity, mut world: Matrix4<f64>, sources: &AnalyticQ
                     // We walk outside-in: collected planes execute AFTER this
                     // subtree, so all remain valid constraints on its result.
                     // Its volume/curvature are unknown; expose that limitation.
-                    if !difference { return Ok(ClipPart { host:None, planes,host_volume:None,section_volume:None,curved:false,mixed:true }); }
+                    if !difference { return Ok(ClipPart { host:None, planes,host_volume:None,section_volume:None,curved:false,mixed:true,section_gap:None }); }
                     mixed = true;
                 }
                 current = reference(&current, slot::IfcBooleanResult::FIRST_OPERAND.index(), decoder)?;
@@ -98,7 +109,13 @@ fn part(mut current: DecodedEntity, mut world: Matrix4<f64>, sources: &AnalyticQ
                         .any(|s|!matches!(s,ifc_lite_geometry::analytic::AnalyticCurveSegment::Line{..})));
                 let host_volume = host.as_ref().and_then(|h| section_volume(h,&[]));
                 let section_volume = if mixed {None} else {host.as_ref().and_then(|h| section_volume(h,&planes.iter().map(Plane::equation).collect::<Vec<_>>()))};
-                return Ok(ClipPart {host,planes,host_volume,section_volume,curved,mixed});
+                let section_gap=match (&instance,&host) {
+                    _ if section_volume.is_some()||mixed=>None,
+                    (None,_)=>Some(format!("host_{}",current.ifc_type.name())),
+                    (Some(_),None)=>Some("host_source_incomplete".into()),
+                    _=>Some("section_integral".into()),
+                };
+                return Ok(ClipPart {host,planes,host_volume,section_volume,curved,mixed,section_gap});
             }
         }
     }
@@ -145,15 +162,6 @@ fn source_parts(model: &Arc<SourceBundle>, sources: &AnalyticQuantitySources, pr
     }
     Ok(parts)
 }
-/// Authored plane clips of one product's own Body parts, in world metres with
-/// outward normals (the removed side is positive). The normal oracle needs these
-/// as independent source surfaces of the cut face. This walks `source_parts`, so
-/// it also computes the per-leaf section volumes, which this caller discards; no
-/// opening work is done.
-pub fn source_planes(model: &Arc<SourceBundle>, sources: &AnalyticQuantitySources, product: u32)
-    -> Result<Vec<Plane>, String> {
-    Ok(source_parts(model, sources, product)?.into_iter().flat_map(|p| p.planes).collect())
-}
 /// Model-scoped source oracle. Relationship extraction runs once, not once per
 /// clipped product. The cache borrows the source so it cannot outlive its model.
 pub struct ClipOracle<'a> {
@@ -174,6 +182,7 @@ impl<'a> ClipOracle<'a> {
         if !cuts.is_empty() {
             for part in &mut parts {
                 part.section_volume=if part.mixed {None} else {part.host.as_ref().and_then(|h|openings::net_volume(h,&part.planes,&cuts))};
+                if part.section_volume.is_none()&&part.section_gap.is_none()&&!part.mixed {part.section_gap=Some("opening_net_volume".into());}
             }
         }
         Ok(Some(ClipExpectation {parts}))

@@ -80,9 +80,15 @@
    719 apps/viewer/src/components/viewer/HierarchyPanel.tsx
    533 apps/viewer/src/components/viewer/layers/LayerMergeSection.tsx
    659 apps/viewer/src/components/viewer/LensPanel.tsx
+<<<<<<< HEAD
    931 apps/viewer/src/components/viewer/lists/ListBuilder.tsx
    443 apps/viewer/src/components/viewer/lists/ListResultsTable.tsx
    570 apps/viewer/src/components/viewer/measureHandlers.ts
+=======
+   908 apps/viewer/src/components/viewer/lists/ListBuilder.tsx
+   467 apps/viewer/src/components/viewer/lists/ListResultsTable.tsx
+   594 apps/viewer/src/components/viewer/measureHandlers.ts
+>>>>>>> upstream/main
    522 apps/viewer/src/components/viewer/properties/BsddCard.tsx
    418 apps/viewer/src/components/viewer/properties/EpsgLookupDialog.tsx
    593 apps/viewer/src/components/viewer/properties/GeoreferencingPanel.tsx
@@ -110,6 +116,7 @@
   1549 apps/viewer/src/components/viewer/Viewport.tsx
    897 apps/viewer/src/components/viewer/ViewportContainer.tsx
    500 apps/viewer/src/components/viewer/ZonesPanel.tsx
+<<<<<<< HEAD
    841 apps/viewer/src/hooks/ids/idsExportService.ts
    538 apps/viewer/src/hooks/ingest/federationAlign.ts
    508 apps/viewer/src/hooks/ingest/pointCloudIngest.ts
@@ -122,6 +129,19 @@
    655 apps/viewer/src/hooks/useIfcFederation.ts
   2243 apps/viewer/src/hooks/useIfcLoader.ts
    432 apps/viewer/src/hooks/useIfcServer.ts
+=======
+   847 apps/viewer/src/hooks/ids/idsExportService.ts
+   598 apps/viewer/src/hooks/ingest/federationAlign.ts
+   525 apps/viewer/src/hooks/ingest/pointCloudIngest.ts
+   461 apps/viewer/src/hooks/useAnnotation2D.ts
+   764 apps/viewer/src/hooks/useBCF.ts
+  1334 apps/viewer/src/hooks/useClash.ts
+  1234 apps/viewer/src/hooks/useDrawingExport.ts
+  1041 apps/viewer/src/hooks/useDrawingGeneration.ts
+   667 apps/viewer/src/hooks/useIfcFederation.ts
+  2211 apps/viewer/src/hooks/useIfcLoader.ts
+   436 apps/viewer/src/hooks/useIfcServer.ts
+>>>>>>> upstream/main
    457 apps/viewer/src/hooks/useSymbolicAnnotations.ts
    633 apps/viewer/src/lib/analytics-scrub.ts
    627 apps/viewer/src/lib/clash/persistence.ts
@@ -261,12 +281,21 @@
   1209 packages/provenance/src/merge-battery.ts
   1032 packages/provenance/src/merge-model.ts
    609 packages/provenance/src/node-hash.ts
+<<<<<<< HEAD
    514 packages/query/src/duckdb-integration.ts
    412 packages/renderer/src/camera-animation.ts
    488 packages/renderer/src/camera-controls.ts
    599 packages/renderer/src/camera.ts
   3771 packages/renderer/src/index.ts
    616 packages/renderer/src/picker.ts
+=======
+   529 packages/query/src/duckdb-integration.ts
+   410 packages/renderer/src/camera-animation.ts
+   583 packages/renderer/src/camera-controls.ts
+   684 packages/renderer/src/camera.ts
+  3699 packages/renderer/src/index.ts
+   706 packages/renderer/src/picker.ts
+>>>>>>> upstream/main
    952 packages/renderer/src/pipeline.ts
    465 packages/renderer/src/pointcloud/point-cloud-renderer.ts
    758 packages/renderer/src/pointcloud/point-cloud-spatial-index.ts
@@ -326,5 +355,5 @@
    559 scripts/review/run-reviewer.mjs
    688 scripts/source-text-assertion-detect.mjs
    504 scripts/test-geometry-regression.mjs
-  2163 scripts/test-wasm-contract.mjs
+  2095 scripts/test-wasm-contract.mjs
    678 scripts/typecheck-tests.mjs
