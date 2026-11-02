@@ -79,7 +79,7 @@ export function parseBcfImported(data: unknown): BcfImportedMessage | null {
 /** Súbor vhodný na odoslanie: prípona a veľkosť (host ich overí znova). Vráti kód chyby alebo null. */
 export function checkImportFile(name: string, size: number): 'extension' | 'empty' | 'tooLarge' | null {
   if (!/\.(bcfzip|bcf)$/i.test(name)) return 'extension';
-  if (size <= 0) return 'empty';
+  if (!Number.isFinite(size) || size <= 0) return 'empty';
   if (size > MAX_BCF_IMPORT_BYTES) return 'tooLarge';
   return null;
 }

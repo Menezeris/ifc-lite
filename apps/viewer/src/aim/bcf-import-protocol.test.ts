@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
 
 import { MAX_BCF_IMPORT_BYTES, MAX_IMPORT_WARNINGS, checkImportFile, parseBcfImported } from './bcf-import-protocol.js';
-import { handleBcfImported, sendBcfImport } from './aimBcfImport.js';
+import { handleBcfImported, sendBcfImport, stopBcfImport } from './aimBcfImport.js';
 import { setIdsHostPost } from './idsHost.js';
 
 const S = 'aim-bridge' as const;
@@ -54,6 +54,8 @@ describe('import .bcfzip do AIM: tvar správ', () => {
     assert.equal(checkImportFile('a.bcfzip', 0), 'empty');
     assert.equal(checkImportFile('a.bcfzip', MAX_BCF_IMPORT_BYTES), null);
     assert.equal(checkImportFile('a.bcfzip', MAX_BCF_IMPORT_BYTES + 1), 'tooLarge');
+    assert.equal(checkImportFile('a.bcfzip', Number.NaN), 'empty');
+    assert.equal(checkImportFile('a.bcfzip', Number.POSITIVE_INFINITY), 'empty');
   });
 });
 
@@ -97,6 +99,21 @@ describe('import .bcfzip do AIM: odoslanie a odpoveď', () => {
     assert.equal(sent[0]!.dry_run, false);
     handleBcfImported(ok({ id: sent[0]!.id }, { dry_run: false }));
     assert.equal((await p).kind, 'done');
+  });
+
+  it('odpojenie mosta zruší čakanie: volajúci dostane notConnected a ďalšia relácia sa nezasekne na busy', async () => {
+    const sent: Array<Record<string, unknown>> = [];
+    setIdsHostPost((m) => sent.push(m));
+    const p = sendBcfImport(file(), true);
+    await tick();
+    stopBcfImport();
+    assert.deepEqual(await p, { kind: 'invalid', reason: 'notConnected' });
+    const next = sendBcfImport(file(), true);
+    await tick();
+    assert.equal(sent.length, 2, 'po odpojení sa ďalší import odošle, nie busy');
+    handleBcfImported(ok({ id: sent[1]!.id }));
+    assert.equal((await next).kind, 'done');
+    stopBcfImport(); // bez čakania nič nerobí
   });
 
   it('chyba hosta sa vráti ako rejected', async () => {

@@ -43,6 +43,15 @@ export async function sendBcfImport(
   return outcome;
 }
 
+/** Odpojenie mosta: zruší čakanie a jeho časovač, aby ďalšia relácia nenarazila na `busy`; čakajúci volajúci dostane `notConnected`. */
+export function stopBcfImport(): void {
+  if (!waiting) return;
+  const { resolve, timer } = waiting;
+  clearTimeout(timer);
+  waiting = null;
+  resolve({ kind: 'invalid', reason: 'notConnected' });
+}
+
 /** Odpoveď hosta z mosta (`BCF_IMPORTED`); overí sa tu, mimo vstupného balíka. */
 export function handleBcfImported(raw: unknown): void {
   const msg: BcfImportedMessage | null = parseBcfImported(raw);
