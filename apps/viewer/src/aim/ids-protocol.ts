@@ -10,7 +10,8 @@
  * Host -> viewer:
  *  - `IDS_LOAD {code, version, xml, target, title?, spec?, run?}`: otvorí IDS v `studio` alebo `validation`.
  *    `run` spustí kontrolu hneď po načítaní (len `validation`), `spec` (identifikátor, názov alebo id
- *    špecifikácie) obmedzí beh na jednu špecifikáciu.
+ *    špecifikácie) obmedzí beh na jednu špecifikáciu. Voliteľne `origin`, `library_commit` (D-182): lišta povie
+ *    "z knižnice, len na čítanie".
  *  - `IDS_SAVED {target, ok, code?, version?, error?, latest_version?}`: výsledok `IDS_SAVE`; pri `ok` si viewer
  *    zapamätá kód a verziu (ďalšie uloženie ide nad ňou), pri konflikte `latest_version` nesie poslednú verziu.
  * Viewer -> host:
@@ -36,6 +37,9 @@ export interface IdsLoadMessage {
   title?: string;
   spec?: string;
   run?: boolean;
+  /** D-182: pôvod v AIM (`library` = kópia z knižnice, len na čítanie) a commit knižnice; starší host ich nemá. */
+  origin?: 'library' | 'chat' | null;
+  library_commit?: string | null;
 }
 export interface IdsSavedMessage {
   source: typeof SOURCE;
@@ -67,6 +71,8 @@ const isText = (v: unknown): v is string => typeof v === 'string' && v.trim().le
 const isTarget = (v: unknown): v is IdsTarget => v === 'studio' || v === 'validation';
 const isVersion = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 1;
 const optional = (v: unknown, ok: (x: unknown) => boolean) => v === undefined || ok(v);
+/** Pôvod IDS (D-182) môže host poslať aj ako `null` (IDS mimo knižnice); nemá kvôli tomu zahodiť celé `IDS_LOAD`. */
+const absentOr = (v: unknown, ok: (x: unknown) => boolean) => v === null || optional(v, ok);
 
 /** Správa hosta pre IDS (overí tvar). */
 export function isIdsInbound(data: unknown): data is IdsInboundMessage {
@@ -74,7 +80,8 @@ export function isIdsInbound(data: unknown): data is IdsInboundMessage {
   if (data.type === 'IDS_LOAD') {
     return isText(data.code) && isVersion(data.version) && isTarget(data.target)
       && typeof data.xml === 'string' && data.xml.length > 0 && data.xml.length <= MAX_IDS_XML
-      && optional(data.title, isText) && optional(data.spec, isText) && optional(data.run, (v) => typeof v === 'boolean');
+      && optional(data.title, isText) && optional(data.spec, isText) && optional(data.run, (v) => typeof v === 'boolean')
+      && absentOr(data.origin, (v) => v === 'library' || v === 'chat') && absentOr(data.library_commit, isText);
   }
   if (data.type === 'IDS_SAVED') {
     return isTarget(data.target) && typeof data.ok === 'boolean' && optional(data.code, isText) && optional(data.version, isVersion)

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/reqlibPlan.ts a/apps/viewer/src/aim/reqlibPlan.ts
+index f19dca84..1b5611ba 100644
+--- b/apps/viewer/src/aim/reqlibPlan.ts
++++ a/apps/viewer/src/aim/reqlibPlan.ts
+@@ -65,7 +65,7 @@ export function runsByModel(specs: readonly ReportSpecLike[], modelIds: readonly
+ 
+ /** Verzia nástroja do pečiatky výsledku: `@ifc-lite/ids` z balíkov forku. */
+ export function idsEngineVersion(pkgs: ReadonlyArray<{ name: string; version: string }>): string {
+-  const ids = pkgs[0];
++  const ids = pkgs.find((p) => p.name === '@ifc-lite/ids');
+   return ids ? `@ifc-lite/ids ${ids.version}` : '@ifc-lite/ids';
+ }
+ 

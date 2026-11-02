@@ -7,7 +7,7 @@ import assert from 'node:assert';
 
 import {
   activateTab, besidePair, besideRefusal, centerLayout, closeAll, closeTab, describeTabs, initialTabs,
-  openTab, resolveTabRef, setBeside, syncDocTabs, type ViewTab,
+  isSceneTab, isTiled, openTab, REQ_TAB, resolveTabRef, setBeside, syncDocTabs, type ViewTab,
 } from './viewTabsPlan.js';
 import { documentLayout, isTabsMessage } from './tabs-protocol.js';
 
@@ -79,11 +79,33 @@ describe('záložky viewera (AIM D-132, od D-161 len 3D a dokumenty)', () => {
 
   it('rozloženie: dokument sám = 3D zbalená, vedľa = oba, 3D sama = žiadny panel dokumentu', () => {
     let s = syncDocTabs(initialTabs(), [doc('D1')], { docId: 'D1', beside: false });
-    assert.deepStrictEqual(centerLayout(s), { collapse3d: true, docPane: true, docId: 'D1' });
+    assert.deepStrictEqual(centerLayout(s), { collapse3d: true, docPane: true, docId: 'D1', library: false });
     s = setBeside(activateTab(s, '3d'), 'doc:D1');
-    assert.deepStrictEqual(centerLayout(s), { collapse3d: false, docPane: true, docId: 'D1' });
-    assert.deepStrictEqual(centerLayout(setBeside(s, null)), { collapse3d: false, docPane: false, docId: null });
-    assert.deepStrictEqual(centerLayout(s, true), { collapse3d: false, docPane: false, docId: null });
+    assert.deepStrictEqual(centerLayout(s), { collapse3d: false, docPane: true, docId: 'D1', library: false });
+    assert.deepStrictEqual(centerLayout(setBeside(s, null)), { collapse3d: false, docPane: false, docId: null, library: false });
+    assert.deepStrictEqual(centerLayout(s, true), { collapse3d: false, docPane: false, docId: null, library: false });
+    // Dlaždice platia len mimo mobilu: obe miesta stredu plochy berú `isTiled` (D-157, D-182).
+    assert.equal(isTiled('split_h', false), true);
+    assert.equal(isTiled('split_h', true), false);
+    assert.equal(isTiled('single', false), false);
+  });
+
+  it('knižnica požiadaviek (D-182): karta na celú plochu alebo vedľa 3D, nie vedľa dokumentu; zatvára sa ako dokument', () => {
+    let s = openTab(initialTabs(), REQ_TAB);
+    assert.deepStrictEqual(centerLayout(s), { collapse3d: true, docPane: true, docId: null, library: true });
+    s = setBeside(activateTab(s, '3d'), 'req');
+    assert.deepStrictEqual([s.activeId, s.besideId], ['3d', 'req']);
+    assert.deepStrictEqual(centerLayout(s), { collapse3d: false, docPane: true, docId: null, library: true });
+    s = syncDocTabs(setBeside(s, null), [doc('D1')], { docId: 'D1', beside: false });
+    assert.deepStrictEqual(centerLayout(s), { collapse3d: true, docPane: true, docId: 'D1', library: false });
+    assert.strictEqual(besidePair(s, 'doc:D1', 'req'), null);
+    assert.ok(besideRefusal(s, 'doc:D1', 'req'));
+    // synchronizácia kariet dokumentov knižnicu nezatvorí, zatvorenie áno
+    s = syncDocTabs(s, [], null);
+    assert.deepStrictEqual(s.tabs.map((t) => t.id), ['3d', 'req']);
+    s = closeTab(s, 'req');
+    assert.deepStrictEqual(s.tabs.map((t) => t.id), ['3d']);
+    assert.strictEqual(isSceneTab(REQ_TAB), false);
   });
 
   it('odkaz z chatu: id, menovka bez veľkosti písmen, id dokumentu', () => {

@@ -1,0 +1,13 @@
+diff --git a/apps/viewer/src/aim/viewTabsLayout.ts b/apps/viewer/src/aim/viewTabsLayout.ts
+index 5e8745c2..8dccd761 100644
+--- a/apps/viewer/src/aim/viewTabsLayout.ts
++++ b/apps/viewer/src/aim/viewTabsLayout.ts
+@@ -55,7 +55,7 @@ export interface CenterLayout {
+ }
+ 
+ /** Dlaždice (AIM D-157) platia mimo mobilu; jedno miesto pre `useAimCenterPanes` aj `AimCenterPane`. */
+-export const isTiled = (layout: string, _isMobile: boolean): boolean => layout !== 'single';
++export const isTiled = (layout: string, isMobile: boolean): boolean => layout !== 'single' && !isMobile;
+ 
+ /** `tiled` (AIM D-157): pri dlaždiciach je 3D panel na celú plochu a dlaždice kreslí `AimTileGrid`. */
+ export function centerLayout(s: ViewTabsState, tiled = false): CenterLayout {

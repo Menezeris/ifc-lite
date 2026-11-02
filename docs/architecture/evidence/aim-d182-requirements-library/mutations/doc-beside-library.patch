@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTabsPlan.ts a/apps/viewer/src/aim/viewTabsPlan.ts
+index 8acf851b..674aaa07 100644
+--- b/apps/viewer/src/aim/viewTabsPlan.ts
++++ a/apps/viewer/src/aim/viewTabsPlan.ts
+@@ -59,7 +59,7 @@ export function besidePair(s: ViewTabsState, a: string, b: string): { active: st
+   const ta = byId(s, a);
+   const tb = byId(s, b);
+   if (!ta || !tb || ta.id === tb.id) return null;
+-  if (isPaneTab(tb)) return { active: ta.id, beside: tb.id };
++  if (isSceneTab(ta) && isPaneTab(tb)) return { active: ta.id, beside: tb.id };
+   if (isPaneTab(ta) && isSceneTab(tb)) return { active: ta.id, beside: tb.id };
+   return null;
+ }

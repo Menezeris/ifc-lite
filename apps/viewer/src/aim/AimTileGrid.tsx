@@ -142,7 +142,7 @@ function TileHeader({ index, tab, tabs, live }: { index: number; tab: ViewTab | 
         onChange={(e) => putTile(index, e.target.value || null)}
       >
         <option value="">(prázdna)</option>
-        {tabs.filter((t) => t.kind !== 'view').map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+        {tabs.filter((t) => t.kind !== 'view' && t.kind !== 'req').map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
         {views.length > 0 && (
           <optgroup label="Pohľady">
             {views.map((v) => <option key={v.id} value={viewTabId(v.id)}>{v.name}</option>)}

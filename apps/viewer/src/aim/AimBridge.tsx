@@ -63,6 +63,9 @@ const loadClash = () => (clash ??= import('./aimClash.js'));
 /** Odpoveď hosta na import .bcfzip z BCF panela: lenivý modul, overí tvar `BCF_IMPORTED` až po načítaní. */
 let bcfImport: Promise<typeof import('./aimBcfImport.js')> | null = null;
 const loadBcfImport = () => (bcfImport ??= import('./aimBcfImport.js'));
+/** Knižnica požiadaviek (D-182): odpoveď hosta `REQLIB_RESULT`, tvar overuje lenivý modul. */
+let reqlib: Promise<typeof import('./aimReqlib.js')> | null = null;
+const loadReqlib = () => (reqlib ??= import('./aimReqlib.js'));
 
 /** Príkazy viditeľnosti idú bránou; dáta panelov a dokumentov nie (D-101). */
 const VISIBILITY = new Set(['FOCUS', 'SELECT', 'HIGHLIGHT_FILTER', 'CLEAR_FILTER', 'RESET_COLORS', 'COLORIZE', 'HIDE', 'SHOW', 'ISOLATE', 'SHOW_ALL']);
@@ -185,6 +188,11 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
         if (aimTyped(raw, 'IDS_LOAD')) command(run); else run();
         return;
       }
+      if (aimTyped(e.data, 'REQLIB_RESULT')) {
+        const raw: unknown = e.data; // Knižnica požiadaviek (D-182): odpoveď na žiadosť karty alebo lišty IDS, hneď
+        void loadReqlib().then((m) => m.handleReqlibResult(raw)).catch((err) => console.warn('[aim-bridge] REQLIB_RESULT failed', err));
+        return;
+      }
       if (aimTyped(e.data, 'CLASH_LOAD') || aimTyped(e.data, 'CLASH_SAVED')) {
         const raw: unknown = e.data; // Test clash a stavy z AIM do panela clash (D-164); potvrdenie uloženia ide hneď
         const run = () => track(loadClash().then((m) => m.runClashMessage(raw, { noteIssue })));
@@ -276,6 +284,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
       setIcddHostPost(null);
       void ids?.then((m) => m.stopIds());
       void clash?.then((m) => m.stopClash());
+      void reqlib?.then((m) => m.stopReqlib());
       void bcfImport?.then((m) => m.stopBcfImport());
       useViewerStore.getState().setUnderlaySaveHandler(null);
       useViewerStore.getState().setDocumentEventHandler(null);

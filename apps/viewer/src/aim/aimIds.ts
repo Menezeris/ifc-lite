@@ -64,6 +64,12 @@ export function stopIds(): void {
   setStatus(statusAfterDisconnect(useAimIds.getState().status));
 }
 
+/** Pôvod IDS v AIM pre lištu (D-182); starší host ho nepošle. */
+const originOf = (msg: IdsLoadMessage) => ({
+  ...(msg.origin ? { origin: msg.origin } : {}),
+  ...(msg.library_commit ? { libraryCommit: msg.library_commit } : {}),
+});
+
 async function loadStudio(msg: IdsLoadMessage, deps: IdsDeps): Promise<void> {
   const [{ importIdsXml }, { loadIdsStudioRuntime }] = await Promise.all([import('@/lib/ids-studio/import'), import('@/lib/ids-studio/runtime-loader')]);
   const imported = importIdsXml(msg.xml);
@@ -73,7 +79,7 @@ async function loadStudio(msg: IdsLoadMessage, deps: IdsDeps): Promise<void> {
   await trackStudio();
   // Základ pre `dirty` je XML tak, ako ho Studio zapíše, nie text z AIM (iné odsadenie by dalo falošné "upravené").
   const baseline = useAimIds.getState().studioXml ?? msg.xml;
-  useAimIds.setState({ studio: { code: msg.code, version: msg.version, docId: imported.doc.docId, baseline } });
+  useAimIds.setState({ studio: { code: msg.code, version: msg.version, docId: imported.doc.docId, baseline, ...originOf(msg) } });
   setStatus(null);
   await openPanel('studio', deps.noteIssue);
 }
@@ -87,7 +93,7 @@ async function loadValidation(msg: IdsLoadMessage, deps: IdsDeps): Promise<void>
   const entry = activeIdsEntry(store.getState());
   if (!entry || entry.xml !== msg.xml) return deps.noteIssue(`IDS_LOAD: IDS '${msg.code}' sa nepodarilo načítať do panela validácie`);
   useAimIds.setState({
-    validation: { code: msg.code, version: msg.version, entryId: entry.id, baseline: msg.xml },
+    validation: { code: msg.code, version: msg.version, entryId: entry.id, baseline: msg.xml, ...originOf(msg) },
     run: msg.run ? { ...(msg.spec ? { spec: msg.spec } : {}), seq: ++runSeq } : null,
   });
   setStatus(null);

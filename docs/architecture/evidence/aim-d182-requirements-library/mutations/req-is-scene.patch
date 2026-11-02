@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/viewTabsLayout.ts a/apps/viewer/src/aim/viewTabsLayout.ts
+index 2744288c..0808b438 100644
+--- b/apps/viewer/src/aim/viewTabsLayout.ts
++++ a/apps/viewer/src/aim/viewTabsLayout.ts
+@@ -36,7 +36,7 @@ export const REQ_TAB: ViewTab = { id: 'req', kind: 'req', label: 'Requirements l
+ export const initialTabs = (): ViewTabsState => ({ tabs: [TAB_3D], activeId: TAB_3D.id, besideId: null });
+ 
+ /** 3D záložky (`3d`, pohľad z Presentation v dlaždici) zdieľajú jeden canvas. */
+-export const isSceneTab = (t: ViewTab | undefined) => !!t && t.kind !== 'doc';
++export const isSceneTab = (t: ViewTab | undefined) => !!t && t.kind !== 'doc' && t.kind !== 'req';
+ /** Záložka v paneli vedľa 3D (dokument alebo knižnica požiadaviek). */
+ export const isPaneTab = (t: ViewTab | undefined) => !!t && (t.kind === 'doc' || t.kind === 'req');
+ 

@@ -26,7 +26,7 @@
  */
 
 import { lazy, Suspense } from 'react';
-import { Files, Map as MapIcon, Package } from 'lucide-react';
+import { BookCheck, Files, Map as MapIcon, Package } from 'lucide-react';
 import { DisplayAll, HideSelected, List, Refresh } from '@/icons';
 import { useViewerStore } from '@/store';
 import {
@@ -37,6 +37,7 @@ import {
 import { RibbonCommandLargeButton } from '@/components/viewer/ribbon/command-button';
 import type { SurfaceCommandContext } from '@/components/viewer/surface-commands';
 import { useAimDerivationsStore } from './aimDerivationsStore';
+import { useAimViewTabs } from './viewTabsStore';
 import { safeManageUrl } from './derivations';
 import type { DerivationsRibbonUi } from './DerivationsRibbonGroup';
 import type { IcddRibbonUi } from './AimIcddRibbonGroup';
@@ -73,6 +74,7 @@ export function DocumentsRibbonTab() {
   const underlayPanelVisible = useViewerStore((s) => s.underlayPanelVisible);
 
   const icddHostReady = useAimIcdd((st) => st.hostReady);
+  const reqTabActive = useAimViewTabs((s) => s.activeId === 'req' || s.besideId === 'req');
   const icddBusy = useAimIcdd((st) => isBusy(st.run));
   const derivationsLayer = useAimDerivationsStore((s) => s.layer);
   const relationsVisible = useAimDerivationsStore((s) => s.relationsVisible);
@@ -102,6 +104,17 @@ export function DocumentsRibbonTab() {
           tooltip="Drawing underlays — georeferenced PDF plans"
           active={underlayPanelVisible}
           commandContext={commandContext}
+        />
+        {/* Knižnica požiadaviek (D-182): karta s IDS z knižnice a z projektu; záložky sú lenivé. */}
+        <RibbonContentLargeButton
+          icon={BookCheck}
+          contentLabel="Requirements library"
+          contentSource="extension"
+          contentId="aim-requirements-library"
+          data-ribbon-extension="aim-requirements-library"
+          tooltip="Requirements library: IDS from the library, assigned to the project, into IDS Studio and Data validation"
+          active={reqTabActive}
+          onClick={() => void import('./reqlibTab').then((m) => m.openRequirementsLibrary())}
         />
       </RibbonGroup>
 

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/reqlibPlan.ts a/apps/viewer/src/aim/reqlibPlan.ts
+index b1e8666a..33d4d3fb 100644
+--- b/apps/viewer/src/aim/reqlibPlan.ts
++++ a/apps/viewer/src/aim/reqlibPlan.ts
+@@ -41,7 +41,7 @@ export interface WireRun {
+  */
+ export function runsByModel(specs: readonly ReportSpecLike[], modelIds: readonly string[], nameOf: (id: string) => string): WireRun[] {
+   // Prvok bez modelu sa dá priradiť len vtedy, keď beh má jediný model; inak by sa pripísal zlému modelu.
+-  if (false && specs.some((s) => s.entityResults.some((e) => !e.modelId))) {
++  if (modelIds.length !== 1 && specs.some((s) => s.entityResults.some((e) => !e.modelId))) {
+     throw new Error('Výsledok obsahuje prvok bez modelu a beh má viac modelov; neuložil sa (spusti kontrolu na jednom modeli).');
+   }
+   return modelIds.map((modelId) => ({

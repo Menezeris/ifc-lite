@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/reqlib-protocol.ts a/apps/viewer/src/aim/reqlib-protocol.ts
+index afd01c66..84350894 100644
+--- b/apps/viewer/src/aim/reqlib-protocol.ts
++++ a/apps/viewer/src/aim/reqlib-protocol.ts
+@@ -47,6 +47,6 @@ export function buildReqlibRequest(id: string, action: ReqlibAction, payload: Re
+ /** Odpoveď hosta (overí tvar). */
+ export function isReqlibResult(data: unknown): data is ReqlibResultMessage {
+   if (!isObj(data) || data.source !== SOURCE || data.type !== 'REQLIB_RESULT') return false;
+-  if (typeof data.id !== 'string' || data.id.length > 100 || typeof data.ok !== 'boolean') return false;
++  if (typeof data.id !== 'string' || !data.id || data.id.length > 100 || typeof data.ok !== 'boolean') return false;
+   return data.error === undefined || (typeof data.error === 'string' && data.error.length <= 4000);
+ }

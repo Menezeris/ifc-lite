@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/reqlibPlan.ts a/apps/viewer/src/aim/reqlibPlan.ts
+index 3f48777e..1b5611ba 100644
+--- b/apps/viewer/src/aim/reqlibPlan.ts
++++ a/apps/viewer/src/aim/reqlibPlan.ts
+@@ -55,6 +55,7 @@ export function runsByModel(specs: readonly ReportSpecLike[], modelIds: readonly
+           ...(e.entityType ? { entityType: e.entityType } : {}),
+           passed: e.passed,
+           requirementResults: (e.requirementResults ?? [])
++            .filter((r) => r.status === 'fail')
+             .map((r) => ({ status: 'fail', ...(r.failureReason ? { failureReason: r.failureReason } : {}) })),
+         })),
+       };

@@ -21,7 +21,7 @@ import type { PanelImperativeHandle } from 'react-resizable-panels';
 import { useViewerStore } from '@/store';
 import { useFloorplanView } from '@/hooks/useFloorplanView';
 import { useAimCalibrationExit } from './useAimCalibrationExit.js';
-import { centerLayout } from './viewTabsLayout.js';
+import { centerLayout, isTiled } from './viewTabsLayout.js';
 import { useAimViewTabs } from './viewTabsStore.js';
 import { useAimPlanRefit } from './useAimPlanRefit.js';
 
@@ -44,7 +44,7 @@ export function useAimCenterPanes(isMobile: boolean) {
   const activeId = useAimViewTabs((s) => s.activeId);
   const besideId = useAimViewTabs((s) => s.besideId);
   // D-157: pri dlaždiciach je 3D panel na celú plochu, canvas sa posunie do živej dlaždice.
-  const tiled = useAimViewTabs((s) => s.layout !== 'single') && !isMobile;
+  const tiled = isTiled(useAimViewTabs((s) => s.layout), isMobile);
   const frame = useAimViewTabs((s) => s.frame);
   const tileFrame = tiled && frame ? frame : undefined;
   const layout = useMemo(() => centerLayout({ tabs, activeId, besideId }, tiled), [tabs, activeId, besideId, tiled]);
@@ -65,7 +65,9 @@ export function useAimCenterPanes(isMobile: boolean) {
   }, []);
 
   // Panel dokumentu: otvorené karty mimo 2D na celú plochu a (D-132) aktívna alebo vedľa.
-  const docPaneOpen = useViewerStore((s) => s.docTabs.length > 0);
+  // D-182: záložka knižnice požiadaviek používa ten istý panel.
+  // Na mobile záložky nie sú (prekrytie D-075 je len pre dokumenty).
+  const docPaneOpen = useViewerStore((s) => s.docTabs.length > 0) || (!isMobile && tabs.some((t) => t.kind === 'req'));
   const docPaneVisible = docPaneOpen && (isMobile || layout.docPane);
   const docPaneVisibleRef = useRef(docPaneVisible);
   docPaneVisibleRef.current = docPaneVisible;

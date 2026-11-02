@@ -14,7 +14,7 @@
 
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Box, ChevronDown, FileText, X } from 'lucide-react';
+import { BookCheck, Box, ChevronDown, FileText, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useViewerStore } from '@/store';
 import type { ViewTabKind } from './viewTabsPlan.js';
@@ -25,7 +25,7 @@ import { fitTabs } from './viewTabsFit.js';
 
 const AimTileGrid = lazy(() => import('./AimTileGrid.js').then((m) => ({ default: m.AimTileGrid })));
 
-const ICON: Record<ViewTabKind, typeof Box> = { '3d': Box, doc: FileText, view: Box };
+const ICON: Record<ViewTabKind, typeof Box> = { '3d': Box, doc: FileText, view: Box, req: BookCheck };
 const SELECT = 'h-6 max-w-40 rounded border bg-background px-1 text-2xs text-muted-foreground';
 /** Miesto jednej záložky a tlačidla zoznamu pri preteku (px), #240. */
 const SLOT_PX = 128;

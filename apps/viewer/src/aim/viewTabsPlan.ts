@@ -15,9 +15,9 @@
  * seba môže byť najviac jedna 3D záložka a druhá je dokument.
  */
 
-import { TAB_3D, isSceneTab, type ViewTab, type ViewTabsState } from './viewTabsLayout.js';
+import { TAB_3D, isPaneTab, isSceneTab, type ViewTab, type ViewTabsState } from './viewTabsLayout.js';
 
-export { TAB_3D, centerLayout, initialTabs, isSceneTab, type CenterLayout, type ViewTab, type ViewTabKind, type ViewTabsState } from './viewTabsLayout.js';
+export { REQ_TAB, TAB_3D, centerLayout, initialTabs, isPaneTab, isSceneTab, isTiled, type CenterLayout, type ViewTab, type ViewTabKind, type ViewTabsState } from './viewTabsLayout.js';
 
 export const docTabId = (docId: string) => `doc:${docId}`;
 export const viewTabId = (viewId: string) => `view:${viewId}`;
@@ -59,8 +59,8 @@ export function besidePair(s: ViewTabsState, a: string, b: string): { active: st
   const ta = byId(s, a);
   const tb = byId(s, b);
   if (!ta || !tb || ta.id === tb.id) return null;
-  if (isSceneTab(ta) && tb.kind === 'doc') return { active: ta.id, beside: tb.id };
-  if (ta.kind === 'doc' && isSceneTab(tb)) return { active: ta.id, beside: tb.id };
+  if (isSceneTab(ta) && isPaneTab(tb)) return { active: ta.id, beside: tb.id };
+  if (isPaneTab(ta) && isSceneTab(tb)) return { active: ta.id, beside: tb.id };
   return null;
 }
 
@@ -71,7 +71,7 @@ export function besideRefusal(s: ViewTabsState, a: string, b: string): string | 
   const tb = byId(s, b);
   if (!ta || !tb) return 'záložka nie je otvorená';
   if (ta.id === tb.id) return 'záložka nemôže byť vedľa seba samej';
-  if (ta.kind === 'doc' && tb.kind === 'doc') return 'dva dokumenty vedľa seba zatiaľ nejdú';
+  if (isPaneTab(ta) && isPaneTab(tb)) return 'dva dokumenty vedľa seba zatiaľ nejdú';
   return 'viewer má jeden 3D canvas: vedľa 3D ide dokument, nie druhý 3D pohľad';
 }
 

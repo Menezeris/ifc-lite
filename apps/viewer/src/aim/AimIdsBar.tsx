@@ -8,7 +8,7 @@
  * si vyžiadal chat (`ids_document open run=true`, voliteľne len jedna špecifikácia). Načítava sa lenivo.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from '@/i18n';
 import { useViewerStore } from '@/store';
 import { findSpecification } from './aimIdsSpec.js';
@@ -28,6 +28,9 @@ export default function AimIdsBar({ target, runValidation }: Props) {
   const status = useAimIds((s) => (s.status?.target === target ? s.status : null));
   const studioXml = useAimIds((s) => s.studioXml);
   const run = useAimIds((s) => (target === 'validation' ? s.run : null));
+  // D-182: uloženie výsledku kontroly (beží raz, vo vieweri) s pečiatkou revízie, verzie IDS a nástroja.
+  const hasReport = useViewerStore((s) => target === 'validation' && s.idsValidationReport?.source.kind === 'ids');
+  const [runSave, setRunSave] = useState<{ busy: boolean; text?: string; ok?: boolean }>({ busy: false });
   const idsDocument = useViewerStore((s) => s.idsDocument);
   const studioDoc = useViewerStore((s) => s.idsStudioState?.doc);
   const hasModel = useViewerStore((s) => [...s.models.values()].some((m) => m.ifcDataStore != null));
@@ -64,7 +67,13 @@ export default function AimIdsBar({ target, runValidation }: Props) {
       case 'saved': return t('aimFork.ids.saved', { code: status.code ?? '', version: status.version ?? 0 });
       case 'conflict': return t('aimFork.ids.conflict', { latest: status.latest ?? 0 });
       case 'error': return t('aimFork.ids.error', { reason: status.error ?? '' });
-      default: return linked ? t(dirty ? 'aimFork.ids.linkedEdited' : 'aimFork.ids.linked', { code: slot?.code ?? '', version: slot?.version ?? 0 }) : t('aimFork.ids.unlinked');
+      default: {
+        if (!linked) return t('aimFork.ids.unlinked');
+        const key = slot?.origin === 'library'
+          ? (dirty ? 'aimFork.ids.linkedLibraryEdited' : 'aimFork.ids.linkedLibrary')
+          : (dirty ? 'aimFork.ids.linkedEdited' : 'aimFork.ids.linked');
+        return t(key, { code: slot?.code ?? '', version: slot?.version ?? 0 });
+      }
     }
   })();
 
@@ -76,9 +85,27 @@ export default function AimIdsBar({ target, runValidation }: Props) {
         onClick={() => void saveToAim(target)}
         className="min-h-6 shrink-0 rounded border px-2 text-2xs font-medium hover:bg-muted disabled:opacity-50"
       >
-        {t('aimFork.ids.save')}
+        {t(slot?.origin === 'library' && linked ? 'aimFork.ids.saveCopy' : 'aimFork.ids.save')}
       </button>
+      {target === 'validation' && linked && (
+        <button
+          type="button"
+          disabled={dirty || !hasReport || runSave.busy}
+          title={t('aimFork.ids.saveRunHint')}
+          onClick={() => {
+            setRunSave({ busy: true });
+            void import('./aimReqlib.js')
+              .then((m) => m.saveRunToAim())
+              .then((r) => setRunSave({ busy: false, text: r.text, ok: r.ok }))
+              .catch((err: unknown) => setRunSave({ busy: false, text: String(err), ok: false }));
+          }}
+          className="min-h-6 shrink-0 rounded border px-2 text-2xs font-medium hover:bg-muted disabled:opacity-50"
+        >
+          {t(runSave.busy ? 'aimFork.ids.savingRun' : 'aimFork.ids.saveRun')}
+        </button>
+      )}
       <output className="min-w-0 break-words text-2xs text-muted-foreground">{statusText}</output>
+      {runSave.text && <output className={`min-w-0 break-words text-2xs ${runSave.ok ? 'text-muted-foreground' : 'text-destructive'}`}>{runSave.text}</output>}
     </div>
   );
 }

@@ -1,0 +1,13 @@
+diff --git a/apps/viewer/src/aim/reqlibPlan.ts b/apps/viewer/src/aim/reqlibPlan.ts
+index 91e6dfd3..796a549c 100644
+--- a/apps/viewer/src/aim/reqlibPlan.ts
++++ b/apps/viewer/src/aim/reqlibPlan.ts
+@@ -69,7 +69,7 @@ export function runsByModel(specs: readonly ReportSpecLike[], modelIds: readonly
+ 
+ /** Verzia IDS (od 1) a revízia modelu (od 0, `model_revisions.revision`) v AIM: celé číslo; postMessage prenesie aj NaN. */
+ const isVersionNo = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 1;
+-const isRevisionNo = (v: unknown): v is number => typeof v === 'number';
++const isRevisionNo = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 0;
+ 
+ /** Odpoveď hosta na `assign`: známy stav, inak chyba (prázdna odpoveď sa nesmie tváriť ako úspech). */
+ export function assignOutcome(out: Record<string, unknown> | null | undefined):
