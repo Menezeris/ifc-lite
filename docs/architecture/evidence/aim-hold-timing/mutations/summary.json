@@ -1,0 +1,72 @@
+{
+  "continuous-input-ignored": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/holdTiming.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "b5d4487146276f5afc6e3f7e97e4891ca1a502a2",
+    "production": [
+      "apps/viewer/src/aim/holdTiming.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/holdTiming.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "deferral-budget-removed": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/holdTiming.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "b5d4487146276f5afc6e3f7e97e4891ca1a502a2",
+    "production": [
+      "apps/viewer/src/aim/holdTiming.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/holdTiming.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "hold-never-deferred": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/holdTiming.longpress.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "b5d4487146276f5afc6e3f7e97e4891ca1a502a2",
+    "production": [
+      "apps/viewer/src/aim/holdTiming.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/holdTiming.longpress.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "wiring-defer-removed": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/holdTiming.longpress.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "b5d4487146276f5afc6e3f7e97e4891ca1a502a2",
+    "production": [
+      "apps/viewer/src/components/viewer/touchLongPress.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/holdTiming.longpress.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "wiring-no-retimer": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/holdTiming.longpress.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "b5d4487146276f5afc6e3f7e97e4891ca1a502a2",
+    "production": [
+      "apps/viewer/src/components/viewer/touchLongPress.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/holdTiming.longpress.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

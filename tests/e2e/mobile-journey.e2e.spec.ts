@@ -65,6 +65,15 @@ async function waitForDrawnFrame(page: Page, since: number): Promise<void> {
     .toMatchObject({ ready: true });
 }
 
+/**
+ * How long a tap may take to reach the store. Every pick is a GPU pass whose 1x1 readback
+ * (`mapAsync`) resolves only after the queued GPU work, and on the CI runner's SwiftShader
+ * (software Vulkan) under load that took 5.4-5.5 s in a local repro with CPU stress: the pick
+ * returned the right element (expressId 52), but after Playwright's default 5 s expect timeout,
+ * so the poll saw `selectedEntityId === null`. `pickPreflight` is not involved (0-1 ms measured).
+ */
+const PICK_READBACK_TIMEOUT_MS = 30_000;
+
 type TouchPoint = { x: number; y: number; id: number };
 
 async function touch(device: CDPSession, type: 'touchStart' | 'touchMove' | 'touchEnd', points: TouchPoint[]): Promise<void> {
@@ -204,6 +213,7 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
     await page.touchscreen.tap(first.x, first.y);
     await requireRenderer('tap selection', () => expect.poll(
       () => page.evaluate(() => globalThis.__ifc_lite_viewer_store__.getState().selectedEntityId),
+      { timeout: PICK_READBACK_TIMEOUT_MS },
     ).toBe(first.globalId));
 
     await page.getByRole('button', { name: 'Measure', exact: true }).click();
@@ -211,14 +221,16 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
     await page.touchscreen.tap(second.x, second.y);
     await requireRenderer('two-tap measurement', () => expect.poll(
       () => page.evaluate(() => globalThis.__ifc_lite_viewer_store__.getState().measurements.length),
+      { timeout: PICK_READBACK_TIMEOUT_MS },
     ).toBeGreaterThan(0));
 
     await page.getByRole('button', { name: 'Select', exact: true }).click();
     await touch(device, 'touchStart', [{ x: first.x, y: first.y, id: 1 }]);
     await requireRenderer('long-press menu', () =>
-      expect(page.getByRole('menu', { name: 'Entity actions' })).toBeVisible({ timeout: 10_000 }));
+      expect(page.getByRole('menu', { name: 'Entity actions' })).toBeVisible({ timeout: PICK_READBACK_TIMEOUT_MS }));
     await requireRenderer('long-press entity pick', () => expect.poll(
       () => page.evaluate(() => globalThis.__ifc_lite_viewer_store__.getState().contextMenu.entityId),
+      { timeout: PICK_READBACK_TIMEOUT_MS },
     ).toBe(first.globalId));
     await info.attach('mobile-journey-authored-ifc.png', { body: await page.screenshot(), contentType: 'image/png' });
     await touch(device, 'touchEnd', []);

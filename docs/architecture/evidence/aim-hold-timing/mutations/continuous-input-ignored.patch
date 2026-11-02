@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/holdTiming.ts a/apps/viewer/src/aim/holdTiming.ts
+index 57569edb..5a368d98 100644
+--- b/apps/viewer/src/aim/holdTiming.ts
++++ a/apps/viewer/src/aim/holdTiming.ts
+@@ -26,7 +26,7 @@ export function browserInputPendingProbe(
+     ?.scheduling;
+   const probe = scheduling?.isInputPending;
+   // `includeContinuous`: touchmove is a continuous event and is ignored by the default call.
+-  return typeof probe === 'function' ? () => probe.call(scheduling, {}) : null;
++  return typeof probe === 'function' ? () => probe.call(scheduling, { includeContinuous: true }) : null;
+ }
+ 
+ /** True when the hold must wait one more turn because browser-queued input has not run yet. */
