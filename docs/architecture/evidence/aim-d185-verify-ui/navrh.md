@@ -31,6 +31,8 @@ rozhodnutí Samuela vypadli, viď časť 0).
 - Kóty: existujúce `MEASURE_SHOW` (D-124) lokálne; prednosť majú `segments` od hosta, inak zvislá
   kóta v strede pôdorysu prvku od najnižšej po najvyššiu kotvu s `z_m`. Zvýraznenie: `FOCUS`
   (miestnosť priesvitne, vstupné prvky oranžovo, kamera na ne). Klik na kód v bunke zvýrazní prvok.
+- Fajočky len pri prvku, ktorého výmery panel ukazuje (most pri výbere nastaví `panelGuid`; stena má tiež
+  `BaseQuantities.Height`, výsledok miestnosti sa na ňu nechytí). Iný výber zavrie detail aj s kótami.
 - Mimo AIM hosta (bez iframe) sa nič nežiada ani nekreslí.
 
 ## 2. Tok dát
