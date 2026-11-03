@@ -142,9 +142,6 @@ export function PropertiesPanel() {
   // >>> AIM-FORK: on mobile the panel flows as one column, scrolled by the sheet
   const isMobile = useViewerStore((s) => s.isMobile);
   // <<< AIM-FORK
-  // >>> AIM-FORK: D-185 UI, panel ostane na miestnosti, ktorú overenie výmer odznačilo v scéne
-  const aimPinned = useAimPanelPinned();
-  // <<< AIM-FORK
   const { query, ifcDataStore, geometryResult, models } = useIfc();
   const overlayAwareQuery = useMemo(() => createQueryAdapter(useViewerStore), []);
 
@@ -195,8 +192,8 @@ export function PropertiesPanel() {
   );
   const editMode = editEnabled && editPermission.allowed;
   const propertiesActiveTab = useViewerStore((s) => s.propertiesActiveTab);
-  // >>> AIM-FORK: AIM | IFC inspector (D-077) — skrytie natívneho obsahu pod AIM tabom
-  const aimNativeHidden = useAimNativeHidden();
+  // >>> AIM-FORK: AIM | IFC inspector (D-077) — skrytie natívneho obsahu pod AIM tabom; D-185 UI: panel ostane na miestnosti odznačenej overením výmer
+  const aimNativeHidden = useAimNativeHidden(), aimPinned = useAimPanelPinned();
   // <<< AIM-FORK
   const setPropertiesActiveTab = useViewerStore((s) => s.setPropertiesActiveTab);
   const setEditEnabled = useViewerStore((s) => s.setEditEnabled);
@@ -1160,9 +1157,7 @@ export function PropertiesPanel() {
   // `overlayEntity` when `entityNode` is empty. Without including
   // `overlayEntity` here the panel collapses to the model-metadata
   // view the moment a fresh add lands.
-  // >>> AIM-FORK: D-185 UI, pripnutý prvok bez výberu v scéne (aimPinned)
-  if ((!selectedEntityId && !aimPinned) || !modelQuery || (!entityNode && !overlayEntity)) {
-  // <<< AIM-FORK
+  if ((!selectedEntityId && !aimPinned /* >>> AIM-FORK: D-185 UI, pripnutý prvok bez výberu v scéne <<< AIM-FORK */) || !modelQuery || (!entityNode && !overlayEntity)) {
     // Show model metadata when a single model is loaded and nothing selected.
     // Handles both federated models (models.size >= 1) and legacy single-model path (models.size === 0).
     if (models.size === 1) {
