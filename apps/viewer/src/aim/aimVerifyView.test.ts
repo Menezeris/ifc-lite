@@ -60,6 +60,7 @@ describe('verifyViewPlan', () => {
     assert.equal(p.projection, 'perspective');
     assert.ok(Math.abs(p.box.min.z - 3.95) < 1e-9);
     assert.ok(p.dir.y > 0.5 && p.dir.z < -0.4 && p.dir.x > 0.2, `smer ${JSON.stringify(p.dir)}`);
+    assert.ok(Math.abs(p.box.max.y - (8.8 + C)) < 1e-9, 'strop rezu tesne nad telesom, doska nad nezakryje pohľad dnu');
   });
 
   it('miestnosť dlhšia v z: rez a kamera po osi x', () => {
