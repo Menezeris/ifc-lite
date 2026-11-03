@@ -123,7 +123,8 @@ wait or retry.
   (D-103): do not push only for them. Reply once, resolve the thread, list them under
   "Follow-up" in the PR body once CI has finished; they are fixed together in a later PR. A finding labelled
   **blocker (security)** is fixed in this PR. Details: `.claude/skills/steward/SKILL.md`.
-- Add the **"Ako vyskúšať"** section to the PR body (steward skill): the link
-  `https://ai-mviewer.vercel.app/ifc?viewer=pr-<number>` and the steps to try, checked
-  live by you first where you can. Do not merge the PR: it ships in a release batch when
+- Add the **"Ako vyskúšať"** section to the PR body (steward skill): the steps to try,
+  checked live by you first where you can. A feature branch has no Vercel preview (AIM
+  D-187: only `main` and `release/aim-*` with `[preview]` in the commit message), so the
+  `?viewer=pr-<number>` link works only on the batch PR after a `[preview]` push. Do not merge the PR: it ships in a release batch when
   Samuel names it (skill `release-train`).

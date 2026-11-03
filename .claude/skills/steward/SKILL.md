@@ -25,10 +25,15 @@ pull requests" and "Release train".
   is quick on the fast lane). Red: fix and push.
 - No open finding labelled **blocker (security)**. Fix it in this PR.
 - No merge conflict with `main`: merge `main` into the branch.
-- An **"Ako vyskúšať"** section in the body, in Slovak: the test link
-  `https://ai-mviewer.vercel.app/ifc?viewer=pr-<this PR number>` (the AIM host with this
-  PR's viewer preview) and 2-5 concrete steps: what to click, which MCP prompt to send,
-  what Samuel should see. Try them yourself first on the local viewer with the test model
+- An **"Ako vyskúšať"** section in the body, in Slovak: 2-5 concrete steps (what to
+  click, which MCP prompt to send, what Samuel should see) and the test link
+  `https://ai-mviewer.vercel.app/ifc?viewer=pr-<number>` (the AIM host with a viewer
+  preview). The link works only when that preview exists (AIM D-187): the fork's Vercel
+  preview is built only for `main` and `release/aim-*` pushes whose head commit message
+  contains `[preview]`, so a feature branch (`claude/*`) has none. In a feature PR write
+  the steps and say they are tried on the batch PR's link (`pr-<batch number>`) once the
+  batch is pushed with `[preview]` (skill `release-train`, step 4); never present a
+  `pr-<feature number>` link as working. Try them yourself first on the local viewer with the test model
   (aim-feature skill, step 5). Never open that link or the AIM host's `/ifc` from a session:
   it downloads the production models from a bucket with a small free egress quota (AIM D-135).
 
