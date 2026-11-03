@@ -87,6 +87,20 @@ export function sectionBoxForEntities(ids: readonly number[], selection?: FitBox
   return around ? sectionBoxFromBounds(around) : null;
 }
 
+/**
+ * Obálka miestnosti so skladbami (od podlahovej po stropnú dosku, so stenami; render rámec) bez okraja boxu,
+ * alebo null, keď `id` nie je miestnosť s geometriou. Pre orez pri overení výmer (D-185 UI).
+ */
+export function spaceRoomBox(id: number): FitBox | null {
+  const state = useViewerStore.getState();
+  const boundsOf = boundsLookup(state, getGlobalRenderer()?.getScene());
+  const ref = resolveEntityRef(id);
+  const store = ref.modelId === 'legacy' ? state.ifcDataStore : state.models.get(ref.modelId)?.ifcDataStore;
+  if ((store?.entities.getTypeName(ref.expressId) ?? '').toUpperCase() !== 'IFCSPACE') return null;
+  const space = boundsOf(id);
+  return space ? sectionBoxForSpace(space, collectCandidates(state, boundsOf, ref.modelId))?.box ?? space : null;
+}
+
 function union(boxes: FitBox[]): FitBox | null {
   if (boxes.length === 0) return null;
   const min = { x: Infinity, y: Infinity, z: Infinity };

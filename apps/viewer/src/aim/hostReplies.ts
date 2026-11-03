@@ -32,7 +32,7 @@ export function hostReply(raw: unknown): boolean {
 }
 
 /** Pripojenie mosta: zvýraznenie z detailu overenia ide tou istou cestou ako `FOCUS` od hosta. */
-export function startHostReplies(focus: (guids: string[]) => void): void {
+export function startHostReplies(focus: (guids: string[], frame?: boolean) => void): void {
   setVerifyFocus(focus);
 }
 
@@ -49,7 +49,7 @@ export function stopHostReplies(): void {
  */
 export function verifySelected(guid: string | null): void {
   const st = useAimVerify.getState();
-  useAimVerify.setState({ panelGuid: guid });
+  useAimVerify.setState({ panelGuid: guid, ...(st.pinned !== null && st.pinned !== guid ? { pinned: null } : {}) });
   if (guid === null && st.guid) void loadVerify().then((m) => m.forgetVerification());
   else if (st.open) void loadVerify().then((m) => m.closeDetailUnless(guid));
 }

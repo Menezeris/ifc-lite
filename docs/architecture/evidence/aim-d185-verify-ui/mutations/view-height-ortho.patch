@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerifyView.ts a/apps/viewer/src/aim/aimVerifyView.ts
+index 84120ca7..0ef0fffb 100644
+--- b/apps/viewer/src/aim/aimVerifyView.ts
++++ a/apps/viewer/src/aim/aimVerifyView.ts
+@@ -128,7 +128,7 @@ export function verifyViewPlan(kind: QuantityKind, room: Box | null, body: Box |
+   if (option === 'b') return { kind, box: sectionBox, dir: toCamera, up, projection: 'orthographic', frame: sectionBox };
+   const p = rad(HEIGHT_PITCH_DEG);
+   const dir = norm({ x: toCamera.x * Math.cos(p), y: Math.sin(p), z: toCamera.z * Math.cos(p) });
+-  return { kind, box: sectionBox, dir, up, projection: 'orthographic', frame: sectionBox };
++  return { kind, box: sectionBox, dir, up, projection: 'perspective', frame: sectionBox };
+ }
+ 
+ /** Póza kamery pre `applyViewpoint`: cieľ v strede rámu, vzdialenosť podľa uhlopriečky (dorovná `frameBounds`). */

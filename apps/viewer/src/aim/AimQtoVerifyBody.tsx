@@ -4,10 +4,12 @@
 
 /**
  * Fajočka overenia pri riadku veličiny (AIM D-185 UI), lenivo z `AimQtoVerify.tsx`, až keď riadok má výsledok.
- * Klik rozbalí detail (`AimVerifyDetail.tsx`) a hneď ukáže kóty a vstupné prvky (`aimVerify.ts`).
+ * Klik rozbalí detail (`AimVerifyDetail.tsx`) a hneď ukáže kóty a vstupné prvky (`aimVerify.ts`). Očko vedľa
+ * zapne kótu veličiny bez rozbalenia, aby šlo ukázať viac kót naraz (pripomienka 3, 3. 11.).
  */
 
 import { lazy, Suspense } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAimVerify } from './aimVerifyStore';
 import { findTarget, STATUS_GLYPH, STATUS_LABEL, targetKey } from './aimVerifyPlan';
 import type { AimQtoVerifyProps } from './AimQtoVerify';
@@ -35,9 +37,26 @@ export function AimQtoVerifyBadge({ qset, quantity }: AimQtoVerifyProps) {
   const key = targetKey(qset, quantity);
   const open = useAimVerify((s) => s.open === key);
   const stale = useAimVerify((s) => s.data?.stale ?? false);
+  const shown = useAimVerify((s) => s.shown.includes(key));
   if (!target) return null;
   const label = `${STATUS_LABEL[target.status]}${stale ? ' (zo staršej revízie)' : ''}: overenie z geometrie, klik ukáže výpočet`;
+  const eye = shown ? 'Skryť kótu veličiny' : 'Zobraziť kótu veličiny (aj viac naraz)';
   return (
+    <>
+    <button
+      type="button"
+      data-aim-verify-eye={key}
+      aria-pressed={shown}
+      aria-label={eye}
+      title={eye}
+      onClick={(e) => {
+        e.stopPropagation();
+        void import('./aimVerify').then((m) => m.toggleShown(key));
+      }}
+      className={`mt-0.5 grid size-5 shrink-0 place-items-center ${shown ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-400 opacity-60 hover:opacity-100'}`}
+    >
+      {shown ? <Eye className="size-3.5" aria-hidden="true" /> : <EyeOff className="size-3.5" aria-hidden="true" />}
+    </button>
     <button
       type="button"
       data-aim-verify={key}
@@ -53,6 +72,7 @@ export function AimQtoVerifyBadge({ qset, quantity }: AimQtoVerifyProps) {
     >
       {STATUS_GLYPH[target.status]}
     </button>
+    </>
   );
 }
 

@@ -158,7 +158,7 @@ export function runVisibilityCommand(
       // Priesvitný objem splynie s farbou miestnosti, preto aj nepriesvitná výplň podstavy (3D aj zhora, #319).
       const state = useViewerStore.getState();
       useAimFocusRoomsStore.getState().setFocus(volumes.map((r) => toGlobalIdFromModels(state.models, r.modelId, r.expressId)), d.FOCUS_COLOR);
-      d.track(frameRefs(bim, refs, 'FOCUS', d.noteIssue));
+      if (msg.frame !== false) d.track(frameRefs(bim, refs, 'FOCUS', d.noteIssue));
       return true;
     }
     case 'SELECT': {

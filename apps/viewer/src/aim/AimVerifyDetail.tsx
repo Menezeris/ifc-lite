@@ -6,12 +6,18 @@
  * Detail overenia jednej veličiny (AIM D-185 UI), lenivo z `AimQtoVerify.tsx`: hodnota zo súboru a z geometrie,
  * rozdiel a tolerancia, slovami ako sa počíta, vzorec s pomenovanými bunkami (hodnota a prvok, z ktorého pochádza),
  * definícia zo schémy s odkazom, MethodOfMeasurement a Formula zo súboru, kontrolné výpočty. Klik na kód prvku
- * v bunke ho zvýrazní vo vieweri.
+ * v bunke, v texte vzorca alebo v zozname vstupných prvkov ho zvýrazní a priblíži vo vieweri; odvodená bunka (hodnota
+ * inej výmery) posunie panel na jej riadok (pripomienky 1 a 6, 3. 11.).
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useViewerStore } from '../store/index.js';
+import { resolveGuids } from './bridge-protocol';
 import { useAimVerify } from './aimVerifyStore';
-import { calculationText, difference, formatDifference, formatValue, STATUS_LABEL } from './aimVerifyPlan';
+import {
+  calculationText, derivedLabel, difference, fillRefs, formatDifference, formatValue, inputRows, linkifyRefs, refIndex, STATUS_LABEL,
+} from './aimVerifyPlan';
+import { revealRow } from './aimPanelScroll';
 import type { VerifyRecipeWire, VerifyStatus, VerifyTargetWire } from './verify-protocol';
 
 const PILL: Record<VerifyStatus, string> = {
@@ -29,9 +35,60 @@ const RESULT_ROW: Record<VerifyStatus, string> = {
 
 const focus = (guid: string) => void import('./aimVerify').then((m) => m.focusElement(guid));
 
+const LINK = 'text-blue-600 underline decoration-dotted dark:text-blue-400';
+
+/** Odvodená bunka: posunie panel na riadok výmery, o ktorú sa výpočet opiera, a na chvíľu ho zvýrazní. */
+function revealQuantity(key: string): void {
+  const row = () => document.querySelector(`[data-aim-qto="${CSS.escape(key)}"]`)?.closest('[class~="group/copyrow"]') ?? null;
+  const el = row();
+  if (!(el instanceof HTMLElement)) return;
+  revealRow(row);
+  el.style.outline = '2px solid rgb(249 115 22)';
+  el.style.outlineOffset = '-2px';
+  setTimeout(() => { el.style.outline = ''; el.style.outlineOffset = ''; }, 2500);
+}
+
+/** Text s kódmi prvkov; známe kódy (z buniek a kotiev) sú odkazy, klik prvok zvýrazní a priblíži v 3D. */
+function Linked({ text, index }: { text: string; index: ReadonlyMap<string, string> }) {
+  return (
+    <>
+      {linkifyRefs(text, index).map((p, i) => ('ref' in p
+        ? <button key={i} type="button" className={LINK} title="Zvýrazniť prvok vo vieweri" onClick={() => focus(p.guid)}>{p.ref}</button>
+        : <span key={i}>{p.text}</span>))}
+    </>
+  );
+}
+
+/** Prvky receptu bez buniek (host ich posiela len ako kotvy): úloha, prvok a výška, každý klikateľný. */
+function Inputs({ recipe }: { recipe: VerifyRecipeWire }) {
+  const rows = inputRows(recipe);
+  if (rows.length === 0) return null;
+  return (
+    <table className="mb-2 w-full border-collapse text-2xs">
+      <caption className="mb-0.5 text-left text-zinc-500">Vstupné prvky</caption>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={`${r.global_id}|${r.role}|${r.z_m ?? ''}`}>
+            <td className="border border-zinc-300 px-1.5 py-0.5 dark:border-zinc-700">{r.role}</td>
+            <td className="border border-zinc-300 px-1.5 py-0.5 dark:border-zinc-700">
+              <button type="button" className={LINK} title="Zvýrazniť prvok vo vieweri" onClick={() => focus(r.global_id)}>{r.ref ?? 'ukázať v 3D'}</button>
+            </td>
+            <td className="whitespace-nowrap border border-zinc-300 px-1.5 py-0.5 text-right font-mono dark:border-zinc-700">{r.z_m !== undefined ? `z = ${formatValue(r.z_m, 'm')}` : ''}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 function Cells({ recipe, unit }: { recipe: VerifyRecipeWire; unit: string }) {
   if (recipe.cells.length === 0) {
-    return recipe.formula_text ? <div className="mb-2 border border-zinc-200 bg-zinc-50 px-2 py-1 font-mono text-2xs dark:border-zinc-700 dark:bg-zinc-900">{recipe.formula_text}</div> : null;
+    return (
+      <>
+        {recipe.formula_text && <div className="mb-1 border border-zinc-200 bg-zinc-50 px-2 py-1 font-mono text-2xs dark:border-zinc-700 dark:bg-zinc-900"><Linked text={recipe.formula_text} index={refIndex(recipe)} /></div>}
+        <Inputs recipe={recipe} />
+      </>
+    );
   }
   return (
     <>
@@ -48,12 +105,18 @@ function Cells({ recipe, unit }: { recipe: VerifyRecipeWire; unit: string }) {
               <td className="border border-zinc-300 px-1.5 py-0.5 dark:border-zinc-700">{c.label}</td>
               <td className="border border-zinc-300 px-1.5 py-0.5 dark:border-zinc-700">
                 {c.global_id ? (
-                  <button type="button" className="text-blue-600 underline decoration-dotted dark:text-blue-400" title="Zvýrazniť prvok vo vieweri" onClick={() => focus(c.global_id!)}>
-                    {c.ref ?? c.global_id}
+                  <button type="button" className={LINK} title="Zvýrazniť prvok vo vieweri" onClick={() => focus(c.global_id!)}>
+                    {c.ref ?? 'ukázať v 3D'}
                   </button>
                 ) : (c.ref ?? '')}
               </td>
-              <td className="whitespace-nowrap border border-zinc-300 px-1.5 py-0.5 text-right font-mono dark:border-zinc-700">{formatValue(c.value, c.unit)}</td>
+              <td className="whitespace-nowrap border border-zinc-300 px-1.5 py-0.5 text-right font-mono dark:border-zinc-700">
+                {c.quantity ? (
+                  <button type="button" data-aim-verify-derived={c.quantity} className={LINK} title="Ukázať túto výmeru v paneli" onClick={() => revealQuantity(c.quantity!)}>
+                    {derivedLabel(c.value, c.unit, c.quantity)}
+                  </button>
+                ) : formatValue(c.value, c.unit)}
+              </td>
             </tr>
           ))}
           <tr className={`font-semibold ${RESULT_ROW[recipe.status]}`}>
@@ -72,6 +135,7 @@ function Body({ t }: { t: VerifyTargetWire }) {
   const main = t.recipes[0];
   const checks = t.recipes.slice(1);
   const quantity = t.target.slice(t.target.indexOf('.') + 1);
+  const refs = refIndex(main);
   return (
     <div data-aim-verify-detail={t.target} className="mt-1.5 border border-zinc-200 bg-white p-2 text-xs text-zinc-800 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
       <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -91,8 +155,8 @@ function Body({ t }: { t: VerifyTargetWire }) {
           </div>
         ))}
       </div>
-      <p className="mb-2"><span className="text-zinc-500">Ako sa počíta: </span>{main.explanation}</p>
-      {main.note && <p className="mb-2 border-l-[3px] border-zinc-400 bg-zinc-50 px-2 py-1 text-2xs dark:bg-zinc-900">{main.note}</p>}
+      <p className="mb-2"><span className="text-zinc-500">Ako sa počíta: </span><Linked text={main.explanation} index={refs} /></p>
+      {main.note && <p className="mb-2 border-l-[3px] border-zinc-400 bg-zinc-50 px-2 py-1 text-2xs dark:bg-zinc-900"><Linked text={main.note} index={refs} /></p>}
       <Cells recipe={main} unit={t.unit} />
       <dl className="grid grid-cols-[96px_1fr] gap-x-2 gap-y-1 text-2xs">
         <dt className="text-zinc-500">Tolerancia</dt>
@@ -119,7 +183,7 @@ function Body({ t }: { t: VerifyTargetWire }) {
             <span>Kontrolný výpočet ({r.recipe}):</span>
             <span className={`px-1.5 font-semibold ${PILL[r.status]}`}>{STATUS_LABEL[r.status]}</span>
           </div>
-          <p className="mb-1">{r.explanation}</p>
+          <p className="mb-1"><Linked text={r.explanation} index={refIndex(r)} /></p>
           <Cells recipe={r} unit={t.unit} />
         </div>
       ))}
@@ -136,7 +200,15 @@ function Body({ t }: { t: VerifyTargetWire }) {
   );
 }
 
+/** Meno prvku v načítanom modeli (kód prvku v AIM), keď ho host neposlal. */
+function ifcName(guid: string): string | null {
+  const state = useViewerStore.getState();
+  const ref = resolveGuids(state.models, [guid])[0];
+  return ref ? state.models.get(ref.modelId)?.ifcDataStore?.entities.getName(ref.expressId) ?? null : null;
+}
+
 export function AimVerifyDetail({ targetKey }: { targetKey: string }) {
   const t = useAimVerify((s) => s.data?.targets.find((x) => x.target === targetKey) ?? null);
-  return t ? <Body t={t} /> : null;
+  const named = useMemo(() => (t ? { ...t, recipes: t.recipes.map((r) => fillRefs(r, ifcName)) } : null), [t]);
+  return named ? <Body t={named} /> : null;
 }

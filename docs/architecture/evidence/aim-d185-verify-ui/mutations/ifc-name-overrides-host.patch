@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerifyPlan.ts a/apps/viewer/src/aim/aimVerifyPlan.ts
+index c5378e40..20ae2e1e 100644
+--- b/apps/viewer/src/aim/aimVerifyPlan.ts
++++ a/apps/viewer/src/aim/aimVerifyPlan.ts
+@@ -131,7 +131,7 @@ export function fillRefs(r: VerifyRecipeWire, nameOf: (guid: string) => string |
+   return {
+     ...r,
+     cells: r.cells.map((c) => (c.ref || !c.global_id ? c : { ...c, ...(name(c.global_id) ? { ref: name(c.global_id) } : {}) })),
+-    anchors: r.anchors.map((a) => (false ? a : { ...a, ...(name(a.global_id) ? { ref: name(a.global_id) } : {}) })),
++    anchors: r.anchors.map((a) => (a.ref ? a : { ...a, ...(name(a.global_id) ? { ref: name(a.global_id) } : {}) })),
+   };
+ }
+ 

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerifyView.ts a/apps/viewer/src/aim/aimVerifyView.ts
+index 4f5ac3be..0ef0fffb 100644
+--- b/apps/viewer/src/aim/aimVerifyView.ts
++++ a/apps/viewer/src/aim/aimVerifyView.ts
+@@ -101,7 +101,7 @@ export function verifyViewPlan(kind: QuantityKind, room: Box | null, body: Box |
+   const up: V3 = { x: 0, y: 1, z: 0 };
+ 
+   if (kind === 'area' || kind === 'perimeter') {
+-    const top = all.max.y;
++    const top = Math.min(all.max.y, core.min.y + PLAN_CUT_M);
+     const box: Box = { min: { ...all.min }, max: { ...all.max, y: top } };
+     if (option === 'b') {
+       const t = rad(PLAN_TILT_DEG);

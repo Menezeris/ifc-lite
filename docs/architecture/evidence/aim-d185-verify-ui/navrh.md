@@ -18,6 +18,12 @@ rozhodnutí Samuela vypadli, viď časť 0).
 5. Kóty sa ukážu hneď pri rozbalení detailu.
 6. Fajočky len pri výmerach konkrétneho prvku (výskyt), nie typu.
 
+## 0b. Pripomienky Samuela (3. 11. 2026)
+
+Odkazy na prvky, orez a kamera podľa druhu veličiny, očko pre viac kót, odznačenie miestnosti s pripnutým panelom,
+NetFloorArea (chýba recept v registri v3, návrh receptu) a odvodené bunky: `samuel-3-11/README.md`. Protokol
+(časť 3) dostal voliteľné `anchors[].ref` a `cells[].quantity`; `FOCUS` voliteľne `frame: false`.
+
 ## 1. Viewer (hotové v PR)
 
 - `QuantitySetCard.tsx`: AIM-FORK bloky, prop `aimVerify`, fajočka `AimQtoVerifyBadge` pred
@@ -90,10 +96,11 @@ interface VerifyRecipeWire {
   method?: string;             // technický popis z registra
   computed_value: number | null;
   expression?: string;         // výraz nad kľúčmi buniek: 'A - B', 'A - B - C', 'A x B'
-  cells: { key: string; label: string; value: number; unit: string; global_id?: string; ref?: string }[];
+  cells: { key: string; label: string; value: number; unit: string; global_id?: string; ref?: string;
+           quantity?: string }[];  // quantity = odvodená bunka, napr. 'Qto_SpaceBaseQuantities.GrossFloorArea' (3. 11.)
   formula_text?: string;       // dnešný stĺpec formula, zobrazí sa len keď cells je prázdne
   note?: string;               // prečo sivá / žltá
-  anchors: { global_id: string; role: string; z_m?: number }[];
+  anchors: { global_id: string; role: string; z_m?: number; ref?: string }[]; // ref = kód prvku (3. 11.)
   segments?: { a: [number, number, number]; b: [number, number, number] }[]; // IFC svet, m, Z hore
 }
 interface VerifyRunAllWire {

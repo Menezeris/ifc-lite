@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerifyView.ts a/apps/viewer/src/aim/aimVerifyView.ts
+index 096280c5..0ef0fffb 100644
+--- b/apps/viewer/src/aim/aimVerifyView.ts
++++ a/apps/viewer/src/aim/aimVerifyView.ts
+@@ -121,7 +121,7 @@ export function verifyViewPlan(kind: QuantityKind, room: Box | null, body: Box |
+       z: (toCamera.z * Math.cos(y) + side.z * Math.sin(y)) * h,
+     });
+     // Strop tesne nad telesom miestnosti: doska nad by zakryla pohľad dnu, podhľad (vnútri telesa) ostane.
+-    const box: Box = { min: { ...sectionBox.min }, max: { ...sectionBox.max } };
++    const box: Box = { min: { ...sectionBox.min }, max: { ...sectionBox.max, y: Math.min(sectionBox.max.y, core.max.y + FACE_CLEARANCE_M) } };
+     return { kind, box, dir, up, projection: 'perspective', frame: box };
+   }
+   // výška (aj neznámy druh): zvislý rez, kamera vodorovne kolmo naň

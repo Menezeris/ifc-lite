@@ -79,7 +79,7 @@ export function anchorGuids(t: VerifyTargetWire): string[] {
  * Úseky kót v IFC svete (m, Z hore). Prednosť majú úseky od hosta; inak zvislá kóta v strede pôdorysu prvku
  * (`box` v IFC svete) od najnižšej po najvyššiu kotvu s výškou. Bez dvoch rôznych výšok kóta nie je.
  */
-export function measureSegments(r: VerifyRecipeWire | undefined, box: Box3 | null): { a: Vec3; b: Vec3 }[] {
+export function measureSegments(r: VerifyRecipeWire | undefined, box: Box3 | null, offset = 0): { a: Vec3; b: Vec3 }[] {
   if (!r) return [];
   if (r.segments && r.segments.length > 0) {
     return r.segments.map((s) => ({ a: { x: s.a[0], y: s.a[1], z: s.a[2] }, b: { x: s.b[0], y: s.b[1], z: s.b[2] } }));
@@ -90,8 +90,10 @@ export function measureSegments(r: VerifyRecipeWire | undefined, box: Box3 | nul
   const lo = Math.min(...zs);
   const hi = Math.max(...zs);
   if (hi - lo < 1e-6) return [];
-  const x = (box.min.x + box.max.x) / 2;
-  const y = (box.min.y + box.max.y) / 2;
+  // Posun pozdĺž dlhšej strany pôdorysu (rez pohľadu ide rovnobežne s ňou, kóta ostane v ňom).
+  const alongX = box.max.x - box.min.x >= box.max.y - box.min.y;
+  const x = (box.min.x + box.max.x) / 2 + (alongX ? offset : 0);
+  const y = (box.min.y + box.max.y) / 2 + (alongX ? 0 : offset);
   return [{ a: { x, y, z: lo }, b: { x, y, z: hi } }];
 }
 
@@ -106,3 +108,96 @@ export function calculationText(t: VerifyTargetWire): string {
   lines.push(`zo súboru ${formatValue(t.file_value, t.unit)}, z geometrie ${formatValue(t.computed_value, t.unit)}, rozdiel ${formatDifference(difference(t), t.unit)}, tolerancia ${t.tolerance.text}`);
   return lines.join('\n');
 }
+
+/** Kód prvku -> GlobalId z buniek a kotiev receptu (na odkazy v texte vzorca a poznámky). */
+export function refIndex(r: VerifyRecipeWire | undefined): Map<string, string> {
+  const out = new Map<string, string>();
+  // Číslo miestnosti (1.07) by sa chytilo aj v čísle vzorca ("= 1.07 m"): v texte odkazom nie je.
+  const ok = (ref: string) => !/^[\d.,\s-]+$/.test(ref);
+  for (const c of r?.cells ?? []) if (c.ref && c.global_id && ok(c.ref)) out.set(c.ref, c.global_id);
+  for (const a of r?.anchors ?? []) if (a.ref && ok(a.ref)) out.set(a.ref, a.global_id);
+  return out;
+}
+
+/**
+ * Kódy prvkov, ktoré host neposlal: doplní ich z mena prvku v IFC (kód v AIM je meno prvku), aby bunky, vstupné
+ * prvky aj text vzorca ukázali konkrétny prvok (pripomienka 1). Kód od hosta má prednosť.
+ */
+export function fillRefs(r: VerifyRecipeWire, nameOf: (guid: string) => string | null | undefined): VerifyRecipeWire {
+  const name = (guid: string) => {
+    const n = nameOf(guid)?.trim();
+    return n ? n.slice(0, 100) : undefined;
+  };
+  return {
+    ...r,
+    cells: r.cells.map((c) => (c.ref || !c.global_id ? c : { ...c, ...(name(c.global_id) ? { ref: name(c.global_id) } : {}) })),
+    anchors: r.anchors.map((a) => (a.ref ? a : { ...a, ...(name(a.global_id) ? { ref: name(a.global_id) } : {}) })),
+  };
+}
+
+export type TextPart = { text: string } | { ref: string; guid: string };
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Text s kódmi prvkov rozdelený na časti; známe kódy (`refIndex`) sú odkazy. Kód sa nechytí vo vnútri dlhšieho kódu
+ * (PD02.10.03 nie v PD02.10.031), bodka alebo čiarka za ním je koniec vety.
+ */
+export function linkifyRefs(text: string, index: ReadonlyMap<string, string>): TextPart[] {
+  if (!text || index.size === 0) return text ? [{ text }] : [];
+  const refs = [...index.keys()].sort((a, b) => b.length - a.length).map(escapeRe);
+  const re = new RegExp(`(?<![\\w.])(${refs.join('|')})(?!\\w|\\.\\w)`, 'g');
+  const out: TextPart[] = [];
+  let last = 0;
+  for (const m of text.matchAll(re)) {
+    const at = m.index ?? 0;
+    if (at > last) out.push({ text: text.slice(last, at) });
+    out.push({ ref: m[1], guid: index.get(m[1])! });
+    last = at + m[1].length;
+  }
+  if (last < text.length) out.push({ text: text.slice(last) });
+  return out;
+}
+
+export interface InputRow { role: string; global_id: string; ref?: string; z_m?: number }
+
+/**
+ * Vstupné prvky receptu bez buniek (host ich zatiaľ posiela len v `anchors`): každý prvok raz, s úlohou a výškou.
+ * Pri recepte s bunkami prázdne, lebo prvky ukazujú bunky.
+ */
+export function inputRows(r: VerifyRecipeWire | undefined): InputRow[] {
+  if (!r || r.cells.length > 0) return [];
+  const seen = new Set<string>();
+  const out: InputRow[] = [];
+  for (const a of r.anchors) {
+    const k = `${a.global_id}|${a.role}|${a.z_m ?? ''}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push({ role: a.role, global_id: a.global_id, ...(a.ref ? { ref: a.ref } : {}), ...(a.z_m !== undefined ? { z_m: a.z_m } : {}) });
+  }
+  return out;
+}
+
+/** Kóty všetkých zapnutých veličín naraz (očko pri riadku, pripomienka 3); poradie podľa `keys`, bez duplicít. */
+export function segmentsForTargets(el: VerifyElementWire | null, keys: readonly string[], box: Box3 | null): { a: Vec3; b: Vec3 }[] {
+  if (!el) return [];
+  const out: { a: Vec3; b: Vec3 }[] = [];
+  const seen = new Set<string>();
+  keys.forEach((key, i) => {
+    const t = el.targets.find((x) => x.target === key);
+    // Kóty z kotiev stoja v strede pôdorysu; ďalšie zapnuté veličiny sa odsunú, aby sa čísla neprekrývali.
+    for (const s of measureSegments(t?.recipes[0], box, i * SIDE_BY_SIDE_M)) {
+      const id = [s.a.x, s.a.y, s.a.z, s.b.x, s.b.y, s.b.z].map((n) => n.toFixed(4)).join(',');
+      if (seen.has(id)) continue;
+      seen.add(id);
+      out.push(s);
+    }
+  });
+  return out;
+}
+
+/** Rozostup kót viacerých veličín naraz (m). */
+export const SIDE_BY_SIDE_M = 0.6;
+
+/** Krátky zápis odvodenej bunky: "72,0000 m² (NetFloorArea)". */
+export const derivedLabel = (value: number, unit: string, quantity: string): string =>
+  `${formatValue(value, unit)} (${quantity.slice(quantity.lastIndexOf('.') + 1)})`;

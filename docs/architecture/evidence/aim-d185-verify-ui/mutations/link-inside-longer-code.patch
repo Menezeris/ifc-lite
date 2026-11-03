@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerifyPlan.ts a/apps/viewer/src/aim/aimVerifyPlan.ts
+index f3e8ea60..20ae2e1e 100644
+--- b/apps/viewer/src/aim/aimVerifyPlan.ts
++++ a/apps/viewer/src/aim/aimVerifyPlan.ts
+@@ -145,7 +145,7 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+ export function linkifyRefs(text: string, index: ReadonlyMap<string, string>): TextPart[] {
+   if (!text || index.size === 0) return text ? [{ text }] : [];
+   const refs = [...index.keys()].sort((a, b) => b.length - a.length).map(escapeRe);
+-  const re = new RegExp(`(?<![\\w.])(${refs.join('|')})`, 'g');
++  const re = new RegExp(`(?<![\\w.])(${refs.join('|')})(?!\\w|\\.\\w)`, 'g');
+   const out: TextPart[] = [];
+   let last = 0;
+   for (const m of text.matchAll(re)) {

@@ -89,7 +89,7 @@ import { useCopyValue } from './properties/useCopyValue';
 import { SelectionSummaryPanel } from './properties/SelectionSummaryPanel';
 import { AssistantAction } from './assistant/AssistantAction';
 // >>> AIM-FORK: AIM asset card, rendered only inside the AIM host (see docs/FORK_MAINTENANCE.md)
-import { AimInspectorTabs, AimVerifyBar, isReadOnlyFocus, useAimNativeHidden } from '@/aim/AimInspectorTabs';
+import { AimInspectorTabs, AimVerifyBar, isReadOnlyFocus, useAimNativeHidden, useAimPanelPinned } from '@/aim/AimInspectorTabs';
 // <<< AIM-FORK
 
 // >>> AIM-FORK: mobile scroll host (bottom sheet owns the single scroll surface)
@@ -192,8 +192,8 @@ export function PropertiesPanel() {
   );
   const editMode = editEnabled && editPermission.allowed;
   const propertiesActiveTab = useViewerStore((s) => s.propertiesActiveTab);
-  // >>> AIM-FORK: AIM | IFC inspector (D-077) — skrytie natívneho obsahu pod AIM tabom
-  const aimNativeHidden = useAimNativeHidden();
+  // >>> AIM-FORK: AIM | IFC inspector (D-077) — skrytie natívneho obsahu pod AIM tabom; D-185 UI: panel ostane na miestnosti odznačenej overením výmer
+  const aimNativeHidden = useAimNativeHidden(), aimPinned = useAimPanelPinned();
   // <<< AIM-FORK
   const setPropertiesActiveTab = useViewerStore((s) => s.setPropertiesActiveTab);
   const setEditEnabled = useViewerStore((s) => s.setEditEnabled);
@@ -1157,7 +1157,7 @@ export function PropertiesPanel() {
   // `overlayEntity` when `entityNode` is empty. Without including
   // `overlayEntity` here the panel collapses to the model-metadata
   // view the moment a fresh add lands.
-  if (!selectedEntityId || !modelQuery || (!entityNode && !overlayEntity)) {
+  if ((!selectedEntityId && !aimPinned /* >>> AIM-FORK: D-185 UI, pripnutý prvok bez výberu v scéne <<< AIM-FORK */) || !modelQuery || (!entityNode && !overlayEntity)) {
     // Show model metadata when a single model is loaded and nothing selected.
     // Handles both federated models (models.size >= 1) and legacy single-model path (models.size === 0).
     if (models.size === 1) {
