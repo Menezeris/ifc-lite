@@ -126,7 +126,7 @@ git grep -n ">>> AIM-FORK" -- apps/ packages/
 | `apps/viewer/src/components/viewer/tools/SectionToolbar.box.test.tsx` | 1 | expected box of the selection now carries the sized margin (20 % of the longest side, 0.5 m for a 2.5 m selection); outside a block: a test line cannot be bracketed |
 | `apps/viewer/src/components/viewer/tools/SectionToolbar.planes.test.tsx` | 1 | the empty bar now lists Box after Face (one expected label, outside a block: a test line cannot be bracketed) |
 | `apps/viewer/src/components/viewer/touchLongPress.ts` | 2 | the 500 ms hold timer does not fire while the browser has queued input (`aim/holdTiming.ts`, `navigator.scheduling.isInputPending`): a late timer on a blocked main thread no longer beats an already received touchmove, which opened the entity menu and suppressed the orbit (AIM hold timing) |
-| `scripts/lib/presentation-channel-allowlist.mjs` | 1 | `aim/aimLens.ts` in `REQUIRES_ROUTING_MARKER`: AIM chat isolation routes through `resolvePresentationIds` (D-096) |
+| `scripts/lib/presentation-channel-allowlist.mjs` | 2 | `aim/aimLens.ts` in `REQUIRES_ROUTING_MARKER`: AIM chat isolation routes through `resolvePresentationIds` (D-096); `aim/aimVerifyScene.ts` in `NO_MARKER_REQUIRED`: the verification detail hides only IfcSpace bodies and releases exactly the recorded ids (D-185 UI, #232) |
 
 If you resolve a conflict here, grep for `AIM-FORK` to confirm you kept all our
 brackets, and note in the sync PR which extension point in upstream would have

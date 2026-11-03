@@ -104,6 +104,16 @@ export const NO_MARKER_REQUIRED = new Map([
     'lens hide/show pair), so expanding the release side again could unhide something the user hid.',
   ],
   // <<< AIM-FORK
+  // >>> AIM-FORK: D-185 verify view hides the IfcSpace bodies while a detail is open (#232)
+  [
+    'apps/viewer/src/aim/aimVerifyScene.ts',
+    'AIM verification detail (D-185 UI, #232): hides only IfcSpace bodies of the opened room\'s model ' +
+    '(spaceIds lists IfcSpace products, never a geometry-less assembly), so there is nothing for ' +
+    'resolvePresentationIds to expand. The paired showEntities releases exactly the ids it recorded in ' +
+    'hiddenRooms (an ownership ledger like the lens hide/show pair), so expanding the release side could ' +
+    'unhide something the user hid.',
+  ],
+  // <<< AIM-FORK
   [
     'apps/viewer/src/lib/actions/scene-restore.ts',
     'Assistant scene-action restore (#6907): showEntities releases exactly the ids applySceneActions ' +
