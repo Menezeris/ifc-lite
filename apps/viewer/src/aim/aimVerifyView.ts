@@ -10,8 +10,8 @@
  *   stranou, kamera vodorovne kolmo na rez, mierne zhora, perspektíva. Kóta je v strede pôdorysu, teda tesne za
  *   rovinou rezu: vidno ju celú, aj dosku pod a nad, podlahovinu a podhľad v reze. Ortografia zhora alebo z boku
  *   ukazuje steny zvonka a kótu skrátenú; perspektíva dáva hĺbku (Samuel 3. 11.).
- * - plocha a obvod: pôdorysný rez 1,2 m nad spodkom miestnosti (ako výkres), pohľad zhora, ortografia (plocha
- *   a obvod sa čítajú v skutočnej veľkosti).
+ * - plocha a obvod: pôdorysný rez 1,2 m nad spodkom miestnosti (ako výkres), pohľad zošikma zhora, perspektíva
+ *   (Samuel 3. 11.: iný pohľad ako pri výške, aby to bolo názorné). Možnosť `b`: kolmo zhora, ortografia.
  * - objem: "domček pre bábiky", rez stredom miestnosti ako pri výške, kamera zhora zo šikma (izometria), perspektíva:
  *   vidno celé teleso, podlahovinu aj podhľad, ktoré sa od objemu odpočítavajú.
  * Box je obálka miestnosti so skladbami (dosky a steny, `sectionBoxForSpace`), zvisle rozšírená o vstupné prvky.
@@ -20,7 +20,10 @@
 export type V3 = { x: number; y: number; z: number };
 export interface Box { min: V3; max: V3 }
 export type QuantityKind = 'height' | 'area' | 'perimeter' | 'volume' | 'other';
-/** `a` = predvolený návrh, `b` = druhá možnosť pre Samuela (výška: ortografia, plocha: perspektíva zošikma). */
+/**
+ * `a` = predvolené rozhodnutie Samuela z 3. 11. (výška: zvislý rez + perspektíva, plocha a obvod: zošikma,
+ * objem: izometria), `b` = ortografická alternatíva (výška: kolmo zboku, plocha a obvod: kolmo zhora).
+ */
 export type ViewOption = 'a' | 'b';
 
 export interface VerifyViewPlan {
@@ -103,7 +106,7 @@ export function verifyViewPlan(kind: QuantityKind, room: Box | null, body: Box |
   if (kind === 'area' || kind === 'perimeter') {
     const top = Math.min(all.max.y, core.min.y + PLAN_CUT_M);
     const box: Box = { min: { ...all.min }, max: { ...all.max, y: top } };
-    if (option === 'b') {
+    if (option !== 'b') {
       const t = rad(PLAN_TILT_DEG);
       return { kind, box, dir: norm({ x: toCamera.x * Math.sin(t), y: Math.cos(t), z: toCamera.z * Math.sin(t) }), up, projection: 'perspective', frame: box };
     }

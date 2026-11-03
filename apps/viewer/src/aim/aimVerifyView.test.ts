@@ -44,13 +44,22 @@ describe('verifyViewPlan', () => {
     assert.deepEqual(p.dir, { x: 0, y: 0, z: -1 });
   });
 
-  it('plocha a obvod: pôdorysný rez 1,2 m nad podlahou, zhora, ortografia', () => {
+  it('plocha a obvod: pôdorysný rez 1,2 m nad podlahou, kamera zošikma zhora, perspektíva', () => {
     for (const kind of ['area', 'perimeter'] as const) {
       const p = verifyViewPlan(kind, room, body, [])!;
+      assert.equal(p.projection, 'perspective');
+      assert.ok(p.dir.y > 0.7 && p.dir.y < 0.8 && p.dir.z < -0.5 && p.dir.x === 0, `smer ${JSON.stringify(p.dir)}`);
+      assert.ok(Math.abs(p.box.max.y - (4.85 + PLAN_CUT_M)) < 1e-9);
+      assert.ok(Math.abs(p.box.min.z - (-0.2 - C)) < 1e-9, 'celý pôdorys, bez zvislého rezu');
+    }
+  });
+
+  it('plocha a obvod, možnosť b: kolmo zhora, ortografia', () => {
+    for (const kind of ['area', 'perimeter'] as const) {
+      const p = verifyViewPlan(kind, room, body, [], 'b')!;
       assert.equal(p.projection, 'orthographic');
       assert.deepEqual(p.dir, { x: 0, y: 1, z: 0 });
       assert.ok(Math.abs(p.box.max.y - (4.85 + PLAN_CUT_M)) < 1e-9);
-      assert.ok(Math.abs(p.box.min.z - (-0.2 - C)) < 1e-9, 'celý pôdorys, bez zvislého rezu');
       assert.notEqual(p.up.y, 1, 'pohľad zhora nemá up rovnobežný so smerom');
     }
   });

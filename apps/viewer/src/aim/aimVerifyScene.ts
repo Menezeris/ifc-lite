@@ -26,7 +26,7 @@ let saved: { plane: Plane; projection: State['projectionMode'] } | null = null;
 let ourBox: Plane['box'] | null = null;
 /** Miestnosti skryté pohľadom (ich plochy by v reze prekryli scénu); po zatvorení sa ukážu. */
 let hiddenRooms: number[] = [];
-/** Druhá možnosť pohľadu (pre porovnanie so Samuelom): `?aimVerifyView=b` v adrese vieweru. */
+/** Prepnutie na ortografické pohľady (výška zboku, plocha zhora): `?aimVerifyView=b` v adrese vieweru; predvolené je `a`. */
 const option = (): ViewOption => {
   try {
     return new URLSearchParams(window.location.search).get('aimVerifyView') === 'b' ? 'b' : 'a';
