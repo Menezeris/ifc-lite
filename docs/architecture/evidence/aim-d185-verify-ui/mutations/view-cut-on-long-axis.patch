@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerifyView.ts a/apps/viewer/src/aim/aimVerifyView.ts
+index 48600853..0ef0fffb 100644
+--- b/apps/viewer/src/aim/aimVerifyView.ts
++++ a/apps/viewer/src/aim/aimVerifyView.ts
+@@ -93,7 +93,7 @@ export function verifyViewPlan(kind: QuantityKind, room: Box | null, body: Box |
+   for (const k of AXES) { all.min[k] -= FACE_CLEARANCE_M; all.max[k] += FACE_CLEARANCE_M; }
+   // Rez rovnobežne s dlhšou stranou: kamera sa pozerá pozdĺž kratšej osi a vidí celú dĺžku miestnosti.
+   const long: 'x' | 'z' = core.max.x - core.min.x >= core.max.z - core.min.z ? 'x' : 'z';
+-  const view: 'x' | 'z' = long;
++  const view: 'x' | 'z' = long === 'x' ? 'z' : 'x';
+   const mid = (core.min[view] + core.max[view]) / 2;
+   const cutAt = Math.max(all.min[view], mid - SECTION_GAP_M);
+   const sectionBox: Box = { min: { ...all.min, [view]: cutAt }, max: { ...all.max } };

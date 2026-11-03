@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerifyPlan.ts a/apps/viewer/src/aim/aimVerifyPlan.ts
+index 6731098d..20ae2e1e 100644
+--- b/apps/viewer/src/aim/aimVerifyPlan.ts
++++ a/apps/viewer/src/aim/aimVerifyPlan.ts
+@@ -113,7 +113,7 @@ export function calculationText(t: VerifyTargetWire): string {
+ export function refIndex(r: VerifyRecipeWire | undefined): Map<string, string> {
+   const out = new Map<string, string>();
+   // Číslo miestnosti (1.07) by sa chytilo aj v čísle vzorca ("= 1.07 m"): v texte odkazom nie je.
+-  const ok = (ref: string) => ref.length > 0;
++  const ok = (ref: string) => !/^[\d.,\s-]+$/.test(ref);
+   for (const c of r?.cells ?? []) if (c.ref && c.global_id && ok(c.ref)) out.set(c.ref, c.global_id);
+   for (const a of r?.anchors ?? []) if (a.ref && ok(a.ref)) out.set(a.ref, a.global_id);
+   return out;

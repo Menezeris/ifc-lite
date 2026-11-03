@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerifyView.ts a/apps/viewer/src/aim/aimVerifyView.ts
+index 5a886d2d..0ef0fffb 100644
+--- b/apps/viewer/src/aim/aimVerifyView.ts
++++ a/apps/viewer/src/aim/aimVerifyView.ts
+@@ -80,7 +80,7 @@ const unit = (axis: 'x' | 'z', sign: number): V3 => ({ x: axis === 'x' ? sign :
+  */
+ export function verifyViewPlan(kind: QuantityKind, room: Box | null, body: Box | null, inputs: readonly Box[], option: ViewOption = 'a'): VerifyViewPlan | null {
+   const core = body ?? room;
+-  const all = unionBox([room, body, ...inputs]);
++  const all = unionBox([room, body]);
+   if (!core || !all) return null;
+   // Vstupné prvky (doska cez celé podlažie, podlahovina) rozšíria box len zvisle; vodorovne ostane pôdorys miestnosti.
+   for (const b of inputs) {

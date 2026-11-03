@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerifyView.ts a/apps/viewer/src/aim/aimVerifyView.ts
+index 9ad16309..0ef0fffb 100644
+--- b/apps/viewer/src/aim/aimVerifyView.ts
++++ a/apps/viewer/src/aim/aimVerifyView.ts
+@@ -90,7 +90,7 @@ export function verifyViewPlan(kind: QuantityKind, room: Box | null, body: Box |
+   }
+   // Steny boxu tesne za vonkajšími lícami stien a dosiek: rovina boxu presne na líci odreže lícnu plochu a renderer
+   // ukáže vnútro prvku farbou rezu (celá miestnosť červená, overené naživo 3. 11.).
+-
++  for (const k of AXES) { all.min[k] -= FACE_CLEARANCE_M; all.max[k] += FACE_CLEARANCE_M; }
+   // Rez rovnobežne s dlhšou stranou: kamera sa pozerá pozdĺž kratšej osi a vidí celú dĺžku miestnosti.
+   const long: 'x' | 'z' = core.max.x - core.min.x >= core.max.z - core.min.z ? 'x' : 'z';
+   const view: 'x' | 'z' = long === 'x' ? 'z' : 'x';

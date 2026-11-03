@@ -28,6 +28,32 @@ Patche sú zapísané mutant -> oprava (smer `git diff base...head`), oracle ich
 a napojenie v `AimBridge.tsx`, `QuantitySetCard.tsx` a `PropertiesPanel.tsx` sú UI a lepidlo bez unit testu;
 overené živo (viewer vložený do hostovej stránky, Playwright), viď PR.
 
+## Pripomienky Samuela 3. 11. 2026 (druhá sada)
+
+Nový modul `aimVerifyView.ts` (orez a kamera podľa druhu veličiny) a nové funkcie v `aimVerifyPlan.ts` (odkazy na
+prvky, vstupné prvky, kóty viacerých veličín) a `verify-protocol.ts` (odvodená bunka). Testy `aimVerifyView.test.ts`
+a `aimVerifyRefs.test.ts` ich importujú, preto znova chirurgické mutácie; všetky `OBSERVED` s overeným obnovením
+voči `origin/main` (záznamy v `summary.json`).
+
+| Patch | Modul | Mutácia | Test, ktorý zčervenal |
+|---|---|---|---|
+| `view-height-ortho.patch` | `aimVerifyView.ts` | výška v ortografii namiesto perspektívy | `aimVerifyView.test.ts` |
+| `view-slab-widens-box.patch` | `aimVerifyView.ts` | doska cez celé podlažie rozšíri box aj vodorovne | `aimVerifyView.test.ts` |
+| `view-no-plan-cut.patch` | `aimVerifyView.ts` | plocha bez pôdorysného rezu 1,2 m | `aimVerifyView.test.ts` |
+| `view-no-face-clearance.patch` | `aimVerifyView.ts` | box presne na lícach (renderer kreslí vnútro prvkov farbou rezu) | `aimVerifyView.test.ts` |
+| `view-volume-slab-above.patch` | `aimVerifyView.ts` | pri objeme doska nad miestnosťou zakryje pohľad dnu | `aimVerifyView.test.ts` |
+| `view-cut-on-long-axis.patch` | `aimVerifyView.ts` | rez kolmo na dlhšiu stranu (kamera vidí len kratšiu) | `aimVerifyView.test.ts` |
+| `link-inside-longer-code.patch` | `aimVerifyPlan.ts` | kód PD02.10.03 sa chytí aj v PD02.10.031 | `aimVerifyRefs.test.ts` |
+| `room-number-linked.patch` | `aimVerifyPlan.ts` | číslo miestnosti (2.01) sa v texte vzorca stane odkazom | `aimVerifyRefs.test.ts` |
+| `ifc-name-overrides-host.patch` | `aimVerifyPlan.ts` | meno z IFC prepíše kód od hosta | `aimVerifyRefs.test.ts` |
+| `input-rows-duplicate.patch` | `aimVerifyPlan.ts` | ten istý prvok vo vstupných prvkoch dvakrát | `aimVerifyRefs.test.ts` |
+| `marks-overlap.patch` | `aimVerifyPlan.ts` | kóty viacerých veličín v jednej čiare cez seba | `aimVerifyRefs.test.ts` |
+| `derived-without-set.patch` | `verify-protocol.ts` | odvodená bunka bez mena sady prejde | `aimVerifyRefs.test.ts` |
+
+`aimVerifyScene.ts` (zápis boxu, kamera, skrytie miestností, pripnutie panela), `AimVerifyDetail.tsx`,
+`AimQtoVerifyBody.tsx` (očko) a riadok AIM-FORK v `PropertiesPanel.tsx` sú lepidlo a UI bez unit testu, overené
+živo (`../samuel-3-11/README.md`).
+
 ## Replay
 
 ```bash
@@ -39,6 +65,8 @@ node scripts/check-test-revert-oracle.mjs --base origin/main \
 
 Patche `verify-protocol.ts` s `--only apps/viewer/src/aim/verify-protocol.ts` a testom `aimVerifyPlan.test.ts`,
 patche `aimVerify.ts` s `--only apps/viewer/src/aim/aimVerify.ts --test apps/viewer/src/aim/aimVerify.test.ts`.
+Patche `view-*` s `--only apps/viewer/src/aim/aimVerifyView.ts --test apps/viewer/src/aim/aimVerifyView.test.ts`, ďalšie
+nové s `--only apps/viewer/src/aim/aimVerifyPlan.ts` (alebo `verify-protocol.ts`) a `--test apps/viewer/src/aim/aimVerifyRefs.test.ts`.
 Patche skopíruj mimo stromu, oracle odmietne nečistý strom.
 
 ## Živá skúška (2. 11. 2026)
