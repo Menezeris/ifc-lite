@@ -109,13 +109,14 @@ describe('Section bar: Box entry (#5513, #7545)', () => {
     renderTool();
     addPlaneFromMenu('Box');
     assert.equal(asked, 1);
-    assert.deepEqual(s().sectionPlane.box, { min: [2, 0, 1], max: [4, 2.5, 3] });
+    // AIM Box cut: margin = 20 % of the longest side (2.5 m), so 0.5 m around the selection.
+    assert.deepEqual(s().sectionPlane.box, { min: [1.5, -0.5, 0.5], max: [4.5, 3, 3.5] });
     assert.equal(button('Fit')?.title, 'Fit the box to the selection');
     act(() => s().setSectionBoxFace('maxX', 9));
-    assert.equal(bar().querySelector('[data-testid="section-box-size"]')?.textContent?.trim(), '7.00 × 2.50 × 2.00 m');
+    assert.equal(bar().querySelector('[data-testid="section-box-size"]')?.textContent?.trim(), '7.50 × 3.50 × 3.00 m');
     click(button('Fit')!);
     assert.equal(asked, 2);
-    assert.deepEqual(s().sectionPlane.box, { min: [2, 0, 1], max: [4, 2.5, 3] });
+    assert.deepEqual(s().sectionPlane.box, { min: [1.5, -0.5, 0.5], max: [4.5, 3, 3.5] });
   });
 
   it('with a selection whose bounds cannot be resolved, falls back to the model', () => {

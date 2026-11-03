@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/components/viewer/tools/SectionAddMenu.tsx a/apps/viewer/src/components/viewer/tools/SectionAddMenu.tsx
+index 0d3a6ded..e47a523c 100644
+--- b/apps/viewer/src/components/viewer/tools/SectionAddMenu.tsx
++++ a/apps/viewer/src/components/viewer/tools/SectionAddMenu.tsx
+@@ -105,7 +105,7 @@ export function SectionEmptyAdd() {
+     <span className="flex items-center gap-1" data-testid={testId}>
+       <span className="whitespace-nowrap px-1 text-xs text-muted-foreground">{t('sectionPlanes.empty')}</span>
+       {/* >>> AIM-FORK: Box sits on the bar next to Face (Dalux "Box cut") */}
+-      {ENTRIES.filter((e) => e.kind !== 'alignment' && e.kind !== 'box').map((e) => (
++      {ENTRIES.filter((e) => e.kind !== 'alignment').map((e) => (
+         <button key={e.kind} type="button" className={ACTION} onClick={() => add(e.kind)}>{t(e.labelKey)}</button>
+       ))}
+       {/* <<< AIM-FORK */}

@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/sectionBoxFit.ts a/apps/viewer/src/aim/sectionBoxFit.ts
+index 555b7a68..949140de 100644
+--- b/apps/viewer/src/aim/sectionBoxFit.ts
++++ a/apps/viewer/src/aim/sectionBoxFit.ts
+@@ -95,6 +95,7 @@ export function sectionBoxForSpace(space: FitBox, candidates: readonly FitCandid
+     if (overlap(space.min.y, space.max.y, c.min.y, c.max.y) < OVERLAP_MIN_M) continue;
+     const thinX = s.x <= s.z;
+     const t = thinX ? s.x : s.z;
++    if (t > WALL_MAX_THICKNESS_M) continue;
+     if (thinX) {
+       if (overlap(space.min.z, space.max.z, c.min.z, c.max.z) < OVERLAP_MIN_M) continue;
+       if (Math.abs(c.max.x - space.min.x) <= WALL_GAP_M) { min.x = Math.min(min.x, c.min.x); found.minX = true; }

@@ -35,6 +35,7 @@ import { useAimViewTabs } from './viewTabsStore.js';
 import { describeTabs } from './viewTabsPlan.js';
 import { describeLayout } from './viewTilesPlan.js';
 import { orderedBox, toSectionBox, type SectionBoxMessage } from './sectionBox.js';
+import { sectionBoxForEntities } from './sectionBoxScene.js';
 import type { guidForEntity, resolveGuids } from './bridge-protocol.js';
 import type { SectionPlaneAxis } from '@/store/types';
 import type { SectionAxis, SectionFit, ViewInboundMessage, ViewQueryResult } from './view-protocol.js';
@@ -318,10 +319,21 @@ export function applySectionBox(msg: SectionBoxMessage, g: GuidHelpers, attempt 
     state.setSectionBox(toSectionBox(orderedBox(ifcPointToRender(msg.box.min, offset), ifcPointToRender(msg.box.max, offset))));
     return Promise.resolve(true);
   }
-  const union = renderBoundsOfGuids(state, msg.guids ?? [], g).union;
-  if (union) {
-    state.setSectionBox(toSectionBox(union, msg.marginM ?? 0.5));
-    return Promise.resolve(true);
+  // `auto`: okraj podľa veľkosti a miestnosť so skladbami (sectionBoxScene). Obálku miestnosti renderer
+  // nedrží (je predvolene skrytá), preto sa tu nečaká na `renderBoundsOfGuids`, ale berie sa aj zo sietí.
+  if (msg.auto) {
+    const ids = g.resolveGuids(state.models, msg.guids ?? []).map((r) => toGlobalIdFromModels(state.models, r.modelId, r.expressId));
+    const auto = ids.length > 0 ? sectionBoxForEntities(ids) : null;
+    if (auto) {
+      state.setSectionBox(auto);
+      return Promise.resolve(true);
+    }
+  } else {
+    const union = renderBoundsOfGuids(state, msg.guids ?? [], g).union;
+    if (union) {
+      state.setSectionBox(toSectionBox(union, msg.marginM ?? 0.5));
+      return Promise.resolve(true);
+    }
   }
   if (attempt < SECTION_RETRIES) return new Promise((r) => setTimeout(r, SECTION_RETRY_MS)).then(() => applySectionBox(msg, g, attempt + 1));
   return Promise.resolve(false);

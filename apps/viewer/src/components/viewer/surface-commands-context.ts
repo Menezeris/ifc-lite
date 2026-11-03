@@ -4,6 +4,9 @@
 
 /** Entity-menu-only command metadata. The mounted menu supplies its active target action. */
 import { Building2, Copy, CopyPlus, Layers, ShieldQuestion, Trash2 } from 'lucide-react';
+// >>> AIM-FORK: icon of Box cut
+import { Box } from 'lucide-react';
+// <<< AIM-FORK
 import { ACTION_NAME_KEYS } from '@/lib/commands/action-names';
 import type { DuplicateDirection } from '@/store/slices/mutationSlice';
 import type { SurfaceCommandDefinition, SurfaceCommandContext, SurfaceCommandState } from './surface-commands';
@@ -24,6 +27,13 @@ export function runContextOr(context: SurfaceCommandContext, fallback: () => voi
 }
 
 export const CONTEXT_SURFACE_COMMANDS = [
+  // >>> AIM-FORK: Box cut around the clicked element (aim/runBoxCut.ts); first, so upstream keeps appending below
+  {
+    id: 'aim:box-cut', labelKey: 'aimFork.boxCut.label',
+    keywords: 'box cut section clip room slab wall', category: 'Tools', icon: Box,
+    surfaces: contextOnly, enabled: alwaysEnabled, run: runContextAction,
+  },
+  // <<< AIM-FORK
   {
     id: 'context:select-all-type', labelKey: 'entityContextMenu.selectAllType',
     contextLabelParams: (state: SurfaceCommandState) => ({ type: state.contextEntityType ?? '' }),

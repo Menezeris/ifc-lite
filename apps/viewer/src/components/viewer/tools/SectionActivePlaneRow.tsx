@@ -34,6 +34,9 @@ import { SectionZoomMenu } from './SectionZoomMenu';
 import { useLiveTestId } from './SectionBarMeasure';
 import { storeyCutElevation } from '@/lib/section/section-distance';
 import { sectionBoxFromBounds, sectionBoxSize } from '@/lib/section/section-box';
+// >>> AIM-FORK: Fit follows the same box as Add
+import { boxForSelection } from '@/aim/sectionBoxScene';
+// <<< AIM-FORK
 import { AlignmentSectionControls } from './AlignmentSectionControls';
 import { useAlignmentToolState } from '@/lib/section/alignment-controller';
 
@@ -89,8 +92,9 @@ export function SectionActivePlaneRow({ compact = false }: { compact?: boolean }
   // uses, assemblies resolved to their parts), else the placed model bounds;
   // with neither known there is nothing to cut with, so the control stays.
   const fitBox = useCallback(() => {
-    const selected = hasSelection ? useViewerStore.getState().cameraCallbacks.selectionBounds?.() : null;
-    const next = sectionBoxFromBounds(selected) ?? sectionBoxFromBounds(distance.bounds);
+    // >>> AIM-FORK: Fit follows the same box as Add (margin by size, room from floor to ceiling slab)
+    const next = (hasSelection ? boxForSelection() : null) ?? sectionBoxFromBounds(distance.bounds);
+    // <<< AIM-FORK
     if (next) setSectionBox(next);
   }, [hasSelection, distance.bounds, setSectionBox]);
 

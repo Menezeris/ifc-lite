@@ -23,6 +23,13 @@ describe('rezný box z chatu (AIM D-132)', () => {
     assert.ok(!isSectionBoxMessage({ source: S, type: 'SET_SECTION_BOX', guids: Array.from({ length: 101 }, (_, i) => `G${i}`) }));
   });
 
+  it('auto (rozumný box): len pri prvkoch a bez marginM, starý host bez neho ostáva platný', () => {
+    assert.ok(isSectionBoxMessage({ source: S, type: 'SET_SECTION_BOX', guids: ['G1'], auto: true }));
+    assert.ok(!isSectionBoxMessage({ source: S, type: 'SET_SECTION_BOX', guids: ['G1'], auto: true, marginM: 0.5 }));
+    assert.ok(!isSectionBoxMessage({ source: S, type: 'SET_SECTION_BOX', guids: ['G1'], auto: false }));
+    assert.ok(!isSectionBoxMessage({ source: S, type: 'SET_SECTION_BOX', box, auto: true }));
+  });
+
   it('box s okrajom do tvaru upstreamu a rohy po prevode osí znova zoradené', () => {
     assert.deepStrictEqual(toSectionBox(box, 0.5), { min: [-0.5, -0.5, -0.5], max: [1.5, 2.5, 3.5] });
     assert.deepStrictEqual(orderedBox({ x: 1, y: 0, z: -3 }, { x: 0, y: 2, z: -1 }), { min: { x: 0, y: 0, z: -3 }, max: { x: 1, y: 2, z: -1 } });

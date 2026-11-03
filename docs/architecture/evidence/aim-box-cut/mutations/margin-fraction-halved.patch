@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionBoxFit.ts a/apps/viewer/src/aim/sectionBoxFit.ts
+index 6f7d0064..949140de 100644
+--- b/apps/viewer/src/aim/sectionBoxFit.ts
++++ a/apps/viewer/src/aim/sectionBoxFit.ts
+@@ -16,7 +16,7 @@ export type FitKind = 'slab' | 'wall';
+ export interface FitCandidate extends FitBox { kind: FitKind }
+ 
+ /** Okraj = 20 % najdlhšej strany: stôl či stĺp dostane ~0,3 m, izba ~1 m, celé podlažie sa zastaví na strope. */
+-export const MARGIN_FRACTION = 0.1;
++export const MARGIN_FRACTION = 0.2;
+ /** Pod 0,3 m by okraj neukázal okolie ani u malého prvku (dvere, okno), nad 2 m už zaberá pol budovy. */
+ export const MARGIN_MIN_M = 0.3;
+ export const MARGIN_MAX_M = 2;

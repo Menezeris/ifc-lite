@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/components/viewer/tools/SectionActivePlaneRow.tsx a/apps/viewer/src/components/viewer/tools/SectionActivePlaneRow.tsx
+index 33227343..7da625b3 100644
+--- b/apps/viewer/src/components/viewer/tools/SectionActivePlaneRow.tsx
++++ a/apps/viewer/src/components/viewer/tools/SectionActivePlaneRow.tsx
+@@ -93,7 +93,7 @@ export function SectionActivePlaneRow({ compact = false }: { compact?: boolean }
+   // with neither known there is nothing to cut with, so the control stays.
+   const fitBox = useCallback(() => {
+     // >>> AIM-FORK: Fit follows the same box as Add (margin by size, room from floor to ceiling slab)
+-    const next = (hasSelection ? sectionBoxFromBounds(useViewerStore.getState().cameraCallbacks.selectionBounds?.()) : null) ?? sectionBoxFromBounds(distance.bounds);
++    const next = (hasSelection ? boxForSelection() : null) ?? sectionBoxFromBounds(distance.bounds);
+     // <<< AIM-FORK
+     if (next) setSectionBox(next);
+   }, [hasSelection, distance.bounds, setSectionBox]);
