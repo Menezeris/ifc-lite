@@ -262,7 +262,7 @@ export function AimBridge({ autoload, entry }: { autoload: AutoloadLatch; entry:
     }
 
     setIdsHostPost((msg) => window.parent.postMessage(msg, origin())); // tlačidlo "Uložiť do AIM" v paneloch IDS (D-162)
-    startHostReplies((guids) => runVisibility({ source: SOURCE, type: 'FOCUS', guids })); // detail overenia výmer (D-185 UI)
+    startHostReplies((guids, frame) => runVisibility({ source: SOURCE, type: 'FOCUS', guids, ...(frame === false ? { frame } : {}) })); // detail overenia výmer (D-185 UI)
     setIcddHostPost((msg, transfer) => window.parent.postMessage(msg, origin(), transfer ?? [])); // ribbon AIM, tlačidlo ICDD (D-181)
     wireDocumentEvents(post, selectPickedGlobalId); // kalibrácia podkladu a taby dokumentov -> host (docBridge.ts)
 

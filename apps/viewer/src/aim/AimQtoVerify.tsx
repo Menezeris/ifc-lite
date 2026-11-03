@@ -27,8 +27,17 @@ export function AimQtoVerifyBadge(p: AimQtoVerifyProps) {
   return has ? <Suspense fallback={null}><LazyBadge {...p} /></Suspense> : null;
 }
 
-/** Detail pod hodnotou veličiny, len keď je rozbalený. */
+/**
+ * Detail pod hodnotou veličiny, len keď je rozbalený. Značka `data-aim-qto` (bez vlastného boxu) označí riadok,
+ * aby naň odvodená bunka iného výpočtu vedela posunúť panel (pripomienka 6).
+ */
 export function AimQtoVerifyDetail(p: AimQtoVerifyProps) {
-  const open = useAimVerify((s) => s.open === `${p.qset}.${p.quantity}`);
-  return open ? <Suspense fallback={null}><LazyDetail {...p} /></Suspense> : null;
+  const key = `${p.qset}.${p.quantity}`;
+  const open = useAimVerify((s) => s.open === key);
+  return (
+    <>
+      <span data-aim-qto={key} className="contents" />
+      {open && <Suspense fallback={null}><LazyDetail {...p} /></Suspense>}
+    </>
+  );
 }

@@ -32,19 +32,28 @@ export interface AimVerifyState {
   error: string | null;
   /** Rozbalený detail: `Qto_X.Name`. */
   open: string | null;
+  /** Veličiny so zapnutou kótou (očko pri riadku), aby šlo ukázať viac kót naraz; rozbalený detail ju má vždy. */
+  shown: string[];
+  /** Miestnosť odznačená v scéne pri rozbalení detailu (pripomienka 4): panel vlastností ostane na nej, kým sa
+   *  výber nezmení. Platí len kým `panelGuid` (prvok panela) je ten istý. */
+  pinned: string | null;
   /** Beh celého modelu z ribbonu. */
   runAll: { check: string; busy: boolean; result: VerifyRunAllWire | null; error: string | null } | null;
 }
 
 export const useAimVerify = create<AimVerifyState>()(() => ({
-  guid: null, panelGuid: null, status: 'idle', data: null, error: null, open: null, runAll: null,
+  guid: null, panelGuid: null, status: 'idle', data: null, error: null, open: null, shown: [], pinned: null, runAll: null,
 }));
 
-type Focus = (guids: string[]) => void;
+/** `frame: false` = zvýrazniť bez rámovania kamery. */
+type Focus = (guids: string[], frame?: boolean) => void;
 let focus: Focus | null = null;
 /** `AimBridge` podá zvýraznenie (tá istá cesta ako `FOCUS` od hosta); prázdny zoznam ho zruší. */
 export const setVerifyFocus = (next: Focus | null): void => { focus = next; };
 export const verifyFocus = (): Focus | null => focus;
+
+/** Panel vlastností ostane na prvku, ktorý overenie odznačilo v scéne (`PropertiesPanel`, AIM-FORK). */
+export const useAimPanelPinned = (): boolean => useAimVerify((s) => s.pinned !== null && s.pinned === s.panelGuid);
 
 /** Riadok `Qto_X.Name` má výsledok overenia (len vtedy sa načíta lenivá fajočka). */
 export const hasTarget = (s: AimVerifyState, key: string): boolean =>

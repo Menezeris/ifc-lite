@@ -89,7 +89,7 @@ import { useCopyValue } from './properties/useCopyValue';
 import { SelectionSummaryPanel } from './properties/SelectionSummaryPanel';
 import { AssistantAction } from './assistant/AssistantAction';
 // >>> AIM-FORK: AIM asset card, rendered only inside the AIM host (see docs/FORK_MAINTENANCE.md)
-import { AimInspectorTabs, AimVerifyBar, isReadOnlyFocus, useAimNativeHidden } from '@/aim/AimInspectorTabs';
+import { AimInspectorTabs, AimVerifyBar, isReadOnlyFocus, useAimNativeHidden, useAimPanelPinned } from '@/aim/AimInspectorTabs';
 // <<< AIM-FORK
 
 // >>> AIM-FORK: mobile scroll host (bottom sheet owns the single scroll surface)
@@ -141,6 +141,9 @@ export function PropertiesPanel() {
   const mergeLayersActive = useViewerStore((s) => s.mergeLayers);
   // >>> AIM-FORK: on mobile the panel flows as one column, scrolled by the sheet
   const isMobile = useViewerStore((s) => s.isMobile);
+  // <<< AIM-FORK
+  // >>> AIM-FORK: D-185 UI, panel ostane na miestnosti, ktorú overenie výmer odznačilo v scéne
+  const aimPinned = useAimPanelPinned();
   // <<< AIM-FORK
   const { query, ifcDataStore, geometryResult, models } = useIfc();
   const overlayAwareQuery = useMemo(() => createQueryAdapter(useViewerStore), []);
@@ -1157,7 +1160,9 @@ export function PropertiesPanel() {
   // `overlayEntity` when `entityNode` is empty. Without including
   // `overlayEntity` here the panel collapses to the model-metadata
   // view the moment a fresh add lands.
-  if (!selectedEntityId || !modelQuery || (!entityNode && !overlayEntity)) {
+  // >>> AIM-FORK: D-185 UI, pripnutý prvok bez výberu v scéne (aimPinned)
+  if ((!selectedEntityId && !aimPinned) || !modelQuery || (!entityNode && !overlayEntity)) {
+  // <<< AIM-FORK
     // Show model metadata when a single model is loaded and nothing selected.
     // Handles both federated models (models.size >= 1) and legacy single-model path (models.size === 0).
     if (models.size === 1) {

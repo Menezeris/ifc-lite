@@ -51,7 +51,13 @@ export interface VerifyCellWire {
   unit: string;
   global_id?: string;
   ref?: string;
+  /** Odvodená bunka: hodnota je iná výmera toho istého prvku (`Qto_SpaceBaseQuantities.NetFloorArea`), klik na ňu
+   *  posunie panel na jej riadok (pripomienka 6, 3. 11.). */
+  quantity?: string;
 }
+
+/** Prvok, o ktorý sa výpočet opiera; `ref` = kód prvku (PD02.10.03), ktorým ho text receptu menuje. */
+export interface VerifyAnchorWire { global_id: string; role: string; z_m?: number; ref?: string }
 
 export interface VerifyRecipeWire {
   recipe: string;
@@ -66,7 +72,7 @@ export interface VerifyRecipeWire {
   /** Dnešný text vzorca s číslami, keď recept bunky nemá. */
   formula_text?: string;
   note?: string;
-  anchors: { global_id: string; role: string; z_m?: number }[];
+  anchors: VerifyAnchorWire[];
   /** Úseky kót v IFC svete (m, Z hore); bez nich viewer kótuje v strede pôdorysu z `z_m` kotiev. */
   segments?: { a: [number, number, number]; b: [number, number, number] }[];
 }
@@ -142,7 +148,11 @@ function parseCell(raw: unknown): VerifyCellWire | null {
   const label = str(raw.label, 300);
   const value = num(raw.value);
   if (!key || !label || value === undefined) return null;
-  return { key, label, value, unit: str(raw.unit, 16) ?? '', global_id: str(raw.global_id, 64), ref: str(raw.ref, 100) };
+  const quantity = str(raw.quantity, 200);
+  return {
+    key, label, value, unit: str(raw.unit, 16) ?? '', global_id: str(raw.global_id, 64), ref: str(raw.ref, 100),
+    ...(quantity && quantity.includes('.') ? { quantity } : {}),
+  };
 }
 
 const vec3 = (v: unknown): [number, number, number] | null =>
@@ -158,7 +168,8 @@ function parseRecipe(raw: unknown): VerifyRecipeWire | null {
     if (!isObj(a)) return [];
     const global_id = str(a.global_id, 64);
     if (!global_id) return [];
-    return [{ global_id, role: str(a.role, 200) ?? '', z_m: num(a.z_m) }];
+    const ref = str(a.ref, 100);
+    return [{ global_id, role: str(a.role, 200) ?? '', z_m: num(a.z_m), ...(ref ? { ref } : {}) }];
   });
   const segments = list(raw.segments).flatMap((s) => {
     if (!isObj(s)) return [];

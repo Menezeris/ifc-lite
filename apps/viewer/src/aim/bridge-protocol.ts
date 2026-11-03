@@ -132,7 +132,7 @@ export interface CapturePinWire {
 }
 
 export type InboundMessage =
-  | { source: typeof SOURCE; type: 'FOCUS'; guids: string[] }
+  | { source: typeof SOURCE; type: 'FOCUS'; guids: string[]; /** false = bez rámovania kamery (detail overenia výmer má vlastný pohľad, D-185 UI) */ frame?: boolean }
   // Výber ako klik myšou (D-082 v AIM repe): selekcia, panel a kamera; ENTITY_SELECTED sa echuje hostovi.
   // `panel` (D-113): sekcia a zvýraznená vlastnosť (validuje lenivý SELECT); `guids` = viac prvkov (#217);
   // `visible: true` bez `guid` = všetky práve viditeľné prvky (#315).
