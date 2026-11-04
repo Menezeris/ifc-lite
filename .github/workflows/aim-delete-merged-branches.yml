@@ -1,0 +1,73 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+# >>> AIM-FORK (whole file, AIM D-187): one-off maintenance, run by hand from the
+# Actions tab. Deletes remote branches of the AIM work (claude/*, aim/*,
+# release/aim-*, sync/upstream-*) whose tip is already contained in main, so no
+# commit is lost (it stays reachable from main). Skipped: main, the head branch
+# of any open pull request, and branches with a commit in the last 2 days.
+# dry_run=true (default) only lists what would be deleted in the job summary.
+name: AIM delete merged branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "true = only list, false = delete"
+        required: true
+        default: "true"
+        type: choice
+        options: ["true", "false"]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: aim-delete-merged-branches
+  cancel-in-progress: false
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Find and delete merged branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
+          gh pr list --state open --limit 500 --json headRefName --jq '.[].headRefName' | sort -u > open-heads.txt
+          cutoff=$(date -d '2 days ago' +%s)
+          : > delete.txt
+          : > kept.txt
+          for ref in $(git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin); do
+            case "$ref" in
+              main|HEAD) continue ;;
+              claude/*|aim/*|release/aim-*|sync/upstream-*) ;;
+              *) continue ;;
+            esac
+            if grep -qxF "$ref" open-heads.txt; then echo "$ref (open PR)" >> kept.txt; continue; fi
+            if ! git merge-base --is-ancestor "origin/$ref" origin/main; then echo "$ref (not in main)" >> kept.txt; continue; fi
+            if [ "$(git log -1 --format=%ct "origin/$ref")" -gt "$cutoff" ]; then echo "$ref (younger than 2 days)" >> kept.txt; continue; fi
+            echo "$ref" >> delete.txt
+          done
+          {
+            echo "## Merged branches (dry_run=$DRY_RUN)"
+            echo "To delete: $(wc -l < delete.txt). Kept: $(wc -l < kept.txt)."
+            echo; echo '```'; cat delete.txt; echo '```'
+            echo; echo "### Kept"; echo '```'; cat kept.txt; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$DRY_RUN" != "false" ]; then echo "dry run, nothing deleted"; exit 0; fi
+          failed=0
+          while read -r ref; do
+            [ -n "$ref" ] || continue
+            if git push origin --delete "$ref"; then echo "deleted $ref"; else echo "::warning::could not delete $ref"; failed=$((failed+1)); fi
+          done < delete.txt
+          echo "Deleted: $(( $(wc -l < delete.txt) - failed )), failed: $failed" >> "$GITHUB_STEP_SUMMARY"
