@@ -1,0 +1,100 @@
+{
+  "crash-keeps-worker": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayRasterClient.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "2a0c71fcd6fb4c3742876af2cf408d1b25d348c6",
+    "production": [
+      "apps/viewer/src/aim/underlayRasterClient.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayRasterClient.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "foreign-message-crashes": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayRasterClient.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "2a0c71fcd6fb4c3742876af2cf408d1b25d348c6",
+    "production": [
+      "apps/viewer/src/aim/underlayRasterClient.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayRasterClient.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "parallel-jobs": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayRasterClient.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "2a0c71fcd6fb4c3742876af2cf408d1b25d348c6",
+    "production": [
+      "apps/viewer/src/aim/underlayRasterClient.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayRasterClient.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "scale-ignores-texture-limit": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayRasterClient.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "2a0c71fcd6fb4c3742876af2cf408d1b25d348c6",
+    "production": [
+      "apps/viewer/src/aim/underlayRasterClient.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayRasterClient.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "stray-bitmap-leaks": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayRasterClient.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "2a0c71fcd6fb4c3742876af2cf408d1b25d348c6",
+    "production": [
+      "apps/viewer/src/aim/underlayRasterClient.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayRasterClient.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "unsupported-keeps-worker": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayRasterClient.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "2a0c71fcd6fb4c3742876af2cf408d1b25d348c6",
+    "production": [
+      "apps/viewer/src/aim/underlayRasterClient.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayRasterClient.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "worker-error-no-fallback": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlayRasterClient.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "2a0c71fcd6fb4c3742876af2cf408d1b25d348c6",
+    "production": [
+      "apps/viewer/src/aim/underlayRasterClient.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlayRasterClient.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

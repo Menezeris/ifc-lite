@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionBoxScene.ts a/apps/viewer/src/aim/sectionBoxScene.ts
+index 5d12bdc3..d4d51377 100644
+--- b/apps/viewer/src/aim/sectionBoxScene.ts
++++ a/apps/viewer/src/aim/sectionBoxScene.ts
+@@ -115,7 +115,7 @@ export function boxForSelection(): SectionBox | null {
+  */
+ export function addBoxCut(ids?: readonly number[]): boolean {
+   const state = useViewerStore.getState();
+-  const box = boxForSelection();
++  const box = ids && ids.length > 0 ? sectionBoxForEntities(ids) : boxForSelection();
+   if (!box) return false;
+   leaveAlignmentMode();
+   if (!state.prepareNewSectionPlane()) return false;

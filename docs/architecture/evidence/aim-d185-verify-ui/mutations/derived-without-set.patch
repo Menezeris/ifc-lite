@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/verify-protocol.ts a/apps/viewer/src/aim/verify-protocol.ts
+index 1d0a96e5..9172889c 100644
+--- b/apps/viewer/src/aim/verify-protocol.ts
++++ a/apps/viewer/src/aim/verify-protocol.ts
+@@ -151,7 +151,7 @@ function parseCell(raw: unknown): VerifyCellWire | null {
+   const quantity = str(raw.quantity, 200);
+   return {
+     key, label, value, unit: str(raw.unit, 16) ?? '', global_id: str(raw.global_id, 64), ref: str(raw.ref, 100),
+-    ...(quantity ? { quantity } : {}),
++    ...(quantity && quantity.includes('.') ? { quantity } : {}),
+   };
+ }
+ 

@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { assignOutcome, idsEngineVersion, libraryStateText, runStateText, runsByModel, saveRunOutcome, sha256Hex, type ReportSpecLike } from './reqlibPlan.js';
+import { assignOutcome, idsEngineVersion, libraryBrowserHref, libraryStateText, runStateText, runsByModel, saveRunOutcome, sha256Hex, type ReportSpecLike } from './reqlibPlan.js';
 import { buildReqlibRequest, isReqlibResult } from './reqlib-protocol.js';
 
 const spec = (status: string, entities: ReportSpecLike['entityResults']): ReportSpecLike => ({
@@ -88,5 +88,15 @@ describe('knižnica požiadaviek: výsledok po modeloch (AIM D-182)', () => {
     assert.equal(isReqlibResult({ source: 'aim-bridge', type: 'REQLIB_RESULT', id: 'r1', ok: 'yes' }), false);
     assert.equal(isReqlibResult({ source: 'iny', type: 'REQLIB_RESULT', id: 'r1', ok: true }), false);
     assert.equal(isReqlibResult({ source: 'aim-bridge', type: 'REQLIB_RESULT', id: '', ok: true }), false);
+  });
+
+  it('adresa prehliadača knižnice: celý, alebo priamo poznámka položky z DB', () => {
+    assert.equal(libraryBrowserHref(), '/kniznica');
+    assert.equal(libraryBrowserHref({ path: 'ids/A.ids', release: { library: null } }), '/kniznica');
+    assert.equal(libraryBrowserHref({ path: null, release: { library: 'assetin' } }), '/kniznica');
+    assert.equal(
+      libraryBrowserHref({ path: 'zadanie/ER/ER-0101 Priestorový model & protokol.md', release: { library: 'assetin' } }),
+      '/kniznica?kniznica=assetin&cesta=zadanie%2FER%2FER-0101%20Priestorov%C3%BD%20model%20%26%20protokol.md',
+    );
   });
 });

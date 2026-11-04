@@ -8,6 +8,9 @@
  * catalogues stay untouched (docs/FORK_MAINTENANCE.md).
  */
 export const aimForkEn = {
+  'aimFork.boxCut.label': 'Box cut',
+  'aimFork.boxCut.title': 'Cut a box around this element; for a room, from the floor slab to the ceiling slab including the walls',
+  'aimFork.boxCut.failed': 'Box cut failed: the element has no geometry or the limit of cutting planes is reached.',
   'aimFork.panel.drawingUnderlay': 'Drawing underlays',
   'aimFork.panel.documents': 'Documents',
   'aimFork.panel.aimLayers': 'AIM layers',
@@ -63,11 +66,11 @@ export const aimForkEn = {
   'aimFork.assistant.boundaryDocuments': 'Project document library. Opening a PDF or image produces no analysis result; the documents themselves live in the AIM platform.',
   /** Underlays panel switch (AIM D-133 addendum, #170): hides the PDF underlays in the 3D view only. */
   'aimFork.underlays3d.label': 'Show in 3D',
-  'aimFork.underlays3d.hint': 'Off by default: the PDF drawings are not loaded until you turn this on. Affects the 3D view only; calibration stays saved and the 2D plan is unchanged.',
+  'aimFork.underlays3d.hint': 'Every drawing starts off: a PDF is loaded only when you turn its eye on (or the AIM chat or a saved view does). Affects the 3D view only; calibration stays saved and the 2D plan is unchanged.',
   /** Underlays are off in 3D (#280): switch state, banner above the list, note on a row whose eye is on. */
   'aimFork.underlays3d.stateOn': 'On',
   'aimFork.underlays3d.stateOff': 'Off',
-  'aimFork.underlays3d.offNotice': 'Underlays are off in 3D (Show in 3D, also switched off from the AIM chat). The eye on a row only applies once it is turned on; the 2D plan is not affected.',
+  'aimFork.underlays3d.offNotice': 'Underlays are off in 3D (Show in 3D, also switched off from the AIM chat). Turning on the eye on a row turns it back on; the 2D plan is not affected.',
   'aimFork.underlays3d.rowNote': 'Not drawn in 3D: Show in 3D is off',
   /** Calibrate on a section underlay (AIMviewer #284): sections are calibrated in AIM, the panel flow is for floor plans. */
   'aimFork.sectionUnderlay.calibrateNote': 'This is a section drawing: calibrate it from the AIM chat (calibrate_underlay with a section plane). Opacity, the eye and fine-tune still work here.',

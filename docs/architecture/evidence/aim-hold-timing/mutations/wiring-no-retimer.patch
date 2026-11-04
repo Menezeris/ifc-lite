@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/components/viewer/touchLongPress.ts a/apps/viewer/src/components/viewer/touchLongPress.ts
+index 55ebff29..9a658475 100644
+--- b/apps/viewer/src/components/viewer/touchLongPress.ts
++++ a/apps/viewer/src/components/viewer/touchLongPress.ts
+@@ -41,7 +41,7 @@ export function createTouchLongPress(onHold: (x: number, y: number) => void): {
+       const fire = () => {
+         timer = null;
+         if (!start) return;
+-        if (shouldDeferHold(deferrals++)) { return; }
++        if (shouldDeferHold(deferrals++)) { timer = setTimeout(fire, 1); return; }
+         fired = true;
+         suppressNativeUntil = Date.now() + 1_000;
+         suppressPoint = { x: start.x, y: start.y };

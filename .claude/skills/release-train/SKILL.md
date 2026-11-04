@@ -63,6 +63,14 @@ exceed it together. Over the limit: say so in the batch PR and ask.
   `https://ai-mviewer.vercel.app/ifc?viewer=pr-<batch PR number>`, and per feature what
   to try (the "Ako vyskúšať" lines of the merged PRs). The link is for Samuel only: a
   session never opens it (production models, AIM D-135).
+- **The preview exists only on request (AIM D-187).** The fork's Vercel preview is built
+  only for `main` and `release/aim-*`, and only for a push whose head commit message
+  contains `[preview]`. Put `[preview]` in the message of the batch's **last push before
+  Samuel tests**, e.g. in the last merge commit: `release: merge <branch> [preview]`
+  (write it there when merging; the batch is not pushed yet, so rewording that local
+  commit is fine). A push without it builds nothing, so the test link above shows the old
+  or no viewer. A later fix pushed to the batch needs `[preview]` again if Samuel should see it.
+  Give Samuel the link only after the preview of that head is ready.
 
 ## 5. Full CI, then Samuel
 

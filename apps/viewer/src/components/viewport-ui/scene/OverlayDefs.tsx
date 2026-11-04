@@ -46,7 +46,8 @@ function Arrowhead({ id, className }: { id: string; className: string }) {
 export function OverlayDefs() {
   return (
     <defs>
-      <filter id={OVERLAY_GLOW_FILTER_ID} x="-75%" y="-75%" width="250%" height="250%">
+      {/* >>> AIM-FORK (#391): objectBoundingBox filter region collapses on a perfectly vertical or horizontal line (zero-width bbox), so such a dimension line was not drawn at all; a fixed user-space region fixes it <<< AIM-FORK */}
+      <filter id={OVERLAY_GLOW_FILTER_ID} filterUnits="userSpaceOnUse" x="-8192" y="-8192" width="16384" height="16384">
         <feGaussianBlur stdDeviation="3" result="blur" />
         <feMerge>
           <feMergeNode in="blur" />

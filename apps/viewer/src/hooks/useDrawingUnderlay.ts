@@ -60,13 +60,21 @@ export interface UseDrawingUnderlayParams {
 /** Rasterize one PDF page for the GPU; the caller closes the bitmap. */
 export type RasterizeUnderlayPage = (pdfUrl: string, page: number, maxTextureDimension: number) => Promise<ImageBitmap>;
 
-const rasterizeWithPdfjs: RasterizeUnderlayPage = async (pdfUrl, page, maxTextureDimension) => {
+const rasterizeOnMainThread: RasterizeUnderlayPage = async (pdfUrl, page, maxTextureDimension) => {
   const doc = await openPdfDocument(pdfUrl);
   try {
     return (await rasterizePdfPage(doc, page, RASTER_TARGET_PX, maxTextureDimension)).image;
   } finally {
     void doc.loadingTask.destroy();
   }
+};
+// pdf.js in a Web Worker on an OffscreenCanvas, the main thread only as fallback (AIM: turning an underlay on must not freeze the page)
+let rasterizeOffThread: Promise<RasterizeUnderlayPage> | null = null;
+const rasterizeWithPdfjs: RasterizeUnderlayPage = async (pdfUrl, page, maxTextureDimension) => {
+  rasterizeOffThread ??= import('@/aim/underlayRasterClient')
+    .then((m) => m.underlayRasterInWorker(rasterizeOnMainThread, RASTER_TARGET_PX))
+    .catch(() => rasterizeOnMainThread);
+  return (await rasterizeOffThread)(pdfUrl, page, maxTextureDimension);
 };
 // <<< AIM-FORK
 
@@ -104,6 +112,8 @@ export function useDrawingUnderlay({ rendererRef, isInitialized, rasterize = ras
   // >>> AIM-FORK: hide saved underlays in the 3D canvas only (viewer state, not `_georef.visible`)
   const aimHidden = useAimUnderlays3d((s) => s.hidden);
   const aimViewLocked = useViewerStore((s) => s.underlayViewLocked);
+  // The locked plan view draws only its storey's underlay; underlays are off in 3D at startup (AIM, start off)
+  const aimActiveStorey = useViewerStore((s) => s.underlayActiveStoreyGuid);
   const aimHide3d = underlaysHiddenIn3d({ hidden: aimHidden, viewLocked: aimViewLocked });
   // Per-underlay 3D overrides from the chat or a saved view (AIM #323, #325); the locked plan view (2D) ignores them
   const aimOverrides = useAimUnderlays3d((s) => s.overrides);
@@ -134,7 +144,7 @@ export function useDrawingUnderlay({ rendererRef, isInitialized, rasterize = ras
     // >>> AIM-FORK: placement copy with the 3D overrides and `visible: false` while the underlays are off in 3D
     const aimEntries: RenderEntry[] = [...drawings.values()]
       .filter((d) => d.placement !== null)
-      .map((d) => ({ id: d.id, pdfUrl: d.pdfUrl, name: d.name, placement: underlayIn3d(d.placement!, aimViewLocked ? undefined : aimOverrides[d.id], aimHide3d) }));
+      .map((d) => ({ id: d.id, pdfUrl: d.pdfUrl, name: d.name, placement: underlayIn3d(d.placement!, aimOverrides[d.id], aimHide3d, aimViewLocked ? aimActiveStorey : undefined) }));
     // Not while calibrating or under the drawing-view cut, which have their own storey (D-072); a section only without a horizontal cut (AIM #284)
     const entries: RenderEntry[] = calibration !== null || underlayCut !== null ? aimEntries : underlaysVisibleAtCut(aimEntries, aimCutZ, aimCutFlipped);
     // <<< AIM-FORK
@@ -289,7 +299,7 @@ export function useDrawingUnderlay({ rendererRef, isInitialized, rasterize = ras
       // <<< AIM-FORK
     }
   // >>> AIM-FORK: re-sync when the 3D switch or a per-underlay override changes
-  }, [drawings, models, calibration, isInitialized, rendererRef, aimHide3d, aimOverrides, aimViewLocked, aimCutZ, aimCutFlipped, underlayCut, rasterize]);
+  }, [drawings, models, calibration, isInitialized, rendererRef, aimHide3d, aimOverrides, aimViewLocked, aimActiveStorey, aimCutZ, aimCutFlipped, underlayCut, rasterize]);
   // <<< AIM-FORK
 
   // Depth-always (no z-fight) while a storey cut is active — a top-down floor

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/verify-protocol.ts a/apps/viewer/src/aim/verify-protocol.ts
+index 21576dea..650192c1 100644
+--- b/apps/viewer/src/aim/verify-protocol.ts
++++ a/apps/viewer/src/aim/verify-protocol.ts
+@@ -120,7 +120,7 @@ const UNITS: readonly VerifyUnit[] = ['m', 'm2', 'm3'];
+ export const safeHref = (v: unknown): string | undefined => {
+   const s = str(v, 2000);
+   if (!s) return undefined;
+-  if (s.startsWith('/')) return s;
++  if (s.startsWith('/') && !s.startsWith('//')) return s;
+   return /^https?:\/\//i.test(s) ? s : undefined;
+ };
+ const MAX_ITEMS = 64;

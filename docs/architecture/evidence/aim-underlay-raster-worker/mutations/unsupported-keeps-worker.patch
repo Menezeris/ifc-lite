@@ -1,0 +1,12 @@
+diff --git b/apps/viewer/src/aim/underlayRasterClient.ts a/apps/viewer/src/aim/underlayRasterClient.ts
+index 8e050ed7..d85b0322 100644
+--- b/apps/viewer/src/aim/underlayRasterClient.ts
++++ a/apps/viewer/src/aim/underlayRasterClient.ts
+@@ -92,6 +92,7 @@ export function createUnderlayRasterClient(opts: UnderlayRasterClientOptions): R
+       pending.delete(msg.id);
+       if ('image' in msg) p.resolve(msg.image);
+       else {
++        if (msg.unsupported) shutDown(msg.error);
+         p.reject(new Error(msg.error));
+       }
+     };

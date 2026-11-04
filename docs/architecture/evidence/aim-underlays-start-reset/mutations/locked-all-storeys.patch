@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlaysPlan.ts a/apps/viewer/src/aim/underlaysPlan.ts
+index ba8c67b4..125f2462 100644
+--- b/apps/viewer/src/aim/underlaysPlan.ts
++++ a/apps/viewer/src/aim/underlaysPlan.ts
+@@ -88,7 +88,7 @@ export function underlayIn3d<T extends { visible: boolean; opacity: number; stor
+   placement: T, override: UnderlayOverride | undefined, hideAll: boolean, lockedStorey?: string | null,
+ ): T {
+   const visible = lockedStorey !== undefined
+-    ? lockedStorey !== null && (override?.visible ?? placement.visible)
++    ? lockedStorey !== null && placement.storeyGuid === lockedStorey && (override?.visible ?? placement.visible)
+     : !hideAll && underlayOn(override);
+   const opacity = override?.opacity ?? placement.opacity;
+   return visible === placement.visible && opacity === placement.opacity ? placement : { ...placement, visible, opacity };

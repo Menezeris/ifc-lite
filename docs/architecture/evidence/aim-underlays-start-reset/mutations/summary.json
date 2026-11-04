@@ -1,0 +1,86 @@
+{
+  "eye-keeps-3d-off": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlaySectionSync.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "e79a2fca937f02de9b8fdc65c21f0bb2b3cd960d",
+    "production": [
+      "apps/viewer/src/aim/aimUnderlays3d.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlaySectionSync.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "locked-all-storeys": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlaysPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "e79a2fca937f02de9b8fdc65c21f0bb2b3cd960d",
+    "production": [
+      "apps/viewer/src/aim/underlaysPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlaysPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "locked-storey-not-passed": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlaySectionSync.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "e79a2fca937f02de9b8fdc65c21f0bb2b3cd960d",
+    "production": [
+      "apps/viewer/src/hooks/useDrawingUnderlay.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlaySectionSync.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "overridden-flag-only-override": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlaysPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "e79a2fca937f02de9b8fdc65c21f0bb2b3cd960d",
+    "production": [
+      "apps/viewer/src/aim/underlaysPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlaysPlan.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "persist-drops-visible": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlaySectionSync.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "e79a2fca937f02de9b8fdc65c21f0bb2b3cd960d",
+    "production": [
+      "apps/viewer/src/aim/underlaysApply.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlaySectionSync.test.ts"
+    ],
+    "restoration": "verified"
+  },
+  "saved-visible-turns-on": {
+    "verdict": "OBSERVED",
+    "exitCode": 0,
+    "reason": "reverting production turned an assertion RED in apps/viewer/src/aim/underlaysPlan.test.ts; that file has a green, attributable baseline.",
+    "base": "3f20edcfb639ba4b3f08c8734236e34299f04943",
+    "head": "e79a2fca937f02de9b8fdc65c21f0bb2b3cd960d",
+    "production": [
+      "apps/viewer/src/aim/underlaysPlan.ts"
+    ],
+    "tests": [
+      "apps/viewer/src/aim/underlaysPlan.test.ts"
+    ],
+    "restoration": "verified"
+  }
+}

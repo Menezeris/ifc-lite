@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerifyPlan.ts a/apps/viewer/src/aim/aimVerifyPlan.ts
+index fad2d384..20ae2e1e 100644
+--- b/apps/viewer/src/aim/aimVerifyPlan.ts
++++ a/apps/viewer/src/aim/aimVerifyPlan.ts
+@@ -185,7 +185,7 @@ export function segmentsForTargets(el: VerifyElementWire | null, keys: readonly
+   keys.forEach((key, i) => {
+     const t = el.targets.find((x) => x.target === key);
+     // Kóty z kotiev stoja v strede pôdorysu; ďalšie zapnuté veličiny sa odsunú, aby sa čísla neprekrývali.
+-    for (const s of measureSegments(t?.recipes[0], box, 0)) {
++    for (const s of measureSegments(t?.recipes[0], box, i * SIDE_BY_SIDE_M)) {
+       const id = [s.a.x, s.a.y, s.a.z, s.b.x, s.b.y, s.b.z].map((n) => n.toFixed(4)).join(',');
+       if (seen.has(id)) continue;
+       seen.add(id);

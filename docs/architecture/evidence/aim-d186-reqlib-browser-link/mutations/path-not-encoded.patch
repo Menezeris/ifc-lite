@@ -1,0 +1,11 @@
+diff --git b/apps/viewer/src/aim/reqlibPlan.ts a/apps/viewer/src/aim/reqlibPlan.ts
+index c3ef47bb..fdfa557a 100644
+--- b/apps/viewer/src/aim/reqlibPlan.ts
++++ a/apps/viewer/src/aim/reqlibPlan.ts
+@@ -148,5 +148,5 @@ export function libraryBrowserHref(item?: { path?: string | null; release?: { li
+   const library = item?.release?.library;
+   const path = item?.path;
+   if (!library || !path) return '/kniznica';
+-  return `/kniznica?kniznica=${encodeURIComponent(library)}&cesta=${path}`;
++  return `/kniznica?kniznica=${encodeURIComponent(library)}&cesta=${encodeURIComponent(path)}`;
+ }

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerifyPlan.ts a/apps/viewer/src/aim/aimVerifyPlan.ts
+index 4f10ac9e..20ae2e1e 100644
+--- b/apps/viewer/src/aim/aimVerifyPlan.ts
++++ a/apps/viewer/src/aim/aimVerifyPlan.ts
+@@ -170,6 +170,8 @@ export function inputRows(r: VerifyRecipeWire | undefined): InputRow[] {
+   const out: InputRow[] = [];
+   for (const a of r.anchors) {
+     const k = `${a.global_id}|${a.role}|${a.z_m ?? ''}`;
++    if (seen.has(k)) continue;
++    seen.add(k);
+     out.push({ role: a.role, global_id: a.global_id, ...(a.ref ? { ref: a.ref } : {}), ...(a.z_m !== undefined ? { z_m: a.z_m } : {}) });
+   }
+   return out;

@@ -3,6 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /** Single-finger long press without an orbit, tap, or duplicate native menu (#5859). */
+import { shouldDeferHold } from '@/aim/holdTiming'; // >>> AIM-FORK: queued touchmove runs before the hold fires <<< AIM-FORK
 const HOLD_MS = 500;
 const TAP_SLOP_PX = 10;
 
@@ -35,14 +36,19 @@ export function createTouchLongPress(onHold: (x: number, y: number) => void): {
       cancel();
       fired = false;
       start = { id: touch.identifier, x: touch.clientX, y: touch.clientY };
-      timer = setTimeout(() => {
+      // >>> AIM-FORK: do not fire while the browser has queued input (a late timer must not beat a touchmove) <<< AIM-FORK
+      let deferrals = 0;
+      const fire = () => {
         timer = null;
         if (!start) return;
+        if (shouldDeferHold(deferrals++)) { timer = setTimeout(fire, 1); return; }
         fired = true;
         suppressNativeUntil = Date.now() + 1_000;
         suppressPoint = { x: start.x, y: start.y };
         onHold(start.x, start.y);
-      }, HOLD_MS);
+      };
+      timer = setTimeout(fire, HOLD_MS);
+      // <<< AIM-FORK
     },
     move(touch) {
       if (!start || touch.identifier !== start.id || fired) return fired;

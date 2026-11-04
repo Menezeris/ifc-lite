@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/underlaysPlan.ts a/apps/viewer/src/aim/underlaysPlan.ts
+index 8910c12d..125f2462 100644
+--- b/apps/viewer/src/aim/underlaysPlan.ts
++++ a/apps/viewer/src/aim/underlaysPlan.ts
+@@ -137,7 +137,7 @@ export function describeUnderlays(drawings: readonly CalibratedDrawing[], overri
+       visible: underlayOn(o),
+       opacity: o?.opacity ?? p.opacity,
+       saved: { visible: p.visible, opacity: p.opacity },
+-      overridden: o !== undefined && (o.visible !== undefined || o.opacity !== undefined),
++      overridden: underlayOn(o) !== p.visible || (o?.opacity ?? p.opacity) !== p.opacity,
+     };
+   });
+ }

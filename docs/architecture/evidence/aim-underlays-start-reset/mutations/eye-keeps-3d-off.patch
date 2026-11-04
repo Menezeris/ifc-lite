@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimUnderlays3d.ts a/apps/viewer/src/aim/aimUnderlays3d.ts
+index 9ef7a225..6da5dd10 100644
+--- b/apps/viewer/src/aim/aimUnderlays3d.ts
++++ a/apps/viewer/src/aim/aimUnderlays3d.ts
+@@ -41,7 +41,7 @@ export const useAimUnderlays3d = create<AimUnderlays3dStore>((set) => ({
+   // Turning one underlay on also turns the 3D switch on: the click asked to see it
+   setUnderlayOn: (id, on) => set((s) => ({
+     overrides: { ...s.overrides, [id]: { ...s.overrides[id], visible: on } },
+-    
++    ...(on ? { hidden: false } : {}),
+   })),
+ }));
+ 

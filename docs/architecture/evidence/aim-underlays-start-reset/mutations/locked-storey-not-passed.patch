@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/hooks/useDrawingUnderlay.ts a/apps/viewer/src/hooks/useDrawingUnderlay.ts
+index eb77030a..b7bbddab 100644
+--- b/apps/viewer/src/hooks/useDrawingUnderlay.ts
++++ a/apps/viewer/src/hooks/useDrawingUnderlay.ts
+@@ -136,7 +136,7 @@ export function useDrawingUnderlay({ rendererRef, isInitialized, rasterize = ras
+     // >>> AIM-FORK: placement copy with the 3D overrides and `visible: false` while the underlays are off in 3D
+     const aimEntries: RenderEntry[] = [...drawings.values()]
+       .filter((d) => d.placement !== null)
+-      .map((d) => ({ id: d.id, pdfUrl: d.pdfUrl, name: d.name, placement: underlayIn3d(d.placement!, aimOverrides[d.id], aimHide3d) }));
++      .map((d) => ({ id: d.id, pdfUrl: d.pdfUrl, name: d.name, placement: underlayIn3d(d.placement!, aimOverrides[d.id], aimHide3d, aimViewLocked ? aimActiveStorey : undefined) }));
+     // Not while calibrating or under the drawing-view cut, which have their own storey (D-072); a section only without a horizontal cut (AIM #284)
+     const entries: RenderEntry[] = calibration !== null || underlayCut !== null ? aimEntries : underlaysVisibleAtCut(aimEntries, aimCutZ, aimCutFlipped);
+     // <<< AIM-FORK

@@ -11,12 +11,14 @@
 
 import { useEffect } from 'react';
 import { assign, bind, cancelChoice, loadCatalog, openIds, setAuthor, useAimReqlib } from './aimReqlib.js';
-import { libraryStateText, runStateText, shortSha, type LibraryState } from './reqlibPlan.js';
+import { libraryBrowserHref, libraryStateText, runStateText, shortSha, type LibraryState } from './reqlibPlan.js';
+import { postAimNavigate } from './aimPanelStore';
 
 interface LibItem {
   path: string; code: string; sha256: string | null; title: string | null; ids_version: string | null;
   specs: Array<{ identifier: string | null; name: string }>; state: LibraryState; aim?: { code: string; version: number | null };
   last_change: { sha: string; date: string | null; author: string | null } | null; error?: string;
+  release?: { library: string | null } | null;
 }
 interface Library {
   configured: boolean; error?: string; repo?: string; ref?: string; dir?: string; commit?: string; items?: LibItem[]; note?: string;
@@ -54,6 +56,7 @@ export function AimRequirementsLibrary() {
             className="h-6 w-36 rounded border bg-background px-1"
           />
         </label>
+        <button type="button" className={BTN} onClick={() => postAimNavigate(libraryBrowserHref())} data-testid="aim-reqlib-browser">Prehliadač knižnice</button>
         <button type="button" className={BTN} disabled={loading} onClick={() => void loadCatalog()}>{loading ? 'Načítavam...' : 'Obnoviť'}</button>
       </div>
       {error && <p className="px-3 py-2 text-destructive">{error}</p>}
@@ -86,6 +89,9 @@ export function AimRequirementsLibrary() {
               <div className="flex flex-wrap items-center gap-2">
                 <strong>{it.code}</strong>
                 <span className="min-w-0 flex-1 truncate">{it.title}</span>
+                {it.release?.library && (
+                  <button type="button" className={BTN} onClick={() => postAimNavigate(libraryBrowserHref(it))} title={it.path}>Poznámka</button>
+                )}
                 <button
                   type="button"
                   className={BTN}

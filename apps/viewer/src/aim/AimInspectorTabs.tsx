@@ -15,6 +15,10 @@
  */
 
 import { useAimPanelStore } from './aimPanelStore';
+
+/** Lišta overenia výmer (D-185 UI) pre kartu Quantities; tu, aby `PropertiesPanel.tsx` mal jeden import AIM. */
+export { AimVerifyBar } from './AimVerifyBar';
+export { useAimPanelPinned } from './aimVerifyStore';
 // PropertiesPanel ho berie cez existujúci import tohto modulu (súbor je na strope veľkosti).
 export { isReadOnlyFocus } from './aimInspectorStore';
 

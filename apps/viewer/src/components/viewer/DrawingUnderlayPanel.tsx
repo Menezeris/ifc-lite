@@ -55,7 +55,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/toast';
 import { useViewerStore, type UnderlayDrawing } from '@/store';
 import { useFloorplanView } from '@/hooks/useFloorplanView';
-import { CalibrationPdfSurface } from './CalibrationPdfSurface'; import { AimUnderlayRowNoteLive } from '@/aim/AimUnderlayRowNoteLive'; import { useSectionCalibrateGuard } from '@/aim/sectionCalibrateNote'; // >>> AIM-FORK (#280, #284): row note when Show in 3D is off; section underlays calibrate in AIM <<< AIM-FORK
+import { CalibrationPdfSurface } from './CalibrationPdfSurface'; import { AimUnderlayRowNoteLive, useAimRowPlacement, toggleAimUnderlay } from '@/aim/AimUnderlayRowNoteLive'; import { useSectionCalibrateGuard } from '@/aim/sectionCalibrateNote'; // >>> AIM-FORK (#280, #284, start off): row note when Show in 3D is off; section underlays calibrate in AIM; the eye is the session 3D state <<< AIM-FORK
 
 interface DrawingUnderlayPanelProps {
   onClose: () => void;
@@ -73,7 +73,7 @@ export function DrawingUnderlayPanel({ onClose }: DrawingUnderlayPanelProps) {
   const setPlacement = useViewerStore((s) => s.setUnderlayPlacement);
   const setOpacity = useViewerStore((s) => s.setUnderlayOpacity);
   const commitPlacement = useViewerStore((s) => s.commitUnderlayPlacement);
-  const setVisible = useViewerStore((s) => s.setUnderlayVisible);
+  // >>> AIM-FORK (start off): no setUnderlayVisible here, the eye is the session 3D state (toggleAimUnderlay) <<< AIM-FORK
   const upsertDrawing = useViewerStore((s) => s.upsertUnderlayDrawing);
   const removeDrawing = useViewerStore((s) => s.removeUnderlayDrawing);
 
@@ -457,7 +457,7 @@ export function DrawingUnderlayPanel({ onClose }: DrawingUnderlayPanelProps) {
               }}
               onOpacity={(v) => setOpacity(d.id, v)}
               onOpacityCommit={() => commitPlacement(d.id)}
-              onToggleVisible={() => setVisible(d.id, !(d.placement?.visible ?? true))}
+              onToggleVisible={() => toggleAimUnderlay(d.id) /* >>> AIM-FORK (start off): the eye turns the underlay on in 3D for this session, no DB write <<< AIM-FORK */}
               onRemove={() => removeDrawing(d.id)}
             />
           ))}
@@ -486,7 +486,7 @@ function DrawingRow({
   onToggleVisible: () => void;
   onRemove: () => void;
 }) {
-  const p = drawing.placement;
+  const p = useAimRowPlacement(drawing.placement, drawing.id); // >>> AIM-FORK (start off): eye and note show the session 3D state, not the saved visible <<< AIM-FORK
   const [fineTune, setFineTune] = useState(false);
   return (
     <div className={`rounded border p-2 ${calibrating ? 'ring-1 ring-primary/50' : ''}`}>

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionBoxFit.ts a/apps/viewer/src/aim/sectionBoxFit.ts
+index 9127f4d4..949140de 100644
+--- b/apps/viewer/src/aim/sectionBoxFit.ts
++++ a/apps/viewer/src/aim/sectionBoxFit.ts
+@@ -76,7 +76,7 @@ export function sectionBoxForSpace(space: FitBox, candidates: readonly FitCandid
+   let ceilBottom = Infinity;
+   for (const c of candidates) {
+     if (c.kind !== 'slab' || !overlapsFootprint(space, c)) continue;
+-    if (c.max.y <= space.min.y + SLAB_GAP_M && c.max.y > floorTop) {
++    if (c.max.y <= space.min.y + SLAB_GAP_M && c.max.y >= space.min.y - SLAB_BELOW_M && c.max.y > floorTop) {
+       floorTop = c.max.y;
+       floorBottom = c.min.y;
+     }

@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/sectionBoxScene.ts a/apps/viewer/src/aim/sectionBoxScene.ts
+index 2409b478..d4d51377 100644
+--- b/apps/viewer/src/aim/sectionBoxScene.ts
++++ a/apps/viewer/src/aim/sectionBoxScene.ts
+@@ -68,7 +68,7 @@ function collectCandidates(state: State, boundsOf: Bounds, modelId: string): Fit
+ export function sectionBoxForEntities(ids: readonly number[], selection?: FitBox | null): SectionBox | null {
+   const state = useViewerStore.getState();
+   const boundsOf = boundsLookup(state, getGlobalRenderer()?.getScene());
+-  if (ids.length === 99) {
++  if (ids.length === 1) {
+     const ref = resolveEntityRef(ids[0]);
+     const store = ref.modelId === 'legacy' ? state.ifcDataStore : state.models.get(ref.modelId)?.ifcDataStore;
+     // getTypeName returns null for an id the store does not know (a clash-only or overlay id).

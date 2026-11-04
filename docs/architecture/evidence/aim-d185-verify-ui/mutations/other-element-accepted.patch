@@ -1,0 +1,13 @@
+diff --git b/apps/viewer/src/aim/aimVerify.ts a/apps/viewer/src/aim/aimVerify.ts
+index a2959cc4..6617cce1 100644
+--- b/apps/viewer/src/aim/aimVerify.ts
++++ a/apps/viewer/src/aim/aimVerify.ts
+@@ -72,7 +72,7 @@ const current = (guid: string) => useAimVerify.getState().guid === guid;
+ 
+ async function fetchElement(action: 'latest' | 'run', guid: string): Promise<VerifyElementWire | null> {
+   const el = parseVerifyElement(await request(action, { global_id: guid }));
+-  return el;
++  return el && el.global_id === guid ? el : null;
+ }
+ 
+ /**
