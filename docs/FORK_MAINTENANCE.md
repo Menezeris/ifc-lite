@@ -459,6 +459,7 @@ Generované z `git grep -n "AIM-FORK" -- .github scripts`; pri synchronizácii n
 | `.github/workflows/test.yml` (job `typecheck` a krok `pnpm lint` v jobe `lint`, ratchet nepoužitých premenných), `aim-fast.yml` (krok *Typecheck the viewer*), `report-service.yml` (`mounted-public-ui`) | `NODE_OPTIONS=--max-old-space-size=6144` pre `tsc` viewera: program s AIM vrstvou potrebuje asi 4,2 GB heapu, nad predvoleným stropom Node na `ubuntu-latest` (OOM, sync PR #157; v Lint lane sa OOM tváril ako *does not compile standalone* a zhadzoval Lint náhodne, balík h 2026-11-01) |
 | `.github/workflows/aim-smoke.yml`, `scripts/aim-smoke.mjs` (+ test) | celý súbor: smoke po produkčnom nasadení (D-116) |
 | `.github/workflows/aim-release.yml` | celý súbor: tag balíka po zlúčení (D-116) |
+| `.github/workflows/aim-delete-merged-branches.yml` | celý súbor: ručné zmazanie AIM vetiev už obsiahnutých v main, predvolene len výpis (D-187) |
 | `.github/workflows/aim-nightly-report.yml` | celý súbor: hlásenie červeného nočného behu (D-103) |
 | `.github/workflows/report-scheduled-failure.yml` | upstream alebo fork s `AIM_SCHEDULED_ISSUES=true` (D-103) |
 | `.github/workflows/release.yml`, `docs.yml`, `docker.yml`, `issue-queue.yml`, `deploy-nightly.yml`, `review-lane-canary.yml` | len upstream (tabuľka vyššie) |
