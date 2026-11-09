@@ -1,5 +1,37 @@
 # @ifc-lite/flow-nodes
 
+## 0.12.2
+
+### Patch Changes
+
+- Updated dependencies [[`87b96f8`](https://github.com/LTplus-AG/ifc-lite/commit/87b96f8f871e3e9ca94a121ebf253fa2d229c675), [`8eefa8e`](https://github.com/LTplus-AG/ifc-lite/commit/8eefa8ec68c25b595bf3bce92f406b767c3f9f1f)]:
+  - @ifc-lite/bcf-api@0.4.0
+  - @ifc-lite/query@2.5.4
+  - @ifc-lite/sdk@9.6.1
+
+## 0.12.1
+
+### Patch Changes
+
+- [#8373](https://github.com/LTplus-AG/ifc-lite/pull/8373) [`29f24db`](https://github.com/LTplus-AG/ifc-lite/commit/29f24dbb5d4877bc8d2efaae4fa3b9e618407dba) Thanks [@petruconduraru](https://github.com/petruconduraru)! - `readXlsxTable` and `writeXlsxTable` load `exceljs` when they are called instead of when the package is imported, so importing `@ifc-lite/flow-nodes` no longer runs all of `exceljs`.
+- Updated dependencies [[`5943cc2`](https://github.com/LTplus-AG/ifc-lite/commit/5943cc28d1b3725ca84dd4d9e7f3e60e867f9fac), [`54ae125`](https://github.com/LTplus-AG/ifc-lite/commit/54ae125d1664c97dbd3f75c24be2b1b0a604c243)]:
+  - @ifc-lite/export@4.13.3
+  - @ifc-lite/ids@3.4.4
+  - @ifc-lite/ids-authoring@0.3.4
+
+## 0.12.0
+
+### Minor Changes
+
+- [#8297](https://github.com/LTplus-AG/ifc-lite/pull/8297) [`2d2ee70`](https://github.com/LTplus-AG/ifc-lite/commit/2d2ee702676e6f270fbab498bf975c0c33a9c074) Thanks [@louistrue](https://github.com/louistrue)! - Add pure, bounded InfluxDB 2 query and CSV adapters at `@ifc-lite/flow-nodes/influx`, shared by the headless recipe and experimental viewer panel. Preserve distinct series and report ambiguous IFC GlobalId matches; browser credentials stay in memory.
+
+### Patch Changes
+
+- Updated dependencies [[`d3eb48a`](https://github.com/LTplus-AG/ifc-lite/commit/d3eb48a12d3b5982603e023961e0709c5933429d), [`2986934`](https://github.com/LTplus-AG/ifc-lite/commit/298693424041c38f0a44433e770e0b3e75b101ec), [`68c8f8f`](https://github.com/LTplus-AG/ifc-lite/commit/68c8f8fed82fb903b26d45f059e8e1b0a09f0eaf)]:
+  - @ifc-lite/export@4.13.2
+  - @ifc-lite/ids@3.4.3
+  - @ifc-lite/ids-authoring@0.3.3
+
 ## 0.11.1
 
 ### Patch Changes

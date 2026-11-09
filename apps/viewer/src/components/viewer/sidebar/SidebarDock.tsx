@@ -22,6 +22,8 @@ import { useViewerStore } from '@/store';
 import { useTranslation } from '@/i18n';
 import { ActivityBar } from './ActivityBar';
 import { SidebarPanelHost } from './SidebarPanelHost';
+import { sidebarPaneDrawn } from '@/lib/panels/rendered-panels';
+import { useEmptyStartFoldsSidebarPane } from '../welcome/useEmptyStartFold';
 
 const ACTIVITY_BAR_PX = 48; // w-12
 // Mirrors the clamp in sidebarSlice so the live drag matches what is persisted.
@@ -31,6 +33,8 @@ const MAX_WIDTH_PCT = 60;
 export function SidebarDock() {
   const { t } = useTranslation();
   const mode = useViewerStore((s) => s.sidebarMode);
+  // The start screen folds a Properties-only pane; the stored mode is untouched.
+  const foldedForStart = useEmptyStartFoldsSidebarPane();
   const widthPct = useViewerStore((s) => s.sidebarWidthPct);
   const setSidebarWidthPct = useViewerStore((s) => s.setSidebarWidthPct);
 
@@ -108,7 +112,7 @@ export function SidebarDock() {
 
   return (
     <div ref={rootRef} className="flex h-full shrink-0">
-      {mode === 'expanded' && (
+      {sidebarPaneDrawn(mode, foldedForStart) && (
         <>
           {/* Resize handle */}
           {/* >>> AIM-FORK: AIM #211 — the 6 px handle sat flush against the canvas, and a grab that missed
@@ -116,14 +120,19 @@ export function SidebarDock() {
               the canvas; z-10 keeps it above the scene overlays. */}
           <div
             onMouseDown={onResizeStart}
+<<<<<<< HEAD
             className="relative z-10 w-1.5 shrink-0 cursor-col-resize bg-border before:absolute before:inset-y-0 before:-left-1.5 before:right-0 before:content-[''] hover:bg-primary/50 active:bg-primary/70 transition-colors"
+=======
+            className="shell-splitter-v"
+            data-dragging={dragPct !== null}
+>>>>>>> upstream/main
             role="separator"
             aria-orientation="vertical"
             aria-label={t('shellChrome.sidebarDock.resizeAriaLabel')}
           />
           {/* <<< AIM-FORK */}
           <div
-            className="h-full min-w-0 overflow-hidden panel-container flex flex-col"
+            className="shell-dock-right h-full min-w-0 overflow-hidden panel-container flex flex-col"
             style={{ width: contentPx ?? `${effectivePct}%` }}
           >
             <div className="min-h-0 flex-1"><SidebarPanelHost /></div>

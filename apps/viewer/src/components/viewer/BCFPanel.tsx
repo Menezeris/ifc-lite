@@ -15,13 +15,13 @@
 
 import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import {
+  Download,
   MessageSquare,
   Upload,
   User,
   MapPin,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { IconButton } from '@/components/ui/icon-button';
 import { tourAnchor, TOUR_ANCHORS } from '@/lib/tours/anchors';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -40,10 +40,8 @@ import { useBCF } from '@/hooks/useBCF'; import { AimBcfImportLazy } from '@/aim
 import { BCFTopicList } from './bcf/BCFTopicList';
 import { BCFTopicDetail } from './bcf/BCFTopicDetail';
 import { BCFCreateTopicForm } from './bcf/BCFCreateTopicForm';
-import { BCFServerControl } from './bcf/BCFServerControl';
+import { useBcfServerActions } from './bcf/BCFServerControl';
 import { AnalysisPanel } from './analysis/AnalysisPanel';
-import { AnalysisExportMenu } from './analysis/AnalysisExportMenu';
-import { openGenericFileDialog } from '@/services/file-dialog';
 import { bcfExportFilename, sanitizeFilename } from '@/lib/export/download';
 import { publishBcfArchive } from '@/lib/bcf-drafts/archive-activity';
 import { readBCFWithDiagnostics, warnIfNoModelLoaded, warnIfImportTruncated, warnIfUnsupportedVersion } from './bcf/bcfImportGuidance';
@@ -77,6 +75,7 @@ export function BCFPanel({ onClose }: BCFPanelProps) {
   const setBcfLoading = useViewerStore((s) => s.setBcfLoading);
   const bcfOverlayVisible = useViewerStore((s) => s.bcfOverlayVisible);
   const toggleBcfOverlay = useViewerStore((s) => s.toggleBcfOverlay);
+  const bcfServer = useBcfServerActions();
 
   // Viewer state for capture feedback
   const selectedEntityId = useViewerStore((s) => s.selectedEntityId);
@@ -183,25 +182,11 @@ export function BCFPanel({ onClose }: BCFPanelProps) {
     await handleImportFile(e.target.files?.[0]);
   }, [handleImportFile]);
 
-  const importFromDialog = useCallback(async (): Promise<boolean> => {
-    const file = await openGenericFileDialog({
-      title: t('bcf.panel.importDialogTitle'),
-      filters: [
-        { name: t('bcf.panel.bcfFilterName'), extensions: ['bcfzip', 'bcf'] },
-        { name: t('bcf.panel.allFilesFilterName'), extensions: ['*'] },
-      ],
-    });
-    if (file) {
-      await handleImportFile(file);
-      return true;
-    }
-    return false;
-  }, [handleImportFile]);
-
-  const handleImportClick = useCallback(async () => {
-    if (await importFromDialog()) return;
+  // Safari only opens a file picker from inside the user's click, so the
+  // click opens the hidden input directly, with no await before it (#8802).
+  const handleImportClick = useCallback(() => {
     fileInputRef.current?.click();
-  }, [importFromDialog]);
+  }, []);
 
   // Export BCF file
   const handleExport = useCallback(async () => {
@@ -404,7 +389,25 @@ export function BCFPanel({ onClose }: BCFPanelProps) {
       error={bcfError}
       onDismissError={() => setBcfError(null)}
       progress={bcfLoading ? { label: t('bcf.panel.busy') } : null}
-      actions={(
+      actions={[
+        { id: 'bcf-import', label: t('bcf.panel.importTitle'), icon: <Upload className="h-4 w-4" />, onSelect: handleImportClick },
+        {
+          id: 'bcf-export', label: t('bcf.panel.exportTitle'), icon: <Download className="h-4 w-4" />,
+          disabled: !bcfProject || topics.length === 0, onSelect: () => { void handleExport(); }, data: tourAnchor(TOUR_ANCHORS.bcfExport),
+        },
+        bcfServer.server,
+        bcfServer.drafts,
+        {
+          // One constant name; `pressed` alone says whether markers are shown (#8802).
+          id: 'bcf-markers', label: t('bcf.panel.showMarkers'),
+          icon: <MapPin className="h-4 w-4" />, pressed: bcfOverlayVisible, onSelect: toggleBcfOverlay,
+        },
+        {
+          id: 'bcf-author', label: t('bcf.panel.setAuthorTitle'), icon: <User className="h-4 w-4" />,
+          onSelect: () => { setTempAuthor(bcfAuthor); setShowAuthorDialog(true); },
+        },
+      ]}
+      dialogs={(
         <>
           <input
             ref={fileInputRef}
@@ -413,6 +416,7 @@ export function BCFPanel({ onClose }: BCFPanelProps) {
             onChange={handleImport}
             className="hidden"
           />
+<<<<<<< HEAD
           <IconButton
             label={t('bcf.panel.importTitle')}
             className="h-7 w-7"
@@ -445,6 +449,9 @@ export function BCFPanel({ onClose }: BCFPanelProps) {
           >
             <User className="h-4 w-4" />
           </IconButton>
+=======
+          {bcfServer.dialogs}
+>>>>>>> upstream/main
         </>
       )}
     >
