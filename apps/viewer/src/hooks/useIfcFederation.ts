@@ -154,7 +154,11 @@ export function useIfcFederation(
         collapsed: options?.collapsed,
         loadedAt,
         sharedRtcOffset,
+<<<<<<< HEAD
       }, { sourceHandle: options?.sourceHandle, workflowOwner: options?.workflowOwner, /* >>> AIM-FORK: AIM #308 */ federatedCache: options?.federatedCache /* <<< AIM-FORK */ });
+=======
+      }, { sourceHandle: options?.sourceHandle, retryOperation: options?.retryOperation, workflowOwner: options?.workflowOwner, gaussianPlacement: options?.gaussianPlacement, gaussianUpAxis: options?.gaussianUpAxis, gaussianAttribution: options?.gaussianAttribution, gaussianReplacingModelId: options?.gaussianReplacingModelId, onGaussianBudgetReserved: options?.onGaussianBudgetReserved, onGaussianLoadSettled: options?.onGaussianLoadSettled });
+>>>>>>> upstream/main
 
       // Before the session check: a superseded load still settled a model (#4897, `federationRtcRebase.ts`).
       if (useViewerStore.getState().models.has(modelId)) convergeFederationRtcFrame();
@@ -186,7 +190,7 @@ export function useIfcFederation(
       console.error('[useIfc] addModel failed:', err);
       if (isCurrent) {
         reportError(err instanceof Error ? err.message : 'Unknown error', 'federated_add_failed',
-          () => { void addModel(file, options); });
+          options?.retryOperation ?? (() => { void addModel(file, options); }));
         setLoading(false);
       }
       return null;
@@ -235,6 +239,7 @@ export function useIfcFederation(
       anchorModelId: referenceSelection.modelId,
       anchorModel: selectedAnchor,
       anchorGeoref: referenceSelection.placement,
+      assumeIfcSharedVerticalDatum: state.ifcSharedVerticalDatum,
       resolveGeoref: (modelId, model) => (
         model.geometryResult && model.spatialReference
           ? { spatialReference: model.spatialReference, coordinateInfo: model.geometryResult.coordinateInfo }

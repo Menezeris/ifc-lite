@@ -87,7 +87,9 @@ function fakeRenderer(state: FakeRendererState): Renderer {
   return {
     getCamera: () => camera,
     getScene: () => scene,
-    getGPUDevice: () => ({}),
+    // No device: the frame pacer (#5865, covered in useAnimationLoop.gpuBacklog.test.tsx)
+    // never engages, so these tests can step frames synchronously.
+    getGPUDevice: () => null,
     getPipeline: () => ({}),
     peekRenderRequest: () => state.renderRequested,
     consumeRenderRequest: () => { state.renderRequested = false; },
@@ -96,10 +98,12 @@ function fakeRenderer(state: FakeRendererState): Renderer {
     // The loop installs the pick preflight on mount and clears it on unmount (pickPreflight.ts).
     setPickPreflight: () => {},
     getModelBounds: () => null,
-    render: (options: RenderOptions) => {
+    getFrameStats: () => null,
+    renderWithResult: (options: RenderOptions) => {
       state.frames?.push(options);
       state.renderCalls++;
       if (state.renderThrows) throw new Error(SAFARI_LOST);
+      return true;
     },
   } as unknown as Renderer;
 }

@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { sectionExclusions } from './section-exclusions.js';
 /**
+<<<<<<< HEAD
  * @ifc-lite/renderer - WebGPU renderer
  */
 
@@ -244,18 +244,16 @@ export interface ExternalOverlay {
 
 /**
  * The reason `whenReady()` rejects when the renderer is destroyed.
+=======
+ * @ifc-lite/renderer - WebGPU renderer.
+>>>>>>> upstream/main
  *
- * A plain `Error` carrying a stable `name` rather than an exported subclass:
- * consumers can discriminate it with `err.name === 'RendererDestroyedError'`
- * without this package growing a new export (and without `instanceof` breaking
- * across duplicated copies of the package).
+ * The full entry: everything `@ifc-lite/renderer/core` publishes, plus
+ * point-cloud rendering and BIM ↔ scan deviation, whose factories this module
+ * installs for every `Renderer` on import.
  */
-function rendererDestroyedError(): Error {
-    const error = new Error('Renderer was destroyed before it became ready');
-    error.name = 'RendererDestroyedError';
-    return error;
-}
 
+<<<<<<< HEAD
 /**
  * Main renderer class
  */
@@ -3769,3 +3767,23 @@ export class Renderer {
         return this.canvas;
     }
 }
+=======
+import { installPointCloudSupport } from './point-cloud-support.js';
+import { PointCloudRenderer } from './pointcloud/point-cloud-renderer.js';
+import { DeviationComputer } from './deviation/deviation-computer.js';
+import { PointPicker } from './point-picker.js';
+import { EdlPass } from './edl-pass.js';
+
+installPointCloudSupport({
+  createPointCloudRenderer: (device, colorFormat, depthFormat, sampleCount, startHandleId) =>
+    new PointCloudRenderer(device, colorFormat, depthFormat, sampleCount, startHandleId),
+  createDeviationComputer: () => new DeviationComputer(),
+  createPointPicker: (device) => new PointPicker(device),
+  createEdlPass: (device, sampleCount) => new EdlPass(device, sampleCount),
+});
+
+export * from './renderer.js';
+export { PointCloudRenderer };
+export { PointRenderPipeline } from './pointcloud/point-pipeline.js';
+export { computeDeviationStatistics, computeDeviationStatisticsAsync, countWithinToleranceAsync, deviationHistogramAsync, summarizeDeviationAssetsAsync } from './deviation/deviation-statistics.js';
+>>>>>>> upstream/main
