@@ -43,9 +43,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { spawnSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { existsSync, copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { createServer } from 'node:http';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -447,5 +448,84 @@ test('an upstream-only IFC fixture requires a pinned archive and exact member', 
     assertRed(check(root), 'upstream_archive.blob_url', 'pinned https://github.com');
   } finally {
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('an upstream IFC file requires a commit-pinned blob that names an IFC file', () => {
+  const path = 'structural/frame.ifc';
+  const bytes = Buffer.from('ISO-10303-21;\nEND-ISO-10303-21;\n');
+  const commit = '0123456789abcdef0123456789abcdef01234567';
+  const file = { blob_url: `https://github.com/example/models/blob/${commit}/frame.ifc`, commit };
+  const manifest = {
+    version: 1,
+    base_url: 'https://example.invalid/fixtures',
+    files: [{ path, sha256: sha256(bytes), size: bytes.length, upstream_file: file }],
+  };
+  const root = makeRoot({ fixtures: [], onDisk: { [path]: bytes }, manifest });
+  const rewrite = () => writeFileSync(join(root, 'tests/models/manifest.json'), JSON.stringify(manifest));
+  try {
+    assert.equal(check(root).status, 0);
+    file.blob_url = file.blob_url.replace(commit, 'main');
+    rewrite();
+    assertRed(check(root), 'upstream_file.blob_url', 'pinned https://github.com');
+    file.blob_url = `https://github.com/example/models/blob/${commit}/frame.zip`;
+    rewrite();
+    assertRed(check(root), 'upstream_file.blob_url', 'must name an IFC file');
+    // A Rhino .3dm may be pinned too, and its blob must be a .3dm.
+    manifest.files[0].path = 'rhino/frame.3dm';
+    rewrite();
+    assertRed(check(root), 'upstream_file.blob_url', 'must name a .3dm file');
+    file.blob_url = `https://github.com/example/models/blob/${commit}/frame.3dm`;
+    rewrite();
+    mkdirSync(join(root, 'tests/models/rhino'), { recursive: true });
+    writeFileSync(join(root, 'tests/models/rhino/frame.3dm'), bytes);
+    assert.equal(check(root).status, 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('direct downloads stop at the declared byte budget and preserve existing fixtures (#8567)', async () => {
+  const path = 'control.ifc';
+  const old = Buffer.from('preserve local original');
+  const expected = Buffer.from('1234');
+  const server = createServer((_req, res) => { res.writeHead(200); res.end(Buffer.alloc(1024, 1)); });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const root = makeRoot({ fixtures: [], onDisk: { [path]: old }, manifest: {
+    version: 1, base_url: base, files: [{ path, size: expected.length, sha256: sha256(expected) }],
+  } });
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, [join(root, 'scripts/fixtures/fetch-fixtures.mjs'), path], {
+        env: { ...process.env, FIXTURE_RETRIES: '1', FIXTURE_TIMEOUT_MS: '2000' },
+      });
+      let output = '';
+      child.stdout.on('data', chunk => { output += chunk; });
+      child.stderr.on('data', chunk => { output += chunk; });
+      child.on('error', reject);
+      child.on('close', status => resolve({ status, output }));
+    });
+    assert.notEqual(result.status, 0);
+    assert.match(result.output, /fixture exceeds declared size/);
+    const { readFileSync } = await import('node:fs');
+    assert.deepEqual(readFileSync(join(root, 'tests/models', path)), old);
+    assert.equal(existsSync(join(root, 'tests/models', `${path}.part`)), false);
+  } finally {
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('noncanonical Gaussian aliases refuse even an existing hash-matched fixture (#8580)', () => {
+  const bytes = Buffer.from('ply\nformat ascii 1.0\nend_header\n');
+  for (const path of ['./gaussian/control.ply', 'pointcloud/../gaussian/control.ply']) {
+    const root = makeRoot({ fixtures: [], onDisk: { 'gaussian/control.ply': bytes }, manifest: {
+      version: 1, base_url: 'https://example.invalid/fixtures',
+      files: [{ path, size: bytes.length, sha256: sha256(bytes) }],
+    } });
+    try { assertRed(check(root), 'canonical relative POSIX path'); }
+    finally { rmSync(root, { recursive: true, force: true }); }
   }
 });

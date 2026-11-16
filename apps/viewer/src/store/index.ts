@@ -4,6 +4,7 @@
 
 /** Combined Zustand store. Domain slices own their state and actions. */
 
+import { registerOverlayCapacity } from './overlay-capacity.js';
 import { registerWorkflowArtifactInvalidation } from '../lib/flow/artifact-lifetime.js';
 import { createAppearanceSlice, type AppearanceSlice } from './slices/appearanceSlice.js';
 import { create } from 'zustand';
@@ -16,10 +17,12 @@ import { createHoverSlice, type HoverSlice } from './slices/hoverSlice.js';
 import { createCameraSlice, type CameraSlice } from './slices/cameraSlice.js';
 import { createSectionSlice, type SectionSlice } from './slices/sectionSlice.js';
 import { registerMutationViewStoreBinding } from './mutation-view-store-binding.js';
+import { peekViewerStore, registerViewerStore, type ViewerStoreApi } from './viewerStoreHandle.js';
 export { customPlaneCenter } from './slices/sectionSlice.js';
 import { createMeasurementSlice, type MeasurementSlice } from './slices/measurementSlice.js';
 import { createDataSlice, type DataSlice } from './slices/dataSlice.js';
 import { createModelSlice, type ModelSlice } from './slices/modelSlice.js';
+import { createServerPropertiesSlice, type ServerPropertiesSlice } from './slices/serverPropertiesSlice.js';
 import { createMutationSlice, type MutationSlice } from './slices/mutationSlice.js';
 import { createDrawing2DSlice, type Drawing2DSlice } from './slices/drawing2DSlice.js';
 // >>> AIM-FORK: fork-only store slices — D-072 underlays, D-075 documents, D-076 identifier links
@@ -99,10 +102,14 @@ export { resolveEntityRef, resolveGlobalId } from './resolveEntityRef.js';
 export { fromGlobalIdFromModels, toGlobalIdFromModels, toGlobalIdForRef } from './globalId.js';
 export type { ForwardModelMapLike } from './globalId.js';
 
+<<<<<<< HEAD
 export type { Drawing2DState, Drawing2DStatus, Annotation2DTool, PolygonArea2DResult, TextAnnotation2D, CloudAnnotation2D, SelectedAnnotation2D } from './slices/drawing2DSlice.js';
 export type { UnderlayDrawing, UnderlayCalibrationDraft, DrawingUnderlaySlice } from './slices/drawingUnderlaySlice.js';
 export type { ViewerDocument, ViewerDocumentKind, DocTab, DocTabView, DocumentEvent, DocumentsSlice } from './slices/documentsSlice.js';
 export type { IdentifierLinksSlice, IdentifierIndexStatus } from './slices/identifierLinksSlice.js';
+=======
+export type { Drawing2DState, Drawing2DStatus, Annotation2DTool, PolygonArea2DResult, TextAnnotation2D, CloudAnnotation2D, Dimension2D, SelectedAnnotation2D } from './slices/drawing2DSlice.js';
+>>>>>>> upstream/main
 
 export type { SheetState } from './slices/sheetSlice.js';
 export type { CollabSlice, CollabRole, CollabStatus, StartCollabOptions } from './slices/collabSlice.js';
@@ -159,7 +166,7 @@ export type ViewerState = AppearanceSlice & LoadingSlice &
   SectionSlice &
   MeasurementSlice &
   DataSlice &
-  ModelSlice &
+  ModelSlice & ServerPropertiesSlice &
   MutationSlice &
   Drawing2DSlice &
   DrawingUnderlaySlice &
@@ -224,6 +231,7 @@ const createViewerStore = () => create<ViewerState>()(withStoreChurnCounters(wit
   ...createMeasurementSlice(...args),
   ...createDataSlice(...args),
   ...createModelSlice(...args),
+  ...createServerPropertiesSlice(...args),
   ...createMutationSlice(...args),
   ...createDrawing2DSlice(...args),
   ...createDrawingUnderlaySlice(...args),
@@ -278,19 +286,15 @@ const createViewerStore = () => create<ViewerState>()(withStoreChurnCounters(wit
   ...createViewerActions(...args),
 })))));
 
-const STORE_SINGLETON_KEY = '__ifc_lite_viewer_store__';
-const globalStoreRegistry = globalThis as typeof globalThis & {
-  [STORE_SINGLETON_KEY]?: ReturnType<typeof createViewerStore>;
-};
-
-export function getViewerStoreApi() {
-  const existing = globalStoreRegistry[STORE_SINGLETON_KEY];
+export function getViewerStoreApi(): ViewerStoreApi {
+  const existing = peekViewerStore();
   if (existing) return existing;
   const store = createViewerStore();
-  globalStoreRegistry[STORE_SINGLETON_KEY] = store;
+  registerViewerStore(store);
   registerSidebarExclusivity(store);
   registerHierarchyLeftSync(store);
   registerDrawingInspectorSheetSync(store);
+  registerOverlayCapacity(store);
   registerMutationViewStoreBinding(store); // views read their model's CURRENT store, not the partial one (#5672)
   registerOverlayThemeSync(store); // `--overlay-*` on <html> follow `theme` in every app that holds the store (#5490)
   registerWorkflowArtifactInvalidation(store);

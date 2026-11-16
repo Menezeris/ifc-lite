@@ -68,6 +68,8 @@ packages/wasm/pkg/ifc-lite.js
 packages/wasm/pkg-threaded/
 # Separate feature-gated fingerprint ownership test bundle; never published.
 packages/wasm/pkg-diff-decode-test/
+# CI WASM build cache manifest (scripts/ci-wasm-cache.mjs); CI-only.
+.ci-wasm-cache/
 
 # csg-thread-bench: rung-2 measurement artifacts (wasm-pack output, copied IFC
 # fixtures, generated corpus blobs). Source (Cargo.toml, src/, web/index.html,
@@ -96,8 +98,51 @@ tests/models/ara3d
 tests/models/issues
 tests/models/various
 tests/models/georeferencer
+tests/models/edinburgh
+tests/models/rhino
 tests/models/**/*.ifc
 tests/models/**/*.IFC
+# Explicit case variants also work with the CI path auditor's basic globs.
+tests/models/**/*.ply
+tests/models/**/*.plY
+tests/models/**/*.pLy
+tests/models/**/*.pLY
+tests/models/**/*.Ply
+tests/models/**/*.PlY
+tests/models/**/*.PLy
+tests/models/**/*.PLY
+tests/models/**/*.splat
+tests/models/**/*.splaT
+tests/models/**/*.splAt
+tests/models/**/*.splAT
+tests/models/**/*.spLat
+tests/models/**/*.spLaT
+tests/models/**/*.spLAt
+tests/models/**/*.spLAT
+tests/models/**/*.sPlat
+tests/models/**/*.sPlaT
+tests/models/**/*.sPlAt
+tests/models/**/*.sPlAT
+tests/models/**/*.sPLat
+tests/models/**/*.sPLaT
+tests/models/**/*.sPLAt
+tests/models/**/*.sPLAT
+tests/models/**/*.Splat
+tests/models/**/*.SplaT
+tests/models/**/*.SplAt
+tests/models/**/*.SplAT
+tests/models/**/*.SpLat
+tests/models/**/*.SpLaT
+tests/models/**/*.SpLAt
+tests/models/**/*.SpLAT
+tests/models/**/*.SPlat
+tests/models/**/*.SPlaT
+tests/models/**/*.SPlAt
+tests/models/**/*.SPlAT
+tests/models/**/*.SPLat
+tests/models/**/*.SPLaT
+tests/models/**/*.SPLAt
+tests/models/**/*.SPLAT
 tests/models/**/*.ifcx
 tests/models/**/*.ifczip
 tests/models/**/*.xml
@@ -118,6 +163,11 @@ tests/benchmark/benchmark-results/viewer-*.console.log
 # Playwright default run artifacts (test-results/ is Playwright's outputDir;
 # these are regenerated on every run and must never be committed)
 /test-results/
+# Local command-palette validation receipts; compact evidence is retained separately.
+/.palette-access-validation/
+# node:test JUnit reports the CI uploads to Mergify Test Engine.
+mergify-junit.xml
+mergify-junit-retry-*.xml
 /playwright-report/
 /blob-report/
 /playwright/.cache/

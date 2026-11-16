@@ -6,7 +6,7 @@
 import type { ListModelTagScope } from './model-tag-scope.js';
 import type { DiscoveredColumns } from './result-types.js';
 import type { IfcTypeEnum, PropertySet, QuantitySet } from '@ifc-lite/data';
-import type { CapturedEntityScope, FilterGroup, ListConditionOperator, ListConditionSource } from '@ifc-lite/rules';
+import type { CapturedEntityScope, CustomGroupingRef, FilterGroup, ListConditionOperator, ListConditionSource } from '@ifc-lite/rules';
 
 // ============================================================================
 // Data Provider Interface
@@ -181,7 +181,11 @@ export interface ListDataProvider {
     homeValue: number | null;
     shares: Array<{ zoneName: string; value: number }>;
   } | null;
+  /** Rendered triangle occurrences for an entity; null means geometry is unavailable, not empty (#10370). */
+  getTriangleCount?(expressId: number): number | null;
   getWorldPosition?(expressId: number): { x: number; y: number; z: number } | null; // World Coordinate, PROJECT-space not map/WGS84 (#3671)
+  /** The element's group in a custom grouping (#8425), the same first match the `customGrouping` rule applies; `null` when in none. */
+  getCustomGroup?(expressId: number, grouping: CustomGroupingRef): string | null;
 }
 
 /** A classification reference exposed to the list engine (code + name). */
@@ -287,7 +291,7 @@ export interface PropertyCondition {
    * - `zone` — a location-zone assignment (issue #1810); `psetName` holds the
    *   zone-SET id, `propertyName` selects `Zone` (default, the zone name —
    *   or the straddled zones joined when the element crosses a boundary) or
-   *   `Straddles` (boolean); `geometry` is the World Coordinate (#3671) — `propertyName` selects axis `X` (default) | `Y` | `Z`
+   *   `Straddles` (boolean); `geometry` is the World Coordinate (#3671) — `propertyName` selects axis `X` (default) | `Y` | `Z`, or `TriangleCount` (unitless occurrence count)
    */
   source: ListConditionSource;
   /** Property set name (for property/quantity sources); the zone-SET id for `zone`. */
@@ -314,6 +318,12 @@ export type UnreadableListCondition =
 // Column Definitions
 // ============================================================================
 
+/** Every `ColumnDefinition.source`; the saved-list reader validates against this one list. */
+export const COLUMN_SOURCES = [
+  'attribute', 'property', 'quantity', 'material', 'classification', 'spatial', 'model', 'zone', 'geometry', 'customGrouping',
+] as const;
+export type ColumnSource = (typeof COLUMN_SOURCES)[number];
+
 export interface ColumnDefinition {
   id: string;
   /**
@@ -323,11 +333,18 @@ export interface ColumnDefinition {
    * `Building` | `Site` | `Project`); `model`/`zone`/`geometry` — see
    * `PropertyCondition.source` for the exact `psetName`/`propertyName`
    * contract, shared verbatim between conditions and columns.
+   * `customGrouping` (column only, #8425) is the element's group: the
+   * grouping's name in `propertyName`, its id hint in `psetName`.
    */
+<<<<<<< HEAD
   // >>> AIM-FORK: `host` = values from the AIM host by GlobalId, `propertyName` is its key (D-174, #277)
   source: 'attribute' | 'property' | 'quantity' | 'material' | 'classification' | 'spatial' | 'model' | 'zone' | 'geometry' | 'host';
   // <<< AIM-FORK
   /** For property: pset name. For quantity: qset name. For zone: the zone-SET id. */
+=======
+  source: ColumnSource;
+  /** For property: pset name. For quantity: qset name. For zone: the zone-SET id. For customGrouping: the grouping id hint. */
+>>>>>>> upstream/main
   psetName?: string;
   /** Attribute / property / quantity name, the spatial level for `spatial`
    *  (`Container` | `Storey` | `Building` | `Site` | `Project`), or the zone

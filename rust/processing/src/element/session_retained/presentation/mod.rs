@@ -4,6 +4,7 @@ use super::{publication::ShapeOnlyProduct, RetainedProductPlan, OwnedMeshProduct
 use ifc_lite_geometry::program::transactions::Requirement;
 mod appearance;
 mod appearance_resolve;
+pub(super) mod material_styles;
 pub use appearance::resolve_appearances;
 mod normals;
 mod faces;
@@ -11,12 +12,17 @@ mod face_attribution;
 mod face_coincidence;
 mod face_curve;
 mod face_surfaces;
+#[cfg(test)]
+mod face_surfaces_tests;
 mod instancing;
+mod surface;
 pub(super) use faces::{sources as face_sources, FaceSources};
 
 // M11-A/N/F/I consume these immutable inputs in their own modules.
 #[allow(dead_code)] // Scaffold inputs become live when the independently gated slices land.
 pub(super) struct Context<'a> {
+    /// Canonical layer class, including exact-defined unsliced skips.
+    pub layer_class: u8,
     pub plan: &'a RetainedProductPlan,
     pub model: &'a OwnedMeshProductionContext,
     pub resources: &'a OwnedResourceContext,
@@ -34,6 +40,7 @@ pub(super) fn apply(product: &mut ShapeOnlyProduct, context: &Context<'_>) -> Re
     discharged.extend(appearance::apply(product, context)?);
     normals::prepare(product, context)?;
     discharged.extend(faces::apply(product, context)?);
+    surface::apply(product, context)?;
     discharged.extend(normals::apply(product, context)?);
     discharged.extend(instancing::apply(product, context));
     Ok(discharged)

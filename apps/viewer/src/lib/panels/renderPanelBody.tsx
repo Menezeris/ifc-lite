@@ -11,6 +11,8 @@
  * hosts stay in lock-step.
  */
 
+import { loadBcfPanel, loadValidationPanel, loadLensPanel, loadGanttPanel, loadListPanel, loadExtensionsPanel } from './deferred-panel-modules';
+import { DeferredPanel } from './DeferredPanel';
 import { AssistantSourceContext } from '@/components/viewer/assistant/AssistantAction';
 import { lazy, Suspense, type ReactNode } from 'react';
 import { panelModelGateMode, type WorkspacePanelId } from './registry';
@@ -20,16 +22,11 @@ import { PropertiesPanel } from '@/components/viewer/PropertiesPanel';
 const InfluxPanel = lazy(() => import('@/components/viewer/influx/InfluxPanel').then(module => ({ default: module.InfluxPanel })));
 
 const ComparePanel = lazy(() => import('@/components/viewer/ComparePanel').then(module => ({ default: module.ComparePanel })));
-import { BCFPanel } from '@/components/viewer/BCFPanel';
-import { ValidationPanel } from '@/components/viewer/validation/ValidationPanel';
-import { LensPanel } from '@/components/viewer/LensPanel';
-import { ClashPanel } from '@/components/viewer/ClashPanel';
-import { ExtensionsPanel } from '@/components/extensions/ExtensionsPanel';
-import { GanttPanel } from '@/components/viewer/schedule/GanttPanel';
-import { ListPanel } from '@/components/viewer/lists/ListPanel';
+const ClashPanel = lazy(() => import('@/components/viewer/ClashPanel').then(module => ({ default: module.ClashPanel })));
 import { RoomPanel } from '@/components/viewer/RoomPanel';
 import { ZonesPanel } from '@/components/viewer/ZonesPanel';
-import { LoadReportPanel } from '@/components/viewer/LoadReportPanel';
+// Opened on demand; kept off the boot path (eager-bundle ratchet, #8341).
+const LoadReportPanel = lazy(() => import('@/components/viewer/LoadReportPanel').then((m) => ({ default: m.LoadReportPanel })));
 import { ChangesPanel } from '@/components/viewer/ChangesPanel';
 import { ChangeSetPanel } from '@/components/viewer/change-sets/ChangeSetPanel';
 import { CostPanel } from '@/components/viewer/CostPanel';
@@ -38,6 +35,7 @@ import { MeasurementsPanel } from '@/components/viewer/MeasurementsPanel';
 import { PlacementPanel } from '@/components/viewer/placement/PlacementPanel';
 import { ModelInspectorPanel } from '@/components/viewer/model-inspector/ModelInspectorPanel';
 import { PanelModelGate } from '@/components/viewer/PanelModelGate';
+import { isPanelAvailable } from './availability';
 import { TOUR_ANCHORS, tourAnchor } from '@/lib/tours/anchors';
 import { loadIdsStudioRuntime } from '@/lib/ids-studio/runtime-loader';
 import { useViewerStore } from '@/store';
@@ -129,6 +127,10 @@ function ChartsPanelBody() {
   return <ChunkErrorBoundary label="Charts panel"><Suspense fallback={null}><ChartsPanel /></Suspense></ChunkErrorBoundary>;
 }
 
+function LoadReportPanelBody({ onClose }: { onClose: () => void }) {
+  return <ChunkErrorBoundary label="Load report panel"><Suspense fallback={null}><LoadReportPanel onClose={onClose} /></Suspense></ChunkErrorBoundary>;
+}
+
 function LayersPanelBody({ onClose }: { onClose: () => void }) {
   return <ChunkErrorBoundary label="Layers panel"><Suspense fallback={null}><LayersPanel onClose={onClose} /></Suspense></ChunkErrorBoundary>;
 }
@@ -176,6 +178,8 @@ function PointCloudPanelBody({ onClose }: { onClose: () => void }) {
  * retired in favour of the strip header's single Close.
  */
 export function renderPanelBody(id: WorkspacePanelId, onClose: () => void): ReactNode {
+  // Switched off by the host: render nothing, so the panel's chunk is never requested.
+  if (!isPanelAvailable(id)) return null;
   const body = panelBody(id, onClose);
   const gate = panelModelGateMode(id);
   return <AssistantSourceContext panel={id}>{gate ? <PanelModelGate id={id} mode={gate} onClose={onClose}>{body}</PanelModelGate> : body}</AssistantSourceContext>;
@@ -194,17 +198,17 @@ function panelBody(id: WorkspacePanelId, onClose: () => void): ReactNode {
     // whenever the panel showed one of the branches that lacked it.
     case 'properties': return <div {...tourAnchor(TOUR_ANCHORS.propertiesPanel)} className="h-full"><PropertiesPanel /></div>;
     case 'compare': return <ChunkErrorBoundary key="compare" label="Compare models"><Suspense fallback={null}><ComparePanel onClose={onClose} /></Suspense></ChunkErrorBoundary>;
-    case 'bcf': return <BCFPanel onClose={onClose} />;
-    case 'validation': return <ValidationPanel onClose={onClose} />;
-    case 'lens': return <LensPanel onClose={onClose} />;
-    case 'clash': return <ClashPanel onClose={onClose} />;
-    case 'extensions': return <ExtensionsPanel onClose={onClose} />;
+    case 'bcf': return <DeferredPanel id="bcf" onClose={onClose} load={loadBcfPanel} />;
+    case 'validation': return <DeferredPanel id="validation" onClose={onClose} load={loadValidationPanel} />;
+    case 'lens': return <DeferredPanel id="lens" onClose={onClose} load={loadLensPanel} />;
+    case 'clash': return <ChunkErrorBoundary key="clash" label="Clash panel"><Suspense fallback={null}><ClashPanel onClose={onClose} /></Suspense></ChunkErrorBoundary>;
+    case 'extensions': return <DeferredPanel id="extensions" onClose={onClose} load={loadExtensionsPanel} />;
     case 'script': return <ChunkErrorBoundary label="Script panel"><Suspense fallback={null}><ScriptPanel /></Suspense></ChunkErrorBoundary>;
-    case 'gantt': return <GanttPanel />;
-    case 'lists': return <ListPanel />;
+    case 'gantt': return <DeferredPanel id="gantt" onClose={onClose} load={loadGanttPanel} />;
+    case 'lists': return <DeferredPanel id="lists" onClose={onClose} load={loadListPanel} />;
     case 'collab': return <RoomPanel onClose={onClose} />;
     case 'zones': return <ZonesPanel onClose={onClose} />;
-    case 'loadReport': return <LoadReportPanel onClose={onClose} />;
+    case 'loadReport': return <LoadReportPanelBody onClose={onClose} />;
     case 'changes': return <ChangesPanel onClose={onClose} />;
     case 'layers': return <LayersPanelBody onClose={onClose} />;
     case 'sources': return <SourcesPanelBody onClose={onClose} />;

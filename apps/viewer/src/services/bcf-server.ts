@@ -22,7 +22,9 @@ import {
   saveBcfServerConfig,
 } from './bcf-server-config.js';
 import type { BcfServerConfig } from './bcf-server-config.js';
+import { bcfServerProfile, relayedFetch } from './bcf-server-profiles.js';
 import { completeSignIn, loadApi } from './bcf-server-session.js';
+import { bcfFetch } from './bcf-server-fetch.js';
 import { withTokenRelay } from './bcf-token-relay.js';
 export {
   clearBcfServerConfig,
@@ -52,15 +54,17 @@ export async function signInToBcfServer(
   serverUrl: string,
   username: string,
   password: string,
+  signal?: AbortSignal,
 ): Promise<BcfServerConfig> {
   const api = await loadApi();
-  const { baseUrl, authInfo } = await api.discoverBcfService({ baseUrl: serverUrl });
+  const { baseUrl, authInfo } = await api.discoverBcfService({ baseUrl: serverUrl, fetchFn: bcfFetch(signal) });
   const token = await api.requestPasswordToken({
     tokenUrl: requireSecureTokenUrl(authInfo.oauth2_token_url),
     username,
     password,
+    fetchFn: bcfFetch(signal),
   });
-  return completeSignIn(baseUrl, token);
+  return completeSignIn(baseUrl, token, undefined, signal);
 }
 
 /**
@@ -72,6 +76,7 @@ export async function signInToBcfServer(
 export async function signInWithToken(
   serverUrl: string,
   accessToken: string,
+  signal?: AbortSignal,
 ): Promise<BcfServerConfig> {
   const api = await loadApi();
   const token = { access_token: accessToken.trim() };
@@ -81,8 +86,8 @@ export async function signInWithToken(
   // ambiguous address costs one unauthenticated `/auth` request and the
   // token then goes to exactly one address. An address that already names a
   // path is unambiguous and skips discovery entirely.
-  const baseUrl = await api.resolveBcfServiceBaseUrl({ baseUrl: serverUrl });
-  return completeSignIn(baseUrl, token);
+  const baseUrl = await api.resolveBcfServiceBaseUrl({ baseUrl: serverUrl, fetchFn: bcfFetch(signal) });
+  return completeSignIn(baseUrl, token, undefined, signal);
 }
 
 /**
@@ -94,15 +99,17 @@ export async function signInWithClientCredentials(
   serverUrl: string,
   clientId: string,
   clientSecret: string,
+  signal?: AbortSignal,
 ): Promise<BcfServerConfig> {
   const api = await loadApi();
-  const { baseUrl, authInfo } = await api.discoverBcfService({ baseUrl: serverUrl });
+  const { baseUrl, authInfo } = await api.discoverBcfService({ baseUrl: serverUrl, fetchFn: bcfFetch(signal) });
   const token = await api.requestClientCredentialsToken({
     tokenUrl: requireSecureTokenUrl(authInfo.oauth2_token_url),
     clientId,
     clientSecret,
+    fetchFn: bcfFetch(signal),
   });
-  return completeSignIn(baseUrl, token, { clientId, clientSecret });
+  return completeSignIn(baseUrl, token, { clientId, clientSecret }, signal);
 }
 
 /**
@@ -156,8 +163,10 @@ async function refreshStoredToken(config: BcfServerConfig): Promise<string> {
     }
     // The stored URL was already resolved at sign-in, so the candidate it
     // needs is the one tried first and no extra request is made.
-    const { authInfo } = await api.discoverBcfService({ baseUrl: config.serverUrl });
+    const profile = bcfServerProfile(config.serverUrl);
+    const { authInfo } = profile ? { authInfo: profile.authInfo } : await api.discoverBcfService({ baseUrl: config.serverUrl });
     const tokenUrl = requireSecureTokenUrl(authInfo.oauth2_token_url);
+    const profileFetch = profile ? { fetchFn: relayedFetch(profile) } : {};
     // OAuth-app sessions must present the app credentials on the refresh
     // grant too; token servers that never issued a client ignore them. A
     // relayed session's app credentials are the relay's to add.
@@ -172,6 +181,7 @@ async function refreshStoredToken(config: BcfServerConfig): Promise<string> {
                 refreshToken: config.refreshToken,
                 clientId: config.clientId || undefined,
                 clientSecret: config.clientSecret || undefined,
+                ...profileFetch,
               }),
           )
         ).result
@@ -203,26 +213,24 @@ async function refreshStoredToken(config: BcfServerConfig): Promise<string> {
 }
 
 /**
- * Client bound to the saved connection. Its token provider transparently
- * refreshes the access token shortly before expiry, and a 401 answer gets
- * one refresh-and-retry (covers servers that omit expires_in); a failed
- * refresh surfaces as a BcfAuthenticationError from the request that
- * needed it.
+ * Token source bound to one saved account. Storage can change mid-request:
+ * only the same account on this server may feed tokens, because a different
+ * user on the same host would otherwise send their bearer token on this
+ * caller's requests. Token rotation still matches (account identity ignores
+ * the refresh token). Shared by the BCF client and the BIMcollab Documents
+ * source, so both refresh through the same single-flight path.
  */
-export async function createConnectedClient(): Promise<BcfApiClient> {
-  const api = await loadApi();
-  const config = loadBcfServerConfig();
-  if (!config) throw new Error('Not connected to a BCF server');
-  // Storage can change mid-pull. Only the same account on this server may
-  // feed tokens — a different user on the same host would send their bearer
-  // token on this client's requests. Token rotation still matches (account
-  // identity ignores the refresh token).
+export function connectedTokenSource(config: BcfServerConfig): {
+  boundConfig: () => BcfServerConfig;
+  getAccessToken: () => Promise<string>;
+  refreshAfterUnauthorized: () => Promise<string | null>;
+} {
   const boundConfig = (): BcfServerConfig => {
     const current = loadBcfServerConfig();
     return current && isSameBcfAccount(current, config) ? current : config;
   };
-  return new api.BcfApiClient({
-    baseUrl: config.serverUrl,
+  return {
+    boundConfig,
     getAccessToken: async () => {
       const current = boundConfig();
       const expiring =
@@ -232,21 +240,47 @@ export async function createConnectedClient(): Promise<BcfApiClient> {
       }
       return current.accessToken;
     },
-    fetchFn: async (input, init) => {
-      const response = await fetch(input, init);
-      if (response.status !== 401) return response;
+    refreshAfterUnauthorized: async () => {
       const current = boundConfig();
-      if (!canReauthenticate(current)) return response;
-      let freshToken: string;
+      if (!canReauthenticate(current)) return null;
       try {
-        freshToken = await refreshStoredToken(current);
+        return await refreshStoredToken(current);
       } catch (error) {
         console.warn('[bcf-server] token refresh after 401 failed', error);
-        return response;
+        return null;
       }
+    },
+  };
+}
+
+/**
+ * Client bound to the saved connection. Its token provider transparently
+ * refreshes the access token shortly before expiry, and a 401 answer gets
+ * one refresh-and-retry (covers servers that omit expires_in); a failed
+ * refresh surfaces as a BcfAuthenticationError from the request that
+ * needed it.
+ */
+export async function createConnectedClient(signal?: AbortSignal): Promise<BcfApiClient> {
+  const api = await loadApi();
+  const config = loadBcfServerConfig();
+  if (!config) throw new Error('Not connected to a BCF server');
+  const tokens = connectedTokenSource(config);
+  // A profiled server (buildagil) serves another version segment and is
+  // reached only through its same-origin relay.
+  const profile = bcfServerProfile(config.serverUrl);
+  const send = bcfFetch(signal, profile ? relayedFetch(profile) : undefined);
+  return new api.BcfApiClient({
+    baseUrl: config.serverUrl,
+    ...(profile ? { version: profile.version } : {}),
+    getAccessToken: tokens.getAccessToken,
+    fetchFn: async (input, init) => {
+      const response = await send(input, init);
+      if (response.status !== 401) return response;
+      const freshToken = await tokens.refreshAfterUnauthorized();
+      if (freshToken === null) return response;
       const headers = new Headers(init?.headers);
       headers.set('Authorization', `Bearer ${freshToken}`);
-      return fetch(input, { ...init, headers });
+      return send(input, { ...init, headers });
     },
   });
 }
@@ -264,11 +298,15 @@ export async function pullBcfServerProject(
   projectId: string,
   projectName: string,
   onProgress?: (progress: BcfSyncProgress) => void,
+  signal?: AbortSignal,
 ): Promise<BcfProjectFetchResult> {
   const api = await loadApi();
   const started = loadBcfServerConfig();
-  const client = await createConnectedClient();
-  const result = await api.fetchProjectAsBCF(client, projectId, { onProgress });
+  const client = await createConnectedClient(signal);
+  // buildagil ignores `$skip`: its profile pages topics by modified_date.
+  const topicPaging = bcfServerProfile(started?.serverUrl ?? '')?.topicPaging;
+  const result = await api.fetchProjectAsBCF(client, projectId, { onProgress, ...(topicPaging ? { topicPaging } : {}) });
+  signal?.throwIfAborted();
   if (!result.project.name) result.project.name = projectName;
   const current = loadBcfServerConfig();
   if (started && current && isSameBcfAccount(current, started)) {

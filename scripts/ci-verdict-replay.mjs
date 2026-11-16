@@ -20,10 +20,13 @@
  *       REPLAYS it: exit 0 for a recorded `success`, exit 1 for anything else,
  *       exit 2 when nothing is there to replay (the probe found one, so this
  *       means the API moved under us; refuse rather than pass).
+ *       `--excuse-lane <job name>` lets a recorded failure that was that lane's
+ *       alone replay as a pass (the lane reads the edit itself and is judged
+ *       fresh by the aggregate; see lib/ci-verdict-replay.mjs).
  *
  * Inputs come from the Actions environment (GITHUB_EVENT_PATH, GITHUB_EVENT_NAME,
  * GITHUB_REPOSITORY, GITHUB_RUN_ID, GH_TOKEN) or, for tests, from
- * `--event-file <json>` / `--check-runs-file <json>` / `--sha` / `--run-id` /
+ * `--event-file <json>` / `--check-runs-file <json>` / `--jobs-file <json>` / `--sha` / `--run-id` /
  * `--repo` / `--output <file>`.
  */
 
@@ -31,10 +34,10 @@ import { readFileSync, appendFileSync } from 'node:fs';
 
 import { gh, GhError } from './lib/gh.mjs';
 import { isMainEntry } from './lib/is-main-entry.mjs';
-import { AGGREGATE_CHECK_NAME, isNoopEdit, selectReplayVerdict } from './lib/ci-verdict-replay.mjs';
+import { AGGREGATE_CHECK_NAME, isNoopEdit, onlyFailedLane, selectReplayVerdict } from './lib/ci-verdict-replay.mjs';
 
 function parseArgs(argv) {
-  const out = { mode: null, eventFile: process.env.GITHUB_EVENT_PATH ?? null, eventName: process.env.GITHUB_EVENT_NAME ?? null, checkRunsFile: null, sha: null, runId: process.env.GITHUB_RUN_ID ?? null, repo: process.env.GITHUB_REPOSITORY ?? null, output: process.env.GITHUB_OUTPUT ?? null, checkName: AGGREGATE_CHECK_NAME };
+  const out = { mode: null, eventFile: process.env.GITHUB_EVENT_PATH ?? null, eventName: process.env.GITHUB_EVENT_NAME ?? null, checkRunsFile: null, jobsFile: null, excuseLane: null, sha: null, runId: process.env.GITHUB_RUN_ID ?? null, repo: process.env.GITHUB_REPOSITORY ?? null, output: process.env.GITHUB_OUTPUT ?? null, checkName: AGGREGATE_CHECK_NAME };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
     const next = () => {
@@ -47,6 +50,8 @@ function parseArgs(argv) {
     else if (a === '--event-file') out.eventFile = next();
     else if (a === '--event-name') out.eventName = next();
     else if (a === '--check-runs-file') out.checkRunsFile = next();
+    else if (a === '--jobs-file') out.jobsFile = next();
+    else if (a === '--excuse-lane') out.excuseLane = next();
     else if (a === '--sha') out.sha = next();
     else if (a === '--run-id') out.runId = next();
     else if (a === '--repo') out.repo = next();
@@ -65,7 +70,7 @@ function readEvent(args) {
 }
 
 /** `check_runs` for the SHA: every run, not GitHub's default "latest per name". */
-function fetchCheckRuns(args, sha) {
+function fetchCheckRuns(args, sha, checkName = args.checkName) {
   if (args.checkRunsFile) {
     const parsed = JSON.parse(readFileSync(args.checkRunsFile, 'utf8'));
     return Array.isArray(parsed) ? parsed : parsed.check_runs;
@@ -74,11 +79,24 @@ function fetchCheckRuns(args, sha) {
   // `filter=all`, deliberately: the default `latest` keeps ONE run per check
   // name, which on the probe is this very run's in-progress aggregate.
   const page = gh(
-    ['api', `repos/${args.repo}/commits/${sha}/check-runs?check_name=${encodeURIComponent(args.checkName)}&filter=all&per_page=100`, '--method', 'GET'],
+    ['api', `repos/${args.repo}/commits/${sha}/check-runs?check_name=${encodeURIComponent(checkName)}&filter=all&per_page=100`, '--method', 'GET'],
     `the check runs of ${sha.slice(0, 9)}`,
   );
   if (!page || !Array.isArray(page.check_runs)) throw new GhError('GH_BAD_SHAPE', 'check-runs response carried no check_runs array');
   return page.check_runs;
+}
+
+/** The recorded run's jobs. A truncated page is an error: a missing job cannot be treated as a passing one. */
+function fetchJobs(args, runId) {
+  if (args.jobsFile) {
+    const parsed = JSON.parse(readFileSync(args.jobsFile, 'utf8'));
+    return Array.isArray(parsed) ? parsed : parsed.jobs;
+  }
+  if (!args.repo) throw new Error('GITHUB_REPOSITORY (or --repo) is required to read jobs');
+  const page = gh(['api', `repos/${args.repo}/actions/runs/${runId}/jobs?filter=latest&per_page=100`, '--method', 'GET'], `the jobs of run ${runId}`);
+  if (!page || !Array.isArray(page.jobs)) throw new GhError('GH_BAD_SHAPE', 'jobs response carried no jobs array');
+  if (page.total_count !== page.jobs.length) throw new GhError('GH_TRUNCATED', `run ${runId} has ${page.total_count} jobs, the page carried ${page.jobs.length}`);
+  return page.jobs;
 }
 
 function emit(args, key, value) {
@@ -105,6 +123,16 @@ export function run(argv) {
       emit(args, 'noop', 'false');
       return 0;
     }
+    // REFUSE_REPLAY_AFTER names a check that runs only in a reduced lane whose
+    // justification may have lapsed (test.yml sets it to `Release PR checks`
+    // when the release PR's lean lane does not hold now). If it succeeded on
+    // this head, the verdict may rest on skipped lanes: run in full instead.
+    const refuseAfter = process.env.REFUSE_REPLAY_AFTER;
+    if (refuseAfter && fetchCheckRuns(args, sha, refuseAfter).some((r) => r?.name === refuseAfter && r.head_sha === sha && r.conclusion === 'success')) {
+      console.log(`[verdict-replay] title/body edit of ${sha.slice(0, 9)}, but "${refuseAfter}" succeeded on it, so its verdict came from a reduced lane that does not hold now; the full lane set runs.`);
+      emit(args, 'noop', 'false');
+      return 0;
+    }
     console.log(
       `[verdict-replay] title/body edit of ${sha.slice(0, 9)}: a completed "${args.checkName}" verdict already exists ` +
         `(${verdict.conclusion}, run ${verdict.runId ?? '?'}, ${verdict.completedAt}). Every lane skips; the aggregate replays it.`,
@@ -125,6 +153,10 @@ export function run(argv) {
   );
   if (verdict.success) {
     console.log('  ✔ the head already had a green verdict; this title/body edit changes nothing a test could see.');
+    return 0;
+  }
+  if (args.excuseLane && verdict.runId && onlyFailedLane(fetchJobs(args, verdict.runId), { lane: args.excuseLane, aggregate: args.checkName })) {
+    console.log(`  ✔ the recorded failure was "${args.excuseLane}" alone, which reads this very edit and is judged fresh by the aggregate; nothing else failed.`);
     return 0;
   }
   console.error(`  ✘ the head's recorded verdict is "${verdict.conclusion}"; a title/body edit does not clear it. Push a fix or re-run the earlier run.`);

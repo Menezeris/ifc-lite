@@ -34,13 +34,42 @@
  * WHAT A REPLAY SKIPS is decided in test.yml, not here: only the lanes a PR
  * run executes. The push-only lanes (feature builds, census, CSG gates,
  * Plato) and the crates.io-dependent semver check still run and are judged.
+ *
+ * THE QUEUE ROUTE. With CI_PR_LANE=fast a PR run records no tree, and the full
+ * gate is a Mergify batch PR. Mergify then merges each PR of the batch as its
+ * own commit, seconds apart, and only the last commit has the batch's tree.
+ * Measured on one 5-PR batch: 5 pushes x 387 job-minutes re-testing a ~425
+ * job-minute run. So a push also replays when a green batch run of this
+ * repository recorded the tree of this commit OR of a later commit on main:
+ * that tree contains this commit, and it passed every lane. An earlier commit
+ * of a batch is therefore never tested alone. Its own tree is not what `main`
+ * ends on, and a probe that runs before its successor lands finds no evidence
+ * and runs in full. A batch ran the push-only lanes too, so `replay_queue=true`
+ * lets test.yml skip those as well.
+ *
+ * A commit touching cache-keying paths (keysMainCaches) also replays this way
+ * when each of those files changes again in a later commit on main. The same
+ * file means the same caches, and path filters run the same lanes: a later
+ * workflow-only full run would not re-key what a Cargo.lock change needs. Only
+ * the newest runs in full.
+ *
+ * WORKFLOW AND ACTION FILES: one listed in scripts/ci-cache-keying-files.txt,
+ * or the list itself, blocks; so does any file under `.github/workflows/` that is
+ * not top-level YAML. Other workflow and action files are not part of a Test
+ * run and key none of its caches, so they replay. The list is committed because
+ * this job cannot parse YAML (no install); lib/cache-keying-files.test.mjs keeps
+ * it exact with a YAML parser, in the Node guards lane of the very run whose
+ * green verdict a replay needs. A missing, empty or unreadable list blocks every
+ * workflow and action file.
  */
 
 import { appendFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 
 import { gh, GhError } from './lib/gh.mjs';
+import { isBatchBranch } from './ci-pr-lane.mjs';
 import { isMainEntry } from './lib/is-main-entry.mjs';
+import { KEYING_LIST_PATH, isListed, parseKeyingList, validKeyingList } from './lib/cache-keying-list.mjs';
 
 export const TREE_ARTIFACT_PREFIX = 'tested-tree-';
 export const TEST_WORKFLOW_FILE = 'test.yml';
@@ -52,14 +81,50 @@ export const TEST_WORKFLOW_FILE = 'test.yml';
  * replay would leave every later PR restoring a stale or cold cache.
  */
 const NO_REPLAY = [
-  /^Cargo\.(lock|toml)$/,
-  /(^|\/)Cargo\.toml$/,
-  /^rust-toolchain\.toml$/,
-  /^\.github\/workflows\//,
-  /^\.github\/actions\//,
+  /(^|\/)Cargo\.(lock|toml)$/,
+  /(^|\/)rust-toolchain(\.toml)?$/,
+  // Part of Swatinem/rust-cache's key, at any workspace root.
+  /(^|\/)\.cargo\/config(\.toml)?$/,
 ];
+const WORKFLOW_OR_ACTION = /^\.github\/(?:workflows|actions)\//;
+const TOP_LEVEL_WORKFLOW = /^\.github\/workflows\/[^/]+\.ya?ml$/;
+
+/** Whether a changed path keys a cache that only a push to main writes. */
+function keysMainCaches(file, keyingList) {
+  // test.yml is the root every listed file is found from, so it blocks even if the list is wrong.
+  if (NO_REPLAY.some((re) => re.test(file)) || file === KEYING_LIST_PATH || file === `.github/workflows/${TEST_WORKFLOW_FILE}`) return true;
+  if (!WORKFLOW_OR_ACTION.test(file)) return false;
+  // Missing, unreadable or malformed (readInputs passes null), or not naming test.yml: trust none of it.
+  if (!Array.isArray(keyingList) || !keyingList.includes(`.github/workflows/${TEST_WORKFLOW_FILE}`)) return true;
+  // GitHub runs only top-level workflow YAML; anything else under workflows/ is a file a
+  // step may read, so it blocks.
+  if (file.startsWith('.github/workflows/') && !TOP_LEVEL_WORKFLOW.test(file)) return true;
+  return isListed(file, keyingList);
+}
 
 const SHA = /^[0-9a-f]{40}$/;
+
+/** More than one batch's worth of later commits; older evidence is not worth the reads. */
+const MAX_LATER_COMMITS = 10;
+const COMPARE_PAGE = 100;
+
+const isTestWorkflow = (r) => r.path === undefined || r.path.endsWith(`/${TEST_WORKFLOW_FILE}`);
+const newestFirst = (a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0);
+
+/**
+ * A green batch run of THIS repository. The repository check is what makes the
+ * artifact evidence: a fork's `pull_request` run executes the fork's workflow,
+ * so it could name a branch and an artifact after any tree it likes.
+ */
+const isGreenBatchRun = (r, repo) =>
+  r &&
+  r.event === 'pull_request' &&
+  r.status === 'completed' &&
+  r.conclusion === 'success' &&
+  isTestWorkflow(r) &&
+  isBatchBranch(r.head_branch) &&
+  typeof repo === 'string' &&
+  r.head_repository?.full_name === repo;
 
 /**
  * Pure decision. Every input is something the probe read; nothing here calls
@@ -71,19 +136,28 @@ const SHA = /^[0-9a-f]{40}$/;
  *   pulls: Array<{number: number, merged_at: string|null, merge_commit_sha: string|null, base: {ref: string}, head: {sha: string}}>,
  *   runs: Array<{id: number, head_sha: string, event: string, status: string, conclusion: string|null, path?: string, created_at: string}>,
  *   artifactNamesByRun: Record<string, string[]>,
- * }} input
- * @returns {{replay: true, runId: number, pr: number} | {replay: false, reason: string}}
+ *   repo?: string,
+ *   queueEvidence?: Array<{tree: string, runs: Array<object>}>,
+ *   laterChangedFiles?: string[],
+ *   rekeyAlreadyJudged?: boolean,
+ *   keyingList?: string[] | null,
+ * }} input `queueEvidence` lists this commit's tree, then later commits' trees, each with the runs holding its artifact.
+ * @returns {{replay: true, runId: number, pr: number, queue?: true} | {replay: false, reason: string}}
  */
 export function decidePushReplay(input) {
-  const { pushSha, pushTree, parentSha, before, changedFiles, pulls, runs, artifactNamesByRun } = input;
+  const { pushSha, pushTree, parentSha, before, changedFiles, pulls, runs, artifactNamesByRun, repo, queueEvidence = [], laterChangedFiles = [], rekeyAlreadyJudged = false, keyingList = null } = input;
   if (!SHA.test(pushSha ?? '') || !SHA.test(pushTree ?? '')) return { replay: false, reason: 'push SHA or tree is not a full hash' };
   // One squash commit on top of the previous tip. A multi-commit push (a
   // direct push, a rebase merge) is not the shape a single PR run tested.
   if (!SHA.test(before ?? '') || parentSha !== before) {
     return { replay: false, reason: `push is not a single commit on ${String(before).slice(0, 9)}` };
   }
-  const blocker = changedFiles.find((f) => NO_REPLAY.some((re) => re.test(f)));
-  if (blocker) return { replay: false, reason: `${blocker} changed; caches that only main writes must be re-keyed by a full run` };
+  const keysCaches = (f) => keysMainCaches(f, keyingList);
+  const blocker = changedFiles.find(keysCaches);
+  const blockerReason = `${blocker} changed; caches that only main writes must be re-keyed by a full run`;
+  // A full page may be truncated, so it proves nothing: that only means a full run.
+  const rekeyedLater = rekeyAlreadyJudged || laterChangedFiles.length < COMPARE_PAGE && changedFiles.filter(keysCaches).every((f) => laterChangedFiles.includes(f));
+  if (blocker && !rekeyedLater) return { replay: false, reason: blockerReason };
 
   const merged = pulls.filter((p) => p && p.merged_at && p.merge_commit_sha === pushSha && p.base?.ref === 'main');
   if (merged.length !== 1) return { replay: false, reason: `${merged.length} merged PRs into main produced ${pushSha.slice(0, 9)}; need exactly one` };
@@ -100,15 +174,20 @@ export function decidePushReplay(input) {
         r.head_sha === head &&
         r.status === 'completed' &&
         r.conclusion === 'success' &&
-        (r.path === undefined || r.path.endsWith(`/${TEST_WORKFLOW_FILE}`)),
+        isTestWorkflow(r),
     )
-    .sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0));
-  if (green.length === 0) return { replay: false, reason: `PR #${pr.number}'s final head ${head.slice(0, 9)} has no green Test run` };
+    .sort(newestFirst);
   const hit = green.find((r) => (artifactNamesByRun[String(r.id)] ?? []).includes(wanted));
-  if (!hit) {
-    return { replay: false, reason: `no green Test run of PR #${pr.number} tested tree ${pushTree.slice(0, 9)} (main moved, or the run predates tree recording)` };
+  if (hit && !blocker) return { replay: true, runId: hit.id, pr: pr.number };
+
+  for (const { runs: treeRuns } of queueEvidence) {
+    const proven = treeRuns.filter((r) => isGreenBatchRun(r, repo)).sort(newestFirst)[0];
+    if (proven) return { replay: true, runId: proven.id, pr: pr.number, queue: true };
   }
-  return { replay: true, runId: hit.id, pr: pr.number };
+
+  if (blocker) return { replay: false, reason: blockerReason };
+  if (green.length === 0) return { replay: false, reason: `PR #${pr.number}'s final head ${head.slice(0, 9)} has no green Test run` };
+  return { replay: false, reason: `no green Test run of PR #${pr.number} tested tree ${pushTree.slice(0, 9)} (main moved, or the run predates tree recording)` };
 }
 
 function git(...args) {
@@ -121,7 +200,10 @@ function emit(output, key, value) {
 }
 
 function readInputs(repo, pushSha, pushTree, parentSha, before) {
-  const changedFiles = git('diff', '--name-only', `${parentSha}`, pushSha).split('\n').filter(Boolean);
+  // --no-renames: a moved file counts on both sides. -z: git quotes a non-ASCII path
+  // otherwise, and `".github/actions/\303\251/x"` would match no blocking rule.
+  // Not git(): its trim would cut a leading space off the first path.
+  const changedFiles = execFileSync('git', ['diff', '-z', '--no-renames', '--name-only', parentSha, pushSha], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).split('\0').filter(Boolean);
   const pulls = gh(['api', `repos/${repo}/commits/${pushSha}/pulls`, '--method', 'GET'], `the PRs of ${pushSha.slice(0, 9)}`);
   if (!Array.isArray(pulls)) throw new GhError('GH_BAD_SHAPE', 'commits/{sha}/pulls did not return an array');
   const merged = pulls.filter((p) => p?.merge_commit_sha === pushSha);
@@ -144,7 +226,72 @@ function readInputs(repo, pushSha, pushTree, parentSha, before) {
       artifactNamesByRun[String(r.id)] = artifactNames(repo, r.id);
     }
   }
-  return { pushSha, pushTree, parentSha, before, changedFiles, pulls, runs, artifactNamesByRun };
+  const { queueEvidence, laterChangedFiles } = readQueueEvidence(repo, pushSha, pushTree);
+  // The list as the push commit has it, read on every push (two or three git calls).
+  // Null when it is absent, unreadable, not a regular file (`cat-file` of a symlink
+  // returns the target path), or malformed: it must name test.yml, and every entry a
+  // file of the pushed tree. --full-tree: pathspecs from the repo root, whatever the cwd.
+  const listMode = gitOrNull('ls-tree', '--full-tree', pushSha, '--', KEYING_LIST_PATH)?.split(' ')[0];
+  const listText = listMode === '100644' || listMode === '100755' ? gitOrNull('cat-file', 'blob', `${pushSha}:${KEYING_LIST_PATH}`) : null;
+  const treeFiles = listText === null ? null : gitOrNull('ls-tree', '-z', '-r', '--full-tree', '--name-only', pushSha, '--', '.github/workflows', '.github/actions')?.split('\0').filter(Boolean);
+  const keyingList = treeFiles ? validKeyingList(parseKeyingList(listText), treeFiles) : null;
+  if (keyingList === null) console.warn(`[push-replay] ${KEYING_LIST_PATH} is missing, unreadable or malformed at ${pushSha.slice(0, 9)}; every workflow and action file blocks`);
+  return { pushSha, pushTree, parentSha, before, changedFiles, pulls, runs, artifactNamesByRun, repo, queueEvidence, laterChangedFiles, keyingList };
+}
+
+/** A git command's stdout, or null when it fails (absent file, bad ref); the caller then blocks. */
+function gitOrNull(...args) {
+  const r = spawnSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 16 * 1024 * 1024 });
+  if (r.status === 0) return r.stdout;
+  // A null list blocks every workflow and action file, so say why.
+  console.warn(`[push-replay] git ${args.join(' ')}: ${(r.stderr || r.error?.message || 'failed').trim()}`);
+  return null;
+}
+
+/** This commit's tree, then those of the commits main has gained since, each with the runs that recorded it. */
+function readQueueEvidence(repo, pushSha, pushTree) {
+  const compare = gh(
+    ['api', `repos/${repo}/compare/${pushSha}...main?per_page=${COMPARE_PAGE}`, '--method', 'GET'],
+    `the commits on main after ${pushSha.slice(0, 9)}`,
+  );
+  if (!compare || typeof compare.status !== 'string' || !Array.isArray(compare.commits)) {
+    throw new GhError('GH_BAD_SHAPE', 'compare response carried no status or commits');
+  }
+  // A commit that is no longer an ancestor of main proves nothing about what main holds.
+  const later = compare.status === 'ahead' ? compare.commits.slice(0, MAX_LATER_COMMITS) : [];
+  const trees = later.map((c) => c?.commit?.tree?.sha);
+  if (trees.some((tree) => typeof tree !== 'string' || !SHA.test(tree))) {
+    throw new GhError('GH_BAD_SHAPE', 'compare commit carried no valid tree');
+  }
+  const laterChangedFiles = compare.status === 'ahead' && Array.isArray(compare.files)
+    ? compare.files.map((f) => f?.filename).filter((f) => typeof f === 'string')
+    : [];
+  return { queueEvidence: [pushTree, ...trees].map((tree) => ({ tree, runs: runsThatRecorded(repo, tree) })), laterChangedFiles };
+}
+
+function runsThatRecorded(repo, tree) {
+  const name = `${TREE_ARTIFACT_PREFIX}${tree}`;
+  const page = gh(
+    ['api', `repos/${repo}/actions/artifacts?name=${name}&per_page=100`, '--method', 'GET'],
+    `the runs that tested tree ${tree.slice(0, 9)}`,
+  );
+  if (!page || !Array.isArray(page.artifacts)) throw new GhError('GH_BAD_SHAPE', 'artifacts response carried no artifact list');
+  const ids = new Set();
+  for (const a of page.artifacts) {
+    if (!a || typeof a.name !== 'string' || typeof a.expired !== 'boolean') {
+      throw new GhError('GH_BAD_SHAPE', 'artifacts item carried no valid name or expiration flag');
+    }
+    if (a.name !== name || a.expired) continue;
+    if (!Number.isSafeInteger(a.workflow_run?.id) || a.workflow_run.id <= 0) {
+      throw new GhError('GH_BAD_SHAPE', 'artifact carried no valid workflow run');
+    }
+    ids.add(a.workflow_run.id);
+  }
+  return [...ids].map((id) => {
+    const run = gh(['api', `repos/${repo}/actions/runs/${id}`, '--method', 'GET'], `Test run ${id}`);
+    if (!run || run.id !== id) throw new GhError('GH_BAD_SHAPE', `run ${id} did not come back`);
+    return run;
+  });
 }
 
 function artifactNames(repo, runId) {
@@ -170,7 +317,11 @@ export function run(argv, env = process.env) {
   const before = env.PUSH_BEFORE ?? '';
   let decision;
   try {
-    decision = decidePushReplay(readInputs(repo, pushSha, pushTree, parentSha, before));
+    const inputs = readInputs(repo, pushSha, pushTree, parentSha, before);
+    // --verify re-reads the run, not main's later history: a later revert must
+    // not fail an aggregate whose replay the probe already chose correctly.
+    if (mode === 'verify') inputs.rekeyAlreadyJudged = true;
+    decision = decidePushReplay(inputs);
   } catch (err) {
     // The probe only saves work. Unreadable evidence must run the full suite,
     // not fail `changes` and suppress every dependent lane (#7944). Once a
@@ -182,12 +333,15 @@ export function run(argv, env = process.env) {
 
   if (mode === 'probe') {
     if (decision.replay) {
-      console.log(`[push-replay] ${pushSha.slice(0, 9)} is tree ${pushTree.slice(0, 9)}, which green run ${decision.runId} of PR #${decision.pr} already tested. PR lanes skip; push-only lanes run.`);
+      console.log(decision.queue
+        ? `[push-replay] ${pushSha.slice(0, 9)} is contained in a tree that green merge-queue run ${decision.runId} tested. PR and push-only lanes skip.`
+        : `[push-replay] ${pushSha.slice(0, 9)} is tree ${pushTree.slice(0, 9)}, which green run ${decision.runId} of PR #${decision.pr} already tested. PR lanes skip; push-only lanes run.`);
     } else {
       console.log(`[push-replay] full run: ${decision.reason}.`);
     }
     emit(env.GITHUB_OUTPUT, 'replay', decision.replay ? 'true' : 'false');
     emit(env.GITHUB_OUTPUT, 'replay_run', decision.replay ? String(decision.runId) : '');
+    emit(env.GITHUB_OUTPUT, 'replay_queue', decision.queue ? 'true' : 'false');
     return 0;
   }
 

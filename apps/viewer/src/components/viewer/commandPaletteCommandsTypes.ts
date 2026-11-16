@@ -26,12 +26,17 @@ export type RightPanel =
   | 'drawing-underlay' | 'documents' | 'aim-layers';
   // <<< AIM-FORK
 
+import type { SurfaceCommandContext } from './surface-command-types';
+
 export interface CommandPaletteBuildParams {
+  surfaceContext?: Omit<SurfaceCommandContext, 'surface'>;
   execute: (code: string) => void;
   recentFiles: RecentFileEntry[];
   cachedNames: React.MutableRefObject<Set<string>>;
   extensionCommands: SlotContribution<CommandContribution>[];
   extensionHost: ExtensionHostService | null;
+  /** A deferred row must not invoke a host replaced by its React provider. */
+  extensionHostIsCurrent?: () => boolean;
   canEditInSession: boolean;
   cesiumAvailable: boolean;
   activateRightPanel: (panel: RightPanel) => void;

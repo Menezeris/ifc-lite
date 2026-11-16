@@ -34,6 +34,7 @@ pub use precision_certificate::UniformContextPrecision;
 pub(crate) use precision_certificate::UniformContextPrecisionCache;
 #[path = "decoder/schema_layout.rs"]
 mod schema_layout;
+mod model_ids;
 #[path = "decoder/styled_items.rs"]
 mod styled_items;
 pub use schema_layout::GridAxisIndex;
@@ -292,19 +293,23 @@ impl<'a> EntityDecoder<'a> {
         Error::UnrepresentableReal(id)
     }
 
-    /// How many records this decoder has refused under input admission: an
-    /// unrepresentable REAL (#7678) or a malformed point/direction leaf
-    /// (`leaf_read`, F3b, D29). One counter, so a geometry job that sees it
-    /// move refused input.
+    /// Distinct input-admission refusals since the last diagnostic drain:
+    /// unrepresentable REALs or malformed point/direction leaves (#7678, F3b).
     pub fn refused_records(&self) -> u64 {
         self.refused_record_ids().len() as u64
     }
 
-    /// The distinct record ids this decoder has refused (#7678), so callers
-    /// that combine several decoders count each record once.
+    /// Distinct input-admission refusals (#7678).
     pub fn refused_record_ids(&self) -> Vec<u32> {
         let ids = self.refused_records.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         ids.iter().copied().collect()
+    }
+
+    /// Drain diagnostic refusals at an element boundary without changing decoded
+    /// entities. Re-reading a refused record in another job counts that job too.
+    pub fn take_refused_record_ids(&self) -> Vec<u32> {
+        self.refused_records.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+            .drain().collect()
     }
 
     /// Decode the entity in `[start, end)` **without** touching the cache.
@@ -385,30 +390,6 @@ impl<'a> EntityDecoder<'a> {
             .ok_or_else(|| Error::parse(0, format!("Entity #{} not found", entity_id)))?;
 
         self.decode_at(start, end)
-    }
-
-    /// The model's `IFCPROJECT` express id: the first in file order, `None`
-    /// when the file has none. Located once per decoder by the one locator
-    /// ([`crate::find_project_id`], a SIMD keyword search) and cached, so
-    /// both scale resolvers below share it.
-    ///
-    /// The byte search misses a legal `IFCPROJECT (` or `#1 /* c */ =` and
-    /// can accept a record-shaped decoy in a string; the entity scan these
-    /// resolvers used before does neither. So a candidate is kept only when
-    /// the index holds it as an `IFCPROJECT`, else that scan decides
-    /// ([`crate::project_locator::scan_for_project_id`]).
-    pub fn project_id(&mut self) -> Option<u32> {
-        if let Some(cached) = self.project_id_cache {
-            return cached;
-        }
-        let located = crate::project_locator::find_project_id(self.content).filter(|&id| {
-            self.get_raw_bytes(id)
-                .and_then(|raw| crate::parser::EntityScanner::new(raw).next_entity())
-                .is_some_and(|(_, kind, _, _)| crate::parser::keyword_eq(kind, "IFCPROJECT"))
-        });
-        let id = located.or_else(|| crate::project_locator::scan_for_project_id(self.content));
-        self.project_id_cache = Some(id);
-        id
     }
 
     /// Multiplier that converts file plane-angle units to radians.

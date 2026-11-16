@@ -61,6 +61,18 @@ pnpm test --filter=@ifc-lite/parser --concurrency=2 -- parse-model.test --maxWor
 pnpm test --filter=@ifc-lite/parser -- --watch
 ```
 
+### Browser-rendered viewer tests
+
+Every viewer test file that imports `apps/viewer/src/test/contrast/render-harness.ts` (the contrast tests and several layout tests) renders the real CSS in a headless Chromium. The harness picks the browser in this order:
+
+1. `IFCLITE_TEST_CHROME_EXECUTABLE`, used as given (a wrong path fails; it never falls back).
+2. System Google Chrome (`channel: 'chrome'`), which is what CI uses.
+3. Outside CI only: Playwright's bundled Chromium, if `pnpm exec playwright install chromium` already installed it. The harness never downloads a browser, and CI never switches away from the Chrome channel.
+
+With none of them, a local run reports those tests as skipped, with the reason on each one, and ends with a line starting `!! N contrast test(s) SKIPPED, not passed`. A run that prints that line has not checked contrast. In CI (`CI` set, or GitHub Actions) they are never skipped: the launch fails as it always has, and `scripts/check-contrast-skips.mjs` fails a viewer shard whose JUnit report holds any such skip. `scripts/pre-handoff.mjs` reports a revert oracle over these tests as SKIPPED, naming the missing browser, because the oracle runs with `CI=1` and the launch would otherwise fail.
+
+A new test that renders through the harness passes `{ skip: CONTRAST_BROWSER_SKIP }` on each `it`, not on its `describe`: node does not count the tests of a skipped suite, so its summary would show nothing skipped.
+
 ### Packed consumer workflows
 
 Build the public packages, then exercise the artifacts a fresh consumer installs:
@@ -76,7 +88,7 @@ The runtime consumer queries a model, edits a declared property, exports/reopens
 
 The same external install also builds a browser entry with Vite and verifies that geometry workers and the WASM binary are emitted. This catches missing worker URLs that a Node-only geometry pass cannot detect.
 
-The check removes its temporary installation on success or failure. Capture its JSON receipt with `pnpm --silent test:packed > packed-receipt.json`. A real captured run is in `tests/evidence/packed-workflows/receipt.json`; it records package versions and fixture hashes, with no model bytes.
+The check removes its temporary installation on success or failure. Capture its JSON receipt with `pnpm --silent test:packed > packed-receipt.json`. The receipt records package versions and fixture hashes, with no model bytes.
 
 ### Local BCF publication peer
 
@@ -386,6 +398,44 @@ const buffer = createMinimalIfc([
   "#2=IFCWALL('wall123',$,$,$,$,$,$,$);"
 ]);
 ```
+
+### Per-Mesh Corpus Gate for Geometry Changes
+
+A change to void cutting or mesh cleanup is judged mesh by mesh, never in
+aggregate: a mesh that gains open edges is a regression, and one that gains
+slivers or raises its max aspect above 1.5x without closing an open edge is
+quality-worse. Three tools run that comparison over the fixture corpus in a
+few minutes:
+
+```bash
+# 1. Build the census once per commit and copy it out of target/ before
+#    switching commits, so base and branch binaries can sit side by side.
+#    For a base commit older than the census, copy this checkout's
+#    rust/processing/examples/mesh_census.rs into the base checkout first,
+#    so both sides measure with the same census and differ only in geometry.
+cargo build --release -p ifc-lite-processing --example mesh_census
+cp target/release/examples/mesh_census /tmp/mesh_census_branch
+
+# 2. One JSON line per mesh for every manifest .ifc up to 200 MiB, 6 at a time.
+scripts/mesh-census-corpus.sh /tmp/mesh_census_branch tests/models /tmp/branch.jsonl 200 6
+
+# 3. The per-mesh verdict (exit 1 on any regression, quality-worse, unmeasured
+#    or missing mesh; unmeasured means the thin census hit its candidate cap).
+node scripts/mesh-census-compare.mjs /tmp/base.jsonl /tmp/branch.jsonl
+```
+
+Besides open and nonmanifold edges, slivers, max aspect and area, the census
+reports thin material (anti-parallel faces under 200 um apart, facing away)
+and coincident sheets. A host sliver left between two flush openings is
+watertight and removes almost no volume, so only those two catch it. Running
+it with `CENSUS_ARGS=--no-voids` attributes thin material to the cut (in
+models with an `IfcWindow` or `IfcDoor` job only; see the example's doc).
+
+For a fast inner loop on one host, cut it out of its model with
+`scripts/ifc-extract-hosts.py [--anonymise] <model.ifc> <out.ifc> <host id>`
+(the host, its openings, the project and the site, whose placement sets the
+RTC offset), check with `mesh_census --ids <host id> <out.ifc>` that the
+extract meshes like the full model, and iterate on the extract.
 
 ## Mocking
 

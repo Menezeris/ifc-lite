@@ -129,12 +129,30 @@ export function packEntityLane(rawId: number, saltByte: number): number {
  * and the sub-batch clones alike.
  */
 export function destroyGpuResources(
-  m: { vertexBuffer: GPUBuffer; indexBuffer: GPUBuffer; uniformBuffer?: GPUBuffer; lod1IndexBuffer?: GPUBuffer },
+  m: { vertexBuffer: GPUBuffer; indexBuffer: GPUBuffer; uniformBuffer?: GPUBuffer; uniformSlot?: { release(): void }; lod1IndexBuffer?: GPUBuffer },
 ): void {
   m.vertexBuffer.destroy();
   m.indexBuffer.destroy();
   if (m.uniformBuffer) m.uniformBuffer.destroy();
+  m.uniformSlot?.release();
   if (m.lod1IndexBuffer) m.lod1IndexBuffer.destroy();
+}
+
+/**
+ * The entity lane every vertex of `mesh` carries (unless it has per-vertex
+ * `entityIds`): its id, masked to the seam-ID range, and the high-8-bit
+ * material-colour salt (identical nudge in every redraw; see colorSaltByte()).
+ */
+export function entityLaneOf(mesh: MeshData): { entityId: number; saltByte: number } {
+  let entityId = mesh.expressId >>> 0;
+  if (!mesh.entityIds && entityId > MAX_ENCODED_ENTITY_ID) {
+    if (!warnedEntityIdRange) {
+      warnedEntityIdRange = true;
+      console.warn('[Renderer] expressId exceeds 24-bit seam-ID encoding range; seam lines may collide.');
+    }
+    entityId = entityId & MAX_ENCODED_ENTITY_ID;
+  }
+  return { entityId, saltByte: colorSaltByte(mesh.color) };
 }
 
 /**
@@ -208,17 +226,7 @@ export function mergeGeometry(
     // Interleave vertex data (position + normal + entityId)
     let outIdx = vertexBase * 7;
     const perVertexEntityIds = mesh.entityIds; // color-merged batches
-    let entityId = mesh.expressId >>> 0;
-    if (!perVertexEntityIds && entityId > MAX_ENCODED_ENTITY_ID) {
-      if (!warnedEntityIdRange) {
-        warnedEntityIdRange = true;
-        console.warn('[Renderer] expressId exceeds 24-bit seam-ID encoding range; seam lines may collide.');
-      }
-      entityId = entityId & MAX_ENCODED_ENTITY_ID;
-    }
-    // High-8-bit material-colour salt → identical nudge in every redraw of this
-    // geometry. See colorSaltByte() above.
-    const saltByte = colorSaltByte(mesh.color);
+    const { entityId, saltByte } = entityLaneOf(mesh);
     const hasNormals = normals.length > 0;
     for (let i = 0; i < vertexCount; i++) {
       const srcIdx = i * 3;

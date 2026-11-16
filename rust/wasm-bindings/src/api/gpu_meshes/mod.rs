@@ -9,21 +9,32 @@
 
 mod affinity_chunks;
 mod batch;
+mod batch_run;
+mod batch_element;
+mod batch_output;
+mod batch_recovery;
+mod batch_prepare;
+mod batch_wire;
+mod batch_caches;
 mod partitioned_batch;
 mod batch_from_source;
 pub(in crate::api) mod batch_host;
 mod batch_partition;
 mod instancing;
 pub(crate) mod prepass;
+mod prepass_mode;
 mod prepass_discovery;
-mod prepass_memory;
+mod prepass_index;
+mod prepass_scan;
+mod prepass_events;
+mod prepass_emit;
+mod prepass_columns;
 mod prepass_once;
 mod prepass_owned_columns;
 mod prepass_sharded;
 mod source_fingerprint;
 pub(super) mod style_finishes;
 mod prepass_from_source;
-mod void_index;
 mod prepass_affinity;
 mod source_fingerprint_prepass;
 
@@ -38,3 +49,12 @@ fn scan_columnar_index(content: &[u8]) -> ifc_lite_core::ColumnarEntityIndex {
 
 #[cfg(all(feature = "retained-browser", target_arch = "wasm32"))]
 pub(crate) use batch_partition::{is_instancing_candidate, INSTANCE_MIN_OCCURRENCES};
+
+
+#[cfg(test)]
+#[path = "c4_11a_tests.rs"]
+mod c4_11a_tests;
+
+#[cfg(test)]
+#[path = "c4_7b_tests.rs"]
+mod c4_7b_tests;

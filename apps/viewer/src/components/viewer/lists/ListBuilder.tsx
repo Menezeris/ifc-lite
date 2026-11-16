@@ -32,8 +32,6 @@ import type {
 } from '@ifc-lite/lists';
 import { discoverColumns, ENTITY_ATTRIBUTES, groupingColumnIds } from '@ifc-lite/lists';
 
-/** The `zone` column mode that carries mesh volume. */
-const ZONE_MODE_VOLUME_LABEL = 'Volume (mesh)';
 import { useViewerStore } from '@/store';
 import type { ZoneSet } from '@/lib/zones';
 import { collectScopeTypes } from '@/lib/lists/scope-types';
@@ -63,46 +61,8 @@ import {
 import { previewSetPattern } from './pattern-preview';
 import { useTranslation } from '@/i18n/useTranslation';
 import { storesWithMutationViews } from './list-builder-discovery';
-
-/** Column descriptor shared by the quick-add grid. */
-interface CommonColumn {
-  id: string;
-  source: ColumnDefinition['source'];
-  /** Zone-SET id for `source: 'zone'` columns; unused otherwise. */
-  psetName?: string;
-  propertyName: string;
-  label: string;
-}
-
-/**
- * The first-class columns: built-in attributes plus the spatial / semantic
- * columns. Surfaced as a flat grid so Material / Classification / Container /
- * Storey / Site / Building / Project / Model are as reachable as Name / Class —
- * not buried in a collapsed group. Container is the element's IMMEDIATE spatial
- * container (Bonsai's "container"): the direct IfcRelContainedInSpatialStructure
- * parent, at whatever level — the storey, or for bridges/roads the
- * IfcBridgePart / IfcRoadPart / IfcSpatialZone it sits in. Site / Building /
- * Project / Model identify which federated file (and where in its spatial tree)
- * each row comes from, so a list over several models can be grouped and sorted
- * by source (issue #1591).
- */
-const COMMON_COLUMNS: CommonColumn[] = [
-  ...ENTITY_ATTRIBUTES.map((a): CommonColumn => ({
-    id: `attr-${a.toLowerCase()}`,
-    source: 'attribute',
-    propertyName: a,
-    label: a,
-  })),
-  { id: 'col-material', source: 'material', propertyName: 'Material', label: 'Material' },
-  { id: 'col-classification', source: 'classification', propertyName: 'Classification', label: 'Classification' },
-  { id: 'col-container', source: 'spatial', propertyName: 'Container', label: 'Container' },
-  { id: 'col-storey', source: 'spatial', propertyName: 'Storey', label: 'Storey' },
-  { id: 'col-building', source: 'spatial', propertyName: 'Building', label: 'Building' },
-  { id: 'col-site', source: 'spatial', propertyName: 'Site', label: 'Site' },
-  { id: 'col-project', source: 'spatial', propertyName: 'Project', label: 'Project' },
-  { id: 'col-model', source: 'model', propertyName: 'Model', label: 'Model' },
-  ...(['X', 'Y', 'Z'] as const).map((axis): CommonColumn => ({ id: `col-world-${axis.toLowerCase()}`, source: 'geometry', propertyName: axis, label: `World ${axis}` })),
-];
+import { dynamicListColumns } from '@/lib/lists/dynamic-columns';
+import { COMMON_COLUMNS } from './list-common-columns';
 
 /** Union the per-provider complete-discovery results into one column set. */
 function mergeDiscovered(parts: DiscoveredColumns[]): DiscoveredColumns {
@@ -557,7 +517,12 @@ const SOURCE_TAG: Record<ColumnDefinition['source'], string> = {
   spatial: 'storey',
   model: 'model',
   zone: 'zone',
+<<<<<<< HEAD
   geometry: 'world', host: 'DB', // >>> AIM-FORK: host column (D-174) <<< AIM-FORK
+=======
+  geometry: 'world',
+  customGrouping: 'group',
+>>>>>>> upstream/main
 };
 
 /** `spatial`/`zone` tags reflect level/mode; everything else uses the flat per-source tag. */
@@ -609,37 +574,14 @@ function ColumnPicker({ discovered, zoneSets, selectedIds, onAdd, onToggle, isDu
     [discovered.quantities],
   );
 
-  // One quick-add column per zone set (issue #1810), appended after the
-  // static first-class columns since zone sets are user-defined + dynamic.
-  const zoneColumns = useMemo<CommonColumn[]>(
-    () => zoneSets.flatMap((zs) => [
-      {
-        id: `col-zone-${zs.id}`,
-        source: 'zone' as const,
-        psetName: zs.id,
-        propertyName: 'Zone',
-        label: `Zone: ${zs.name}`,
-      },
-      // The per-zone quantity #1810 actually asked for (#2508). The BASIS is in
-      // the mode name, so it survives into the column tag and the header rather
-      // than living in a tooltip: a zone volume off a net wall and one off a
-      // gross wall are not comparable numbers.
-      {
-        id: `col-zonevol-${zs.id}`,
-        source: 'zone' as const,
-        psetName: zs.id,
-        propertyName: ZONE_MODE_VOLUME_LABEL,
-        label: `Zone volume: ${zs.name}`,
-      },
-    ]),
-    [zoneSets],
-  );
+  const lenses = useViewerStore((st) => st.savedLenses);
+  const dynamicColumns = useMemo(() => dynamicListColumns(zoneSets, lenses), [zoneSets, lenses]);
 
   return (
     <div className="space-y-2">
       {/* Quick-add grid of the first-class columns */}
       <div className="flex flex-wrap gap-1.5">
-        {[...COMMON_COLUMNS, ...zoneColumns].map(({ id, source, psetName, propertyName, label }) => {
+        {[...COMMON_COLUMNS, ...dynamicColumns].map(({ id, source, psetName, propertyName, label }) => {
           const selected = selectedIds.has(id);
           return (
             <Chip

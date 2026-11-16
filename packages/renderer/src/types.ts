@@ -7,6 +7,7 @@
  */
 
 import type { ClipBox } from './clip-types.js';
+import type { MeshUniformSlot } from './mesh-uniform-arena.js';
 export type { ClipBox, ExtraClipPlane } from './clip-types.js';
 
 export interface Vec3 {
@@ -68,6 +69,8 @@ export interface Mesh {
    *  report the representation item it hit. See {@link PickResult.geometryItemId}
    *  for when it is absent. */
   geometryItemId?: number;
+  /** A highlight merging many pieces (#9192), and what it covers. */
+  mergedSelection?: import('./selection-hydration.js').MergedSelectionCoverage;
 }
 
 /**
@@ -98,7 +101,8 @@ export interface BatchedMesh {
    *  batches built before this field existed, or single-model scenes. */
   modelIndices?: (number | undefined)[];
   bindGroup?: GPUBindGroup;
-  uniformBuffer?: GPUBuffer;
+  /** This batch's mesh uniform block in the shared arena (mesh-uniform-arena.ts). */
+  uniformSlot?: MeshUniformSlot;
   // Bounding box for frustum culling (optional) — WORLD space.
   bounds?: { min: [number, number, number]; max: [number, number, number] };
   /** Per-batch local-frame origin: stored vertex positions are RELATIVE to it,
@@ -255,7 +259,7 @@ export interface RenderOptions {
    */
   isolatedIds?: Set<number> | null;
   selectedId?: number | null;     // Currently selected mesh (for highlighting)
-  selectedIds?: Set<number>;      // Multi-selection support
+  selectedIds?: Set<number>;      // Multi-selection. Re-read in full on every frame at rest; while `isInteracting`, a same-size in-place edit of a Set past 32,768 ids is seen within a few frames (#9835)
   selectedItemId?: number;        // #4382: narrows selectedId's highlight to one representation item (geometryItemId); no effect on selectedIds
   /** `capHighlightKey(modelIndex, id)` → RGBA (0–1) painted over that element's section-cap polygons (selection / hover); compared by content each frame. */
   capHighlight?: ReadonlyMap<string, readonly [number, number, number, number]> | null;

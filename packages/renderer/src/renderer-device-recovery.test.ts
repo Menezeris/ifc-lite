@@ -5,12 +5,25 @@
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert';
 import { Renderer } from './index.js';
+import { diffCounters, perfCounters } from '@ifc-lite/load-trace';
+import type { DeviceRecoveryFailureReason } from './device-recovery.js';
 import { PointCloudRenderer } from './pointcloud/point-cloud-renderer.js';
 
 // WebGPU enum global referenced by PointRenderPipeline's bind-group-layout
 // entry (not defined in node) — same polyfill as deviation-computer.test.ts
 // and point-cloud-placement.test.ts.
 (globalThis as Record<string, unknown>).GPUShaderStage = { VERTEX: 1, FRAGMENT: 2, COMPUTE: 4 };
+
+// #9543: an existing exhaustive consumer must not need another reason case.
+function legacyFailure(reason: DeviceRecoveryFailureReason): string {
+  switch (reason) {
+    case 'renderer-destroyed': return 'destroyed';
+    case 'not-lost': case 'cpu-geometry-released': case 'scene-not-settled':
+    case 'unsupported-authored-meshes': case 'cold-restore-failed':
+    case 'device-init-failed': case 'scene-restore-failed': return 'other';
+    default: { const exhaustive: never = reason; throw new Error(String(exhaustive)); }
+  }
+}
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -427,6 +440,37 @@ describe('Renderer.recoverDevice (#4885)', () => {
     }
   });
 
+  it('reports the replacement device\'s own loss text, not the previous attempt\'s', async () => {
+    const renderer = lostRenderer();
+    const lostDuringInit = (message: string) => async () => {
+      renderer['pipeline'] = {} as never;
+      renderer['handleDeviceLost']({ message, reason: 'unknown' }, { fromDevicePromise: true });
+    };
+    const error = mock.method(console, 'error', () => undefined);
+    try {
+      renderer['initOnce'] = lostDuringInit('first replacement text');
+      await renderer.recoverDevice();
+      renderer['initOnce'] = lostDuringInit('second replacement text');
+      const result = await renderer.recoverDevice();
+      assert.strictEqual(result.ok, false);
+      if (!result.ok) {
+        assert.strictEqual(
+          (result.error as Error).message,
+          'Replacement GPU device was lost during initialization (unknown): second replacement text',
+        );
+      }
+
+      // An attempt whose replacement was not lost must not inherit the earlier text.
+      renderer['initOnce'] = async () => { throw new Error('Failed to get GPU adapter'); };
+      const adapterless = await renderer.recoverDevice();
+      assert.strictEqual(adapterless.ok, false);
+      if (!adapterless.ok) assert.strictEqual((adapterless.error as Error).message, 'Failed to get GPU adapter');
+      assert.strictEqual(renderer['recovery'].replacementLostInfo, null);
+    } finally {
+      error.mock.restore();
+    }
+  });
+
   it('revalidates scene blockers after replacement initialization', async () => {
     const renderer = lostRenderer();
     renderer['initOnce'] = async () => {
@@ -479,6 +523,7 @@ describe('Renderer.recoverDevice (#4885)', () => {
   });
 
   it('serializes a newer public init behind recovery so it owns the final GPU stack', async () => {
+    perfCounters.enable(); const before = perfCounters.read();
     const renderer = lostRenderer(), gate = deferred<void>(), started = deferred<void>();
     const replacementPipeline = { owner: 'newer-init' };
     let calls = 0, preservedScene = true, publicInitSawClearedScene = false;
@@ -510,7 +555,10 @@ describe('Renderer.recoverDevice (#4885)', () => {
     assert.strictEqual(calls, 1, 'init must wait for recovery to release lifecycle ownership');
 
     gate.resolve();
-    assert.deepStrictEqual(await recovery, { ok: false, reason: 'renderer-destroyed' });
+    const outcome = await recovery;
+    assert.deepStrictEqual(outcome, { ok: false, reason: 'renderer-destroyed', superseded: true });
+    if (!outcome.ok) assert.strictEqual(legacyFailure(outcome.reason), 'destroyed');
+    assert.strictEqual(diffCounters(perfCounters.read(), before)['gpu.recovery.outcome.superseded'], 1);
     await initialization;
     assert.strictEqual(renderer['pipeline'], replacementPipeline);
     assert.strictEqual(renderer.isReady(), true);
