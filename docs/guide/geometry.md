@@ -734,6 +734,54 @@ here has one", not "this build cannot see them".
 
 ## Performance Optimization
 
+### Smaller engine for mesh-only pages (geometry-core)
+
+`@ifc-lite/wasm` also publishes a geometry-core engine at
+`@ifc-lite/wasm/core`: the same Rust crate built without the exporters
+(glTF/GLB, OBJ, STEP, IFC5, JSON/CSV, HBJSON/DFJSON, USD), LandXML, clash
+detection, point-cloud scan operations and PDF underlays. Parsing, the
+pre-pass, mesh batches, styles, symbolic/2D helpers and re-meshing are the same
+code, so both engines produce byte-identical meshes; the core binary is just
+smaller to download and compile.
+
+A page that only turns IFC into meshes (`processAdaptive`, `processStreaming`,
+`process`) swaps the engine with one exact-match bundler alias. Nothing else
+changes; `@ifc-lite/geometry` picks up the core binary through the glue it
+imports, in the page and in its workers:
+
+<!-- Reason: bundler configuration, not package source. -->
+<!-- docs-check: skip -->
+```ts
+// vite.config.ts (applies to worker bundles too)
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  resolve: {
+    alias: [{ find: /^@ifc-lite\/wasm$/, replacement: '@ifc-lite/wasm/core' }],
+  },
+  worker: { format: 'es' },
+});
+
+// webpack.config.js: the trailing `$` makes the alias exact
+// resolve: { alias: { '@ifc-lite/wasm$': '@ifc-lite/wasm/core' } }
+```
+
+A page that passes explicit `wasmUrls: { wasm }` (see the geometry README's
+Vite setup) must point that URL at the core binary too, for example
+`ENGINE_BINARY_URL.href` imported from `@ifc-lite/wasm/core`: an explicit URL
+wins over the glue's own,
+and the alias does not rewrite the `ifc-lite_bg.wasm` subpath. Match the bare
+specifier only: `@ifc-lite/wasm/diff` and the other subpaths
+must keep resolving to themselves. The core engine is typed with the full engine's
+TypeScript declarations, so a method from a left-out family still type-checks
+but throws `TypeError: … is not a function` at run time
+(`exportGlb`, `exportStep`, the LandXML, clash, scan-segmentation and PDF
+methods, and the `GeometryProcessor` exports built on them). It is a
+bundler-only option: Node (`IfcLiteBridge` reading the binary from disk)
+always loads the full engine. The full binary is still emitted by the
+bundler as an unreferenced asset, because `@ifc-lite/geometry` names it
+statically, but no page fetches it.
+
 ### Memory-Efficient Processing
 
 Use streaming for large files:
@@ -891,7 +939,7 @@ const { meshes, csgFailures } = await client.remesh({
 client.dispose(); // terminates the worker; in-flight requests reject
 ```
 
-`client.styleWire(sourceBytes)` runs one whole-file pre-pass in the worker and returns that style wire, for a model whose load did not keep one; the viewer captures it once per model. A client whose worker fails or does not answer within `requestTimeoutMs` (default 30 s) is dead: `alive` turns false, requests still in flight and any later ones reject at once, and the caller creates a new client.
+`client.styleWire(sourceBytes)` runs one whole-file pre-pass in the worker and returns that style wire, for a model whose load did not keep one; the viewer captures it once per model. A client whose worker fails or does not answer within `requestTimeoutMs` (default 30 s) is dead: `alive` turns false, requests still in flight and any later ones reject at once, and the caller creates a new client. `RemeshClient.create` has its own deadline, `startTimeoutMs` (default 120 s, covering the wasm fetch and compile): a worker that does not report its engine ready in time, or fails while starting, rejects `create` and is terminated. Both timeouts are clamped to 2^31-1 ms (the most `setTimeout` honours), and `0`, a negative number, `NaN` or `Infinity` means no deadline. A request whose message cannot be posted (for example a `DataCloneError`) rejects on its own and leaves the client alive.
 
 The meshes come back in the same frame and units as the load, so they can replace the element's load-time meshes directly. `scripts/lib/wasm-remesh-contracts.mjs` pins this. For each wall of several fixtures, including one with an RTC shift, it re-meshes the wall from its subgraph and checks the positions, indices, colours and origins against meshing the whole file.
 
@@ -918,18 +966,16 @@ The separate opt-in WASM `pkg-retained` bundle exposes
 returned meshes. An empty ID filter selects no jobs. Orphan type products follow
 product occurrences, once per type, with all unreferenced maps processed atomically
 at their MappingOrigin. Instanced types, types with only curve maps that exact does not mesh,
-and jobs without representations are skipped. Published orphan types leave
-MaterialLayers unmet.
+and jobs without representations are skipped. Published orphan types discharge all applicable obligations.
 
 Published outcomes contain `expressId`, `ifcType`, and atomic `parts` with f64
 object-local metre positions, u32 indices, and column-major `worldFromObject`
-matrices into IFC Z-up world metres. Consumers must show the
-`PresentationObligationsUnmet` marker and its `obligationsUnmet` list, which for
-every published product is exactly `['MaterialLayers']`: material layers are not yet
-delivered. `OpeningClosure` (openings are cut or the product is plan-proven unvoided),
-`PersistentFaces` (each part's faces carry source keys), `SurfaceNormals` (per-corner
-normals) and `IfcAppearance` (each part's colour comes from the exact engine's own
-colour resolver) are discharged. Refused outcomes carry
+matrices into IFC Z-up world metres. Consumers show `final` for a product with empty
+`obligationsUnmet`, and `PresentationObligationsUnmet` (shape-only) with its nonempty list
+otherwise. M4 completes material layers (including source-proven skips); M11 completes
+appearance, persistent faces and surface normals. Each band resolves its own material’s
+appearance through exact’s resolver. A model may contain final published products alongside
+refused products; its coverage remains explicit. Refused outcomes carry
 an ID, typed code and optional origin, with no partial product or exact fallback.
 See the [WASM package contract](https://github.com/LTplus-AG/ifc-lite/blob/main/packages/wasm/README.md#experimental-retained-whole-model-engine)
 for lifecycle, transport and result details. The default engine is unchanged.
@@ -941,5 +987,84 @@ frame, then atomic `published` mesh collections or typed `refused` events.
 Extract and free each collection and its mesh handles in `finally` blocks.
 Use `detail: 'shape'` for the M1 f64 shape parts. A session reuses its qualified
 worker across runs; free the session when finished, or terminate the host Worker
-to cancel immediately. Consumers must continue to show the shape-only marker.
+to cancel immediately. Consumers show each product’s final or shape-only presentation state.
 
+
+## Pipeline refusal diagnostics
+
+`IfcAPI.getPipelineDiagnostics()` returns a versioned object after a browser
+geometry batch has run or a prepass has recorded a refusal. The additive
+schema version 1 field `refusedInputElements` counts
+attempted jobs whose own input decode or geometry reads refused a record.
+A second attempt counts again; a valid neighbour after a refusal does not.
+`refusedPrepassRecords` counts distinct refused record IDs observed in prepass
+or batch resolution on that worker. Plain syntax/decode failures are excluded,
+matching native admission-refusal semantics. Repeated reads and batches do not add the same
+record twice. These counters are separate from owned-producer refusal warnings
+and CSG failure diagnostics. They do not change which geometry is emitted.
+
+`omittedTypeRecords` (#8341) makes a different loss countable: a type product
+whose RepresentationMaps the scan can read, but whose own record the full
+decoder rejects (a syntax error in another attribute), cannot be meshed, so its
+type geometry is left out of the plan. It counts distinct records whose plan
+had at least one map to draw in that pipeline's type mode, once per load
+however many maps or re-reads. Type records are exempt from input admission,
+so these are plain decode failures and never appear in the refusal counters.
+Native drops the same records before scheduling and reports their ids, once,
+through `ProcessingSink::on_omitted_type_records`; `from_processing_stats`
+cannot see them and leaves the report field at 0.
+
+The counts are per `IfcAPI`, not a deduplicated model-wide sum over workers.
+They survive `clearPrePassCache()` for inspection after a load, and reset on
+load start (`buildPrePassOnce`, streaming prepass, `setEntityIndex`, or
+`setSourceBytes`). Before any batch, refusal or omitted type record, the getter returns `undefined`.
+
+Rust callers can use
+`ifc_lite_processing::pipeline_diagnostics::PipelineDiagnosticsReport` via
+`Default` or `from_processing_stats`. It contains the original counters/timings,
+the two refusal counters and `omitted_type_records`, serialized as one flat object. The published
+`PipelineDiagnostics` v1 struct and its constructor remain available unchanged;
+the new report is non-exhaustive so future counters can be added without
+breaking struct literals. Inspection of the published `ifc-lite-processing`
+27.0.0 crate confirmed that directly adding fields or `#[non_exhaustive]` to
+that existing v1 struct would break Rust callers.
+
+Browser BREP signatures are cached only within one source epoch. Installing an
+index or source, starting a prepass, or clearing derived caches discards them.
+Tessellation, scheduling, template selection and instancing policy still use
+the existing batch decisions. Native material-layer index construction remains
+gated by the explicit `ProcessingRequest.layer_slicing` opt-in; the default
+native pass does not build the index or slice layers.
+
+## Gross host geometry
+
+To mesh hosts without subtracting their `IfcRelVoidsElement` openings, set
+`skipVoids` when constructing the processor (discussion #8586):
+
+```typescript
+import { GeometryProcessor } from '@ifc-lite/geometry';
+
+const geometry = new GeometryProcessor({
+  skipVoids: true,
+  preferNative: false,
+  enableInstancing: false, // Deliver all geometry through event.meshes.
+});
+await geometry.init();
+for await (const event of geometry.processAdaptive(new Uint8Array(buffer))) {
+  if (event.type === 'batch') console.log(event.meshes);
+}
+```
+
+The default is `false` (net geometry). This setting applies to `process`,
+`processStreaming`, and `processAdaptive`, including worker pools and recovered
+workers. It preserves door/window meshes, styles, and booleans authored inside
+the host representation. It cannot fill holes already authored into a profile,
+BRep or tessellation. It changes geometry generation, not previously emitted
+meshes; switching an existing scene requires generating and replacing meshes.
+
+Direct WASM consumers can call `IfcAPI.setSkipVoids(true)` before batching.
+An older WASM bundle without this method rejects an enabled option explicitly.
+Third-party Tauri bridges do not expose this contract; select WASM with
+`preferNative: false`. Native Rust consumers use
+`ProcessingRequest::full_pass().skip_voids(true)` with the shared `process` API.
+This is independent of `OpeningFilterMode`, which also controls filling visibility.

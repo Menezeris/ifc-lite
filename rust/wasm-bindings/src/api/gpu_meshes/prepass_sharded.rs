@@ -41,12 +41,14 @@ pub(super) fn stream_meta_unit_scale(meta: &ifc_lite_processing::stream_meta::St
 
 /// Serialize the shared [`StreamMeta`] onto a JS object as the wire fields the
 /// host reads: `unitScale`, `planeAngleToRadians`, `rtcOffset` (`[x,y,z]`),
-/// `needsShift`, `buildingRotation` (`null` when absent). Used by both the
+/// `needsShift`, `buildingRotation` and `siteOrigin` (`[x,y,z]` metres; both
+/// `null` when absent). Used by both the
 /// `buildPrePassOnce` result object and the streaming `meta` events so all
 /// three emission points serialize identically.
 pub(super) fn set_stream_meta_props(
     obj: &js_sys::Object,
     meta: &ifc_lite_processing::stream_meta::StreamMeta,
+    site_origin: Option<[f64; 3]>,
 ) {
     // `unitRefused` says why a NaN `unitScale` was sent.
     crate::api::set_js_prop(obj, "unitScale", &stream_meta_unit_scale(meta).into());
@@ -62,6 +64,14 @@ pub(super) fn set_stream_meta_props(
     match meta.building_rotation {
         Some(rot) => crate::api::set_js_prop(obj, "buildingRotation", &rot.into()),
         None => crate::api::set_js_prop(obj, "buildingRotation", &JsValue::NULL),
+    };
+    match site_origin {
+        Some(origin) => {
+            let arr = js_sys::Float64Array::new_with_length(3);
+            arr.copy_from(&origin);
+            crate::api::set_js_prop(obj, "siteOrigin", &arr)
+        }
+        None => crate::api::set_js_prop(obj, "siteOrigin", &JsValue::NULL),
     };
 }
 
@@ -175,8 +185,7 @@ impl IfcAPI {
     pub fn resolve_styled_items_shard(&self, data: &[u8], spans: &[u32]) -> Result<JsValue, JsValue> {
         use ifc_lite_core::EntityDecoder;
         let index = {
-            let slot = self
-                .cached_entity_index
+            let slot = self.content.cached_entity_index
                 .lock()
                 .unwrap_or_else(std::sync::PoisonError::into_inner);
             slot.clone()
@@ -207,6 +216,7 @@ impl IfcAPI {
         // first-wins colour merge picks each id's finish from the same slice.
         let finishes = ifc_lite_processing::prepass::resolve_geometry_finishes(&styled, &mut decoder);
 
+        self.collect_pipeline_refusals(&decoder);
         let orphan_ids = js_sys::Uint32Array::new_with_length(orphan.len() as u32);
         let orphan_colors = js_sys::Float32Array::new_with_length((orphan.len() * 4) as u32);
         for (i, (&id, color)) in orphan.iter().enumerate() {
@@ -287,8 +297,7 @@ impl IfcAPI {
             defines_by_type: Vec::new(),
         };
         let index = {
-            let slot = self
-                .cached_entity_index
+            let slot = self.content.cached_entity_index
                 .lock()
                 .unwrap_or_else(std::sync::PoisonError::into_inner);
             slot.clone()
@@ -332,6 +341,7 @@ impl IfcAPI {
             geom_finishes.get(&id).copied()
         });
 
+        self.collect_pipeline_refusals(&decoder);
         Ok(styles_payload_with_flat((style_ids, style_colors, style_finishes), &resolved).into())
     }
 }

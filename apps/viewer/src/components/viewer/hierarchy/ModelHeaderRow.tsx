@@ -10,6 +10,8 @@
  * dispatches to this component for `model-header` nodes.
  */
 
+import { isFeatureEnabled } from '@/lib/features';
+import { PositionedDownload } from '../PositionedDownload';
 import { Move3D, ChevronRight, Eye, EyeOff, FileBox, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { openRepositionModels } from '@/lib/model-placement/commands';
@@ -118,12 +120,13 @@ export function ModelHeaderRow({
             {formatLocaleNumber(locale, node.elementCount)}
           </span>
         )}
+        <PositionedDownload modelId={modelId} />
         <ModelRowTags modelId={modelId} modelName={node.name} />
         {/* >>> AIM-FORK: AIM model revision (D-089) */}
         <AimModelRevision modelName={node.name} />
         {/* <<< AIM-FORK */}
 
-        <button
+        {isFeatureEnabled('edit.placement') && <button
           // 14px icon, `p-[5px]` a side: 14 + 2*5 = 24, the WCAG 2.2 2.5.8
           // minimum with no headroom to spare — these buttons sit `gap-1`
           // (4px) apart, so a bigger hit area (via padding or slop) would
@@ -134,7 +137,7 @@ export function ModelHeaderRow({
           onClick={(event) => { event.stopPropagation(); openRepositionModels([modelId]); }}
         >
           <Move3D className="h-3.5 w-3.5" />
-        </button>
+        </button>}
         <Tooltip>
           <TooltipTrigger asChild>
             <button

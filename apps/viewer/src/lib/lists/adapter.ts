@@ -278,10 +278,16 @@ export function createListDataProvider(
     getProjectName(): string {
       return ancestry().projectName;
     },
+<<<<<<< HEAD
     ...relationNameHooks(store), getHostValue: (entityId, key) => hostColumnValue(key, store.entities.getGlobalId(entityId)), // >>> AIM-FORK (#277, D-174): spatial levels Referenced / Boundary, `host` column <<< AIM-FORK
     getModelName(): string {
       return modelName;
     },
+=======
+
+    getModelName: () => modelName,
+    getTriangleCount: (id) => zoneContext?.getTriangleCount?.(id) ?? null,
+>>>>>>> upstream/main
     getWorldPosition: (id) => zoneContext?.getWorldPosition?.(id) ?? null,
 
     discoverAllColumns(): DiscoveredColumns {

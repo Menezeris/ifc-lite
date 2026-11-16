@@ -21,7 +21,8 @@
  *     generic STEP token, and worth reading on its own.
  */
 
-import { serializeValue, SCHEMA_REGISTRY, type IfcAttributeValue, type SchemaRegistry } from '@ifc-lite/parser';
+import { serializeValue, type IfcAttributeValue, type SchemaRegistry } from '@ifc-lite/parser';
+import { ifc4Registry } from './ifc4-registry.js';
 import { QuantityType, formatStepReal, escapeStepString, isCompleteStepNumericLiteral } from '@ifc-lite/data';
 
 /**
@@ -37,15 +38,39 @@ export { escapeStepString };
 /** EXPRESS base primitives a defined type ultimately resolves to. */
 const EXPRESS_PRIMITIVES = new Set(['BOOLEAN', 'LOGICAL', 'INTEGER', 'REAL', 'NUMBER', 'STRING', 'BINARY']);
 
+/** Per-registry `IFC…` token → registry key, for {@link canonicalTypeName}. */
+const TYPE_KEYS_BY_TOKEN = new WeakMap<SchemaRegistry['types'], Map<string, string>>();
+
+/**
+ * The registry key a type name spells, matched the way the written token is:
+ * `IFCLENGTHMEASURE`, `LengthMeasure` and `IfcLengthMeasure` all write
+ * `IFCLENGTHMEASURE`, so all resolve to `IfcLengthMeasure`. A `Map`, not an
+ * object, so no inherited name can match. A caller's registry may gain a type
+ * after the first lookup, so a miss rebuilds the map before giving up.
+ */
+function canonicalTypeName(typeName: string, types: SchemaRegistry['types']): string {
+  if (Object.prototype.hasOwnProperty.call(types, typeName)) return typeName;
+  let token = typeName.toUpperCase();
+  if (!token.startsWith('IFC')) token = `IFC${token}`;
+  let key = TYPE_KEYS_BY_TOKEN.get(types)?.get(token);
+  if (key === undefined) {
+    const keys = new Map(Object.keys(types).map((k) => [k.toUpperCase(), k]));
+    TYPE_KEYS_BY_TOKEN.set(types, keys);
+    key = keys.get(token);
+  }
+  return key ?? typeName;
+}
+
 /**
  * Resolve an IFC defined type (`IfcLengthMeasure`, `IfcPositiveLengthMeasure`,
  * `IfcBoolean`, …) to its underlying EXPRESS primitive (`REAL`, `BOOLEAN`, …)
  * by walking the schema registry's `types` alias chain. Returns `null` for a
  * type the registry doesn't know or one that bottoms out in an entity/select.
- * `registry` defaults to the parser's IFC4 pin.
+ * The name is matched case-insensitively, with the `Ifc` prefix optional
+ * (#8312). `registry` defaults to the parser's IFC4 pin.
  */
-export function resolveExpressBase(typeName: string, registry: SchemaRegistry = SCHEMA_REGISTRY): string | null {
-  let cursor: string | undefined = typeName;
+export function resolveExpressBase(typeName: string, registry: SchemaRegistry = ifc4Registry()): string | null {
+  let cursor: string | undefined = canonicalTypeName(typeName, registry.types);
   const seen = new Set<string>();
   while (cursor && !seen.has(cursor)) {
     seen.add(cursor);
@@ -124,7 +149,7 @@ function serializeInnerByBase(value: string | number | boolean, base: string | n
  * `IFCLENGTHMEASURE(3.)`). `type` is the IFC type name (`'IfcBoolean'`); the
  * inner value is serialized to match that type's underlying primitive.
  */
-export function serializeTypedMarker(type: string, value: string | number | boolean): string {
+export function serializeTypedMarker(type: string, value: string | number | boolean | number[]): string {
   let token = type.toUpperCase();
   if (!token.startsWith('IFC')) token = `IFC${token}`;
   // The token is written bare, outside any string quotes: a `(`, `;` or newline
@@ -132,6 +157,15 @@ export function serializeTypedMarker(type: string, value: string | number | bool
   // records into DATA (the class-name guard of EXPORT-STEP-26).
   if (!/^IFC[A-Z][A-Z0-9_]*$/.test(token)) {
     throw new Error(`Cannot write ${JSON.stringify(type)} as a STEP type name: it is not an IFC identifier`);
+  }
+  if (Array.isArray(value)) {
+    // IFC4 indexed segments are defined aggregate SELECT members (#8447).
+    const validLength = token === 'IFCLINEINDEX' ? value.length >= 2
+      : token === 'IFCARCINDEX' && value.length === 3;
+    if (!validLength || !value.every((index) => Number.isSafeInteger(index) && index > 0)) {
+      throw new Error(`Cannot write ${token}: expected positive integer segment indices`);
+    }
+    return `${token}((${value.join(',')}))`;
   }
   return `${token}(${serializeInnerByBase(value, resolveExpressBase(type))})`;
 }
@@ -202,6 +236,22 @@ export function tokenIsRealLiteral(token: string): boolean {
  * Serialize a root attribute value for STEP, inferring the format from the
  * existing token (enum, boolean, number, string, etc.).
  */
+/**
+ * A named-edit value the georeferencing writer has decided is TEXT, whatever it looks like (`$`, `*`, `#12`). It is a
+ * distinct object, not a spelling inside a string: no user string can be one, and no string is ever inspected for a
+ * prefix to tell.
+ */
+export class TextEditValue extends String {}
+
+/**
+ * A CRS text value as an in-place edit: text is text (`$`, `*`, `#12` stay quoted strings, as on the create path)
+ * and only an empty value clears the slot, with the `$` token the create path writes for it.
+ */
+export function textEdit(value: unknown): string {
+  const text = String(value);
+  return text === '' ? '$' : (new TextEditValue(text) as unknown as string);
+}
+
 export function serializeAttributeValue(value: string, currentToken: string): string {
   const trimmed = value.trim();
   const current = currentToken.trim();
@@ -277,6 +327,7 @@ export function serializeStepValue(value: IfcAttributeValue, forceReal = false):
  * `LIST [1:3] OF IfcLengthMeasure` (#5217). That case throws.
  */
 function serializeStepValueAt(value: IfcAttributeValue, forceReal: boolean, inList: boolean): string {
+  if (value && typeof value === 'object' && 'literal' in value) return serializeValue(value);
   if (value === null || value === undefined) return '$';
   if (typeof value === 'boolean') return value ? '.T.' : '.F.';
   if (typeof value === 'number') {

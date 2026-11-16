@@ -65,8 +65,8 @@ fn product_plan(source: &Arc<SourceBundle>, id: u32) -> RetainedProductPlan {
     program.finish().unwrap()
 }
 fn hand_part() -> ShapePart {
-    ShapePart { positions: Vec::new(), indices: Vec::new(), world_from_object: [0.; 16], curved: false, halfspace_clipped: false,
-        revision_local_faces: Vec::new(), normals: None, appearance: None, faces: None, instance_key: None }
+    ShapePart { layer: None, capped_volume_m3: None, positions: Vec::new(), indices: Vec::new(), world_from_object: [0.; 16], curved: false, halfspace_clipped: false,
+        revision_local_faces: Vec::new(), normals: None, appearance: None, faces: None, instance_key: None, source_exact: false, surface: None }
 }
 const WALL: &str = "#14=IFCWALL('w',$,'Wall',$,$,#7,#13,$,$);";
 /// Two unstyled items, materials [glass(alpha .35), frame(opaque)].
@@ -113,30 +113,34 @@ fn assert_unsupported(error: RetainedExecutionError, entity: u32, cause: &str) {
     assert_eq!((origin.site, origin.entity, origin.cause), ("appearance", Some(entity), cause));
 }
 #[test]
-fn m11_a_textures_and_indexed_palettes_refuse_as_explicit_absence() {
-    // Both arise only on IfcTessellatedFaceSet, which retained refuses upstream (census: 0/131
-    // committed, 0/94,567 heavy-eligible). A binding that still carries one never gets plain colour.
+fn issue_8291_texture_and_palette_bindings_stay_flagged_for_the_surface_slice() {
     let mut texture = fact(7);
     texture.texture_pending = true;
-    assert_unsupported(resolve(&[bound(texture)]).unwrap_err(), 7, "texture_pending");
+    let parts = resolve(&[bound(texture)]).unwrap();
+    assert!(parts[0].texture_pending && !parts[0].palette_pending);
     let mut palette = fact(8);
     palette.indexed_palette_pending = true;
-    assert_unsupported(resolve(&[bound(fact(7)), bound(palette)]).unwrap_err(), 8, "indexed_palette_pending");
+    let parts = resolve(&[bound(fact(7)), bound(palette)]).unwrap();
+    assert!(!parts[0].palette_pending && parts[1].palette_pending);
 }
 #[test]
-fn m11_a_band_parts_keyed_by_material_refuse_until_layers_land() {
+fn m4_band_without_a_material_style_uses_exact_fallback_and_material_identity() {
     let band = Bound { source: PartSource::Material(31), ..bound(fact(31)) };
-    assert_unsupported(resolve(&[band]).unwrap_err(), 31, "material_band");
+    let parts = resolve(&[band]).unwrap();
+    near(parts[0].rgba, [0.85, 0.85, 0.85, 1.]);
+    assert_eq!(parts[0].geometry_item_id, None);
+    assert_eq!(parts[0].material_id, Some(31));
+    assert_eq!(parts[0].material_name, None);
 }
 #[test]
 fn m11_a_a_part_count_that_differs_from_the_plan_refuses() {
     let source = source("#10", WALL);
     let plan = product_plan(&source, 14);
-    let mut product = ShapeOnlyProduct { cuts: 0, consumed_parts: 0, cut_times_ms: Vec::new(), normal_planar_fallbacks: 0, product_id: 14,
+    let mut product = ShapeOnlyProduct { band_ms: 0., cap_ms: 0., max_snap_metres: 0., cuts: 0, consumed_parts: 0, cut_times_ms: Vec::new(), normal_planar_fallbacks: 0, product_id: 14,
         ifc_type: IfcType::IfcWall, parts: vec![hand_part(), hand_part()],
         obligations: PresentationObligationsUnmet(vec![Requirement::IfcAppearance]), _storage: Storage::default() };
     let model = snapshot(&source);
-    let error = apply(&mut product, &Context { plan: &plan, model: &model, resources: &OwnedResourceContext::capture_current(),
+    let error = apply(&mut product, &Context { layer_class: 0, plan: &plan, model: &model, resources: &OwnedResourceContext::capture_current(),
         element_color: [0.; 4], faces: &[], chord_metres: 0.001, angle_degrees: 5. }).unwrap_err();
     assert_unsupported(error, 14, "binding");
 }
@@ -147,7 +151,7 @@ fn m11_a_binding_selection_prefers_the_type_binding_and_keeps_every_pending_flag
     let typed = PresentationFacts { type_product: Some((60, 1)), representation_map: Some(61), ..fact(60) };
     let Bound { source, fact: chosen, .. } = bind(&[item, typed]).unwrap();
     assert_eq!((source, chosen.type_product, chosen.texture_pending), (PartSource::Item(60), Some((60, 1)), true));
-    assert_unsupported(resolve(&[Bound { source, fact: chosen, occurrences: Vec::new() }]).unwrap_err(), 60, "texture_pending");
+    assert!(resolve(&[Bound { source, fact: chosen, occurrences: Vec::new() }]).unwrap()[0].texture_pending);
     assert_eq!(bind(&[]).unwrap().source, PartSource::Unbound);
 }
 #[test]
@@ -196,4 +200,49 @@ fn m11_a_one_leaf_under_two_occurrences_is_two_sub_meshes_and_two_cursor_steps()
     near([alphas[0], alphas[1], alphas[2], alphas[3]], [0.35, 0.35, 1., 0.35]);
     near([alphas[4], 0., 0., 0.], [1., 0., 0., 0.]);
     assert!(resolved.iter().all(|part| part.geometry_item_id == Some(10)));
+}
+
+// #7955 / PR #8324: material-key styling must retain exact's fallback cursor.
+#[test]
+fn m4_band_appearance_missing_style_matches_exact_bits_and_names() {
+    let text = include_str!("../../../../../../tests/fixtures/synthetic-retained/m4-band-appearance.ifc");
+    let source = SourceBundle::new(text.as_bytes().to_vec());
+    let mut decoder = source.decoder();
+    let mut spans = PrepassSpans::default();
+    let mut scanner = EntityScanner::new(source.bytes());
+    while let Some((id, name, start, end)) = scanner.next_entity() { spans.stash(name, id, start, end); }
+    let mut resolved = resolve_prepass(&spans, &mut decoder, Default::default());
+    super::super::material_styles::join(&mut resolved, &mut decoder);
+    let model = ProductionModel::from_source(source.clone()).snapshot(OwnedMeshProductionData {
+        geometry_style_index: Arc::new(resolved.geometry_style_index),
+        element_material_colors: Arc::new(resolved.element_material_colors),
+        ..Default::default()
+    });
+    let entity = decoder.decode_by_id(22).unwrap();
+    let job = ElementMeshJob { id: 22, ifc_type: IfcType::IfcWall, entity: &entity,
+        kind: ElementJobKind::Product, element_color: None, metadata: None };
+    let parts = [23, 31, 33].map(|id| Bound { source: PartSource::Material(id), ..bound(fact(id)) });
+    let appearances = resolve_parts(&AssemblyJob::from(&job), &parts, [0.8, 0.2, 0.1, 1.],
+        &model.borrowed(), &mut decoder).unwrap();
+    let mut router = GeometryRouter::with_units(source.bytes(), &mut decoder);
+    decoder.seed_unit_scales(router.unit_scale(), 1.);
+    router.set_material_layer_index(Arc::new(ifc_lite_geometry::MaterialLayerIndex::from_content(
+        source.bytes(), &mut decoder)));
+    let exact = crate::element::produce_element_meshes(&job, &model.borrowed(), &Default::default(), &mut decoder, &router);
+    let meshes: Vec<_> = exact.meshes.iter().filter(|mesh| mesh.express_id == 22).collect();
+    assert_eq!(meshes.len(), 3, "exact must slice all three material bands");
+    for appearance in &appearances {
+        let mesh = meshes.iter().find(|mesh| mesh.material_id == appearance.material_id).unwrap();
+        assert_eq!(appearance.rgba.map(f32::to_bits), mesh.color.map(f32::to_bits),
+            "material {:?}", appearance.material_id);
+        assert_eq!(appearance.material_name, mesh.material_name);
+    }
+    near(appearances[1].rgba, [0.1, 0.2, 0.8, 0.75]);
+    assert_eq!(appearances[1].material_name, None);
+    // Missing-style parts consume successive entries; styled keys consume none.
+    let parts = [23, 31, 33, 31].map(|id| Bound { source: PartSource::Material(id), ..bound(fact(id)) });
+    let appearances = resolve_parts(&AssemblyJob::from(&job), &parts, [0.8, 0.2, 0.1, 1.],
+        &model.borrowed(), &mut decoder).unwrap();
+    near(appearances[1].rgba, [0.1, 0.2, 0.8, 0.75]);
+    near(appearances[3].rgba, [0.8, 0.2, 0.1, 1.]);
 }

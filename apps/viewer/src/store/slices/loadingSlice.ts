@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+import { loadIfcSharedVerticalDatum, saveIfcSharedVerticalDatum } from './ifcGeorefAssumptionSettings.js';
 import { clearLoadReport } from '../../lib/error-reports/context';
 /**
  * Loading state slice
@@ -26,6 +27,8 @@ export interface LoadingSlice {
   geometryProgress: { phase: string; percent: number; indeterminate?: boolean } | null;
   metadataProgress: { phase: string; percent: number; indeterminate?: boolean } | null;
   error: string | null;
+  /** Monotonic identity for stale error actions (#8947); never reset. */
+  loadErrorSeq: number;
   /**
    * Cancellation hook for an in-flight long-running operation (e.g.
    * streaming a 100M-point scan). UI components can show a Cancel
@@ -84,6 +87,8 @@ export interface LoadingSlice {
    * reset leaves it alone. Default: all off.
    */
   landXmlGeorefAssumptionSettings: LandXmlGeorefAssumptions;
+  /** Explicit IFC height-system assumption; persists across session resets. Default off. */
+  ifcSharedVerticalDatum: boolean;
   /**
    * Re-runs the load that most recently set `error` (#5851), same File,
    * URL, or buffers, through the same call. Set ONLY by
@@ -110,6 +115,7 @@ export interface LoadingSlice {
   setLandXmlUnitsRefusal: (value: LoadingSlice['landXmlUnitsRefusal']) => void;
   setLandXmlAssumptionRefusal: (value: LandXmlAssumptionRefusal | null) => void;
   setLandXmlGeorefAssumptionSettings: (partial: Partial<LandXmlGeorefAssumptions>) => void;
+  setIfcSharedVerticalDatum: (enabled: boolean) => void;
   setLastLoadRetry: (retry: (() => void) | null) => void;
 }
 
@@ -121,6 +127,7 @@ export const createLoadingSlice: StateCreator<LoadingSlice, [], [], LoadingSlice
   geometryProgress: null,
   metadataProgress: null,
   error: null,
+  loadErrorSeq: 0,
   activeStreamCanceller: null,
   activeLoadCanceller: null,
   loadCancelSeq: 0,
@@ -128,6 +135,7 @@ export const createLoadingSlice: StateCreator<LoadingSlice, [], [], LoadingSlice
   landXmlUnitsRefusal: null,
   landXmlAssumptionRefusal: null,
   landXmlGeorefAssumptionSettings: loadLandXmlGeorefAssumptionSettings(),
+  ifcSharedVerticalDatum: loadIfcSharedVerticalDatum(),
   lastLoadRetry: null,
 
   // Actions
@@ -142,7 +150,8 @@ export const createLoadingSlice: StateCreator<LoadingSlice, [], [], LoadingSlice
   // survive its error and attach itself to whatever sets a new one next.
   setError: (error) => {
     if (error === null) clearLoadReport();
-    set(error === null ? { error, lastLoadRetry: null } : { error });
+    set((state) => ({ error, loadErrorSeq: state.loadErrorSeq + 1,
+      ...(error === null ? { lastLoadRetry: null } : {}) }));
   },
   setActiveStreamCanceller: (activeStreamCanceller) => set({ activeStreamCanceller }),
   setActiveLoadCanceller: (activeLoadCanceller) => set({ activeLoadCanceller }),
@@ -155,6 +164,10 @@ export const createLoadingSlice: StateCreator<LoadingSlice, [], [], LoadingSlice
     saveLandXmlGeorefAssumptionSettings(next);
     return { landXmlGeorefAssumptionSettings: next };
   }),
+  setIfcSharedVerticalDatum: (enabled) => {
+    saveIfcSharedVerticalDatum(enabled);
+    set({ ifcSharedVerticalDatum: enabled });
+  },
   setLastLoadRetry: (lastLoadRetry) => set({ lastLoadRetry }),
 });
 

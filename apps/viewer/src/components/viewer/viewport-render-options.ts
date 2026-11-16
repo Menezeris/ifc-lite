@@ -10,9 +10,14 @@ import { preserveClashPaintInSelection } from '@/lib/clash/renderer-selection';
 import { sectionRenderClip } from '@/lib/section/section-render-clip';
 import { sectionCapHighlight } from '@/lib/section/cap-highlight';
 import { hoverOutlineTarget } from './useHoverOutline';
+<<<<<<< HEAD
 // >>> AIM-FORK: drawing-view storey cut (D-072)
 import { underlayCutClip } from '@/aim/underlayCut';
 // <<< AIM-FORK
+=======
+import { isGeometryHeld } from '@/lib/pick-gating';
+import { viewportSelection } from './heldSelection.js';
+>>>>>>> upstream/main
 
 /** One option builder for ordinary frames and owned captures (#6709). */
 export function viewportRenderOptions(
@@ -25,11 +30,13 @@ export function viewportRenderOptions(
     p.clashHighlightColorsRef.current, colors,
   );
   const state = useViewerStore.getState();
+  const held = isGeometryHeld(state);
+  const visibleSelection = viewportSelection(state, selection.selectedId, selection.selectedIds);
   return {
     hiddenIds: p.hiddenEntitiesRef.current,
     isolatedIds: p.isolatedEntitiesRef.current,
     ghostExceptIds: p.ghostExceptEntitiesRef.current,
-    selectedId: selection.selectedId, selectedIds: selection.selectedIds,
+    selectedId: visibleSelection.selectedId, selectedIds: visibleSelection.selectedIds,
     emphasizeOverrides: (p.clashHighlightColorsRef.current?.size ?? 0) > 0,
     selectedModelIndex: p.selectedModelIndexRef.current,
     clearColor: p.clearColorRef.current,
@@ -44,7 +51,7 @@ export function viewportRenderOptions(
     ...underlayCutClip(p.underlayCutRef?.current ?? null, renderer.getModelBounds()),
     // <<< AIM-FORK
     ...hoverOutlineTarget(),
-    capHighlight: sectionCapHighlight(state, selection.selectedId, selection.selectedIds, p.selectedModelIndexRef.current),
+    capHighlight: held ? null : sectionCapHighlight(state, selection.selectedId, selection.selectedIds, p.selectedModelIndexRef.current),
     terrainClipY: p.terrainClipYRef.current ?? undefined,
   };
 }

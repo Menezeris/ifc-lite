@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import { describe, expect, it } from 'vitest';
-import { PropertyValueType } from '@ifc-lite/data';
+import { PropertyValueType, stepString, serializeValue } from '@ifc-lite/data';
 import {
   serializeAttributeValue,
   serializeStepValue,
@@ -14,8 +14,18 @@ import {
   toStepInteger,
   escapeStepString,
 } from './step-serialization.js';
+import { SCHEMA_REGISTRY } from '@ifc-lite/parser';
 import { serializePropertyValue } from './property-value-serialization.js';
 import { toStepRealScaled } from './unit-normalize.js';
+
+describe('literal authoring strings (#9876)', () => {
+  it.each(['$', '*', '#42', '.AREA.', "O'Brien"])('preserves %j without changing intentional markers', value => {
+    expect(serializeStepValue(stepString(value))).toBe(serializeValue(stepString(value)));
+    expect(serializeStepValue([stepString(value)])).toBe(`(${serializeValue(stepString(value))})`);
+    expect(serializeStepValue('$')).toBe('$');
+    expect(serializeStepValue('*')).toBe('*');
+  });
+});
 
 describe('resolveExpressBase', () => {
   it('resolves defined types to their EXPRESS primitive, following alias chains', () => {
@@ -261,5 +271,46 @@ describe('serializeTypedMarker type-name guard', () => {
       expect(() => serializeTypedMarker(bad, 'x')).toThrow(/not an IFC identifier/);
     }
     expect(serializeTypedMarker('IfcLabel', 'x')).toBe("IFCLABEL('x')");
+  });
+});
+
+describe('defined-type base lookup ignores spelling (#8312)', () => {
+  it('resolves upper-case and prefix-less names to the same base', () => {
+    for (const name of ['IfcLengthMeasure', 'IFCLENGTHMEASURE', 'ifclengthmeasure', 'LengthMeasure', 'LENGTHMEASURE']) {
+      expect(resolveExpressBase(name)).toBe('REAL');
+    }
+    expect(resolveExpressBase('IFCPOSITIVELENGTHMEASURE')).toBe('REAL');
+    expect(resolveExpressBase('IFCNOSUCHTYPE')).toBeNull();
+    expect(resolveExpressBase('CONSTRUCTOR')).toBeNull();
+  });
+
+  it('sees a type added to a registry after an earlier lookup', () => {
+    const registry = { ...SCHEMA_REGISTRY, types: { ...SCHEMA_REGISTRY.types } };
+    expect(resolveExpressBase('IFCCUSTOMMEASURE', registry)).toBeNull();
+    registry.types.IfcCustomMeasure = 'REAL';
+    expect(resolveExpressBase('IFCCUSTOMMEASURE', registry)).toBe('REAL');
+  });
+
+  it('encodes the inner value from the base, not the JSON shape', () => {
+    for (const name of ['IfcLengthMeasure', 'IFCLENGTHMEASURE', 'LengthMeasure']) {
+      expect(serializeTypedMarker(name, 3)).toBe('IFCLENGTHMEASURE(3.)');
+    }
+    expect(serializeTypedMarker('LABEL', 42)).toBe("IFCLABEL('42')");
+    expect(serializeTypedMarker('ifcboolean', 'false')).toBe('IFCBOOLEAN(.F.)');
+    expect(serializeTypedMarker('COUNTMEASURE', 3)).toBe('IFCCOUNTMEASURE(3.)');
+  });
+});
+
+// #8447: indexed-polycurve segments must keep their defined aggregate type.
+describe('typed indexed segments', () => {
+  it('writes line and arc indices without converting integers into references', () => {
+    expect(serializeTypedMarker('IfcLineIndex', [1, 2, 3])).toBe('IFCLINEINDEX((1,2,3))');
+    expect(serializeTypedMarker('IfcArcIndex', [2, 3, 4])).toBe('IFCARCINDEX((2,3,4))');
+  });
+  it('refuses invalid segment aggregates instead of emitting malformed STEP', () => {
+    expect(() => serializeTypedMarker('IfcArcIndex', [1, 2])).toThrow(/segment indices/);
+    expect(() => serializeTypedMarker('IfcLineIndex', [0, 2])).toThrow(/segment indices/);
+    expect(() => serializeTypedMarker('IfcLineIndex', [1, Infinity])).toThrow(/segment indices/);
+    expect(() => serializeTypedMarker('IfcLabel', [1, 2])).toThrow(/segment indices/);
   });
 });

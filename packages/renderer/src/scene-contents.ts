@@ -45,6 +45,7 @@
 
 import type { Mesh, BatchedMesh } from './types.js';
 import type { MeshData, DecodedInstancedShard } from '@ifc-lite/geometry';
+import type { SceneCaptureCallback, SceneCaptureDrop, SceneSnapshot } from './scene-snapshot.js';
 import type { RenderPipeline } from './pipeline.js';
 import type { BoundingBox } from './scene-raycaster.js';
 import type { ResidentGpuBytes } from './render-stats.js';
@@ -76,8 +77,23 @@ export interface SceneContents {
   ): Promise<void>;
   isFinalizeInProgress(): boolean;
   setEphemeralStreamingMode(enabled: boolean): void;
+  /** Stop the current stream's fragment pass after about `maxIndices` (a cache hit); finalize first draws the rest. */
+  limitStreamingFragments(maxIndices: number): void;
   isEphemeralStreaming(): boolean;
   finishEphemeralStreaming(): void;
+
+  // ─── Finished-scene snapshot (scene-snapshot.ts) ─────────────────────
+  /** Everything outside the source geometry that decides a snapshot's bytes. */
+  sceneSnapshotPolicy(): string;
+  isSceneSnapshotHydrating(): boolean;
+  /** Report the next finalized scene as a snapshot, when it is exactly the pieces queued from now on. */
+  /** `sources[ordinal]` is the mesh queued as that piece: a reopen that decodes the meshes in another order maps it with `reorderSnapshotPieces`. */
+  captureNextFinalize(onCaptured: SceneCaptureCallback, onDropped?: (reason: SceneCaptureDrop) => void): void;
+  /** Replace the flat scene with these batches; pass the handle to `hydrateSceneSnapshot`. Null: refused, scene untouched. */
+  adoptSceneSnapshot(snapshot: SceneSnapshot, device: GPUDevice, pipeline: RenderPipeline): object | null;
+  /** Attach the source meshes with no upload. False: the adoption is gone or they do not match, so nothing adopted remains. */
+  hydrateSceneSnapshot(adoption: object, meshes: readonly MeshData[]): boolean;
+  abandonSceneSnapshot(adoption: object): void;
 
   // ─── Geometry read-back ──────────────────────────────────────────────
   getMeshes(): Mesh[];
@@ -112,6 +128,13 @@ export interface SceneContents {
    */
   hasMeshData(expressId: number, modelIndex?: number): boolean;
   getAllMeshDataExpressIds(): number[];
+  /** Live triangle occurrences by renderer entity ID, without expanding instances.
+   * Null while a cached scene still awaits source-geometry hydration. */
+  onGeometryChange?(listener: () => void): () => void;
+  getTriangleCounts?(): ReadonlyMap<number, number> | null;
+  /** The viewport has supplied the complete flat-source snapshot for this Scene. */
+  isTriangleCountReplayComplete?(): boolean;
+  setTriangleCountReplayComplete?(complete: boolean): void;
   getBounds(): {
     min: { x: number; y: number; z: number };
     max: { x: number; y: number; z: number };

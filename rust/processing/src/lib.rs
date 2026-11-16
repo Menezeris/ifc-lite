@@ -42,6 +42,7 @@ pub use shard_classes::{
 #[path = "determinism_tests.rs"]
 mod determinism_tests;
 pub mod element;
+pub mod execution;
 pub mod retained_geometry;
 pub mod retained_requests;
 mod geometry_pool;
@@ -59,6 +60,7 @@ pub mod prepass;
 mod prepass_styled;
 pub use prepass_styled::flat_styles_rgba8_from_geometry_columns;
 mod prepass_type_material;
+mod prepass_wire;
 mod processor;
 mod product_geometry_audit;
 pub use product_geometry_audit::ProductGeometryAudit;
@@ -81,6 +83,11 @@ pub mod stream_meta;
 pub mod style;
 mod symbolic;
 mod types;
+/// Native warm-load cache of complete results; off unless a caller opts in.
+#[cfg(all(feature = "native-result-cache", not(target_arch = "wasm32")))]
+pub mod result_cache;
+mod result_fingerprint;
+pub use result_fingerprint::result_fingerprint;
 
 pub use geometry_export::{
     build_geometry_data_export, build_colored_geometry_data_export, ColoredGeometryDataExport,
@@ -102,15 +109,18 @@ pub use georeferencing::{
     extract_georeferencing, extract_georeferencing_with_index, Georeferencing,
 };
 pub use pipeline_diagnostics::{
-    PipelineDiagnostics, PipelinePhaseTimings, PIPELINE_DIAGNOSTICS_SCHEMA_VERSION,
+    PipelineDiagnostics, PipelineDiagnosticsReport, PipelinePhaseTimings, PIPELINE_DIAGNOSTICS_SCHEMA_VERSION,
 };
 /// Re-exported so the server can name the quality level without a direct
 /// `ifc-lite-geometry` dependency edge for one enum.
 pub use ifc_lite_geometry::TessellationQuality;
-/// The don't-bake occurrence → flat `MeshData` recovery, shared with the browser
-/// batch (`rust/wasm-bindings/src/api/gpu_meshes/instancing.rs`) so the mapping
-/// has one home rather than two clones. See its doc comment.
-pub use processor::instancing::recover_occurrences_flat;
+/// The don't-bake occurrence grouping, template selection and occurrence → flat
+/// `MeshData` recovery, shared with the browser batch
+/// (`rust/wasm-bindings/src/api/gpu_meshes/instancing.rs`) so each has one home
+/// rather than two clones. See their doc comments.
+pub use processor::instancing::{
+    group_occurrences_by_rep, index_templates_by_rep, recover_occurrences_flat,
+};
 #[allow(deprecated)] // the deprecated delegates stay exported until the next major
 pub use processor::{
     convert_mesh_to_site_local, detect_schema_version, is_quick_spatial_type_ci, native_to_baked,

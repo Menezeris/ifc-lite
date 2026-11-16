@@ -76,7 +76,7 @@ const NAME_STOPWORDS = [
   'is', 'was', 'be', 'by', 'as', 'it', 'this', 'that',
 ].join('|');
 
-// The leading \b is load-bearing: without it the run can start in the MIDDLE
+// The Unicode-aware leading boundary (`\b` skips 東京塔.ifc) stops a run starting in the MIDDLE
 // of a stop-word ("loading" -> "oading"), which sails straight past the
 // lookahead and defeats the whole stop-list.
 //
@@ -84,12 +84,12 @@ const NAME_STOPWORDS = [
 // never a nested star, so a hostile message cannot force catastrophic
 // backtracking.
 const FILE_TOKEN = new RegExp(
-  String.raw`\b(?:(?!(?:${NAME_STOPWORDS})[ \t])[^\s\\/]{1,64}[ \t]{1,3}){0,12}` +
+  String.raw`(?<![\p{L}\p{N}_])(?=[\p{L}\p{N}_])(?:(?!(?:${NAME_STOPWORDS})[ \t])[^\s\\/]{1,64}[ \t]{1,3}){0,12}` +
   String.raw`[^\s\\/]{1,80}\.(?:${EXT_ALTERNATION})\b`,
-  'gi',
+  'giu',
 );
 
-const redactFileTokens = (value: string): string =>
+export const redactFileTokens = (value: string): string =>
   value.replace(FILE_TOKEN, '[file]');
 
 const stripQueryAndHash = (value: string): string => {
@@ -127,7 +127,7 @@ const scrubProperties = (
       continue;
     }
     if (k === 'model_count' && typeof v === 'number' && Number.isSafeInteger(v) && v >= 0) continue; // aggregate only
-    if (k === 'load_path' && typeof v === 'string' && /^(?:wasm|cache|server|point-cloud|landxml)$/.test(v)) continue; // closed pipeline id, never a file path (#6961)
+    if (k === 'load_path' && typeof v === 'string' && /^(?:wasm|cache|server|point-cloud|landxml|3dm)$/.test(v)) continue; // closed pipeline id, never a file path (#6961)
     if (SENSITIVE_KEY.test(k)) {
       delete props[k];
       continue;
@@ -558,7 +558,7 @@ const stampFingerprint = (
 // context-gated (./file-not-found-errors.ts). `invalid_archive` only claims
 // anchored parser content/size refusals (./invalid-archive-errors.ts).
 const BENIGN_ERROR_KINDS = new Set<string>([
-  'network_unavailable', 'cancelled', 'webgl_unavailable', 'file_unreadable', 'invalid_archive',
+  'network_unavailable', 'cancelled', 'webgl_unavailable', 'file_unreadable', 'invalid_archive', 'invalid_input',
 ]);
 
 const downgradeBenignExceptions = (

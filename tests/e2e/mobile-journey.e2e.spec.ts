@@ -40,6 +40,7 @@ async function loadAuthoredModel(page: Page): Promise<void> {
 }
 
 /**
+<<<<<<< HEAD
  * The first tap picks through the GPU (`renderer.pick`), which needs resident geometry and a
  * frame drawn for the final camera. `visibleFaces` projects on the CPU and proves neither, so
  * wait for both before tapping (the tap itself is NOT retried: a user tapping right after load
@@ -73,6 +74,15 @@ async function waitForDrawnFrame(page: Page, since: number): Promise<void> {
  * so the poll saw `selectedEntityId === null`. `pickPreflight` is not involved (0-1 ms measured).
  */
 const PICK_READBACK_TIMEOUT_MS = 30_000;
+=======
+ * A GPU pick resolves only after a render pass and a `mapAsync` readback. On the
+ * hosted runners' SwiftShader WebGPU that takes 1-5 s (CI run 40855310027, 100
+ * taps: medians 1.0-3.0 s per runner, worst 5.0 s), so `expect.poll`'s default
+ * 5 s budget raced the pick and failed with `selectedEntityId === null` while the
+ * pick was still in flight; the pick itself resolved to the expected entity.
+ */
+const PICK_SETTLE_MS = 30_000;
+>>>>>>> upstream/main
 
 type TouchPoint = { x: number; y: number; id: number };
 
@@ -90,8 +100,11 @@ async function visibleFaces(page: Page): Promise<Array<{ globalId: number; x: nu
     for (const [modelId, model] of state.models) for (const mesh of model.geometryResult?.meshes ?? []) {
       const globalId = state.toGlobalId(modelId, mesh.expressId);
       for (const { screen } of globalThis.__ifc_lite_scene_face_hits__(globalId)) {
+        // A face under viewport UI (the mobile Home/zoom stack, the Measure HUD) is not tappable:
+        // the tap lands on the UI and never reaches the canvas.
         if (screen.x > rect.left + 20 && screen.x < rect.right - 20 &&
-          screen.y > rect.top + 20 && screen.y < rect.bottom - 20) {
+          screen.y > rect.top + 20 && screen.y < rect.bottom - 20 &&
+          document.elementFromPoint(screen.x, screen.y) === canvas) {
           faces.push({ globalId, x: screen.x, y: screen.y });
         }
       }
@@ -145,7 +158,14 @@ test('the Panels sheet opens every available registry panel on a phone (#5865)',
   expect(available).toContain('pointclouds'); // #5873: the empty panel is reachable before a scan loads.
   expect([...available].sort()).toEqual(registered.map(({ id }) => id).sort());
 
-  const launcher = page.getByRole('button', { name: 'Open the panel list' });
+  const launcher = page.getByRole('button', { name: 'Panels', exact: true });
+  // One labelled phone target in the bottom half, off the model, not three
+  // tiles over its top-left quarter (#8802 R6).
+  const launcherBox = await launcher.boundingBox();
+  expect(launcherBox, 'the Panels button is laid out').not.toBeNull();
+  expect(launcherBox!.height).toBeGreaterThanOrEqual(44);
+  expect(launcherBox!.y).toBeGreaterThan(844 / 2);
+  await expect(page.getByRole('button', { name: 'Open Hierarchy', exact: true })).toHaveCount(0);
   for (const [index, id] of available.entries()) {
     await expect(launcher).toBeVisible();
     await launcher.click();
@@ -208,20 +228,31 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
     await requireRenderer('drawn frame after camera moves', () => waitForDrawnFrame(page, lastInputAt));
     const faces = await requireRenderer('visible-face projection', () => visibleFaces(page));
     const first = faces[0];
-    const second = faces.find((face) => Math.hypot(face.x - first.x, face.y - first.y) > 25);
-    if (!second) throw new Error('two distinct visible face points are required for Measure');
     await page.touchscreen.tap(first.x, first.y);
     await requireRenderer('tap selection', () => expect.poll(
       () => page.evaluate(() => globalThis.__ifc_lite_viewer_store__.getState().selectedEntityId),
+<<<<<<< HEAD
       { timeout: PICK_READBACK_TIMEOUT_MS },
+=======
+      { timeout: PICK_SETTLE_MS },
+>>>>>>> upstream/main
     ).toBe(first.globalId));
 
     await page.getByRole('button', { name: 'Measure', exact: true }).click();
-    await page.touchscreen.tap(first.x, first.y);
-    await page.touchscreen.tap(second.x, second.y);
+    // Pick the two taps with the Measure UI on screen, so neither lands on it.
+    const measureFaces = await requireRenderer('visible-face projection', () => visibleFaces(page));
+    const start = measureFaces[0];
+    const end = measureFaces.find((face) => Math.hypot(face.x - start.x, face.y - start.y) > 25);
+    if (!end) throw new Error('two distinct visible face points are required for Measure');
+    await page.touchscreen.tap(start.x, start.y);
+    await page.touchscreen.tap(end.x, end.y);
     await requireRenderer('two-tap measurement', () => expect.poll(
       () => page.evaluate(() => globalThis.__ifc_lite_viewer_store__.getState().measurements.length),
+<<<<<<< HEAD
       { timeout: PICK_READBACK_TIMEOUT_MS },
+=======
+      { timeout: PICK_SETTLE_MS },
+>>>>>>> upstream/main
     ).toBeGreaterThan(0));
 
     await page.getByRole('button', { name: 'Select', exact: true }).click();
@@ -230,7 +261,11 @@ test('one finger orbits, two fingers pinch, taps select and measure, and hold op
       expect(page.getByRole('menu', { name: 'Entity actions' })).toBeVisible({ timeout: PICK_READBACK_TIMEOUT_MS }));
     await requireRenderer('long-press entity pick', () => expect.poll(
       () => page.evaluate(() => globalThis.__ifc_lite_viewer_store__.getState().contextMenu.entityId),
+<<<<<<< HEAD
       { timeout: PICK_READBACK_TIMEOUT_MS },
+=======
+      { timeout: PICK_SETTLE_MS },
+>>>>>>> upstream/main
     ).toBe(first.globalId));
     await info.attach('mobile-journey-authored-ifc.png', { body: await page.screenshot(), contentType: 'image/png' });
     await touch(device, 'touchEnd', []);

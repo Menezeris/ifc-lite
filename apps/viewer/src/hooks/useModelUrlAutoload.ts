@@ -22,12 +22,18 @@ import { useEffect, useRef } from 'react';
 import { useIfcLoader } from './useIfcLoader.js';
 import { useIfcFederation } from './useIfcFederation.js';
 import { useWebGpuOpenGuard } from './useWebGpuOpenGuard';
+import { watchLoadSupersession } from './modelLoadCanceller.js';
 import { showLoadError } from '@/lib/analytics';
 import { useViewerStore } from '@/store';
 import { useTranslation, type TranslationKey } from '@/i18n';
+<<<<<<< HEAD
 // >>> AIM-FORK: `?models=` federation autoload + cross-origin allowlist (D-049 / AIM host)
 import { AUTOLOAD_COMPLETE_EVENT, parseAutoloadUrls } from '@/lib/autoload';
 // <<< AIM-FORK
+=======
+import { markLoadIntent } from '@/lib/load-intent';
+import { pageUrlModelAllowed } from '@/lib/processed-model';
+>>>>>>> upstream/main
 
 export function useModelUrlAutoload(): void {
   // The loader and federation hooks subscribe to actions only; `useIfc()` also
@@ -92,6 +98,7 @@ export function useModelUrlAutoload(): void {
       fail('viewportLighting.container.modelUrlAutoload.fetchFailed', 'model_url_fetch_failed', retry, { reason });
     };
     const attempt = async () => {
+<<<<<<< HEAD
       if (!guardWebGpu(() => { void attempt(); })) return;
       try {
         // Lazy: nothing of it is needed at boot (entry chunk stays as it was).
@@ -107,6 +114,46 @@ export function useModelUrlAutoload(): void {
         failFetch(err, () => { void attempt(); });
       } finally {
         window.dispatchEvent(new Event(AUTOLOAD_COMPLETE_EVENT));
+=======
+      if (!pageUrlModelAllowed('model')) return; // a host asked for its own model; checked again on Retry
+      markLoadIntent(); // the model is fetched before the load starts
+      // Replay-safe (a fetch, no gesture): Retry on the unsupported card may
+      // re-run it after the re-check. This effect never reaches the guard
+      // while the check is still running; it waits for the check instead.
+      if (!guardWebGpu(() => { void attempt(); }, { replay: 'free' })) return;
+      // Resolve (supports relative paths) and enforce same-origin before fetching.
+      let source: URL;
+      try {
+        source = resolvedUrl ?? new URL(modelUrl, sourceBaseUrl);
+        resolvedUrl = source;
+      } catch {
+        fail('viewportLighting.container.modelUrlAutoload.malformedUrl', 'model_url_malformed', null);
+        return;
+      }
+      if (source.origin !== window.location.origin) {
+        fail('viewportLighting.container.modelUrlAutoload.crossOrigin', 'model_url_cross_origin', null);
+        return;
+      }
+      // A load the user starts while the model downloads is what they want
+      // to see; the autoload then drops out quietly (L9).
+      const supersession = watchLoadSupersession('any');
+      try {
+        const res = await fetch(source.href, { signal: supersession.signal });
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        const blob = await res.blob();
+        if (supersession.signal.aborted) return;
+        supersession.stop(); // the add below is this autoload's own load
+        const filename = source.pathname.split('/').pop() || 'model.ifc';
+        const file = new File([blob], filename, { type: blob.type || 'application/x-step' });
+        await addModel(file);
+      } catch (err) {
+        if (supersession.signal.aborted) return;
+        const reason = err instanceof Error ? err.message : String(err);
+        fail('viewportLighting.container.modelUrlAutoload.fetchFailed', 'model_url_fetch_failed',
+          () => { void attempt(); }, { reason });
+      } finally {
+        supersession.stop();
+>>>>>>> upstream/main
       }
     };
     // <<< AIM-FORK

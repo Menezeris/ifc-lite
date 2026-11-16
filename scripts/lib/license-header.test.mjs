@@ -176,9 +176,10 @@ test('EVERY wasm-pack out-dir under a scan root is excluded, not just the defaul
   // bites a developer who ran the build: `--check` lists generated files as
   // missing a header, and write mode stamps MPL notices into wasm-pack output.
   // Each path is the `--out-dir` its build script passes.
-  // scripts/build-wasm.sh:208, behind BUILD_WIDE=1.
-  assert.equal(licenseHeaderFor('packages/wasm/pkg-wide/ifc-lite.d.ts'), null);
   assert.equal(licenseHeaderFor('packages/wasm/pkg-retained/ifc-lite.d.ts'), null);
+  // Retired build output can remain in developer worktrees after the path is removed.
+  assert.equal(licenseHeaderFor('packages/wasm/pkg-wide/ifc-lite.d.ts'), null);
+  assert.equal(licenseHeaderFor('packages/wasm/pkg-core/ifc-lite.js'), null);
   assert.equal(licenseHeaderFor('packages/wasm/pkg-diff/ifc-lite-diff.d.ts'), null);
   assert.notEqual(licenseHeaderFor('packages/wasm/pkg-diff-source/owned.ts'), null);
   // rust/csg-thread-bench/build.sh:20-21, relative to the script's own dir.
@@ -195,6 +196,17 @@ test('excluded directory names match whole path segments', () => {
   assert.equal(licenseHeaderFor('packages/x/node_modules/dep/index.js'), null);
   // `distribution` is not `dist`.
   assert.notEqual(licenseHeaderFor('packages/x/src/distribution/index.ts'), null);
+});
+
+test('staged Emscripten runtime keeps its own license, while adapter sources require MPL (#7955)', () => {
+  for (const staged of ['rust/wasm-bindings/smlib', 'apps/viewer/public/smlib']) {
+    assert.equal(licenseHeaderFor(`${staged}/ifclite_smlib_browser.mjs`), null);
+    assert.equal(withLicenseHeader(`${staged}/ifclite_smlib_browser.mjs`, UNLICENSED_FILE), null);
+    assert.notEqual(licenseHeaderFor(`${staged}/client.mjs`), null);
+  }
+  // A synthetic name exercises classification without implying a file read
+  // to the CI input-path audit (#7955).
+  assert.notEqual(licenseHeaderFor('native/smlib-adapter/browser/example-client.mjs'), null);
 });
 
 test('Windows-style separators classify the same as POSIX ones', () => {

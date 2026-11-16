@@ -48,3 +48,39 @@ test('modified, unhashed, and non-LandXML fixtures stay on the content-addressed
     `${BASE_URL}/${SHA256}`,
   );
 });
+
+test('reviewed Gaussian corpus uses immutable upstream bytes (#8567)', () => {
+  for (const extension of ['ply', 'splat']) {
+    assert.equal(fixtureDownloadUrl(BASE_URL, reviewedEntry({ path: `gaussian/capture.${extension}` })),
+      `https://raw.githubusercontent.com/example/producer/${COMMIT}/exports/example.xml`);
+  }
+});
+
+test('ordinary PLY keeps release URL even when carrying matching immutable provenance (#8580)', () => {
+  const entry = reviewedEntry({ path: 'pointcloud/ordinary.ply' });
+  assert.equal(fixtureDownloadUrl(BASE_URL, entry), `${BASE_URL}/${SHA256}`);
+  // The reserved path, not the optional Gaussian metadata object, selects policy.
+  entry.path = 'gaussian/nested/control.ply';
+  assert.equal(fixtureDownloadUrl(BASE_URL, entry),
+    `https://raw.githubusercontent.com/example/producer/${COMMIT}/exports/example.xml`);
+  entry.provenance.modification.status = 'modified';
+  assert.equal(fixtureDownloadUrl(BASE_URL, entry), `${BASE_URL}/${SHA256}`);
+});
+
+test('URL policy rejects noncanonical aliases before selecting either source (#8580)', () => {
+  for (const path of ['./gaussian/control.ply', 'pointcloud/../gaussian/control.ply']) {
+    const entry = reviewedEntry({ path });
+    assert.throws(() => fixtureDownloadUrl(BASE_URL, entry), /canonical relative POSIX path/);
+    delete entry.provenance;
+    assert.throws(() => fixtureDownloadUrl(BASE_URL, entry), /canonical relative POSIX path/);
+  }
+});
+
+test('an upstream IFC file fetches its commit-pinned blob, never the release', () => {
+  const entry = {
+    path: 'structural/models/frame.ifc',
+    sha256: SHA256,
+    upstream_file: { blob_url: `https://github.com/example/models/blob/${COMMIT}/ifc/frame.ifc`, commit: COMMIT },
+  };
+  assert.equal(fixtureDownloadUrl(BASE_URL, entry), `https://raw.githubusercontent.com/example/models/${COMMIT}/ifc/frame.ifc`);
+});

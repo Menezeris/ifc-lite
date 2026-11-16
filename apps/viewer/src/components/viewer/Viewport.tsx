@@ -16,6 +16,7 @@ import type { MeshData, CoordinateInfo, PointCloudAsset } from '@ifc-lite/geomet
 import { useViewerStore, resolveEntityRef, type CameraViewpoint } from '@/store';
 import { LIGHTING_PRESETS } from '@/lib/lighting-presets';
 import { presetViewRotation } from '@/lib/preset-view-orientation';
+import { rotateAboutVertical } from '@/lib/viewpoint-rotate-vertical';
 import { isGeometryLoadStreaming } from '@/lib/pick-gating';
 import { isTextEntryElement } from '@/lib/keyboard-event';
 import { effectiveIsolatedIds } from '@/lib/effective-isolation';
@@ -38,6 +39,7 @@ import { useLatestRef } from '../../hooks/useLatestRef.js';
 import { useHoverOutline } from './useHoverOutline.js';
 import { frameSelectionBounds } from '@/lib/clash/capture-framing';
 import { fitAllBounds, instancedPassDrawn } from '@/lib/visibility/visible-bounds';
+import { gaussianFitBox } from '@/hooks/ingest/gaussianAssets';
 import { typeNameOfGlobalId } from '@/store/globalId';
 import { projectToCssScreen } from '../../utils/projectScreen.js';
 import { getSpatialChunkingConfig } from '../../utils/spatialChunkConfig.js';
@@ -83,6 +85,10 @@ import { useAuthoringOverlay } from './useAuthoringOverlay.js';
 import { useClashRendererOverlays } from './useClashRendererOverlays';
 import { useTranslation } from '@/i18n';
 import { createCentreSurfaceZoom } from './zoomSurface.js';
+import type { MeasureCameraState } from './measureCameraState';
+import { observeViewportCanvas } from './viewportCanvasObserver';
+import { useViewportCursor } from './useViewportCursor.js';
+import { deferSelectionFrameWhileHeld } from './heldSelection.js';
 
 interface ViewportProps {
   geometry: MeshData[] | null;
@@ -249,7 +255,6 @@ export function Viewport({
     startMeasurement,
     updateMeasurement,
     finalizeMeasurement,
-    cancelMeasurement,
     updateMeasurementScreenCoords,
     snapEnabled,
     setSnapTarget,
@@ -271,13 +276,11 @@ export function Viewport({
     pendingMeshRemovals,
     pendingMeshTranslations,
     pendingMeshRotations,
-    pendingInstancedShards,
     clearPendingColorUpdates,
     clearPendingMeshColorUpdates,
     clearPendingMeshRemovals, pruneGeometryMeshes,
     clearPendingMeshTranslations,
     clearPendingMeshRotations,
-    clearInstancedShards,
   } = useColorUpdateState();
 
   // IFC data state
@@ -297,9 +300,9 @@ export function Viewport({
     return Number.isFinite(min) && Number.isFinite(max) ? { min, max } : null;
   }, [coordinateInfo, sectionCoordinateInfo, sectionPlane.axis]);
 
-  // Theme-aware clear color ref (updated when theme changes)
-  // Tokyo Night storm: #1a1b26 = rgb(26, 27, 38)
-  const clearColorRef = useRef<[number, number, number, number]>([0.102, 0.106, 0.149, 1]);
+  // Theme-aware clear color ref (updated when theme changes); starts on the
+  // dark canvas shell token until the theme effect runs.
+  const clearColorRef = useRef<[number, number, number, number]>(getThemeClearColor('dark'));
   const visualEnhancement = useMemo<VisualEnhancementOptions>(() => ({
     enabled: isMobile ? false : visualEnhancementsEnabled,
     contactShading: {
@@ -527,22 +530,8 @@ export function Viewport({
   // Skip visualization updates if raycast was slow (prevents UI freezes)
   const SLOW_RAYCAST_THRESHOLD_MS = 50;
 
-  // Render throttling during orbit/pan
-  // Adaptive: 16ms (60fps) for small models, up to 33ms (30fps) for very large models
-  const lastRenderTimeRef = useRef<number>(0);
-  const renderPendingRef = useRef<boolean>(false);
-  const RENDER_THROTTLE_MS_SMALL = 16;  // ~60fps for models < 10K meshes
-  const RENDER_THROTTLE_MS_LARGE = 25;  // ~40fps for models 10K-50K meshes
-  const RENDER_THROTTLE_MS_HUGE = 33;   // ~30fps for models > 50K meshes
-
   // Camera state tracking for measurement updates (only update when camera actually moved)
-  const lastCameraStateRef = useRef<{
-    position: { x: number; y: number; z: number };
-    rotation: { azimuth: number; elevation: number };
-    distance: number;
-    canvasWidth: number;
-    canvasHeight: number;
-  } | null>(null);
+  const lastCameraStateRef = useRef<MeasureCameraState | null>(null);
 
   // activeTool has a side effect (first-person mode), so keep as useEffect.
   //
@@ -562,40 +551,7 @@ export function Viewport({
     }
   }, [activeTool, isInitialized]);
 
-  // Cleanup measurement state when tool changes + set cursor
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    if (activeTool !== 'measure') {
-      // Cancel any active measurement
-      if (activeMeasurement) {
-        cancelMeasurement();
-      }
-      // Clear pending raycast requests
-      if (measureRaycastFrameRef.current !== null) {
-        cancelAnimationFrame(measureRaycastFrameRef.current);
-        measureRaycastFrameRef.current = null;
-        measureRaycastPendingRef.current = false;
-      }
-    }
-
-    // Leaving the section tool disarms face-pick so it doesn't ambush the
-    // user on re-entry to a different tool (issue #243).
-    if (activeTool !== 'section' && sectionPickMode) {
-      setSectionPickMode(false);
-    }
-
-    // Set cursor based on active tool. Section + pick-armed gets a
-    // crosshair to telegraph "click a face".
-    if (activeTool === 'measure' || activeTool === 'annotate') {
-      canvas.style.cursor = 'crosshair';
-    } else if (activeTool === 'section' && sectionPickMode) {
-      canvas.style.cursor = 'crosshair';
-    } else {
-      canvas.style.cursor = 'default';
-    }
-  }, [activeTool, activeMeasurement, cancelMeasurement, sectionPickMode, setSectionPickMode]);
+  useViewportCursor(canvasRef, activeTool, sectionPickMode, setSectionPickMode);
 
   // Helper: calculate scale bar value (world-space size for 96px scale bar)
   const calculateScale = () => {
@@ -708,7 +664,8 @@ export function Viewport({
       };
       const applyViewpoint = (viewpoint: CameraViewpoint, animate = true, durationMs = 300) => {
         camera.setProjectionMode(viewpoint.projectionMode);
-        useViewerStore.setState({ projectionMode: viewpoint.projectionMode });
+        // Unchanged mode: skip the store write, which notifies every subscriber.
+        if (useViewerStore.getState().projectionMode !== viewpoint.projectionMode) useViewerStore.setState({ projectionMode: viewpoint.projectionMode });
         camera.setFOV(viewpoint.fov);
         if (
           viewpoint.projectionMode === 'orthographic' &&
@@ -737,25 +694,12 @@ export function Viewport({
         calculateScale();
       };
       const animateHorizontalRotation = (angle: number) => {
-        const position = camera.getPosition();
-        const target = camera.getTarget();
-        const offsetX = position.x - target.x;
-        const offsetZ = position.z - target.z;
-        const cosine = Math.cos(angle);
-        const sine = Math.sin(angle);
         const projectionMode = camera.getProjectionMode();
-
         // Keep CameraControls' spherical-orbit convention, then use the
         // shared viewpoint path so the ViewCube's animator interpolates it.
         applyViewpoint(
           {
-            position: {
-              x: target.x + offsetX * cosine + offsetZ * sine,
-              y: position.y,
-              z: target.z - offsetX * sine + offsetZ * cosine,
-            },
-            target,
-            up: camera.getUp(),
+            ...rotateAboutVertical({ position: camera.getPosition(), target: camera.getTarget(), up: camera.getUp() }, angle),
             fov: camera.getFOV(),
             projectionMode,
             orthoSize: projectionMode === 'orthographic' ? camera.getOrthoSize() : undefined,
@@ -873,7 +817,8 @@ export function Viewport({
           const target = fitAllBounds({ meshes: geometryRef.current ?? [], wholeScene: geometryBoundsRef.current,
             typeOf: (id) => typeNameOfGlobalId(useViewerStore.getState(), id, ifcDataStoreRef.current),
             instancedIds: rendererRef.current?.getScene().getInstancedEntityIds() ?? [], instancedDrawn: instancedPassDrawn(useViewerStore.getState()),
-            boundsOf: createRenderableBoundsLookup(), visibility: { hidden: hiddenEntitiesRef.current, isolated: isolatedEntitiesRef.current } });
+            boundsOf: createRenderableBoundsLookup(), visibility: { hidden: hiddenEntitiesRef.current, isolated: isolatedEntitiesRef.current },
+            captures: gaussianFitBox(rendererRef.current?.gaussianSplats.getBounds() ?? null) });
           camera.zoomExtent(target.min, target.max, 300); calculateScale();
         },
         home: () => {
@@ -955,6 +900,7 @@ export function Viewport({
           return bounds;
         },
         frameSelection: (durationMs = 300) => {
+          if (deferSelectionFrameWhileHeld(durationMs)) return false;
           const bounds = useViewerStore.getState().cameraCallbacks.selectionBounds?.();
           if (!bounds) return false;
           return frameSelectionBounds(camera, renderer, bounds.min, bounds.max, durationMs, calculateScale);
@@ -1121,6 +1067,7 @@ export function Viewport({
           projectionMode: camera.getProjectionMode(),
           orthoSize: camera.getProjectionMode() === 'orthographic' ? camera.getOrthoSize() : undefined,
         }),
+        isCameraTweening: () => camera.isTweening(),
         applyViewpoint,
       });
 
@@ -1133,19 +1080,10 @@ export function Viewport({
         if (!aborted) setGpuRecoveryEpoch((epoch) => epoch + 1);
       });
 
-      // ResizeObserver — re-render; the frame re-sizes the drawing buffer itself.
-      resizeObserver = new ResizeObserver(() => {
-        if (aborted) return;
-        renderCurrent();
+      // Re-render on resize; a resize also ends Point mode's Live (#8886).
+      resizeObserver = observeViewportCanvas(canvas, lastCameraStateRef, () => {
+        if (!aborted) renderCurrent();
       });
-      // The device-pixel box also fires when only the pixel ratio changes (window
-      // moved to another display, browser zoom), which the CSS box does not.
-      try {
-        resizeObserver.observe(canvas, { box: 'device-pixel-content-box' });
-      } catch (err) {
-        console.debug('[Viewport] device-pixel-content-box unsupported; observing the CSS box', err);
-        resizeObserver.observe(canvas);
-      }
 
       // Initial render
       renderCurrent();
@@ -1229,17 +1167,20 @@ export function Viewport({
     };
   }, [sectionPlane.enabled, sectionPlane.axis, sectionPlane.position, sectionRange]);
 
+  const symbolicVisibility = useMemo(() => ({ hidden: hiddenEntities, isolated: isolatedEntities }), [hiddenEntities, isolatedEntities]);
   const symbolicLineChannels = useSymbolicAnnotations({ // two buffers, not one (issue #3359)
     enabled: ifcAnnotationsVisible,
     gridEnabled: ifcGridVisible,
     gridSectionClip,
     fallbackY: annotationFallbackY,
+    visibility: symbolicVisibility,
   });
   const { texts: annotationTexts3D, fills: annotationFills3D } = useSymbolicAnnotationsRichData({
     enabled: ifcAnnotationsVisible,
     gridEnabled: ifcGridVisible,
     gridSectionClip,
     fallbackY: annotationFallbackY,
+    visibility: symbolicVisibility,
   });
   // Each independent symbolic upload is contained and replayed on device recovery.
   const alignmentVertices3D = useAlignmentLines3D();
@@ -1307,8 +1248,6 @@ export function Viewport({
     lastHoverSnapTimeRef,
     lastHoverCheckRef,
     hoverTooltipsEnabledRef,
-    lastRenderTimeRef,
-    renderPendingRef,
     isInteractingRef,
     lastClickTimeRef,
     lastClickPosRef,
@@ -1341,9 +1280,6 @@ export function Viewport({
     HOVER_SNAP_THROTTLE_MS,
     SLOW_RAYCAST_THRESHOLD_MS,
     hoverThrottleMs,
-    RENDER_THROTTLE_MS_SMALL,
-    RENDER_THROTTLE_MS_LARGE,
-    RENDER_THROTTLE_MS_HUGE,
     fastZoomRef,
   });
 
@@ -1398,6 +1334,7 @@ export function Viewport({
     lastFrameTimeRef,
     mouseIsDraggingRef,
     activeToolRef,
+    snapEnabledRef,
     terrainClipYRef,
     hiddenEntitiesRef,
     isolatedEntitiesRef,
@@ -1439,7 +1376,6 @@ export function Viewport({
     pendingMeshRemovals,
     pendingMeshTranslations,
     pendingMeshRotations,
-    pendingInstancedShards,
     currentLevelY,
     modelIdToIndex,
     modelIdToOffset,
@@ -1449,7 +1385,6 @@ export function Viewport({
     clearPendingMeshRemovals, pruneGeometryMeshes,
     clearPendingMeshTranslations,
     clearPendingMeshRotations,
-    clearInstancedShards,
     clearColorRef,
     releaseGeometryAfterFinalize: releaseGeometryAfterStream,
     onGeometryReleased,

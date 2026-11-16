@@ -43,6 +43,7 @@ Each `ColumnDefinition` has a `source` that says where the value comes from:
 | `spatial` | Containing spatial element name; `propertyName` picks the level (`Storey` (default), `Building`, `Site`, `Project`) | `Level 2` |
 | `model` | Source file name | `office.ifc` |
 | `zone` | Location-zone assignment and per-zone volume (user-defined 3D zone boxes, viewer-computed); `psetName` holds the zone-set id, `propertyName` picks the mode — see [Zone columns](#zone-columns) | `Section A` |
+| `customGrouping` | The element's group in a custom grouping (in the viewer, a rule-based Lens): the first enabled rule it matches, as the `customGrouping` filter rule applies it. `propertyName` holds the grouping name, `psetName` its id hint; the provider answers through `getCustomGroup` | `Structure` |
 
 A column looks like:
 
@@ -59,6 +60,22 @@ const fireRating: ColumnDefinition = {
 ```
 
 For `quantity` columns, `psetName` holds the quantity set name (e.g. `Qto_DoorBaseQuantities`).
+
+### Triangle counts
+
+Choose **Triangles** to add a numeric geometry column (`source: 'geometry'`,
+`propertyName: 'TriangleCount'`). Sort it descending to find heavily triangulated
+objects, or use the geometry filter to select objects above a count. Providers
+implement the optional `getTriangleCount(expressId)` accessor; absent or
+unavailable geometry produces a blank cell, while a known empty object reports
+zero. After renderer replacement, viewer counts remain unavailable until the viewport
+has supplied its complete source snapshot; a first mesh does not establish a
+complete model count. Counts have no length unit.
+
+The viewer counts each occurrence of instanced geometry and every mesh piece
+belonging to an object. It also shows the model total in project information and
+an object's own count in its information palette. These are geometry counts,
+independent of camera position, visibility and rendering detail level.
 
 ### Zone columns
 

@@ -6,7 +6,23 @@
 // intentionally still accepted: moving the existing corpus to v2 requires a
 // rights review for every historical byte, not a mechanical JSON rewrite.
 
+// One spelling per on-disk fixture. Do not let resolve() erase dot segments
+// after provenance policy has classified a different raw path (#8580).
+export function isCanonicalFixturePath(path) {
+  return typeof path === 'string' && path.length > 0 && !/[\\:\0]/.test(path)
+    && path.split('/').every(segment => segment.length > 0 && segment !== '.' && segment !== '..');
+}
+
+// Registry classification is independent of optional metadata: Gaussian PLY
+// belongs under gaussian/, while .splat is intrinsically Gaussian anywhere.
+// Ordinary PLY retains historical validation and discovery behavior (#8580).
+export function isGaussianFixturePath(path) {
+  return typeof path === 'string' && (/\.splat$/i.test(path) || /^gaussian\/.+\.ply$/i.test(path));
+}
+
 const SHA256_RE = /^[a-f0-9]{64}$/;
+// File types an `upstream_file` entry may pin: fetched from the author's repository, never re-hosted.
+const UPSTREAM_FILE_EXT = /\.(ifc|3dm)$/i;
 const COMMIT_RE = /^[a-f0-9]{40}$/;
 const CAPABILITY_STATES = new Set(['rendered', 'preserved-only', 'unsupported', 'refused']);
 
@@ -71,10 +87,10 @@ function requirePinnedGitHubBlobUrl(value, commit, where, errors) {
   }
 }
 
-function validateReviewedLandXmlEntry(entry, index, errors) {
+function validateReviewedProvenance(entry, index, errors, kind) {
   const where = `files[${index}]`;
   if (!isObject(entry.provenance)) {
-    invalid(errors, `${where}.provenance`, 'is required for a reviewed LandXML fixture');
+    invalid(errors, `${where}.provenance`, `is required for a reviewed ${kind} fixture`);
     return;
   }
   const { provenance } = entry;
@@ -82,10 +98,40 @@ function validateReviewedLandXmlEntry(entry, index, errors) {
     invalid(errors, `${where}.provenance.source`, 'is required');
   } else {
     const source = provenance.source;
-    if (!isText(source.commit) || !COMMIT_RE.test(source.commit)) {
-      invalid(errors, `${where}.provenance.source.commit`, 'must be a 40-character lowercase Git commit');
+    if (kind === 'Gaussian' && source.kind === 'publisher-artifacts') {
+      requireUrl(source.page_url, `${where}.provenance.source.page_url`, errors);
+      requireText(source.version, `${where}.provenance.source.version`, errors);
+      if (source.commit !== undefined || source.blob_url !== undefined) {
+        invalid(errors, `${where}.provenance.source`, 'publisher artifacts must not impersonate a Git blob');
+      }
+      if (!Array.isArray(source.artifacts) || source.artifacts.length === 0) {
+        invalid(errors, `${where}.provenance.source.artifacts`, 'must list hash-pinned original files');
+      } else {
+        const paths = new Set();
+        for (const artifact of source.artifacts) {
+          if (!isObject(artifact)) { invalid(errors, where, 'source artifact must be an object'); continue; }
+          if (!isCanonicalFixturePath(artifact.path) || paths.has(artifact.path)) {
+            invalid(errors, where, 'source artifact paths must be canonical and unique');
+          }
+          paths.add(artifact.path);
+          requireUrl(artifact.url, `${where}.provenance.source.artifacts.url`, errors);
+          if (!SHA256_RE.test(artifact.sha256 ?? '')) invalid(errors, where, 'source artifact requires SHA-256');
+          if (!Number.isSafeInteger(artifact.size) || artifact.size <= 0) invalid(errors, where, 'source artifact size must be positive');
+        }
+        if (!source.artifacts.some(artifact => artifact?.sha256 === source.sha256)) {
+          invalid(errors, where, 'source.sha256 must identify one original artifact');
+        }
+      }
+      requireUrl(provenance.license?.evidence_url, `${where}.provenance.license.evidence_url`, errors);
+      if (!SHA256_RE.test(provenance.license?.evidence_sha256 ?? '')) {
+        invalid(errors, where, 'publisher license evidence requires SHA-256');
+      }
+    } else {
+      if (!isText(source.commit) || !COMMIT_RE.test(source.commit)) {
+        invalid(errors, `${where}.provenance.source.commit`, 'must be a 40-character lowercase Git commit');
+      }
+      requirePinnedGitHubBlobUrl(source.blob_url, source.commit, `${where}.provenance.source.blob_url`, errors);
     }
-    requirePinnedGitHubBlobUrl(source.blob_url, source.commit, `${where}.provenance.source.blob_url`, errors);
     if (!isText(source.sha256) || !SHA256_RE.test(source.sha256)) {
       invalid(errors, `${where}.provenance.source.sha256`, 'must be a lowercase SHA-256');
     }
@@ -115,6 +161,14 @@ function validateReviewedLandXmlEntry(entry, index, errors) {
   if (provenance.no_customer_data !== true) {
     invalid(errors, `${where}.provenance.no_customer_data`, 'must be true after a provenance review');
   }
+  if (provenance.modification?.status === 'unmodified' && provenance.source?.sha256 !== entry.sha256) {
+    invalid(errors, `${where}.provenance.source.sha256`, 'must equal entry.sha256 for an unmodified fixture');
+  }
+}
+
+function validateReviewedLandXmlEntry(entry, index, errors) {
+  validateReviewedProvenance(entry, index, errors, 'LandXML');
+  const where = `files[${index}]`;
   if (!isObject(entry.producer)) {
     invalid(errors, `${where}.producer`, 'is required for a reviewed LandXML fixture');
   } else {
@@ -144,9 +198,23 @@ function validateReviewedLandXmlEntry(entry, index, errors) {
       }
     });
   }
-  if (provenance.modification?.status === 'unmodified' && provenance.source?.sha256 !== entry.sha256) {
-    invalid(errors, `${where}.provenance.source.sha256`, 'must equal entry.sha256 for an unmodified fixture');
+}
+
+function validateReviewedGaussianEntry(entry, index, errors) {
+  validateReviewedProvenance(entry, index, errors, 'Gaussian');
+  const where = `files[${index}].gaussian`;
+  const g = entry.gaussian;
+  if (!isObject(g)) { invalid(errors, where, 'reviewed Gaussian metadata is required'); return; }
+  for (const field of ['units', 'up_axis', 'source_method']) requireText(g[field], `${where}.${field}`, errors);
+  if (!Number.isSafeInteger(g.count) || g.count <= 0) invalid(errors, where, 'count must be positive');
+  if (g.nonzero_sh !== undefined && (typeof g.nonzero_sh !== 'boolean' || g.sh_degree === 0)) {
+    invalid(errors, where, 'nonzero_sh must be boolean and requires higher-order channels');
   }
+  if (![0, 1, 2, 3].includes(g.sh_degree)) invalid(errors, where, 'sh_degree must be 0..3');
+  if (/\.splat$/i.test(entry.path) && (g.sh_degree !== 0 || entry.size !== g.count * 32)) {
+    invalid(errors, where, '.splat requires SH0 and exactly 32 bytes per Gaussian');
+  }
+  requireUrl(g.metadata_url, `${where}.metadata_url`, errors);
 }
 
 /** Return human-readable errors without throwing, for CLI callers. */
@@ -178,6 +246,10 @@ export function validateManifest(manifest) {
       return;
     }
     requireText(entry.path, `${where}.path`, errors);
+    if (!isCanonicalFixturePath(entry.path)) {
+      invalid(errors, `${where}.path`, 'must be a canonical relative POSIX path without empty, dot or parent segments');
+      return;
+    }
     if (!isText(entry.sha256) || !SHA256_RE.test(entry.sha256)) {
       invalid(errors, `${where}.sha256`, 'must be a lowercase SHA-256');
     }
@@ -206,10 +278,33 @@ export function validateManifest(manifest) {
         requireText(archive.member, `${where}.upstream_archive.member`, errors);
       }
     }
+    // An unlicensed upstream IFC is fetched from its pinned blob and never
+    // uploaded; the entry's own sha256 and size are the source bytes.
+    if (entry.upstream_file !== undefined) {
+      const file = entry.upstream_file;
+      if (!isObject(file)) {
+        invalid(errors, `${where}.upstream_file`, 'must be an object');
+      } else {
+        const kind = UPSTREAM_FILE_EXT.exec(entry.path)?.[1].toLowerCase();
+        if (!kind) invalid(errors, `${where}.path`, 'upstream files support IFC and Rhino .3dm files only');
+        if (entry.upstream_archive !== undefined) invalid(errors, `${where}.upstream_file`, 'cannot be combined with upstream_archive');
+        if (!isText(file.commit) || !COMMIT_RE.test(file.commit)) {
+          invalid(errors, `${where}.upstream_file.commit`, 'must be a 40-character lowercase Git commit');
+        }
+        requirePinnedGitHubBlobUrl(file.blob_url, file.commit, `${where}.upstream_file.blob_url`, errors);
+        if (!isText(file.blob_url) || UPSTREAM_FILE_EXT.exec(file.blob_url)?.[1].toLowerCase() !== (kind ?? 'ifc')) {
+          invalid(errors, `${where}.upstream_file.blob_url`, kind === '3dm' ? 'must name a .3dm file' : 'must name an IFC file');
+        }
+      }
+    }
     // The root manifest remains v1 while the historical IFC catalogue awaits
     // its own rights review. LandXML files are reviewed per entry, so adding
     // one cannot bypass provenance simply by retaining a v1 root header.
     if (isLandXmlPath(entry.path)) validateReviewedLandXmlEntry(entry, index, errors);
+    if (isGaussianFixturePath(entry.path)) validateReviewedGaussianEntry(entry, index, errors);
+    else if (entry.gaussian !== undefined) {
+      invalid(errors, `${where}.path`, 'Gaussian PLY fixtures must use the reserved gaussian/ directory');
+    }
   });
   return errors;
 }

@@ -1,6 +1,6 @@
 {
   "name": "@ifc-lite/collab",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Real-time collaborative BIM via CRDT on IFCX",
   "type": "module",
   "main": "./dist/index.js",
@@ -50,8 +50,9 @@
     "yjs": "^13.6.33"
   },
   "devDependencies": {
+    "@mergifyio/vitest": "^2026.10.11",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.5"
   },
   "license": "MPL-2.0",
   "author": "Louis True",
